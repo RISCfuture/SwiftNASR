@@ -121,6 +121,9 @@ public class ARTCC: Record, Equatable, Codable {
         /// General and per-field remarks.
         public var remarks = Remarks<Field>()
         
+        // used to cross-reference airport from airport code
+        var findAirportByID: ((_ airportID: String) -> Airport?)!
+        
         /// Fields that per-field remarks can be associated with.
         public enum Field: String, Codable {
             case altitude, specialUsageName, associatedAirportCode

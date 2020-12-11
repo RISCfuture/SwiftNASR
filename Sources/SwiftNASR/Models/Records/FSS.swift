@@ -46,7 +46,7 @@ public class FSS: Record, Equatable, Codable {
     public let frequencies: Array<Frequency>
     
     /// The frequencies that the FSS communicates with aircraft on.
-    public let commFacilities: Array<CommFacility>
+    public var commFacilities: Array<CommFacility>
     
     /// The remote communications outlets that the FSS uses to communicate with
     /// aircraft.
@@ -309,6 +309,13 @@ public class FSS: Record, Equatable, Codable {
         
         /// The navaid type associated with this comm facility.
         public let navaidType: NavaidFacilityType?
+        
+        // for loading states from the parent FSS object
+        var findStateByName: ((_ name: String) -> State?)!
+        
+        enum CodingKeys: String, CodingKey {
+            case frequency, operationalHours, city, stateName, location, lowAltEnrouteChart, timezone, owner, ownerName, `operator`, operatorName, status, statusDate, navaid, navaidType
+        }
     }
     
     /// Direction-finding equipment that an FSS can use to locate aircraft.

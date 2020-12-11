@@ -210,10 +210,10 @@ extension AirportParser {
             }
         }
         
-        let base = try parseRunwayEnd(transformedValues, offset1: 10, offset2: 84)
+        let base = try parseRunwayEnd(transformedValues, offset1: 10, offset2: 84, airport: airport)
         var reciprocal: RunwayEnd? = nil
         if transformedValues[44] != nil {
-            reciprocal = try parseRunwayEnd(transformedValues, offset1: 44, offset2: 109)
+            reciprocal = try parseRunwayEnd(transformedValues, offset1: 44, offset2: 109, airport: airport)
         }
         
         var singleWheelWeightBearingCapacity: UInt? = nil

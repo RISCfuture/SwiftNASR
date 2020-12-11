@@ -457,6 +457,9 @@ public class RunwayEnd: Codable {
         /// General and per-field remarks.
         public var remarks = Remarks<Field>()
         
+        // for accessing other runways in the parent Airport
+        var findRunwayByID: ((_ runwayID: String) -> Runway?)!
+        
         /// Fields that per-field remarks can be associated with.
         public enum Field: String, Codable {
             case availableDistance, intersectingRunwayID, definingEntity, position, positionSource, positionSourceDate

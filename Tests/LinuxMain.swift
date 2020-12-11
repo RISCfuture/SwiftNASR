@@ -17,6 +17,7 @@ QCKMain([
     DirectoryLoaderSpec.self,
     FSSParserSpec.self,
     JSONZipCoderSpec.self,
+    NASRDataSpec.self,
     ParserSpec.self,
     RecordEnumSpec.self,
     StateParserSpec.self,

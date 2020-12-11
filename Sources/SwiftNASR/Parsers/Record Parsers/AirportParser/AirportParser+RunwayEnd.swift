@@ -90,7 +90,7 @@ extension AirportParser {
         }
     }
     
-    func parseRunwayEnd(_ values: Array<Any?>, offset1: Int, offset2: Int) throws -> RunwayEnd {
+    func parseRunwayEnd(_ values: Array<Any?>, offset1: Int, offset2: Int, airport: Airport) throws -> RunwayEnd {
         var VGSI: RunwayEnd.VisualGlideslopeIndicator? = nil
         if values[offset1 + 20] != nil {
             do {
@@ -131,12 +131,13 @@ extension AirportParser {
         
         var LAHSO: RunwayEnd.LAHSOPoint? = nil
         if values[offset2 + 16] != nil {
-            LAHSO = RunwayEnd.LAHSOPoint(availableDistance: values[offset2 + 16] as! UInt,
-                                        intersectingRunwayID: values[offset2 + 17] as! String?,
-                                        definingEntity: values[offset2 + 18] as! String?,
-                                        position: location,
-                                        positionSource: values[offset2 + 23] as! String?,
-                                        positionSourceDate: values[offset2 + 24] as! Date?)
+            LAHSO = RunwayEnd.LAHSOPoint(
+                availableDistance: values[offset2 + 16] as! UInt,
+                intersectingRunwayID: values[offset2 + 17] as! String?,
+                definingEntity: values[offset2 + 18] as! String?,
+                position: location,
+                positionSource: values[offset2 + 23] as! String?,
+                positionSourceDate: values[offset2 + 24] as! Date?)
         }
         
         var controllingObject: RunwayEnd.ControllingObject? = nil
