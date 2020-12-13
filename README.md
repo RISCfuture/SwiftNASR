@@ -17,7 +17,7 @@ possible, SwiftNASR avoids representing data as open-ended types such as strings
 Instead, enums and other types with small domains are preferred. This obviously has
 maintainability implications -- namely, as the upstream data changes, SwiftNASR is more
 likely to generate parsing errors, and require more developer work to maintain future
-compatibility -- but it also results in a library thats more in harmony with the design goals
+compatibility -- but it also results in a library that's more in harmony with the design goals
 of the Swift language itself (type safety, compile-time checks, etc.).
 
 ### What records can I parse with this?
