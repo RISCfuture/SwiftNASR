@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "SwiftNASR",
     platforms: [
-        .macOS(.v10_15), .iOS(.v9), .tvOS(.v9), .watchOS(.v2)
+        .macOS(.v10_12), .iOS(.v10), .tvOS(.v10), .watchOS(.v3)
     ],
 
     products: [
