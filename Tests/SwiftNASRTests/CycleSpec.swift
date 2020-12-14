@@ -32,5 +32,27 @@ class CycleSpec: QuickSpec {
                 expect(cycle).to(beNil())
             }
         }
+        
+        describe("contains") {
+            var dateComponents = DateComponents()
+            dateComponents.year = 2020
+            dateComponents.month = 2
+            dateComponents.day = 21
+
+            let cycle = Cycle.effectiveCycle(for: calendar.date(from: dateComponents)!)!
+            
+            it("returns true if the date falls within the cycle") {
+                let date = Calendar.current.date(from: .init(year: 2020, month: 2, day: 21))!
+                expect(cycle.contains(date)).to(beTrue())
+            }
+            
+            it("returns false if the date does not fall within the cycle") {
+                var date = Calendar.current.date(from: .init(year: 2020, month: 2, day: 28))!
+                expect(cycle.contains(date)).to(beFalse())
+                
+                date = Calendar.current.date(from: .init(year: 2020, month: 1, day: 29))!
+                expect(cycle.contains(date)).to(beFalse())
+            }
+        }
     }
 }
