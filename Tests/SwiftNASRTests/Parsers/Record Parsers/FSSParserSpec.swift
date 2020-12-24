@@ -22,12 +22,20 @@ class FSSParserSpec: QuickSpec {
             }
 
             it("parses FSSes") {
-                try! NASR.parse(.flightServiceStations)
+                try! NASR.parse(.flightServiceStations) { _ in false }
                 expect(NASR.data.FSSes!.count).to(equal(2))
                 
                 let FTW = NASR.data.FSSes!.first(where: { $0.ID == "FTW" })!
                 expect(FTW.commFacilities.count).to(equal(20))
                 expect(FTW.navaids.count).to(equal(79))
+            }
+            
+            it("returns a Publisher") {
+                let publisher = NASR.parseFSSes()
+                _ = publisher.sink(receiveCompletion: { _ in }, receiveValue: { FSSes in
+                    expect(FSSes.count).to(equal(2))
+                })
+                expect(NASR.data.FSSes!.count).toEventually(equal(2))
             }
         }
     }

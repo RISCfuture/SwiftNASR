@@ -32,6 +32,4 @@ class StateParser: Parser {
     func finish(data: NASRData) {
         data.states = states
     }
-    
-    
 }

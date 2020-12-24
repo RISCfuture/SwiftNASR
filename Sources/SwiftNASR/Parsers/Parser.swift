@@ -1,7 +1,10 @@
 import Foundation
+import Combine
 
-protocol Parser {
-    mutating func prepare(distribution: Distribution) throws
+protocol Parser: class {
+    func prepare(distribution: Distribution) throws
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    func preparePublisher(distribution: Distribution) -> AnyPublisher<Void, Swift.Error>
     func parse(data: Data) throws
     func finish(data: NASRData)
 }
@@ -32,6 +35,20 @@ extension Parser {
             return Offset(distance: distance, direction: Offset.Direction(rawValue: direction)!)
         }
         throw ParserError.invalidValue(value)
+    }
+}
+
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+extension Parser {
+    func preparePublisher(distribution: Distribution) -> AnyPublisher<Void, Error> {
+        return Future { promise in
+            do {
+                try self.prepare(distribution: distribution)
+                promise(.success(()))
+            } catch (let error) {
+                promise(.failure(error))
+            }
+        }.eraseToAnyPublisher()
     }
 }
 

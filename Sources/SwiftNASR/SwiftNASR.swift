@@ -105,8 +105,8 @@ public final class SwiftNASR {
         return NASR
     }
 
-    private let loader: Loader
-    private var distribution: Distribution? = nil
+    let loader: Loader
+    var distribution: Distribution? = nil
 
     /**
      Aeronautical data is stored into this field once it is parsed. All members
@@ -153,7 +153,7 @@ public final class SwiftNASR {
      */
     
     public func parse(_ type: RecordType,
-                      errorHandler: @escaping (_ error: Swift.Error) -> Bool = {_ in return true }) throws {
+                      errorHandler: @escaping (_ error: Swift.Error) -> Bool) throws {
         guard let distribution = self.distribution else {
             throw Error.notYetLoaded
         }
@@ -171,13 +171,12 @@ public final class SwiftNASR {
     }
     
     private func parse(parser: Parser,
-                       processor: ((Data) -> Void) throws -> Void,
+                       processor: @escaping (@escaping (Data) -> Void) throws -> Void,
                        errorHandler: @escaping (Swift.Error) -> Bool) throws {
         guard let distribution = self.distribution else {
             throw Error.notYetLoaded
         }
 
-        var parser = parser
         try parser.prepare(distribution: distribution)
 
         try processor() { recordData in

@@ -25,7 +25,7 @@ class ParserSpec: QuickSpec {
             it("sets the ranges for a layout file") {
                 let distURL = self.fixturesURL.appendingPathComponent("MockDistribution")
                 let distribution = DirectoryDistribution(location: distURL)
-                var parser = MockParser()
+                let parser = MockParser()
 
                 try! parser.prepare(distribution: distribution)
                 let ranges = parser.formats.map { $0.fields.map { $0.range } }
@@ -35,7 +35,7 @@ class ParserSpec: QuickSpec {
             it("throws badData if an L entry is invalid") {
                 let distURL = self.fixturesURL.appendingPathComponent("FailingMockDistribution")
                 let distribution = DirectoryDistribution(location: distURL)
-                var parser = MockParser()
+                let parser = MockParser()
 
                 expect { try parser.prepare(distribution: distribution) }.to(throwError(LayoutParserError.badData("Field defined before group")))
             }

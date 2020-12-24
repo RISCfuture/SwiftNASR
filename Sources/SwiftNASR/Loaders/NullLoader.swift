@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 /**
  `NullLoader` is provided for API compatibility between loading data from a
@@ -53,5 +54,10 @@ public class NullLoader: Loader {
     
     public func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) {
         callback(.success(NullDistribution()))
+    }
+    
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func load() -> AnyPublisher<Distribution, Swift.Error> {
+        return Result.Publisher(NullDistribution()).eraseToAnyPublisher()
     }
 }

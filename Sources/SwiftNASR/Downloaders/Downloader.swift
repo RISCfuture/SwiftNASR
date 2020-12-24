@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import Dispatch
 
 /**
@@ -48,6 +49,17 @@ open class Downloader: Loader {
 
     public func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) {}
     
+    /**
+     Downloads the NASR data asynchronously.
+     
+     - Returns: A publisher that publishes the downloaded distribution.
+     */
+    
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func load() -> AnyPublisher<Distribution, Swift.Error> {
+        return Empty(completeImmediately: true).eraseToAnyPublisher()
+    }
+    
     /// Errors that can occur when working with distributions.
     public enum Error: Swift.Error, CustomStringConvertible {
         
@@ -57,7 +69,7 @@ open class Downloader: Loader {
          - Parameter response: The HTTP response.
          */
         
-        case badResponse(_ response: HTTPURLResponse)
+        case badResponse(_ response: URLResponse)
         
         /// Downloaded tempfile unexpectedly missing.
         case noFile
@@ -71,7 +83,7 @@ open class Downloader: Loader {
         public var description: String {
             switch self {
                 case .badResponse(let response):
-                    return "Bad response: \(response.statusCode)"
+                    return "Bad response: \(response.description)"
                 case .noFile:
                     return "Couldn't find file to load"
                 case .noData:

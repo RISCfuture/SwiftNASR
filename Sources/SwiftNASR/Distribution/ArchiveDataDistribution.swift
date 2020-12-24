@@ -1,4 +1,6 @@
 import Foundation
+import Combine
+import Dispatch
 import ZIPFoundation
 
 /**
@@ -7,7 +9,7 @@ import ZIPFoundation
  buffered chunks.
  */
 
-public class ArchiveDataDistribution: Distribution {
+public class ArchiveDataDistribution: ConcurrentDistribution {
     
     /// The compressed distribution data.
     public let data: Data
@@ -29,19 +31,7 @@ public class ArchiveDataDistribution: Distribution {
         self.archive = archive
     }
     
-    /**
-     Decompresses and reads a file from the distribution archive.
-     
-     - Parameter path: The path to the file within the archive.
-     - Parameter eachLine: A callback for each line of text in the expanded
-                           file.
-     - Parameter data: A line of text from the file being read.
-     
-     - Throws: `DistributionError.noSuchFile` if a file at `path` doesn't exist
-               within the archive.
-     */
-
-    public func readFile(path: String, eachLine: (_ data: Data) -> Void) throws {
+    override func readFileSynchronously(path: String, eachLine: (_ data: Data) -> Void) throws {
         guard let entry = archive[path] else { throw DistributionError.noSuchFile(path: path) }
         var buffer = Data(capacity: Int(chunkSize))
 
@@ -53,5 +43,36 @@ public class ArchiveDataDistribution: Distribution {
             }
         }
         if buffer.count > 0 { eachLine(buffer) }
+    }
+    
+    /**
+     Decompresses and reads a file from the distribution archive.
+     
+     - Parameter path: The path to the file within the archive.
+     - Returns: A publisher that publishes each line, in order, from the
+                decompressed file.
+     */
+    
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public override func readFileAsynchronously(path: String, subject: CurrentValueSubject<Data, Error>) {
+        guard let entry = archive[path] else {
+            subject.send(completion: .failure(DistributionError.noSuchFile(path: path)))
+            return
+        }
+                    
+        do {
+            var buffer = Data(capacity: Int(chunkSize))
+            let _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: false, progress: nil) { data in
+                buffer.append(data)
+                while let EOL = buffer.range(of: delimiter) {
+                    subject.send(buffer.subdata(in: buffer.startIndex..<EOL.lowerBound))
+                    buffer.removeSubrange(buffer.startIndex..<EOL.upperBound)
+                }
+            }
+            if buffer.count > 0 { subject.send(buffer) }
+            subject.send(completion: .finished)
+        } catch (let error) {
+            subject.send(completion: .failure(error))
+        }
     }
 }

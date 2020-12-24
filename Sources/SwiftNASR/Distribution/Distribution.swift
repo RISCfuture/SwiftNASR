@@ -1,4 +1,6 @@
 import Foundation
+import Combine
+import Dispatch
 
 fileprivate let metatypes = [
     (RecordType.states, State.self),
@@ -71,20 +73,42 @@ public protocol Distribution {
      */
     
     func readFile(path: String, eachLine: (_ data: Data) -> Void) throws
+    
+    /**
+     Reads a file from the distribution.
+     
+     - Parameter path: The path to the file within the distribution.
+     - Returns: A publisher that publishes each line of the file.
+     */
+    
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    func readFile(path: String) -> AnyPublisher<Data, Error>
 }
 
 extension Distribution {
     
     /**
-     Reads the data for a given record type from the distribution.
+     Synchronously reads the data for a given record type from the distribution.
      
      - Parameter type: The record type to read data for.
      - Parameter eachRecord: A callback for each data record in the file.
      - Parameter data: The data for an individual record.
      */
     
-    public func read(type: RecordType, eachRecord: (_ data: Data) -> Void) throws {
-        try readFile(path: "\(type.rawValue).txt", eachLine: eachRecord)
+    public func read(type: RecordType, eachRecord: @escaping (_ data: Data) -> Void) throws {
+        try readFile(path: "\(type.rawValue).txt", eachLine: { eachRecord($0) })
+    }
+    
+    /**
+     Reads the data for a given record type from the distribution.
+     
+     - Parameter type: The record type to read data for.
+     - Returns: A publisher that publishes each data record from the file.
+     */
+    
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func read(type: RecordType) -> AnyPublisher<Data, Error> {
+        return readFile(path: "\(type.rawValue).txt")
     }
 }
 
@@ -98,10 +122,19 @@ public enum DistributionError: Swift.Error, CustomStringConvertible {
      */
     case noSuchFile(path: String)
     
+    /**
+     `FileManager` threw an NSError of some kind.
+     
+     - Parameter nsError: The wrapped NSError.
+     */
+    case nsError(_ nsError: NSError)
+    
     public var description: String {
         switch self {
             case .noSuchFile(let path):
                 return "No such file \(path)"
+            case .nsError(let error):
+                return error.description
         }
     }
 }

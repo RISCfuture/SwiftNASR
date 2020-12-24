@@ -22,8 +22,16 @@ class StateParserSpec: QuickSpec {
             }
 
             it("parses states") {
-                try! NASR.parse(.states)
+                try! NASR.parse(.states) { _ in false }
                 expect(NASR.data.states!.count).to(equal(66))
+            }
+            
+            it("returns a Publisher") {
+                let publisher = NASR.parseStates()
+                _ = publisher.sink(receiveCompletion: { _ in }, receiveValue: { states in
+                    expect(states.count).to(equal(66))
+                })
+                expect(NASR.data.states!.count).toEventually(equal(66))
             }
         }
     }

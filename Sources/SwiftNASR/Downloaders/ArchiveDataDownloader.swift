@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 /**
  A downloader that downloads a distribution archive into memory. No data is
@@ -27,5 +28,19 @@ public class ArchiveDataDownloader: Downloader {
                 else { callback(.failure(Downloader.Error.noData)) }
             }
         }.resume()
+    }
+    
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public override func load() -> AnyPublisher<Distribution, Swift.Error> {
+        return session.dataTaskPublisher(for: cycleURL)
+            .tryMap { data, response -> Distribution in
+                guard let HTTPResponse = response as? HTTPURLResponse, HTTPResponse.statusCode == 200 else {
+                    throw Downloader.Error.badResponse(response)
+                }
+                guard let distribution = ArchiveDataDistribution(data: data) else {
+                    throw Downloader.Error.badData
+                }
+                return distribution
+            }.share().eraseToAnyPublisher()
     }
 }

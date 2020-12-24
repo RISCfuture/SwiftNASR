@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 /**
  Wraps distribution data in an `ArchiveFileDistribution`.
@@ -25,6 +26,19 @@ public class ArchiveLoader: Loader {
             return
         }
         callback(.success(distribution))
+    }
+    
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func load() -> AnyPublisher<Distribution, Swift.Error> {
+        return Future { promise in
+            DispatchQueue.global(qos: .utility).async {
+                guard let distribution = ArchiveFileDistribution(location: self.location) else {
+                    promise(.failure(Error.badData))
+                    return
+                }
+                promise(.success(distribution))
+            }
+        }.eraseToAnyPublisher()
     }
 
     /// Errors that can occur when loading archive data.

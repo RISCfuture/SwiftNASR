@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 /**
  An empty distribution, used by `NullLoader` to provide API compatibility
@@ -10,6 +11,11 @@ import Foundation
 public class NullDistribution: Distribution {
     public func readFile(path: String, eachLine: (Data) -> Void) throws {
         throw Error.nullDistribution
+    }
+    
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func readFile(path: String) -> AnyPublisher<Data, Swift.Error> {
+        return Fail(error: Error.nullDistribution).eraseToAnyPublisher()
     }
     
     /// Null distribution errors.

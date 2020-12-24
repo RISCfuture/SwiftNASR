@@ -18,10 +18,10 @@ class NASRDataSpec: QuickSpec {
         NASR.load { _ in group.leave() }
         group.wait()
         
-        try! NASR.parse(.states)
-        try! NASR.parse(.airports)
-        try! NASR.parse(.ARTCCFacilities)
-        try! NASR.parse(.flightServiceStations)
+        try! NASR.parse(.states) { _ in false }
+        try! NASR.parse(.airports) { _ in false }
+        try! NASR.parse(.ARTCCFacilities) { _ in false }
+        try! NASR.parse(.flightServiceStations) { _ in false }
         
         let parsedData = NASR.data
         let encodedData = try! JSONEncoder().encode(parsedData)

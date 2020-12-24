@@ -1,3 +1,5 @@
+import Combine
+
 /**
  Loaders create the appropriate `Distribution` for a `Downloader`. For example,
  the `ArchiveDataDownloader` produces a ZIP-compressed archive, and so the
@@ -18,4 +20,15 @@ public protocol Loader {
      */
     
     func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void)
+    
+    /**
+     Asynchronously wraps downloaded data (or data loaded from disk or memory)
+     in an appropriate `Distribution` implementation.
+     
+     - Returns: A publisher that publishes the distribution data wrapped in the
+                appropriate implementation.
+     */
+    
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    func load() -> AnyPublisher<Distribution, Swift.Error>
 }

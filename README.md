@@ -140,6 +140,36 @@ let data = try encoder.encode(validAirports)
 For more information on the data you have available to work with, see the class
 documentation for each of the record classes, such as `Airport`.
 
+### Use as a Publisher
+
+SwiftNASR can also be used as a `Publisher` for reactive apps written using Combine.
+The `load` method has a variation that returns a publisher that emits when loading is
+complete:
+
+``` swift
+let distribution = SwiftNASR.fromLocalArchive(distributionURL)
+let cancelable = distribution.load().sink { distribution in
+    // [...]
+}
+```
+
+There are also variations of the `parse` method for each parseable type that return
+Publishers that emit when parsing is complete:
+
+    ``` swift
+    let distribution = SwiftNASR.fromLocalArchive(distributionURL)
+    let cancelable = distribution.load().map { $0.parseAirports() }
+        .switchToLatest().sink { event in _
+            switch event {
+                case let .error(error): // parse error for one row only
+                    // [...] (decide if you want to keep parsing or cancel)
+                case let .complete(airports):
+                    // [...]
+            }
+        }
+}
+    ```
+
 ## Tests
 
 Testing is done using Nimble and Quick. Simply run the `SwiftNASRTests` target to run
