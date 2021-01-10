@@ -12,14 +12,14 @@ import Foundation
  or a landing.
  */
 
-public class Airport: Record, Equatable, Codable {
+public class Airport: Record, Identifiable, Equatable, Codable {
 
     // MARK: - Properties
 
     /// A unique identifier for this airport. This field should be used to
     /// uniquely identify an airport, as the `LID` for an airport
     /// can sometimes change.
-    public let siteNumber: String
+    public var id: String
     
     /// The airport name.
     public let name: String
@@ -323,8 +323,8 @@ public class Airport: Record, Equatable, Codable {
     
     // MARK: - Methods
 
-    init(siteNumber: String, name: String, LID: String, ICAOIdentifier: String?, facilityType: Airport.FacilityType, FAARegion: Airport.FAARegion?, FAAFieldOfficeCode: String?, stateCode: String?, county: String, countyStateCode: String, city: String, ownership: Airport.Ownership, publicUse: Bool, owner: Airport.Person?, manager: Airport.Person?, referencePoint: Location, referencePointDeterminationMethod: Airport.LocationDeterminationMethod, elevationDeterminationMethod: Airport.LocationDeterminationMethod?, magneticVariation: Int?, magneticVariationEpoch: Date?, trafficPatternAltitude: Int?, sectionalChart: String?, distanceCityToAirport: UInt?, directionCityToAirport: Direction?, landArea: Float?, boundaryARTCCID: String, responsibleARTCCID: String, tieInFSSOnStation: Bool?, tieInFSSID: String, alternateFSSID: String?, NOTAMIssuerID: String?, NOTAMDAvailable: Bool?, activationDate: Date?, status: Airport.Status, ARFFCapability: Airport.ARFFCapability?, agreements: Array<Airport.FederalAgreement>, airspaceAnalysisDetermination: Airport.AirspaceAnalysisDetermination?, customsEntryAirport: Bool?, customsLandingRightsAirport: Bool?, jointUseAgreement: Bool?, militaryLandingRights: Bool?, inspectionMethod: Airport.InspectionMethod?, inspectionAgency: Airport.InspectionAgency?, lastPhysicalInspectionDate: Date?, lastInformationRequestCompletedDate: Date?, fuelsAvailable: Array<Airport.FuelType>, airframeRepairAvailable: Airport.RepairService?, powerplantRepairAvailable: Airport.RepairService?, bottledOxygenAvailable: Array<Airport.OxygenPressure>, bulkOxygenAvailable: Array<Airport.OxygenPressure>, airportLightingSchedule: Airport.LightingSchedule?, beaconLightingSchedule: Airport.LightingSchedule?, controlTower: Bool, UNICOMFrequency: UInt?, CTAF: UInt?, segmentedCircle: Airport.AirportMarker?, beaconColor: Airport.LensColor?, landingFee: Bool?, medicalUse: Bool?, basedSingleEngineGA: UInt?, basedMultiEngineGA: UInt?, basedJetGA: UInt?, basedHelicopterGA: UInt?, basedOperationalGliders: UInt?, basedOperationalMilitary: UInt?, basedUltralights: UInt?, annualCommercialOps: UInt?, annualCommuterOps: UInt?, annualAirTaxiOps: UInt?, annualLocalGAOps: UInt?, annualTransientGAOps: UInt?, annualMilitaryOps: UInt?, annualPeriodEndDate: Date?, positionSource: String?, positionSourceDate: Date?, elevationSource: String?, elevationSourceDate: Date?, contractFuelAvailable: Bool?, transientStorageFacilities: Array<Airport.StorageFacility>?, otherServices: Array<Airport.Service>, windIndicator: Airport.AirportMarker?, minimumOperationalNetwork: Bool) {
-        self.siteNumber = siteNumber
+    init(id: String, name: String, LID: String, ICAOIdentifier: String?, facilityType: Airport.FacilityType, FAARegion: Airport.FAARegion?, FAAFieldOfficeCode: String?, stateCode: String?, county: String, countyStateCode: String, city: String, ownership: Airport.Ownership, publicUse: Bool, owner: Airport.Person?, manager: Airport.Person?, referencePoint: Location, referencePointDeterminationMethod: Airport.LocationDeterminationMethod, elevationDeterminationMethod: Airport.LocationDeterminationMethod?, magneticVariation: Int?, magneticVariationEpoch: Date?, trafficPatternAltitude: Int?, sectionalChart: String?, distanceCityToAirport: UInt?, directionCityToAirport: Direction?, landArea: Float?, boundaryARTCCID: String, responsibleARTCCID: String, tieInFSSOnStation: Bool?, tieInFSSID: String, alternateFSSID: String?, NOTAMIssuerID: String?, NOTAMDAvailable: Bool?, activationDate: Date?, status: Airport.Status, ARFFCapability: Airport.ARFFCapability?, agreements: Array<Airport.FederalAgreement>, airspaceAnalysisDetermination: Airport.AirspaceAnalysisDetermination?, customsEntryAirport: Bool?, customsLandingRightsAirport: Bool?, jointUseAgreement: Bool?, militaryLandingRights: Bool?, inspectionMethod: Airport.InspectionMethod?, inspectionAgency: Airport.InspectionAgency?, lastPhysicalInspectionDate: Date?, lastInformationRequestCompletedDate: Date?, fuelsAvailable: Array<Airport.FuelType>, airframeRepairAvailable: Airport.RepairService?, powerplantRepairAvailable: Airport.RepairService?, bottledOxygenAvailable: Array<Airport.OxygenPressure>, bulkOxygenAvailable: Array<Airport.OxygenPressure>, airportLightingSchedule: Airport.LightingSchedule?, beaconLightingSchedule: Airport.LightingSchedule?, controlTower: Bool, UNICOMFrequency: UInt?, CTAF: UInt?, segmentedCircle: Airport.AirportMarker?, beaconColor: Airport.LensColor?, landingFee: Bool?, medicalUse: Bool?, basedSingleEngineGA: UInt?, basedMultiEngineGA: UInt?, basedJetGA: UInt?, basedHelicopterGA: UInt?, basedOperationalGliders: UInt?, basedOperationalMilitary: UInt?, basedUltralights: UInt?, annualCommercialOps: UInt?, annualCommuterOps: UInt?, annualAirTaxiOps: UInt?, annualLocalGAOps: UInt?, annualTransientGAOps: UInt?, annualMilitaryOps: UInt?, annualPeriodEndDate: Date?, positionSource: String?, positionSourceDate: Date?, elevationSource: String?, elevationSourceDate: Date?, contractFuelAvailable: Bool?, transientStorageFacilities: Array<Airport.StorageFacility>?, otherServices: Array<Airport.Service>, windIndicator: Airport.AirportMarker?, minimumOperationalNetwork: Bool) {
+        self.id = id
         self.name = name
         self.LID = LID
         self.ICAOIdentifier = ICAOIdentifier
@@ -409,7 +409,7 @@ public class Airport: Record, Equatable, Codable {
     }
 
     public static func == (lhs: Airport, rhs: Airport) -> Bool {
-        return lhs.siteNumber == rhs.siteNumber
+        return lhs.id == rhs.id
     }
 
     // MARK: - Types
@@ -883,7 +883,7 @@ public class Airport: Record, Equatable, Codable {
     
     /// Fields that per-field remarks can be associated with.
     public enum Field: String, Codable {
-        case siteNumber, name, LID, ICAOIdentifier, facilityType
+        case id, name, LID, ICAOIdentifier, facilityType
 
         case FAARegion, FAAFieldOfficeCode, stateCode, county, countyStateCode, city
 
@@ -910,7 +910,7 @@ public class Airport: Record, Equatable, Codable {
         case attendanceSchedule
         
         static let fieldOrder: Array<Self?> = [
-            nil, .siteNumber, .facilityType, .LID, nil,
+            nil, .id, .facilityType, .LID, nil,
             .FAARegion, .FAAFieldOfficeCode, .stateCode, .stateCode, .county, .countyStateCode, .city, .name,
             .ownership, .publicUse, .owner, .owner, .owner, .owner, .manager, .manager, .manager, .manager,
             .referencePoint, .referencePoint, .referencePoint, .referencePoint, .referencePointDeterminationMethod, .referencePoint, .elevationDeterminationMethod, .magneticVariation, .magneticVariationEpoch, .trafficPatternAltitude, .sectionalChart, .distanceCityToAirport, .directionCityToAirport, .landArea,
@@ -928,7 +928,7 @@ public class Airport: Record, Equatable, Codable {
     // MARK: - Coding
     
     public enum CodingKeys: String, CodingKey {
-      case siteNumber, name, LID, ICAOIdentifier, facilityType, FAARegion, FAAFieldOfficeCode, stateCode, county, countyStateCode, city, ownership, publicUse, owner, manager, referencePoint, referencePointDeterminationMethod, elevationDeterminationMethod, magneticVariation, magneticVariationEpoch, trafficPatternAltitude, sectionalChart, distanceCityToAirport, directionCityToAirport, landArea, boundaryARTCCID, responsibleARTCCID, tieInFSSOnStation, tieInFSSID, alternateFSSID, NOTAMIssuerID, NOTAMDAvailable, activationDate, status, ARFFCapability, agreements, airspaceAnalysisDetermination, customsEntryAirport, customsLandingRightsAirport, jointUseAgreement, militaryLandingRights, inspectionMethod, inspectionAgency, lastPhysicalInspectionDate, lastInformationRequestCompletedDate, fuelsAvailable, airframeRepairAvailable, powerplantRepairAvailable, bottledOxygenAvailable, bulkOxygenAvailable, airportLightingSchedule, beaconLightingSchedule, controlTower, UNICOMFrequency, CTAF, segmentedCircle, beaconColor, landingFee, medicalUse, basedSingleEngineGA, basedMultiEngineGA, basedJetGA, basedHelicopterGA, basedOperationalGliders, basedOperationalMilitary, basedUltralights, annualCommercialOps, annualCommuterOps, annualAirTaxiOps, annualLocalGAOps, annualTransientGAOps, annualMilitaryOps, annualPeriodEndDate, positionSource, positionSourceDate, elevationSource, elevationSourceDate, contractFuelAvailable, transientStorageFacilities, otherServices, windIndicator, minimumOperationalNetwork
+      case id, name, LID, ICAOIdentifier, facilityType, FAARegion, FAAFieldOfficeCode, stateCode, county, countyStateCode, city, ownership, publicUse, owner, manager, referencePoint, referencePointDeterminationMethod, elevationDeterminationMethod, magneticVariation, magneticVariationEpoch, trafficPatternAltitude, sectionalChart, distanceCityToAirport, directionCityToAirport, landArea, boundaryARTCCID, responsibleARTCCID, tieInFSSOnStation, tieInFSSID, alternateFSSID, NOTAMIssuerID, NOTAMDAvailable, activationDate, status, ARFFCapability, agreements, airspaceAnalysisDetermination, customsEntryAirport, customsLandingRightsAirport, jointUseAgreement, militaryLandingRights, inspectionMethod, inspectionAgency, lastPhysicalInspectionDate, lastInformationRequestCompletedDate, fuelsAvailable, airframeRepairAvailable, powerplantRepairAvailable, bottledOxygenAvailable, bulkOxygenAvailable, airportLightingSchedule, beaconLightingSchedule, controlTower, UNICOMFrequency, CTAF, segmentedCircle, beaconColor, landingFee, medicalUse, basedSingleEngineGA, basedMultiEngineGA, basedJetGA, basedHelicopterGA, basedOperationalGliders, basedOperationalMilitary, basedUltralights, annualCommercialOps, annualCommuterOps, annualAirTaxiOps, annualLocalGAOps, annualTransientGAOps, annualMilitaryOps, annualPeriodEndDate, positionSource, positionSourceDate, elevationSource, elevationSourceDate, contractFuelAvailable, transientStorageFacilities, otherServices, windIndicator, minimumOperationalNetwork
       
       case attendanceSchedule, runways, remarks
     }

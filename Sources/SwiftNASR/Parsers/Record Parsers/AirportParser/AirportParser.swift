@@ -236,7 +236,7 @@ class AirportParser: FixedWidthParser {
                                 longitude: transformedValues[25] as! Float,
                                 elevation: (transformedValues[28] as! Float))
 
-        let airport = Airport(siteNumber: transformedValues[1] as! String,
+        let airport = Airport(id: transformedValues[1] as! String,
                               name: transformedValues[12] as! String,
                               LID: transformedValues[3] as! String,
                               ICAOIdentifier: transformedValues[102] as! String?,
@@ -319,7 +319,7 @@ class AirportParser: FixedWidthParser {
                               windIndicator: transformedValues[101] as! Airport.AirportMarker?,
                               minimumOperationalNetwork: transformedValues[103] as! Bool)
 
-        airports[airport.siteNumber] = airport
+        airports[airport.id] = airport
     }
     
     func finish(data: NASRData) {
