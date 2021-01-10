@@ -43,8 +43,8 @@ public class ConcurrentDistribution: Distribution {
 
         queue.async { [self] in
             mutex.wait()
+            defer { mutex.signal() }
             readFileAsynchronously(path: path, subject: subject)
-            mutex.signal()
         }
         
         return subject.eraseToAnyPublisher()

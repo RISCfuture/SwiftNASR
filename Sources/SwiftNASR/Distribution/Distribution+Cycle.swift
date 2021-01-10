@@ -21,15 +21,13 @@ extension Distribution {
      */
     
     public func readCycle(callback: (_ cycle: Cycle?) -> Void) throws {
-        var called = false
+        var cycle: Cycle? = nil
         try readFile(path: "README.txt") { line in
             if line.starts(with: readmeFirstLine) {
-                callback(parseCycleFrom(line))
-                called = true
+                if cycle == nil { cycle = parseCycleFrom(line) }
             }
         }
-        
-        if !called { callback(nil) }
+        callback(cycle)
     }
     
     /**
