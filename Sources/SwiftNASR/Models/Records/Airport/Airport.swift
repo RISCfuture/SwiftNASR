@@ -12,7 +12,7 @@ import Foundation
  or a landing.
  */
 
-public class Airport: Record, Identifiable, Equatable, Codable {
+public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
 
     // MARK: - Properties
 
@@ -410,6 +410,10 @@ public class Airport: Record, Identifiable, Equatable, Codable {
 
     public static func == (lhs: Airport, rhs: Airport) -> Bool {
         return lhs.id == rhs.id
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 
     // MARK: - Types
