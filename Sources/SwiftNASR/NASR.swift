@@ -17,7 +17,7 @@ let zulu = TimeZone(secondsFromGMT: 0)!
  efficient retrieval.
  */
 
-public final class SwiftNASR {
+public final class NASR {
     
     /**
      Loads NASR data from a local ZIP file. The file must have already been
@@ -27,7 +27,7 @@ public final class SwiftNASR {
      - Returns: The instance for loading, parsing, and accessing that data.
      */
     
-    public class func fromLocalArchive(_ location: URL) -> SwiftNASR {
+    public class func fromLocalArchive(_ location: URL) -> NASR {
         let loader = ArchiveLoader(location: location)
         return self.init(loader: loader)
     }
@@ -40,7 +40,7 @@ public final class SwiftNASR {
      - Returns: The instance for loading, parsing, and accessing that data.
      */
 
-    public class func fromLocalDirectory(_ location: URL) -> SwiftNASR {
+    public class func fromLocalDirectory(_ location: URL) -> NASR {
         let loader = DirectoryLoader(location: location)
         return self.init(loader: loader)
     }
@@ -56,7 +56,7 @@ public final class SwiftNASR {
                 nil if no cycle is/was effective for `date`.
      */
 
-    public class func fromInternetToMemory(activeAt date: Date? = nil) -> SwiftNASR? {
+    public class func fromInternetToMemory(activeAt date: Date? = nil) -> NASR? {
         let loader: Loader
         if let date = date {
             guard let cycle = Cycle.effectiveCycle(for: date) else { return nil }
@@ -81,7 +81,7 @@ public final class SwiftNASR {
                 nil if no cycle is/was effective for `date`.
      */
 
-    public class func fromInternetToFile(_ location: URL? = nil, activeAt date: Date? = nil) -> SwiftNASR? {
+    public class func fromInternetToFile(_ location: URL? = nil, activeAt date: Date? = nil) -> NASR? {
         let loader: Loader
         if let date = date {
             guard let cycle = Cycle.effectiveCycle(for: date) else { return nil }
@@ -101,7 +101,7 @@ public final class SwiftNASR {
      - Returns: The instance for accessing that data.
      */
     
-    public class func fromData(_ data: NASRData) -> SwiftNASR {
+    public class func fromData(_ data: NASRData) -> NASR {
         let NASR = self.init(loader: NullLoader())
         NASR.data = data
         return NASR

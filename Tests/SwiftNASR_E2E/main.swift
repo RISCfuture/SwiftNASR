@@ -7,11 +7,11 @@ import Combine
 let workingURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
 let distributionURL = workingURL.appendingPathComponent("distribution.zip")
 
-let NASR: SwiftNASR
+let nasr: NASR
 if FileManager.default.fileExists(atPath: distributionURL.path) {
-    NASR = SwiftNASR.fromLocalArchive(distributionURL)
+    nasr = NASR.fromLocalArchive(distributionURL)
 } else {
-    NASR = SwiftNASR.fromInternetToFile(distributionURL)!
+    nasr = NASR.fromInternetToFile(distributionURL)!
 }
 
 print("Loading...")
@@ -21,7 +21,7 @@ func testWithCombine() {
     let group = DispatchGroup()
     group.enter()
     
-    let cancellable = NASR.load().map {
+    let cancellable = nasr.load().map {
         return Publishers.CombineLatest3(
             $0.parseAirports(errorHandler: { print($0) }),
             $0.parseARTCCs(errorHandler: { print($0) }),
@@ -32,7 +32,7 @@ func testWithCombine() {
     .sink(receiveCompletion: { completion in
         do {
             let encoder = JSONZipEncoder()
-            let data = try encoder.encode(NASR.data)
+            let data = try encoder.encode(nasr.data)
             
             try data.write(to: workingURL.appendingPathComponent("distribution.json.zip"))
             group.leave()
@@ -50,29 +50,29 @@ func testWithCallbacks() {
     let group = DispatchGroup()
     group.enter()
     
-    NASR.load { result in
+    nasr.load { result in
         switch result {
             case .success:
                 print("Parsing...")
                 
-                try! NASR.parse(.airports, errorHandler: { error in
+                try! nasr.parse(.airports, errorHandler: { error in
                     fputs("\(error)\n", stderr)
                     return true
                 })
                 
-                try! NASR.parse(.ARTCCFacilities, errorHandler: { error in
+                try! nasr.parse(.ARTCCFacilities, errorHandler: { error in
                     fputs("\(error)\n", stderr)
                     return true
                 })
                 
-                try! NASR.parse(.flightServiceStations, errorHandler: { error in
+                try! nasr.parse(.flightServiceStations, errorHandler: { error in
                     fputs("\(error)\n", stderr)
                     return true
                 })
                 
                 do {
                     let encoder = JSONZipEncoder()
-                    let data = try encoder.encode(NASR.data)
+                    let data = try encoder.encode(nasr.data)
                     
                     try data.write(to: workingURL.appendingPathComponent("distribution.json.zip"))
                 } catch (let error) {

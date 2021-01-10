@@ -63,28 +63,27 @@ dependencies: [
 
 ## Usage
 
-The `SwiftNASR` class is used to load NASR distributions. If you have not already
-downloaded a NASR distribution, you can do so using the `fromInternetToFile`
-method, which will download the distribution to a file, so you can avoid having to
-re-download it later:
+The `NASR` class is used to load NASR distributions. If you have not already downloaded a
+NASR distribution, you can do so using the `fromInternetToFile` method, which will
+download the distribution to a file, so you can avoid having to re-download it later:
 
 ``` swift
 import SwiftNASR
 
 let workingURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
 let distributionURL = workingURL.appendingPathComponent("distribution.zip")
-let distribution = SwiftNASR.fromInternetToFile(distributionURL)!
+let distribution = NASR.fromInternetToFile(distributionURL)!
 ```
 
 If you have already downloaded the distribution, you can load it using
 `fromLocalArchive`:
 
 ``` swift
-let distribution = SwiftNASR.fromLocalArchive(distributionURL)
+let distribution = NASR.fromLocalArchive(distributionURL)
 ```
 
-Once you have your distribution, use the `SwiftNASR` class to asynchronously load the
-data and parse it:
+Once you have your distribution, use the `NASR` class to asynchronously load the data and
+parse it:
 
 ``` swift
 distribution.load { result in
@@ -104,7 +103,7 @@ Note that larger datasets, such as airports, can take several moments to parse. 
 recommended to serialize this data once parsed using an encoder (see below).
 
 Once you've completed parsing the data you're interested in, you can access it from
-`SwiftNASR.data`:
+`NASR.data`:
 
 ``` swift
 let sanCarlos = distribution.data.airports!.first { $0.LID == "KSQL" }
@@ -147,7 +146,7 @@ The `load` method has a variation that returns a publisher that emits when loadi
 complete:
 
 ``` swift
-let distribution = SwiftNASR.fromLocalArchive(distributionURL)
+let distribution = NASR.fromLocalArchive(distributionURL)
 let cancelable = distribution.load().sink { distribution in
     // [...]
 }
@@ -157,7 +156,7 @@ There are also variations of the `parse` method for each parseable type that ret
 Publishers that emit when parsing is complete:
 
     ``` swift
-    let distribution = SwiftNASR.fromLocalArchive(distributionURL)
+    let distribution = NASR.fromLocalArchive(distributionURL)
     let cancelable = distribution.load().map { $0.parseAirports() }
         .switchToLatest().sink { event in _
             switch event {

@@ -11,19 +11,19 @@ class NASRDataSpec: QuickSpec {
     
     override func spec() {
         let distURL = fixturesURL.appendingPathComponent("MockDistribution")
-        let NASR = SwiftNASR.fromLocalDirectory(distURL)
+        let nasr = NASR.fromLocalDirectory(distURL)
         
         let group = DispatchGroup()
         group.enter()
-        NASR.load { _ in group.leave() }
+        nasr.load { _ in group.leave() }
         group.wait()
         
-        try! NASR.parse(.states) { _ in false }
-        try! NASR.parse(.airports) { _ in false }
-        try! NASR.parse(.ARTCCFacilities) { _ in false }
-        try! NASR.parse(.flightServiceStations) { _ in false }
+        try! nasr.parse(.states) { _ in false }
+        try! nasr.parse(.airports) { _ in false }
+        try! nasr.parse(.ARTCCFacilities) { _ in false }
+        try! nasr.parse(.flightServiceStations) { _ in false }
         
-        let parsedData = NASR.data
+        let parsedData = nasr.data
         let encodedData = try! JSONEncoder().encode(parsedData)
         let decodedData = try! JSONDecoder().decode(NASRData.self, from: encodedData)
                 

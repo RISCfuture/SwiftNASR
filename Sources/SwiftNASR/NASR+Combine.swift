@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-extension SwiftNASR {
+extension NASR {
     
     /**
      Asynchronously loads data, either from disk or from the Internet.
@@ -10,7 +10,7 @@ extension SwiftNASR {
      - Returns: A publisher that publishes this object when the data is loaded.
      */
     
-    public func load() -> AnyPublisher<SwiftNASR, Swift.Error> {
+    public func load() -> AnyPublisher<NASR, Swift.Error> {
         return loader.load()
             .handleEvents(receiveOutput: { self.distribution = $0 })
             .map { distribution in
@@ -104,7 +104,7 @@ extension SwiftNASR {
             return Result.Publisher(Result.failure(Error.notYetLoaded)).eraseToAnyPublisher()
         }
         let parser = parserFor(recordType: type)
-        let queue = DispatchQueue(label: "SwiftNASR.ArchiveFileDistribution", qos: .utility, attributes: [], autoreleaseFrequency: .workItem)
+        let queue = DispatchQueue(label: "codes.tim.SwiftNASR", qos: .utility, attributes: [], autoreleaseFrequency: .workItem)
         
         return parser.preparePublisher(distribution: distribution).map { () -> AnyPublisher<Data, Swift.Error> in
             switch type {

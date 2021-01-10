@@ -9,7 +9,7 @@ import Combine
  */
 
 public class ConcurrentDistribution: Distribution {
-    private let queue = DispatchQueue(label: "SwiftNASR.ArchiveFileDistribution", qos: .utility, attributes: [], autoreleaseFrequency: .workItem)
+    private let queue = DispatchQueue(label: "codes.tim.SwiftNASR", qos: .utility, attributes: [], autoreleaseFrequency: .workItem)
     private let mutex = DispatchSemaphore(value: 1)
     
     /**

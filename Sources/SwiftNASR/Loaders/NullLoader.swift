@@ -4,20 +4,20 @@ import Combine
 /**
  `NullLoader` is provided for API compatibility between loading data from a
  distribution and loading it directly from a serialized format. In both cases,
- you can access distribution data using the `SwiftNASR.data` method.
+ you can access distribution data using the `NASR.data` method.
  
  The first time you want to access NASR data, you must load it from a
  distribution like so:
  
  
  ``` swift
- let distribution = SwiftNASR.fromInternetToFile(distributionURL)!
+ let distribution = NASR.fromInternetToFile(distributionURL)!
  try! distribution.parse(.airports, errorHandler: { error in
      // [...]
  })
  ```
  
- You then access data using the `SwiftNASR.data` method:
+ You then access data using the `NASR.data` method:
  
  ``` swift
  let airports = distribution.data.airports
@@ -40,10 +40,10 @@ import Combine
  ``` swift
  let decoder = JSONZipDecoder()
  let data = try! decoder.decode(NASRData.Type, from: serializedDataURL)
- let distribution = SwiftNASR.fromData(data)
+ let distribution = NASR.fromData(data)
  ```
  
- `SwiftNASR.fromData` uses `NullLoader` to accomplish this.
+ `NASR.fromData` uses `NullLoader` to accomplish this.
  */
 
 public class NullLoader: Loader {
