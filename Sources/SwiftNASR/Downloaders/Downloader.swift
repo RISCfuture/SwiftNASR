@@ -45,9 +45,12 @@ open class Downloader: Loader {
      - Parameter callback: A function to call with the completed download.
      - Parameter result: If successful, cointains the distribution. If not,
                          contains the error.
+     - Returns: A progress value that is updated during the download.
      */
 
-    public func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) {}
+    public func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) -> Progress {
+        return Progress(totalUnitCount: 0)
+    }
     
     /**
      Downloads the NASR data asynchronously.

@@ -34,7 +34,7 @@ class ArchiveDataDownloaderSpec: QuickSpec {
 
                 it("calls back with the data") {
                     waitUntil { done in
-                        self.downloader.load { result in
+                        _ = self.downloader.load { result in
                             expect({
                                 switch result {
                                 case .success(let distribution):
@@ -65,7 +65,7 @@ class ArchiveDataDownloaderSpec: QuickSpec {
 
                 it("calls back with an error") {
                     waitUntil { done in
-                        self.downloader.load { result in
+                        _ = self.downloader.load { result in
                             expect({
                                 switch result {
                                 case .success:
@@ -92,7 +92,7 @@ class ArchiveDataDownloaderSpec: QuickSpec {
 
                 it("calls back with an error") {
                     waitUntil { done in
-                        self.downloader.load { result in
+                        _ = self.downloader.load { result in
                             expect({
                                 switch result {
                                 case .success:

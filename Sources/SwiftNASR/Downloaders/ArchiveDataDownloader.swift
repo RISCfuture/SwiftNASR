@@ -11,8 +11,8 @@ public class ArchiveDataDownloader: Downloader {
     /// The `URLSession` to use for downloading.
     public var session = URLSession.shared
 
-    override public func load(callback: @escaping (Result<Distribution, Swift.Error>) -> Void) {
-        session.dataTask(with: cycleURL) { data, response, error in
+    override public func load(callback: @escaping (Result<Distribution, Swift.Error>) -> Void) -> Progress {
+        let task = session.dataTask(with: cycleURL) { data, response, error in
             if let error = error { callback(.failure(error)) }
             else if let response = response {
                 let HTTPResponse = response as! HTTPURLResponse
@@ -27,7 +27,9 @@ public class ArchiveDataDownloader: Downloader {
                 }
                 else { callback(.failure(Downloader.Error.noData)) }
             }
-        }.resume()
+        }
+        task.resume()
+        return task.progress
     }
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)

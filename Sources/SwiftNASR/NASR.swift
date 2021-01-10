@@ -127,10 +127,11 @@ public final class NASR {
      - Parameter callback: A block to call when the data is loaded.
      - Parameter result: If successful, contains `Void`. If not, contains the
                          error.
+    - Returns: A progress instance for the loading operation.
      */
 
-    public func load(callback: @escaping (_ result: Result<Void, Swift.Error>) -> Void) {
-        loader.load { result in
+    public func load(callback: @escaping (_ result: Result<Void, Swift.Error>) -> Void) -> Progress {
+        return loader.load { result in
             switch result {
             case .success(let distribution):
                 self.distribution = distribution

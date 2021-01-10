@@ -15,7 +15,7 @@ class NASRDataSpec: QuickSpec {
         
         let group = DispatchGroup()
         group.enter()
-        nasr.load { _ in group.leave() }
+        _ = nasr.load { _ in group.leave() }
         group.wait()
         
         try! nasr.parse(.states) { _ in false }

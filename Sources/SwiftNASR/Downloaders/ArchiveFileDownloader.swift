@@ -29,8 +29,8 @@ public class ArchiveFileDownloader: Downloader {
         self.location = location
     }
 
-    override public func load(callback: @escaping (Result<Distribution, Swift.Error>) -> Void) {
-        session.downloadTask(with: cycleURL) { tempfileURL, response, error in
+    override public func load(callback: @escaping (Result<Distribution, Swift.Error>) -> Void) -> Progress {
+        let task = session.downloadTask(with: cycleURL) { tempfileURL, response, error in
             do {
                 if let error = error { callback(.failure(error)) }
                 else if let response = response {
@@ -61,7 +61,9 @@ public class ArchiveFileDownloader: Downloader {
                 callback(.failure(error))
                 return
             }
-        }.resume()
+        }
+        task.resume()
+        return task.progress
     }
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)

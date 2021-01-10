@@ -1,3 +1,4 @@
+import Foundation
 import Combine
 
 /**
@@ -17,9 +18,10 @@ public protocol Loader {
      - Parameter result: If successful, contains the distribution data wrapped
                          in the appropriate implementation. If not, contains the
                          error.
+     - Returns: A progress value that is updated during the loading process.
      */
     
-    func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void)
+    func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) -> Progress
     
     /**
      Asynchronously wraps downloaded data (or data loaded from disk or memory)

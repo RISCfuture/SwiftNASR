@@ -32,7 +32,7 @@ class ArchiveLoaderSpec: QuickSpec {
 
             it("calls back with the archive") {
                 waitUntil { done in
-                    loader.load { result in
+                    _ = loader.load { result in
                         expect({
                             switch result {
                             case .success(let distribution):

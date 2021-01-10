@@ -52,8 +52,9 @@ public class NullLoader: Loader {
      Yields a `NullDistribution` that cannot be used to parse NASR data.
      */
     
-    public func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) {
+    public func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) -> Progress {
         callback(.success(NullDistribution()))
+        return Progress(totalUnitCount: 0)
     }
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)

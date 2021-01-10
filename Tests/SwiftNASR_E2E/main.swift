@@ -50,7 +50,7 @@ func testWithCallbacks() {
     let group = DispatchGroup()
     group.enter()
     
-    nasr.load { result in
+    _ = nasr.load { result in
         switch result {
             case .success:
                 print("Parsing...")
