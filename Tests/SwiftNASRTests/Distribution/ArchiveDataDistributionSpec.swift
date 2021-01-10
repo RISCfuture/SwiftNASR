@@ -12,6 +12,10 @@ class ArchiveDataDistributionSpec: QuickSpec {
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: UInt32(data.count)) { position, size in
             return data.subdata(in: position..<(position+size))
         }
+        let cycle = "AIS subscriber files effective date December 3, 2020.".data(using: .ascii)!
+        try! archive.addEntry(with: "README.txt", type: .file, uncompressedSize: UInt32(cycle.count)) { position, size in
+            return cycle.subdata(in: position..<(position+size))
+        }
         return archive.data!
     }
 
@@ -33,6 +37,16 @@ class ArchiveDataDistributionSpec: QuickSpec {
             it("throws an error if the file doesn't exist") {
                 expect { try distribution.readFile(path: "unknown") { _ in } }
                     .to(throwError(DistributionError.noSuchFile(path: "n/a")))
+            }
+        }
+        
+        describe("readCycle") {
+            it("reads the cycle from the README file") {
+                try! distribution.readCycle { cycle in
+                    expect(cycle!.year).to(equal(2020))
+                    expect(cycle!.month).to(equal(12))
+                    expect(cycle!.day).to(equal(3))
+                }
             }
         }
     }

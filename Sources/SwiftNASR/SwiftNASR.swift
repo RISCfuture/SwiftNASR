@@ -1,5 +1,7 @@
 import Foundation
 
+let zulu = TimeZone(secondsFromGMT: 0)!
+
 /**
  The `SwiftNASR` class provides top-level access to loading, parsing, and
  accessing aeronautical data disseminated via NASR distributions. To use this
@@ -132,7 +134,14 @@ public final class SwiftNASR {
             switch result {
             case .success(let distribution):
                 self.distribution = distribution
-                callback(.success(()))
+                do {
+                    try distribution.readCycle { cycle in
+                        self.data.cycle = cycle
+                        callback(.success(()))
+                    }
+                } catch (let error) {
+                    callback(.failure(error))
+                }
             case .failure(let error):
                 callback(.failure(error))
             }

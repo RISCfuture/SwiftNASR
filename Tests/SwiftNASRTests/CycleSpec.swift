@@ -11,15 +11,15 @@ class CycleSpec: QuickSpec {
         describe("effectiveCycle") {
             it("returns the effective cycle for a date") {
                 var dateComponents = DateComponents()
-                dateComponents.year = 2020
+                dateComponents.year = 2021
                 dateComponents.month = 2
                 dateComponents.day = 21
 
                 let cycle = Cycle.effectiveCycle(for: calendar.date(from: dateComponents)!)!
 
-                expect(cycle.year).to(equal(2020))
+                expect(cycle.year).to(equal(2021))
                 expect(cycle.month).to(equal(1))
-                expect(cycle.day).to(equal(30))
+                expect(cycle.day).to(equal(28))
             }
 
             it("returns nil if the date comes before the first cycle") {
@@ -35,22 +35,22 @@ class CycleSpec: QuickSpec {
         
         describe("contains") {
             var dateComponents = DateComponents()
-            dateComponents.year = 2020
+            dateComponents.year = 2021
             dateComponents.month = 2
             dateComponents.day = 21
 
             let cycle = Cycle.effectiveCycle(for: calendar.date(from: dateComponents)!)!
             
             it("returns true if the date falls within the cycle") {
-                let date = Calendar.current.date(from: .init(year: 2020, month: 2, day: 21))!
+                let date = Calendar.current.date(from: .init(year: 2021, month: 2, day: 1))!
                 expect(cycle.contains(date)).to(beTrue())
             }
             
             it("returns false if the date does not fall within the cycle") {
-                var date = Calendar.current.date(from: .init(year: 2020, month: 2, day: 28))!
+                var date = Calendar.current.date(from: .init(year: 2021, month: 2, day: 28))!
                 expect(cycle.contains(date)).to(beFalse())
                 
-                date = Calendar.current.date(from: .init(year: 2020, month: 1, day: 29))!
+                date = Calendar.current.date(from: .init(year: 2021, month: 1, day: 27))!
                 expect(cycle.contains(date)).to(beFalse())
             }
         }

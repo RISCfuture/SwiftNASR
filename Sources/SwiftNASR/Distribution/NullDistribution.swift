@@ -18,6 +18,15 @@ public class NullDistribution: Distribution {
         return Fail(error: Error.nullDistribution).eraseToAnyPublisher()
     }
     
+    public func readCycle(callback: (_ cycle: Cycle?) -> Void) throws {
+        callback(nil)
+    }
+    
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func readCycle() -> AnyPublisher<Cycle?, Error> {
+        return Result.Publisher(nil).eraseToAnyPublisher()
+    }
+    
     /// Null distribution errors.
     public enum Error: Swift.Error {
         

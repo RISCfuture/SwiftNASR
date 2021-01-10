@@ -4,7 +4,7 @@ fileprivate var dateFormatter: DateFormatter {
     let df = DateFormatter()
     df.dateFormat = "dd MMM yyyy"
     df.locale = Locale(identifier: "en_US_POSIX")
-    df.timeZone = TimeZone(secondsFromGMT: 0)
+    df.timeZone = zulu
     return df
 }
 
@@ -12,7 +12,7 @@ fileprivate var lastUpdatedDateFormatter: DateFormatter {
     let df = DateFormatter()
     df.dateFormat = "dd MMM yyyy"
     df.locale = Locale(identifier: "en_US_POSIX")
-    df.timeZone = TimeZone(secondsFromGMT: 0)
+    df.timeZone = zulu
     return df
 }
 

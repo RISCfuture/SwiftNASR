@@ -18,14 +18,14 @@ public struct Cycle: Codable {
 
     private static var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        calendar.timeZone = zulu
         return calendar
     }
     
     /// The earliest reference cycle (not necessarily the earliest cycle for
     /// which data is available, but the earliest representable date for a
     /// cycle).
-    public static let datum = Cycle(year: 2017, month: 10, day: 12)
+    public static let datum = Cycle(year: 2020, month: 12, day: 3)
 
     /// `true` if this cycle's effectivity period includes the current date.
     public static var current: Cycle { effectiveCycle(for: Date())! }
@@ -99,7 +99,7 @@ public struct Cycle: Codable {
     }
 
     private static func dateToCycle(_ date: Date) -> Cycle? {
-        let components = calendar.dateComponents(in: TimeZone(secondsFromGMT: 0)!, from: date)
+        let components = calendar.dateComponents(in: zulu, from: date)
         guard let year = components.year else { return nil }
         guard let mon = components.month else { return nil }
         guard let day = components.day else { return nil }

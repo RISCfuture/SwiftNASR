@@ -13,6 +13,11 @@ extension SwiftNASR {
     public func load() -> AnyPublisher<SwiftNASR, Swift.Error> {
         return loader.load()
             .handleEvents(receiveOutput: { self.distribution = $0 })
+            .map { distribution in
+                distribution.readCycle()
+                    .handleEvents(receiveOutput: { cycle in self.data.cycle = cycle })
+            }
+            .switchToLatest()
             .map { _ in self }
             .eraseToAnyPublisher()
     }

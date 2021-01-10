@@ -27,25 +27,25 @@ struct FixedWidthTransformer {
     static var yearOnly: DateFormatter {
         let df = DateFormatter()
         df.dateFormat = "yyyy"
-        df.timeZone = TimeZone(secondsFromGMT: 0)!
+        df.timeZone = zulu
         return df
     }
     static var monthYear: DateFormatter {
         let df = DateFormatter()
         df.dateFormat = "MM/yyyy"
-        df.timeZone = TimeZone(secondsFromGMT: 0)!
+        df.timeZone = zulu
         return df
     }
     static var monthDayYear: DateFormatter {
         let df = DateFormatter()
         df.dateFormat = "MMddyyyy"
-        df.timeZone = TimeZone(secondsFromGMT: 0)!
+        df.timeZone = zulu
         return df
     }
     static var monthDayYearSlash: DateFormatter {
         let df = DateFormatter()
         df.dateFormat = "MM/dd/yyyy"
-        df.timeZone = TimeZone(secondsFromGMT: 0)!
+        df.timeZone = zulu
         return df
     }
 
