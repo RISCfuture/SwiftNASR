@@ -22,7 +22,7 @@ extension Distribution {
     
     public func readCycle(callback: (_ cycle: Cycle?) -> Void) throws {
         var cycle: Cycle? = nil
-        try readFile(path: "README.txt") { line in
+        try readFile(path: "README.txt") { line, progress in
             if line.starts(with: readmeFirstLine) {
                 if cycle == nil { cycle = parseCycleFrom(line) }
             }

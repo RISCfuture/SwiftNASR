@@ -77,9 +77,9 @@ extension LayoutDataParser {
         var formats = Array<NASRTable>()
         var error: Error? = nil
         
-        try distribution.readFile(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt") { lineData in
+        try distribution.readFile(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt") { data, progress in
             do {
-                try parseLine(data: lineData, formats: &formats)
+                try parseLine(data: data, formats: &formats)
             } catch (let lineError) {
                 error = lineError
             }

@@ -31,18 +31,20 @@ public class ArchiveDataDistribution: ConcurrentDistribution {
         self.archive = archive
     }
     
-    override func readFileSynchronously(path: String, eachLine: (_ data: Data) -> Void) throws {
+    override func readFileSynchronously(path: String, eachLine: (Data, Progress) -> Void) throws {
         guard let entry = archive[path] else { throw DistributionError.noSuchFile(path: path) }
         var buffer = Data(capacity: Int(chunkSize))
+        let progress = Progress(totalUnitCount: Int64(entry.uncompressedSize))
 
         let _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: false, progress: nil) { data in
             buffer.append(data)
+            progress.completedUnitCount += Int64(data.count)
             while let EOL = buffer.range(of: delimiter) {
-                eachLine(buffer.subdata(in: buffer.startIndex..<EOL.lowerBound))
+                eachLine(buffer.subdata(in: buffer.startIndex..<EOL.lowerBound), progress)
                 buffer.removeSubrange(buffer.startIndex..<EOL.upperBound)
             }
         }
-        if buffer.count > 0 { eachLine(buffer) }
+        if buffer.count > 0 { eachLine(buffer, progress) }
     }
     
     /**

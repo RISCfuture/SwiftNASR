@@ -10,6 +10,8 @@ public class ArchiveLoader: Loader {
     /// The location of the archive file on disk.
     public var location: URL
     
+    private let queue = DispatchQueue(label: "codes.tim.SwiftNASR.ArchiveLoader", qos: .utility, attributes: .concurrent)
+    
     /**
      Creates a loader that loads from a given location on disk.
      
@@ -32,7 +34,7 @@ public class ArchiveLoader: Loader {
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public func load() -> AnyPublisher<Distribution, Swift.Error> {
         return Future { promise in
-            DispatchQueue.global(qos: .utility).async {
+            self.queue.async {
                 guard let distribution = ArchiveFileDistribution(location: self.location) else {
                     promise(.failure(Error.badData))
                     return

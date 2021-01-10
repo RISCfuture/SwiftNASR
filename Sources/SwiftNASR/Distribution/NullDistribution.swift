@@ -9,7 +9,7 @@ import Combine
  */
 
 public class NullDistribution: Distribution {
-    public func readFile(path: String, eachLine: (Data) -> Void) throws {
+    public func readFile(path: String, eachLine: (Data, Progress) -> Void) throws {
         throw Error.nullDistribution
     }
     

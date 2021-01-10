@@ -24,9 +24,14 @@ class DirectoryDistributionSpec: QuickSpec {
         describe("readFile") {
             it("reads each line from the file") {
                 var count = 0
-                try! distribution.readFile(path: "APT.TXT") { data in
-                    if count == 0 { expect(data).to(equal("Hello, world!".data(using: .ascii)!)) }
-                    else if count == 1 { expect(data).to(equal("Line 2".data(using: .ascii)!)) }
+                try! distribution.readFile(path: "APT.TXT") { data, progress in
+                    if count == 0 {
+                        expect(progress.completedUnitCount).to(equal(34))
+                        expect(data).to(equal("Hello, world!".data(using: .ascii)!))
+                    }
+                    else if count == 1 {
+                        expect(data).to(equal("Line 2".data(using: .ascii)!))
+                    }
                     else { fail("too many lines") }
 
                     count += 1
@@ -34,7 +39,7 @@ class DirectoryDistributionSpec: QuickSpec {
             }
 
             it("throws an error if the file doesn't exist") {
-                expect { try distribution.readFile(path: "unknown") { _ in } }
+                expect { try distribution.readFile(path: "unknown") { _, _ in } }
                     .to(throwError(DistributionError.noSuchFile(path: "n/a")))
             }
         }

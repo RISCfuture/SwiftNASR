@@ -104,7 +104,7 @@ extension NASR {
             return Result.Publisher(Result.failure(Error.notYetLoaded)).eraseToAnyPublisher()
         }
         let parser = parserFor(recordType: type)
-        let queue = DispatchQueue(label: "codes.tim.SwiftNASR", qos: .utility, attributes: [], autoreleaseFrequency: .workItem)
+        let queue = DispatchQueue(label: "codes.tim.SwiftNASR.NASR", qos: .utility, attributes: [], autoreleaseFrequency: .workItem)
         
         return parser.preparePublisher(distribution: distribution).map { () -> AnyPublisher<Data, Swift.Error> in
             switch type {

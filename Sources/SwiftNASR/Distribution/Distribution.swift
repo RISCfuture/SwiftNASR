@@ -67,12 +67,13 @@ public protocol Distribution {
      - Parameter path: The path to the file within the distribution.
      - Parameter eachLine: A callback for each line of text in the file.
      - Parameter data: A line of text from the file being read.
+     - Parameter progress: The progress so far reading through the file.
      
      - Throws: `DistributionError.noSuchFile` if a file at `path` doesn't exist
                within the distribution.
      */
     
-    func readFile(path: String, eachLine: (_ data: Data) -> Void) throws
+    func readFile(path: String, eachLine: (_ data: Data, _ progress: Progress) -> Void) throws
     
     /**
      Reads a file from the distribution.
@@ -93,10 +94,11 @@ extension Distribution {
      - Parameter type: The record type to read data for.
      - Parameter eachRecord: A callback for each data record in the file.
      - Parameter data: The data for an individual record.
+     - Parameter progress: The progress so far reading through the file.
      */
     
-    public func read(type: RecordType, eachRecord: @escaping (_ data: Data) -> Void) throws {
-        try readFile(path: "\(type.rawValue).txt", eachLine: { eachRecord($0) })
+    public func read(type: RecordType, eachRecord: @escaping (_ data: Data, _ progress: Progress) -> Void) throws {
+        try readFile(path: "\(type.rawValue).txt", eachLine: { data, progress in eachRecord(data, progress) })
     }
     
     /**

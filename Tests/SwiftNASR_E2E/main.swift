@@ -50,27 +50,46 @@ func testWithCallbacks() {
     let group = DispatchGroup()
     group.enter()
     
-    _ = nasr.load { result in
+    let progress = Progress(totalUnitCount: 140)
+    DispatchQueue.global(qos: .background).async {
+        repeat {
+            sleep(1)
+            let pct = Int((progress.fractionCompleted*100).rounded())
+            print("\(pct)% \r", terminator: "")
+        } while progress.fractionCompleted < 1.0
+    }
+
+    let addProgress: (Progress, Int64, inout Bool) -> Void = { newProgress, weight, added in
+        if added { return }
+        progress.addChild(newProgress, withPendingUnitCount: weight)
+        added = true
+    }
+    
+    let loadProgress = nasr.load { result in
         switch result {
             case .success:
                 print("Parsing...")
                 
-                try! nasr.parse(.airports, errorHandler: { error in
+                var airportsAdded = false
+                try! nasr.parse(.airports, progressHandler: { addProgress($0, 100, &airportsAdded) }, errorHandler: { error in
                     fputs("\(error)\n", stderr)
                     return true
                 })
                 
-                try! nasr.parse(.ARTCCFacilities, errorHandler: { error in
+                var ARTCCsAdded = false
+                try! nasr.parse(.ARTCCFacilities, progressHandler: { addProgress($0, 20, &ARTCCsAdded) }, errorHandler: { error in
                     fputs("\(error)\n", stderr)
                     return true
                 })
-                
-                try! nasr.parse(.flightServiceStations, errorHandler: { error in
+
+                var FSSesAdded = false
+                try! nasr.parse(.flightServiceStations, progressHandler: { addProgress($0, 10, &FSSesAdded) }, errorHandler: { error in
                     fputs("\(error)\n", stderr)
                     return true
                 })
                 
                 do {
+                    print("Saving...")
                     let encoder = JSONZipEncoder()
                     let data = try encoder.encode(nasr.data)
                     
@@ -84,6 +103,7 @@ func testWithCallbacks() {
         }
         group.leave()
     }
+    progress.addChild(loadProgress, withPendingUnitCount: 10)
     
     group.wait()
 }

@@ -160,9 +160,13 @@ public final class NASR {
                                any error will be swallowed but parsing will
                                continue.
      - Parameter error: The parsing error that occurred.
+     - Parameter progressHandler: A block of code to call periodically with
+                                  updating parsing progress.
+     - Parameter progress: The progress through the parsing operation.
      */
     
     public func parse(_ type: RecordType,
+                      progressHandler: @escaping (_ progress: Progress) -> Void = { _ in },
                       errorHandler: @escaping (_ error: Swift.Error) -> Bool) throws {
         guard let distribution = self.distribution else {
             throw Error.notYetLoaded
@@ -173,9 +177,15 @@ public final class NASR {
         try parse(parser: parser, processor: { process in
             switch type {
                 case .states:
-                    try distribution.readFile(path: "State_&_Country_Codes/STATE.txt") { process($0) }
+                    try distribution.readFile(path: "State_&_Country_Codes/STATE.txt") { data, progress in
+                        process(data)
+                        progressHandler(progress)
+                    }
                 default:
-                    try distribution.read(type: type) { process($0) }
+                    try distribution.read(type: type) { data, progress in
+                        process(data)
+                        progressHandler(progress)
+                    }
             }
         }, errorHandler: errorHandler)
     }

@@ -17,7 +17,7 @@ class FSSParserSpec: QuickSpec {
             beforeEach {
                 let group = DispatchGroup()
                 group.enter()
-                nasr.load { _ in group.leave() }
+                _ = nasr.load { _ in group.leave() }
                 group.wait()
             }
 

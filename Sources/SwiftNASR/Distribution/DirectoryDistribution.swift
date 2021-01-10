@@ -25,7 +25,7 @@ public class DirectoryDistribution: ConcurrentDistribution {
         self.location = location
     }
     
-    override func readFileSynchronously(path: String, eachLine: (_ data: Data) -> Void) throws {
+    override func readFileSynchronously(path: String, eachLine: (Data, Progress) -> Void) throws {
         let fileURL = location.appendingPathComponent(path)
         let handle: FileHandle
         do {
@@ -38,15 +38,20 @@ public class DirectoryDistribution: ConcurrentDistribution {
             }
         }
         var buffer = Data(capacity: chunkSize)
+        let filesize = try FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as! NSNumber
+        let progress = Progress(totalUnitCount: filesize.int64Value)
 
         while true {
             if let EOL = buffer.range(of: delimiter) {
-                eachLine(buffer.subdata(in: buffer.startIndex..<EOL.lowerBound))
+                let subdata = buffer.subdata(in: buffer.startIndex..<EOL.lowerBound)
+                progress.completedUnitCount += Int64(subdata.count)
+                eachLine(subdata, progress)
                 buffer.removeSubrange(buffer.startIndex..<EOL.upperBound)
             } else {
                 let data = handle.readData(ofLength: chunkSize)
+                progress.completedUnitCount += Int64(data.count)
                 guard data.count > 0 else {
-                    if buffer.count > 0 { eachLine(buffer) }
+                    if buffer.count > 0 { eachLine(buffer, progress) }
                     return
                 }
                 buffer.append(data)

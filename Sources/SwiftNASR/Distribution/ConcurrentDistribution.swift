@@ -9,7 +9,7 @@ import Combine
  */
 
 public class ConcurrentDistribution: Distribution {
-    private let queue = DispatchQueue(label: "codes.tim.SwiftNASR", qos: .utility, attributes: [], autoreleaseFrequency: .workItem)
+    private let queue = DispatchQueue(label: "codes.tim.SwiftNASR.ConcurrentDistribution", qos: .utility, attributes: [], autoreleaseFrequency: .workItem)
     private let mutex = DispatchSemaphore(value: 1)
     
     /**
@@ -18,12 +18,13 @@ public class ConcurrentDistribution: Distribution {
      - Parameter path: The path to the file.
      - Parameter eachLine: A callback for each line of text in the file.
      - Parameter data: A line of text from the file being read.
+     - Parameter progress: The progress so far reading through the file.
      
      - Throws: `DistributionError.noSuchFile` if a file at `path` doesn't exist
                within the distribution.
      */
     
-    public func readFile(path: String, eachLine: (Data) -> Void) throws {
+    public func readFile(path: String, eachLine: (_ data: Data, _ progress: Progress) -> Void) throws {
         mutex.wait()
         defer { mutex.signal() }
         
@@ -50,7 +51,7 @@ public class ConcurrentDistribution: Distribution {
         return subject.eraseToAnyPublisher()
     }
     
-    func readFileSynchronously(path: String, eachLine: (Data) -> Void) throws {
+    func readFileSynchronously(path: String, eachLine: (Data, Progress) -> Void) throws {
         fatalError("Must be implemented by subclasses")
     }
     
