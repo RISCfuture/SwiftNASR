@@ -117,7 +117,7 @@ public final class NASR {
      */
     public var data = NASRData()
 
-    internal required init(loader: Loader) {
+    public required init(loader: Loader) {
         self.loader = loader
     }
     

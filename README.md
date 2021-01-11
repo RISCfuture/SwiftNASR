@@ -169,6 +169,14 @@ Publishers that emit when parsing is complete:
 }
     ```
 
+### Customizing loader behavior
+
+If you need to customize loader behavior (e.g., using your own
+`URLSessionConfiguration`), instantiate a loader yourself and pass it to the `NASR`
+initializer. The different `NASR` class constructors are simply syntactic sugar for different
+loader implementations. See the documentation for each `Loader` implementation for
+more information.
+
 ## Tests
 
 Testing is done using Nimble and Quick. Simply run the `SwiftNASRTests` target to run
