@@ -26,7 +26,7 @@ class ArchiveDataDistributionSpec: QuickSpec {
             it("reads each line from the file") {
                 var count = 0
                 try! distribution.readFile(path: "APT.TXT") { data, progress in
-                    expect(progress.completedUnitCount).to(equal(21))
+                    expect(progress.completedUnitCount).toEventually(equal(21))
                     if count == 0 {
                         expect(data).to(equal("Hello, world!".data(using: .ascii)!))
                     }

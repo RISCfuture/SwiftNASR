@@ -44,12 +44,12 @@ public class DirectoryDistribution: ConcurrentDistribution {
         while true {
             if let EOL = buffer.range(of: delimiter) {
                 let subdata = buffer.subdata(in: buffer.startIndex..<EOL.lowerBound)
-                progress.completedUnitCount += Int64(subdata.count)
+                ConcurrentDistribution.progressQueue.async { progress.completedUnitCount += Int64(subdata.count) }
                 eachLine(subdata, progress)
                 buffer.removeSubrange(buffer.startIndex..<EOL.upperBound)
             } else {
                 let data = handle.readData(ofLength: chunkSize)
-                progress.completedUnitCount += Int64(data.count)
+                ConcurrentDistribution.progressQueue.async { progress.completedUnitCount += Int64(data.count) }
                 guard data.count > 0 else {
                     if buffer.count > 0 { eachLine(buffer, progress) }
                     return

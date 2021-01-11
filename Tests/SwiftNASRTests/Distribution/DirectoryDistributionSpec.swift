@@ -26,7 +26,7 @@ class DirectoryDistributionSpec: QuickSpec {
                 var count = 0
                 try! distribution.readFile(path: "APT.TXT") { data, progress in
                     if count == 0 {
-                        expect(progress.completedUnitCount).to(equal(34))
+                        expect(progress.completedUnitCount).toEventually(equal(34))
                         expect(data).to(equal("Hello, world!".data(using: .ascii)!))
                     }
                     else if count == 1 {

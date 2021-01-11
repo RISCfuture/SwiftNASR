@@ -9,6 +9,13 @@ import Combine
  */
 
 public class ConcurrentDistribution: Distribution {
+    
+    /// The queue that progress updates are processed on. By default, an
+    /// internal queue at the `userInteractive` QoS level. If you have a main
+    /// thread where progress updates must be made, then set this var to that
+    /// thread.
+    public static var progressQueue = DispatchQueue(label: "codes.tim.SwiftNASR.ConcurrentDistribution.progress", qos: .userInteractive)
+    
     private let queue = DispatchQueue(label: "codes.tim.SwiftNASR.ConcurrentDistribution", qos: .utility, attributes: [], autoreleaseFrequency: .workItem)
     private let mutex = DispatchSemaphore(value: 1)
     
