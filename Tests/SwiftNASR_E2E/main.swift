@@ -39,7 +39,7 @@ print("Loading...")
 func testWithCombine() {
     loadingQueue.async {
         let cancellable = nasr.load().map {
-            return Publishers.CombineLatest3(
+            Publishers.CombineLatest3(
                 $0.parseAirports(errorHandler: { print($0) }),
                 $0.parseARTCCs(errorHandler: { print($0) }),
                 $0.parseFSSes(errorHandler: { print($0) })

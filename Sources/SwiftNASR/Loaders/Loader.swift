@@ -1,6 +1,12 @@
 import Foundation
 import Combine
 
+let completedProgress = { () -> Progress in
+    let progress = Progress(totalUnitCount: 1)
+    progress.completedUnitCount = 1
+    return progress
+}()
+
 /**
  Loaders create the appropriate `Distribution` for a `Downloader`. For example,
  the `ArchiveDataDownloader` produces a ZIP-compressed archive, and so the

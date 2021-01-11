@@ -25,10 +25,10 @@ public class ArchiveLoader: Loader {
     public func load(callback: @escaping (Result<Distribution, Swift.Error>) -> Void) -> Progress {
         guard let distribution = ArchiveFileDistribution(location: location) else {
             callback(.failure(Error.badData))
-            return Progress(totalUnitCount: 0)
+            return completedProgress
         }
         callback(.success(distribution))
-        return Progress(totalUnitCount: 0)
+        return completedProgress
     }
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)

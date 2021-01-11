@@ -49,7 +49,7 @@ open class Downloader: Loader {
      */
 
     public func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) -> Progress {
-        return Progress(totalUnitCount: 0)
+        return completedProgress
     }
     
     /**

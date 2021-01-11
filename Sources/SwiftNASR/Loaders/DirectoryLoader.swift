@@ -22,7 +22,7 @@ public class DirectoryLoader: Loader {
 
     public func load(callback: @escaping (Result<Distribution, Error>) -> Void) -> Progress {
         callback(.success(DirectoryDistribution(location: location)))
-        return Progress(totalUnitCount: 0)
+        return completedProgress
     }
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)

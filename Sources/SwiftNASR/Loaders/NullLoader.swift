@@ -54,7 +54,7 @@ public class NullLoader: Loader {
     
     public func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) -> Progress {
         callback(.success(NullDistribution()))
-        return Progress(totalUnitCount: 0)
+        return completedProgress
     }
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
