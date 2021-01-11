@@ -1,6 +1,27 @@
 import Foundation
 import Combine
 
+class ObservedProgress: Progress {
+    private var observation: NSKeyValueObservation!
+    
+    init(child: Progress, queue: DispatchQueue) {
+        super.init(parent: nil, userInfo: nil)
+        
+        observation = child.observe(\.completedUnitCount) { _, change in
+            if let count = change.newValue {
+                queue.async { self.completedUnitCount = count }
+            }
+        }
+        
+        totalUnitCount = child.totalUnitCount
+        completedUnitCount = child.completedUnitCount
+    }
+    
+    deinit {
+        observation.invalidate()
+    }
+}
+
 /**
  A downloader that downloads a distribution archive into memory. No data is
  saved to disk and no buffering is done.
@@ -28,8 +49,9 @@ public class ArchiveDataDownloader: Downloader {
                 else { callback(.failure(Downloader.Error.noData)) }
             }
         }
+        let progress = ObservedProgress(child: task.progress, queue: Self.progressQueue)
         task.resume()
-        return task.progress
+        return progress
     }
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)

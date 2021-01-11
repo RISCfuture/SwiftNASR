@@ -38,7 +38,7 @@ public class ArchiveFileDistribution: ConcurrentDistribution {
 
         let _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: false, progress: nil) { data in
             buffer.append(data)
-            ConcurrentDistribution.progressQueue.async { progress.completedUnitCount += Int64(data.count) }
+            Self.progressQueue.async { progress.completedUnitCount += Int64(data.count) }
             while let EOL = buffer.range(of: delimiter) {
                 eachLine(buffer.subdata(in: buffer.startIndex..<EOL.lowerBound), progress)
                 buffer.removeSubrange(buffer.startIndex..<EOL.upperBound)
