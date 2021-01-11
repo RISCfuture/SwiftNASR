@@ -592,6 +592,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
         case unknown6 = "6"
         case unknown7 = "7"
         case unknown8 = "8"
+        case unknown9 = "9"
     }
 
     /// Airspace analysis determinations.
