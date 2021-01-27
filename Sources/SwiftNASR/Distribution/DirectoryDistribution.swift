@@ -32,7 +32,7 @@ public class DirectoryDistribution: ConcurrentDistribution {
             handle = try FileHandle(forReadingFrom: fileURL)
         } catch let error as NSError {
             if error.domain == NSCocoaErrorDomain && error.code == NSFileNoSuchFileError {
-                throw DistributionError.noSuchFile(path: path)
+                throw Error.noSuchFile(path: path)
             } else {
                 throw error
             }
@@ -60,17 +60,17 @@ public class DirectoryDistribution: ConcurrentDistribution {
     }
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public override func readFileAsynchronously(path: String, subject: CurrentValueSubject<Data, Error>) {
+    public override func readFileAsynchronously(path: String, subject: CurrentValueSubject<Data, Swift.Error>) {
         let fileURL = location.appendingPathComponent(path)
         let handle: FileHandle
         do {
             handle = try FileHandle(forReadingFrom: fileURL)
         } catch let error as NSError {
             if error.domain == NSCocoaErrorDomain && error.code == NSFileNoSuchFileError {
-                subject.send(completion: .failure(DistributionError.noSuchFile(path: path)))
+                subject.send(completion: .failure(Error.noSuchFile(path: path)))
                 return
             } else {
-                subject.send(completion: .failure(DistributionError.nsError(error)))
+                subject.send(completion: .failure(error))
                 return
             }
         }

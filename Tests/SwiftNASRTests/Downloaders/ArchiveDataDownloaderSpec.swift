@@ -72,7 +72,7 @@ class ArchiveDataDownloaderSpec: QuickSpec {
                                     return { .failed(reason: "expected error, got data") }
                                 case .failure(let error):
                                     switch error {
-                                    case Downloader.Error.badResponse:
+                                    case Error.badResponse:
                                         return { .succeeded }
                                     default:
                                         return { .failed(reason: "wrong error \(error)") }

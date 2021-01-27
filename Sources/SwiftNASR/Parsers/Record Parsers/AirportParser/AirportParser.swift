@@ -346,10 +346,4 @@ class AirportParser: FixedWidthParser {
                                   address2: address2,
                                   phone: phone)
     }
-    
-    enum Error: Swift.Error {
-        case invalidRunwaySurface(_ value: String)
-        case invalidPavementClassification(_ value: String)
-        case invalidVGSI(_ value: String)
-    }
 }

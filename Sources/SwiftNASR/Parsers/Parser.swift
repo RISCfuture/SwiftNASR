@@ -40,7 +40,7 @@ extension Parser {
 
 @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Parser {
-    func preparePublisher(distribution: Distribution) -> AnyPublisher<Void, Error> {
+    func preparePublisher(distribution: Distribution) -> AnyPublisher<Void, Swift.Error> {
         return Future { promise in
             do {
                 try self.prepare(distribution: distribution)

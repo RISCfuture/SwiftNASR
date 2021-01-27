@@ -263,7 +263,7 @@ extension AirportParser {
                 materials.insert(material)
             } else {
                 condition = Runway.Condition.for(String(identifier))
-                guard condition != nil else { throw AirportParser.Error.invalidRunwaySurface(value) } // something we don't know
+                guard condition != nil else { throw Error.invalidRunwaySurface(value) } // something we don't know
             }
         }
         
@@ -273,7 +273,7 @@ extension AirportParser {
     private func parsePavementClassification(_ value: String) throws -> Runway.PavementClassification {
         let components = value.split(separator: "/")
         let numberStr = String(components[0]).trimmingCharacters(in: .whitespaces)
-        guard let number = UInt(numberStr) else { throw AirportParser.Error.invalidPavementClassification(value) }
+        guard let number = UInt(numberStr) else { throw Error.invalidPavementClassification(value) }
         let type = try AirportParser.raw(String(components[1]), toEnum: Runway.PavementClassification.Classification.self)
         let strength = try AirportParser.raw(String(components[2]), toEnum: Runway.PavementClassification.SubgradeStrengthCategory.self)
         let tirePressure = try AirportParser.raw(String(components[3]), toEnum: Runway.PavementClassification.TirePressureLimit.self)

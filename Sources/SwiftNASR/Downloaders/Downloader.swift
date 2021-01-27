@@ -68,38 +68,4 @@ open class Downloader: Loader {
     public func load() -> AnyPublisher<Distribution, Swift.Error> {
         return Empty(completeImmediately: true).eraseToAnyPublisher()
     }
-    
-    /// Errors that can occur when working with distributions.
-    public enum Error: Swift.Error, CustomStringConvertible {
-        
-        /**
-         Received a bad HTTP response.
-         
-         - Parameter response: The HTTP response.
-         */
-        
-        case badResponse(_ response: URLResponse)
-        
-        /// Downloaded tempfile unexpectedly missing.
-        case noFile
-        
-        /// Response did not contain any body.
-        case noData
-        
-        /// Response body was not parseable.
-        case badData
-        
-        public var description: String {
-            switch self {
-                case .badResponse(let response):
-                    return "Bad response: \(response.description)"
-                case .noFile:
-                    return "Couldn't find file to load"
-                case .noData:
-                    return "No data was downloaded"
-                case .badData:
-                    return "Data is invalid"
-            }
-        }
-    }
 }

@@ -174,24 +174,4 @@ class ARTCCParser: FixedWidthParser {
 
         center.frequencies[freqIndex].remarks.general.append(transformedValues[6] as! String)
     }
-
-    enum Error: Swift.Error, CustomStringConvertible {
-        case unknownARTCC(_ ID: String)
-        case unknownARTCCFrequency(_ frequency: UInt, ARTCC: ARTCC)
-        case unknownFieldID(_ fieldID: String, ARTCC: ARTCC)
-        case unknownFrequencyFieldID(_ fieldID: String, frequency: ARTCC.CommFrequency, ARTCC: ARTCC)
-        
-        public var description: String {
-            switch self {
-                case .unknownARTCC(let ID):
-                    return "Referenced undefined ARTCC record with ID '\(ID)'"
-                case .unknownARTCCFrequency(let ID, let frequency):
-                    return "Referenced undefined frequency '\(frequency)' for ARTCC \(ID)"
-                case .unknownFieldID(let fieldID, let ARTCC):
-                    return "Unknown field ID '\(fieldID)' at '\(ARTCC.ID) \(ARTCC.locationName)'"
-                case .unknownFrequencyFieldID(let fieldID, let frequency, let ARTCC):
-                    return "Unknown field ID '\(fieldID)' for \(frequency.frequency) kHz at '\(ARTCC.ID) \(ARTCC.locationName)'"
-            }
-        }
-    }
 }

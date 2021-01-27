@@ -210,17 +210,4 @@ public final class NASR {
 
         parser.finish(data: data)
     }
-    
-    /// Errors that can occur when working with this class.
-    public enum Error: Swift.Error, CustomStringConvertible {
-        /// `parse` was called before `load`.
-        case notYetLoaded
-        
-        public var description: String {
-            switch self {
-                case .notYetLoaded:
-                    return "This NASR has not been loaded yet"
-            }
-        }
-    }
 }

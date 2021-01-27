@@ -20,7 +20,7 @@ public class DirectoryLoader: Loader {
         self.location = location
     }
 
-    public func load(callback: @escaping (Result<Distribution, Error>) -> Void) -> Progress {
+    public func load(callback: @escaping (Result<Distribution, Swift.Error>) -> Void) -> Progress {
         callback(.success(DirectoryDistribution(location: location)))
         return completedProgress
     }

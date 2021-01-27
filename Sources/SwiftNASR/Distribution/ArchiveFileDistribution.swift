@@ -32,7 +32,7 @@ public class ArchiveFileDistribution: ConcurrentDistribution {
     }
     
     override func readFileSynchronously(path: String, eachLine: (Data, Progress) -> Void) throws {
-        guard let entry = archive[path] else { throw DistributionError.noSuchFile(path: path) }
+        guard let entry = archive[path] else { throw Error.noSuchFile(path: path) }
         var buffer = Data(capacity: Int(chunkSize))
         let progress = Progress(totalUnitCount: Int64(entry.uncompressedSize))
 
@@ -48,9 +48,9 @@ public class ArchiveFileDistribution: ConcurrentDistribution {
     }
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public override func readFileAsynchronously(path: String, subject: CurrentValueSubject<Data, Error>) {
+    public override func readFileAsynchronously(path: String, subject: CurrentValueSubject<Data, Swift.Error>) {
         guard let entry = archive[path] else {
-            subject.send(completion: .failure(DistributionError.noSuchFile(path: path)))
+            subject.send(completion: .failure(Error.noSuchFile(path: path)))
             return
         }
         

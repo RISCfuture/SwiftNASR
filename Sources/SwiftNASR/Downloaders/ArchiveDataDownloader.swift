@@ -37,16 +37,16 @@ public class ArchiveDataDownloader: Downloader {
             if let error = error { callback(.failure(error)) }
             else if let response = response {
                 let HTTPResponse = response as! HTTPURLResponse
-                if HTTPResponse.statusCode/100 != 2 { callback(.failure(Downloader.Error.badResponse(HTTPResponse))) }
+                if HTTPResponse.statusCode/100 != 2 { callback(.failure(Error.badResponse(HTTPResponse))) }
                 else if let data = data {
                     guard let distribution = ArchiveDataDistribution(data: data) else {
-                        callback(.failure(Downloader.Error.badData))
+                        callback(.failure(Error.badData))
                         return
                     }
                     callback(.success(distribution))
 
                 }
-                else { callback(.failure(Downloader.Error.noData)) }
+                else { callback(.failure(Error.noData)) }
             }
         }
         let progress = ObservedProgress(child: task.progress, queue: Self.progressQueue)
@@ -59,10 +59,10 @@ public class ArchiveDataDownloader: Downloader {
         return session.dataTaskPublisher(for: cycleURL)
             .tryMap { data, response -> Distribution in
                 guard let HTTPResponse = response as? HTTPURLResponse, HTTPResponse.statusCode == 200 else {
-                    throw Downloader.Error.badResponse(response)
+                    throw Error.badResponse(response)
                 }
                 guard let distribution = ArchiveDataDistribution(data: data) else {
-                    throw Downloader.Error.badData
+                    throw Error.badData
                 }
                 return distribution
             }.share().eraseToAnyPublisher()

@@ -43,18 +43,4 @@ public class ArchiveLoader: Loader {
             }
         }.eraseToAnyPublisher()
     }
-
-    /// Errors that can occur when loading archive data.
-    public enum Error: Swift.Error, CustomStringConvertible {
-        
-        /// The data was malformed.
-        case badData
-        
-        public var description: String {
-            switch self {
-                case .badData:
-                    return "Invalid archive data"
-            }
-        }
-    }
 }

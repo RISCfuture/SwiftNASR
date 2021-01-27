@@ -75,7 +75,7 @@ extension LayoutDataParser {
         
     func formatsFor(type: RecordType, distribution: Distribution) throws -> Array<NASRTable> {
         var formats = Array<NASRTable>()
-        var error: Error? = nil
+        var error: Swift.Error? = nil
         
         try distribution.readFile(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt") { data, progress in
             do {

@@ -37,7 +37,7 @@ extension Distribution {
      */
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func readCycle() -> AnyPublisher<Cycle?, Error> {
+    public func readCycle() -> AnyPublisher<Cycle?, Swift.Error> {
         return readFile(path: "README.txt")
             .filter { $0.starts(with: readmeFirstLine) }
             .map { parseCycleFrom($0) }

@@ -26,20 +26,4 @@ public class NullDistribution: Distribution {
     public func readCycle() -> AnyPublisher<Cycle?, Error> {
         return Result.Publisher(nil).eraseToAnyPublisher()
     }
-    
-    /// Null distribution errors.
-    public enum Error: Swift.Error {
-        
-        /// Tried to call `load` on a `SwiftNASR` instance with a null
-        /// distribution.
-        case nullDistribution
-        
-        public var description: String {
-            switch self {
-                case .nullDistribution:
-                    return "Called .load() on a null distribution"
-            }
-        }
-
-    }
 }

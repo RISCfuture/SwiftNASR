@@ -46,8 +46,8 @@ public class ConcurrentDistribution: Distribution {
      */
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func readFile(path: String) -> AnyPublisher<Data, Error> {
-        let subject = CurrentValueSubject<Data, Error>(Data())
+    public func readFile(path: String) -> AnyPublisher<Data, Swift.Error> {
+        let subject = CurrentValueSubject<Data, Swift.Error>(Data())
 
         queue.async { [self] in
             mutex.wait()
@@ -63,7 +63,7 @@ public class ConcurrentDistribution: Distribution {
     }
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func readFileAsynchronously(path: String, subject: CurrentValueSubject<Data, Error>) {
+    func readFileAsynchronously(path: String, subject: CurrentValueSubject<Data, Swift.Error>) {
         fatalError("Must be implemented by subclasses")
     }
 }

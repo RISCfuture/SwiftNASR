@@ -83,7 +83,7 @@ public protocol Distribution {
      */
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func readFile(path: String) -> AnyPublisher<Data, Error>
+    func readFile(path: String) -> AnyPublisher<Data, Swift.Error>
 }
 
 extension Distribution {
@@ -109,34 +109,7 @@ extension Distribution {
      */
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func read(type: RecordType) -> AnyPublisher<Data, Error> {
+    public func read(type: RecordType) -> AnyPublisher<Data, Swift.Error> {
         return readFile(path: "\(type.rawValue).txt")
-    }
-}
-
-/// Errors that can occur when working with distributions.
-public enum DistributionError: Swift.Error, CustomStringConvertible {
-    
-    /**
-     Tried to read from a file that doesn't exist within a distribution.
-     
-     - Parameter path: The path to the nonexistent file.
-     */
-    case noSuchFile(path: String)
-    
-    /**
-     `FileManager` threw an NSError of some kind.
-     
-     - Parameter nsError: The wrapped NSError.
-     */
-    case nsError(_ nsError: NSError)
-    
-    public var description: String {
-        switch self {
-            case .noSuchFile(let path):
-                return "No such file \(path)"
-            case .nsError(let error):
-                return error.description
-        }
     }
 }

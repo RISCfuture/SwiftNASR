@@ -342,18 +342,4 @@ class FSSParser: FixedWidthNoRecordIDParser {
                              singleSideband: SSBRange != nil,
                              use: use)
     }
-
-    enum Error: Swift.Error, CustomStringConvertible {
-        case invalidFrequency(_ string: String)
-        case unknownFSS(_ ID: String)
-        
-        public var description: String {
-            switch self {
-                case .invalidFrequency(let string):
-                    return "Invalid frequency '\(string)'"
-                case .unknownFSS(let ID):
-                    return "Continuation record references unknown FSS '\(ID)'"
-            }
-        }
-    }
 }

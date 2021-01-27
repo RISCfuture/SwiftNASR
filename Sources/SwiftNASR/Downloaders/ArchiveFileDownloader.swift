@@ -35,26 +35,26 @@ public class ArchiveFileDownloader: Downloader {
                 if let error = error { callback(.failure(error)) }
                 else if let response = response {
                     let HTTPResponse = response as! HTTPURLResponse
-                    if HTTPResponse.statusCode/100 != 2 { callback(.failure(Downloader.Error.badResponse(HTTPResponse))) }
+                    if HTTPResponse.statusCode/100 != 2 { callback(.failure(Error.badResponse(HTTPResponse))) }
                     else if let tempfileURL = tempfileURL {
                         if let location = self.location {
                             try FileManager.default.copyItem(at: tempfileURL, to: location)
                             guard let distribution = ArchiveFileDistribution(location: location) else {
-                                callback(.failure(Downloader.Error.badData))
+                                callback(.failure(Error.badData))
                                 return
                             }
                             callback(.success(distribution))
                         }
                         else {
                             guard let distribution = ArchiveFileDistribution(location: tempfileURL) else {
-                                callback(.failure(Downloader.Error.badData))
+                                callback(.failure(Error.badData))
                                 return
                             }
                             callback(.success(distribution))
                         }
                     }
                     else {
-                        callback(.failure(Downloader.Error.noFile))
+                        callback(.failure(Error.noFile))
                     }
                 }
             } catch (let error) {
@@ -77,25 +77,25 @@ public class ArchiveFileDownloader: Downloader {
                     else if let response = response {
                         let HTTPResponse = response as! HTTPURLResponse
                         if HTTPResponse.statusCode/100 != 2 {
-                            throw Downloader.Error.badResponse(HTTPResponse)
+                            throw Error.badResponse(HTTPResponse)
                         }
                         else if let tempfileURL = tempfileURL {
                             if let location = self.location {
                                 try FileManager.default.copyItem(at: tempfileURL, to: location)
                                 guard let distribution = ArchiveFileDistribution(location: location) else {
-                                    throw Downloader.Error.badData
+                                    throw Error.badData
                                 }
                                 promise(.success(distribution))
                             }
                             else {
                                 guard let distribution = ArchiveFileDistribution(location: tempfileURL) else {
-                                    throw Downloader.Error.badData
+                                    throw Error.badData
                                 }
                                 promise(.success(distribution))
                             }
                         }
                         else {
-                            throw Downloader.Error.noFile
+                            throw Error.noFile
                         }
                     }
                 } catch (let error) {
