@@ -54,7 +54,7 @@ open class Downloader: Loader {
      - Returns: A progress value that is updated during the download.
      */
 
-    public func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) -> Progress {
+    open func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) -> Progress {
         return completedProgress
     }
     
@@ -65,7 +65,7 @@ open class Downloader: Loader {
      */
     
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func load() -> AnyPublisher<Distribution, Swift.Error> {
+    open func load() -> AnyPublisher<Distribution, Swift.Error> {
         return Empty(completeImmediately: true).eraseToAnyPublisher()
     }
 }
