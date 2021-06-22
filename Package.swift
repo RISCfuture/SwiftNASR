@@ -15,14 +15,14 @@ let package = Package(
         .executable(name: "SwiftNASR_E2E", targets: ["SwiftNASR_E2E"])
     ],
     dependencies: [
-        .package(url: "https://github.com/weichsel/ZIPFoundation/", .branch("development")), // required to get in-memory support
-        .package(url: "https://github.com/Quick/Quick.git", .upToNextMajor(from: "2.2.0")),
-        .package(url: "https://github.com/Quick/Nimble.git", .branch("master")) // required for Swift 5.3 support
+        .package(url: "https://github.com/weichsel/ZIPFoundation/", .upToNextMajor(from: "0.9.12")),
+        .package(url: "https://github.com/Quick/Quick.git", .upToNextMajor(from: "4.0.0")),
+        .package(url: "https://github.com/Quick/Nimble.git", .upToNextMajor(from: "9.2.0"))
     ],
     targets: [
         .target(
             name: "SwiftNASR",
-            dependencies: ["ZIPFoundation",]),
+            dependencies: ["ZIPFoundation"]),
         .testTarget(
             name: "SwiftNASRTests",
             dependencies: ["SwiftNASR", "Quick", "Nimble"]),
