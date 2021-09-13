@@ -145,7 +145,7 @@ class ARTCCParser: FixedWidthParser {
             throw Error.unknownARTCC(transformedValues[1] as! String)
         }
         
-        center.remarks.general.append(transformedValues[5] as! String)
+        center.remarks.append(.general(transformedValues[5] as! String))
     }
 
     private func parseFrequency(_ values: Array<String>) throws {
@@ -172,6 +172,6 @@ class ARTCCParser: FixedWidthParser {
             throw Error.unknownARTCCFrequency(transformedValues[4] as! UInt, ARTCC: center)
         }
 
-        center.frequencies[freqIndex].remarks.general.append(transformedValues[6] as! String)
+        center.frequencies[freqIndex].remarks.append(.general(transformedValues[6] as! String))
     }
 }

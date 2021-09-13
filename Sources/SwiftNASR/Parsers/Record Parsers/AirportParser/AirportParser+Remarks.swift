@@ -23,23 +23,24 @@ extension AirportParser {
         if try tryAttendanceScheduleRemark(remark, airport, fieldID) { return }
         if try tryRunwayOrEndFieldRemark(remark, airport, fieldID) { return }
         if try tryAirportFieldRemark(remark, airport, fieldID) { return }
+        if try tryAirportFuelRemark(remark, airport, fieldID) { return }
         
         throw AirportRemarksError.unknownFieldID(fieldID, airport: airport)
     }
     
     private func tryAirportGeneralRemark(_ remark: String, _ airport: Airport, _ fieldID: String) throws -> Bool {
         guard fieldID.starts(with: "A110-") || fieldID.starts(with: "A110*") else { return false }
-        airport.remarks.general.append(remark)
+        airport.remarks.append(.general(remark))
         
         return true
     }
     
     private func tryAirportLightingRemark(_ remark: String, _ airport: Airport, _ fieldID: String) throws -> Bool {
         if fieldID == "A81-APT" {
-            airport.remarks.append(remark: remark, forField: .airportLightingSchedule)
+            airport.remarks.append(.field(field: .airportLightingSchedule, content: remark))
             return true
         } else if fieldID == "A81-BCN" {
-            airport.remarks.append(remark: remark, forField: .beaconLightingSchedule)
+            airport.remarks.append(.field(field: .beaconLightingSchedule, content: remark))
             return true
         }
         
@@ -48,7 +49,19 @@ extension AirportParser {
     
     private func tryAttendanceScheduleRemark(_ remark: String, _ airport: Airport, _ fieldID: String) throws -> Bool {
         guard attendanceScheduleFieldForID(fieldID) else { return false }
-        airport.remarks.append(remark: remark, forField: .attendanceSchedule)
+        airport.remarks.append(.field(field: .attendanceSchedule, content: remark))
+        return true
+    }
+    
+    private func tryAirportFuelRemark(_ remark: String, _ airport: Airport, _ combinedFieldID: String) throws -> Bool {
+        let parts = combinedFieldID.split(separator: "-")
+        guard parts.count == 3 else { return false }
+        guard parts[0] == "A70" else { return false }
+        guard let fuelType = Airport.FuelType(rawValue: String(parts[2])) else {
+            throw AirportRemarksError.unknownFuelType(String(parts[2]), airport: airport)
+        }
+        airport.remarks.append(.fuel(field: .fuelsAvailable, fuel: fuelType, content: remark))
+        
         return true
     }
     
@@ -72,7 +85,7 @@ extension AirportParser {
         guard let end = runwayEndForID(endID, inAirport: airport) else {
             throw AirportRemarksError.unknownRunwayEnd(endID, airport: airport)
         }
-        end.remarks.append(remark: remark, forField: .arrestingSystems)
+        end.remarks.append(.field(field: .arrestingSystems, content: remark))
         return true
     }
     
@@ -88,7 +101,7 @@ extension AirportParser {
                 case .controllingObject:
                     preconditionFailure("NASR field defined in RunwayEnd.Field.fieldOrder but not ControllingObject.Field.fieldOrder")
                 default:
-                    end.remarks.append(remark: remark, forField: field)
+                    end.remarks.append(.field(field: field, content: remark))
                     return true
             }
             
@@ -102,22 +115,22 @@ extension AirportParser {
     private func tryLAHSOFieldRemark(_ remark: String, _ airport: Airport, _ end: RunwayEnd, _ fieldID: String) throws -> Bool {
         guard let field = LAHSOFieldForID(fieldID) else { return false }
         if end.LAHSO == nil {
-            end.remarks.general.append(remark)
+            end.remarks.append(.general(remark))
             return true
         }
         
-        end.LAHSO!.remarks.append(remark: remark, forField: field)
+        end.LAHSO!.remarks.append(.field(field: field, content: remark))
         return true
     }
     
     private func tryControllingObjectFieldRemark(_ remark: String, _ airport: Airport, _ end: RunwayEnd, _ fieldID: String) throws -> Bool {
         guard let field = controllingObjectFieldForID(fieldID) else { return false }
         if end.controllingObject == nil {
-            end.remarks.general.append(remark)
+            end.remarks.append(.general(remark))
             return true
         }
         
-        end.controllingObject!.remarks.append(remark: remark, forField: field)
+        end.controllingObject!.remarks.append(.field(field: field, content: remark))
         return true
     }
     
@@ -127,7 +140,7 @@ extension AirportParser {
             throw AirportRemarksError.unknownRunwayEnd(endID, airport: airport)
         }
         
-        end.remarks.general.append(remark)
+        end.remarks.append(.general(remark))
         return true
     }
     
@@ -137,7 +150,7 @@ extension AirportParser {
             throw AirportRemarksError.unknownRunway(runwayID, airport: airport)
         }
         
-        runway.remarks.append(remark: remark, forField: field)
+        runway.remarks.append(.field(field: field, content: remark))
         return true
     }
     
@@ -150,7 +163,7 @@ extension AirportParser {
             case .owner, .manager:
                 preconditionFailure("NASR field defined in Airport.Field.fieldOrder but not Person.Field.fieldOrder")
             default:
-                airport.remarks.append(remark: remark, forField: field)
+                airport.remarks.append(.field(field: field, content: remark))
                 return true
         }
     }
@@ -162,17 +175,17 @@ extension AirportParser {
         switch airportField {
             case .owner:
                 if airport.owner == nil {
-                    airport.remarks.general.append(remark)
+                    airport.remarks.append(.general(remark))
                     return true
                 }
-                airport.owner!.remarks.append(remark: remark, forField: field)
+                airport.owner!.remarks.append(.field(field: field, content: remark))
                 return true
             case .manager:
                 if airport.manager == nil {
-                    airport.remarks.general.append(remark)
+                    airport.remarks.append(.general(remark))
                     return true
                 }
-                airport.manager!.remarks.append(remark: remark, forField: field)
+                airport.manager!.remarks.append(.field(field: field, content: remark))
                 return true
             default:
                 preconditionFailure("Person field on Airport.Field.fieldOrder does not correspond with same field on Person.Field.fieldOrder")
@@ -250,7 +263,7 @@ enum AirportRemarksError: Swift.Error, CustomStringConvertible {
     case invalidFieldID(_ fieldID: String, airport: Airport)
     case unknownRunway(_ runwayID: String, airport: Airport)
     case unknownRunwayEnd(_ endID: String, airport: Airport)
-    
+    case unknownFuelType(_ fuelType: String, airport: Airport)
     
     public var description: String {
         switch self {
@@ -264,6 +277,8 @@ enum AirportRemarksError: Swift.Error, CustomStringConvertible {
                 return "Unknown runway '\(runwayID)' at '\(airport.LID)'"
             case .unknownRunwayEnd(let endID, let airport):
                 return "Unknown runway end '\(endID)' at '\(airport.LID)'"
+            case .unknownFuelType(let fuelType, let airport):
+                return "Unknown fuel type '\(fuelType)' at '\(airport.LID)'"
         }
     }
 }
