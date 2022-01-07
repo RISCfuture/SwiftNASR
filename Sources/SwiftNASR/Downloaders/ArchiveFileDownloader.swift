@@ -66,8 +66,8 @@ public class ArchiveFileDownloader: Downloader {
         return task.progress
     }
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public override func load() -> AnyPublisher<Distribution, Swift.Error> {
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public override func loadPublisher() -> AnyPublisher<Distribution, Swift.Error> {
         return Future { promise in
             self.session.downloadTask(with: self.cycleURL) { tempfileURL, response, error in
                 do {
@@ -103,5 +103,24 @@ public class ArchiveFileDownloader: Downloader {
                 }
             }.resume()
         }.eraseToAnyPublisher()
+    }
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    override public func load(progress: inout Progress) async throws -> Distribution {
+        let delegate = DownloadDelegate(progress: &progress)
+        let (tempfileURL, response) = try await session.download(from: cycleURL, delegate: delegate)
+        
+        let HTTPResponse = response as! HTTPURLResponse
+        if HTTPResponse.statusCode/100 != 2 { throw Error.badResponse(HTTPResponse) }
+        
+        if let location = self.location {
+            try FileManager.default.copyItem(at: tempfileURL, to: location)
+            guard let distribution = ArchiveFileDistribution(location: location) else { throw Error.badData }
+            return distribution
+        }
+        else {
+            guard let distribution = ArchiveFileDistribution(location: tempfileURL) else { throw Error.badData }
+            return distribution
+        }
     }
 }

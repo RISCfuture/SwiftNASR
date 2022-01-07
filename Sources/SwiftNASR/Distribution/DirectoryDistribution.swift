@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import  Dispatch
 
 /**
  A NASR distribution that has been loaded from a directory of decompressed
@@ -25,7 +24,7 @@ public class DirectoryDistribution: ConcurrentDistribution {
         self.location = location
     }
     
-    override func readFileSynchronously(path: String, eachLine: (Data, Progress) -> Void) throws {
+    func readFileWithCallback(path: String, eachLine: (Data, Progress) -> Void) throws {
         let fileURL = location.appendingPathComponent(path)
         let handle: FileHandle
         do {
@@ -43,13 +42,19 @@ public class DirectoryDistribution: ConcurrentDistribution {
 
         while true {
             if let EOL = buffer.range(of: delimiter) {
-                let subdata = buffer.subdata(in: buffer.startIndex..<EOL.lowerBound)
-                Self.progressQueue.async { progress.completedUnitCount += Int64(subdata.count) }
+                if EOL.lowerBound == 0 {
+                    buffer.removeSubrange(EOL)
+                    continue
+                }
+                
+                let subrange = buffer.startIndex..<EOL.lowerBound
+                let subdata = buffer.subdata(in: subrange)
+                progressQueue.async { progress.completedUnitCount += Int64(subdata.count) }
                 eachLine(subdata, progress)
-                buffer.removeSubrange(buffer.startIndex..<EOL.upperBound)
+                buffer.removeSubrange(subrange)
             } else {
                 let data = handle.readData(ofLength: chunkSize)
-                Self.progressQueue.async { progress.completedUnitCount += Int64(data.count) }
+                progressQueue.async { progress.completedUnitCount += Int64(data.count) }
                 guard data.count > 0 else {
                     if buffer.count > 0 { eachLine(buffer, progress) }
                     return
@@ -59,35 +64,28 @@ public class DirectoryDistribution: ConcurrentDistribution {
         }
     }
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public override func readFileAsynchronously(path: String, subject: CurrentValueSubject<Data, Swift.Error>) {
-        let fileURL = location.appendingPathComponent(path)
-        let handle: FileHandle
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    func readFileWithCombine(path: String, subject: CurrentValueSubject<Data, Swift.Error>) {
         do {
-            handle = try FileHandle(forReadingFrom: fileURL)
-        } catch let error as NSError {
-            if error.domain == NSCocoaErrorDomain && error.code == NSFileNoSuchFileError {
-                subject.send(completion: .failure(Error.noSuchFile(path: path)))
-                return
-            } else {
-                subject.send(completion: .failure(error))
-                return
+            try readFileWithCallback(path: path) { data, progress in
+                subject.send(data)
             }
+            subject.send(completion: .finished)
+        } catch (let error) {
+            subject.send(completion: .failure(error))
         }
-        var buffer = Data(capacity: chunkSize)
-
-        while true {
-            if let EOL = buffer.range(of: delimiter) {
-                subject.send(buffer.subdata(in: buffer.startIndex..<EOL.lowerBound))
-                buffer.removeSubrange(buffer.startIndex..<EOL.upperBound)
-            } else {
-                let data = handle.readData(ofLength: chunkSize)
-                guard data.count > 0 else {
-                    if buffer.count > 0 { subject.send(buffer) }
-                    subject.send(completion: .finished)
-                    return
+    }
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    func readFileWithAsyncAwait(path: String) -> AsyncThrowingStream<(Data, Progress), Swift.Error> {
+        return AsyncThrowingStream { continuation in
+            do {
+                try readFileWithCallback(path: path) { data, progress in
+                    continuation.yield((data, progress))
                 }
-                buffer.append(data)
+                continuation.finish()
+            } catch (let error) {
+                continuation.finish(throwing: error)
             }
         }
     }

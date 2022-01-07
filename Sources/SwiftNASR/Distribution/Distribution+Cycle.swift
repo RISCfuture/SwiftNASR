@@ -36,13 +36,34 @@ extension Distribution {
      - Returns: A publisher that publishes the parsed cycle, if any.
      */
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func readCycle() -> AnyPublisher<Cycle?, Swift.Error> {
-        return readFile(path: "README.txt")
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func readCyclePublisher() -> AnyPublisher<Cycle?, Swift.Error> {
+        return readFilePublisher(path: "README.txt")
             .filter { $0.starts(with: readmeFirstLine) }
             .map { parseCycleFrom($0) }
             .first()
             .eraseToAnyPublisher()
+    }
+    
+    /**
+     Reads the cycle from the README file.
+     
+     - Returns: The parsed cycle, or `nil` if the cycle could not be parsed.
+     */
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    public func readCycle() async throws -> Cycle? {
+        var cycle: Cycle? = nil
+        let lines: AsyncThrowingStream = readFile(path: "README.txt")
+        for try await (line, _) in lines {
+            if line.starts(with: readmeFirstLine) {
+                if cycle == nil {
+                    cycle = parseCycleFrom(line)
+                    break
+                }
+            }
+        }
+        return cycle
     }
     
     private func parseCycleFrom(_ line: Data) -> Cycle? {

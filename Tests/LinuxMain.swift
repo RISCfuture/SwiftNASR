@@ -24,4 +24,3 @@ QCKMain([
     StringSpec.self,
     WriterSpec.self,
 ])
-

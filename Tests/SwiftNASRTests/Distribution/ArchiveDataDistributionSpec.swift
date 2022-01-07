@@ -9,12 +9,12 @@ class ArchiveDataDistributionSpec: QuickSpec {
     private var mockData: Data {
         let data = "Hello, world!\r\nLine 2".data(using: .ascii)!
         let archive = Archive(accessMode: .create)!
-        try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: UInt32(data.count)) { position, size in
-            return data.subdata(in: position..<(position+size))
+        try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
+            return data.subdata(in: Data.Index(position)..<(Int(position)+size))
         }
         let cycle = "AIS subscriber files effective date December 3, 2020.".data(using: .ascii)!
-        try! archive.addEntry(with: "README.txt", type: .file, uncompressedSize: UInt32(cycle.count)) { position, size in
-            return cycle.subdata(in: position..<(position+size))
+        try! archive.addEntry(with: "README.txt", type: .file, uncompressedSize: Int64(cycle.count)) { (position: Int64, size: Int) in
+            return cycle.subdata(in: Data.Index(position)..<(Int(position)+size))
         }
         return archive.data!
     }

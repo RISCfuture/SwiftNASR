@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import Dispatch
 
 fileprivate let metatypes = [
     (RecordType.states, State.self),
@@ -82,8 +81,19 @@ public protocol Distribution {
      - Returns: A publisher that publishes each line of the file.
      */
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func readFile(path: String) -> AnyPublisher<Data, Swift.Error>
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    func readFilePublisher(path: String) -> AnyPublisher<Data, Swift.Error>
+    
+    /**
+     Decompresses and reads a file asynchronously from a distribution.
+     
+     - Parameter path: The path to the file.
+     - Returns: An `AsyncStream` that contains each line, in order, from the
+     file.
+     */
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    func readFile(path: String) -> AsyncThrowingStream<(Data, Progress), Swift.Error>
 }
 
 extension Distribution {
@@ -108,8 +118,13 @@ extension Distribution {
      - Returns: A publisher that publishes each data record from the file.
      */
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func read(type: RecordType) -> AnyPublisher<Data, Swift.Error> {
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func readPublisher(type: RecordType) -> AnyPublisher<Data, Swift.Error> {
+        return readFilePublisher(path: "\(type.rawValue).txt")
+    }
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    public func read(type: RecordType) -> AsyncThrowingStream<(Data, Progress), Swift.Error> {
         return readFile(path: "\(type.rawValue).txt")
     }
 }

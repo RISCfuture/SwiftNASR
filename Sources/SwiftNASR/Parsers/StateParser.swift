@@ -4,8 +4,9 @@ class StateParser: Parser {
     private var states: Array<State> = []
     private var seenStateCode = false
     
-    func prepare(distribution: Distribution) throws {
+    func prepare(distribution: Distribution, callback: @escaping ((Result<Void, Swift.Error>) -> Void) = { _ in }) {
         states = []
+        callback(.success(()))
     }
     
     func parse(data: Data) throws {

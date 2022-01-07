@@ -5,32 +5,67 @@ import Nimble
 @testable import SwiftNASR
 
 class NASRDataSpec: QuickSpec {
-    let fixturesURL = URL(fileURLWithPath: #file)
-        .deletingLastPathComponent()
-        .appendingPathComponent("Support").appendingPathComponent("Fixtures")
-    
     override func spec() {
-        let distURL = fixturesURL.appendingPathComponent("MockDistribution")
-        let nasr = NASR.fromLocalDirectory(distURL)
+        var parsedData = NASRData()
+        var decodedData = NASRData()
         
-        let group = DispatchGroup()
-        group.enter()
-        _ = nasr.load { _ in group.leave() }
-        group.wait()
-        
-        try! nasr.parse(.states) { _ in false }
-        try! nasr.parse(.airports) { _ in false }
-        try! nasr.parse(.ARTCCFacilities) { _ in false }
-        try! nasr.parse(.flightServiceStations) { _ in false }
-        
-        let parsedData = nasr.data
-        let encodedData = try! JSONEncoder().encode(parsedData)
-        let decodedData = try! JSONDecoder().decode(NASRData.self, from: encodedData)
+        beforeEach {
+            let distURL = Bundle.module.resourceURL!.appendingPathComponent("MockDistribution", isDirectory: true)
+            let nasr = NASR.fromLocalDirectory(distURL)
+            
+            waitUntil { done in
+                _ = nasr.load { result in
+                    switch result {
+                    case .failure(let error): fail((error as CustomStringConvertible).description)
+                    default: break
+                    }
+                    done()
+                }
+            }
+            
+            waitUntil { done in
+                try! nasr.parse(RecordType.states, errorHandler: {
+                    fail(($0 as CustomStringConvertible).description)
+                    done()
+                    return false
+                }, completionHandler: { done() })
+            }
+            waitUntil { done in
+                try! nasr.parse(RecordType.airports, errorHandler: {
+                    fail(($0 as CustomStringConvertible).description)
+                    done()
+                    return false
+                }, completionHandler: { done() })
+            }
+            waitUntil { done in
+                try! nasr.parse(RecordType.ARTCCFacilities, errorHandler: {
+                    fail(($0 as CustomStringConvertible).description)
+                    done()
+                    return false
+                }, completionHandler: { done() })
+            }
+            waitUntil { done in
+                try! nasr.parse(RecordType.flightServiceStations, errorHandler: {
+                    fail(($0 as CustomStringConvertible).description)
+                    done()
+                    return false
+                }, completionHandler: { done() })
+            }
+            
+            parsedData = nasr.data
+            let encodedData = try! JSONEncoder().encode(parsedData)
+            decodedData = try! JSONDecoder().decode(NASRData.self, from: encodedData)
+        }
                 
         describe("Airport") {
-            let parsedSFO = parsedData.airports!.first(where: { $0.LID == "SFO" })!
-            let decodedSFO = decodedData.airports!.first(where: { $0.LID == "SFO" })!
-
+            var parsedSFO: Airport!
+            var decodedSFO: Airport!
+            
+            beforeEach {
+                parsedSFO = parsedData.airports!.first(where: { $0.LID == "SFO" })!
+                decodedSFO = decodedData.airports!.first(where: { $0.LID == "SFO" })!
+            }
+            
             describe("state") {
                 it("returns the object") {
                     expect(parsedSFO.state!.postOfficeCode).to(equal("CA"))
@@ -89,8 +124,13 @@ class NASRDataSpec: QuickSpec {
         }
         
         describe("ARTCC") {
-            let parsedZOA = parsedData.ARTCCs!.first(where: { $0.ID == "ZOA" && $0.locationName == "PRIEST" && $0.type == .RCAG })!
-            let decodedZOA = decodedData.ARTCCs!.first(where: { $0.ID == "ZOA" && $0.locationName == "PRIEST" && $0.type == .RCAG })!
+            var parsedZOA: ARTCC!
+            var decodedZOA: ARTCC!
+            
+            beforeEach {
+                parsedZOA = parsedData.ARTCCs!.first(where: { $0.ID == "ZOA" && $0.locationName == "PRIEST" && $0.type == ARTCC.FacilityType.RCAG })!
+                decodedZOA = decodedData.ARTCCs!.first(where: { $0.ID == "ZOA" && $0.locationName == "PRIEST" && $0.type == ARTCC.FacilityType.RCAG })!
+            }
             
             describe("state") {
                 it("returns the object") {
@@ -113,8 +153,13 @@ class NASRDataSpec: QuickSpec {
         }
         
         describe("FSS") {
-            let parsedOAK = parsedData.FSSes!.first(where: { $0.ID == "OAK" })!
-            let decodedOAK = decodedData.FSSes!.first(where: { $0.ID == "OAK" })!
+            var parsedOAK: FSS!
+            var decodedOAK: FSS!
+            
+            beforeEach {
+                parsedOAK = parsedData.FSSes!.first(where: { $0.ID == "OAK" })!
+                decodedOAK = decodedData.FSSes!.first(where: { $0.ID == "OAK" })!
+            }
             
             describe("nearestFSSWithTeletype") {
                 pending("returns the object") {

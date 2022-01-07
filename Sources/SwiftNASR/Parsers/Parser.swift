@@ -2,10 +2,16 @@ import Foundation
 import Combine
 
 protocol Parser: AnyObject {
-    func prepare(distribution: Distribution) throws
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    func prepare(distribution: Distribution, callback: @escaping ((Result<Void, Swift.Error>) -> Void))
+    
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     func preparePublisher(distribution: Distribution) -> AnyPublisher<Void, Swift.Error>
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    func prepare(distribution: Distribution) async throws
+    
     func parse(data: Data) throws
+    
     func finish(data: NASRData)
 }
 
@@ -38,17 +44,25 @@ extension Parser {
     }
 }
 
-@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Parser {
     func preparePublisher(distribution: Distribution) -> AnyPublisher<Void, Swift.Error> {
         return Future { promise in
-            do {
-                try self.prepare(distribution: distribution)
-                promise(.success(()))
-            } catch (let error) {
-                promise(.failure(error))
+            self.prepare(distribution: distribution) { result in
+                promise(result)
             }
         }.eraseToAnyPublisher()
+    }
+}
+
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+extension Parser {
+    func prepare(distribution: Distribution) async throws -> Void {
+        return try await withCheckedThrowingContinuation { continuation in
+            self.prepare(distribution: distribution) { result in
+                continuation.resume(with: result)
+            }
+        }
     }
 }
 

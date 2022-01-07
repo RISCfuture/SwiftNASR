@@ -5,7 +5,7 @@ import ZIPFoundation
 
 @testable import SwiftNASR
 
-@available(OSX 10.12, *)
+@available(macOS 10.12, *)
 class ArchiveFileDownloaderSpec: QuickSpec {
     private var downloader: ArchiveFileDownloader {
         let d = ArchiveFileDownloader(cycle: Cycle(year: 2020, month: 1, day: 30))
@@ -17,8 +17,8 @@ class ArchiveFileDownloaderSpec: QuickSpec {
     private var mockData: Data {
         let data = "Hello, world!".data(using: .ascii)!
         let archive = Archive(accessMode: .create)!
-        try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: UInt32(data.count)) { position, size in
-            return data.subdata(in: position..<(position+size))
+        try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
+            return data.subdata(in: Data.Index(position)..<(Int(position)+size))
         }
         return archive.data!
     }

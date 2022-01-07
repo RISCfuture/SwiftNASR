@@ -4,7 +4,7 @@ import Nimble
 
 @testable import SwiftNASR
 
-@available(OSX 10.12, *)
+@available(macOS 10.12, *)
 class DirectoryLoaderSpec: QuickSpec {
     override func spec() {
         describe("load") {

@@ -37,6 +37,16 @@ public protocol Loader {
                 appropriate implementation.
      */
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func load() -> AnyPublisher<Distribution, Swift.Error>
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    func loadPublisher() -> AnyPublisher<Distribution, Swift.Error>
+    
+    /**
+     Asynchronously wraps downloaded data (or data loaded from disk or memory)
+     in an appropriate `Distribution` implementation.
+     
+     - Returns: The distribution data wrapped in the appropriate implementation.
+     */
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    func load(progress: inout Progress) async throws -> Distribution
 }

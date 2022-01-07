@@ -54,8 +54,8 @@ public class ArchiveDataDownloader: Downloader {
         return progress
     }
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public override func load() -> AnyPublisher<Distribution, Swift.Error> {
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public override func loadPublisher() -> AnyPublisher<Distribution, Swift.Error> {
         return session.dataTaskPublisher(for: cycleURL)
             .tryMap { data, response -> Distribution in
                 guard let HTTPResponse = response as? HTTPURLResponse, HTTPResponse.statusCode == 200 else {
@@ -66,5 +66,17 @@ public class ArchiveDataDownloader: Downloader {
                 }
                 return distribution
             }.share().eraseToAnyPublisher()
+    }
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    override public func load(progress: inout Progress) async throws -> Distribution {
+        let delegate = DownloadDelegate(progress: &progress)
+        let (data, response) = try await session.data(from: cycleURL, delegate: delegate)
+        
+        let HTTPResponse = response as! HTTPURLResponse
+        if HTTPResponse.statusCode/100 != 2 { throw Error.badResponse(HTTPResponse) }
+        
+        guard let distribution = ArchiveDataDistribution(data: data) else { throw Error.badData }
+        return distribution
     }
 }
