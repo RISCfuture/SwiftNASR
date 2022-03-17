@@ -52,7 +52,7 @@ class CallbacksTest: E2ETest {
                 self.parseAirports()
                 self.parseARTCCs()
                 self.parseFSSes()
-            case .failure(let error):
+            case let .failure(error):
                 fatalError("\(error)")
             }
         }

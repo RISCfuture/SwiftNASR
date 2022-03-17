@@ -28,7 +28,7 @@ class ParserSpec: QuickSpec {
                 waitUntil { done in
                     parser.prepare(distribution: distribution) { result in
                         switch result {
-                        case .failure(let error):
+                        case let .failure(error):
                             fail("Got error: \(error)")
                             done()
                         case .success(_):
@@ -47,14 +47,13 @@ class ParserSpec: QuickSpec {
                 
                 waitUntil { done in
                     parser.prepare(distribution: distribution) { result in
-                        switch result {
-                        case .failure(let error):
-                            expect((error as CustomStringConvertible).description).to(equal("Invalid data: Field defined before group"))
-                            done()
-                        case .success(_):
+                        guard case let .failure(error) = result else {
                             fail("Unexpected success")
                             done()
+                            return
                         }
+                        expect((error as CustomStringConvertible).description).to(equal("Invalid data: Field defined before group"))
+                        done()
                     }
                 }
             }

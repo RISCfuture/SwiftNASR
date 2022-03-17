@@ -74,13 +74,13 @@ enum ParserError: Swift.Error, CustomStringConvertible {
     
     public var description: String {
         switch self {
-            case .badData(let reason):
+            case let .badData(reason):
                 return "Invalid data: \(reason)"
-            case .unknownRecordIdentifier(let identifier):
+            case let .unknownRecordIdentifier(identifier):
                 return "Unknown record identifier '\(identifier)'"
-            case .unknownRecordEnumValue(let value):
+            case let .unknownRecordEnumValue(value):
                 return "Unknown record value '\(value)'"
-            case .invalidValue(let value):
+            case let .invalidValue(value):
                 return "Invalid value '\(value)'"
         }
     }

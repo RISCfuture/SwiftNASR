@@ -48,115 +48,117 @@ struct FixedWidthTransformer {
         df.timeZone = zulu
         return df
     }
-
+    
     var fields: Array<FixedWidthField>
-
+    
     init(_ fields: Array<FixedWidthField>) {
         self.fields = fields
     }
-
+    
     func applyTo(_ values: Array<String>) throws -> Array<Any?> {
         return try values.enumerated().map { index, value in
             switch fields[index] {
-            case .recordType: return nil
-            case .null: return nil
-            case .string(let nullable):
-                return try transform(value, nullable: nullable, index: index, trim: true) { $0 }
-            case .integer(let nullable):
-                return try transform(value, nullable: nullable, index: index, trim: true) {
-                    guard let transformed = Int($0) else {
-                        throw FixedWidthParserError.invalidNumber($0, at: index)
-                    }
-                    return transformed
-                }
-            case .unsignedInteger(let nullable):
-                return try transform(value, nullable: nullable, index: index, trim: true) {
-                    guard let transformed = UInt($0) else {
-                        throw FixedWidthParserError.invalidNumber($0, at: index)
-                    }
-                    return transformed
-                }
-            case .float(let nullable):
-                return try transform(value, nullable: nullable, index: index, trim: true) {
-                    guard let transformed = Float($0) else {
-                        throw FixedWidthParserError.invalidNumber($0, at: index)
-                    }
-                    return transformed
-                }
-            case .DDMMSS(let nullable):
-                return try transform(value, nullable: nullable, index: index, trim: true) {
-                    guard let result = Self.parseDDMMSS($0) else {
-                        throw FixedWidthParserError.invalidGeodesic($0, at: index)
-                    }
-                    return result
-                }
-            case .frequency(let nullable):
-                return try transform(value, nullable: nullable, index: index, trim: true) {
-                    guard let result = Self.parseFrequency($0) else {
-                        throw FixedWidthParserError.invalidFrequency($0, at: index)
-                    }
-                    return result
-                }
-            case .boolean(let trueValue, let nullable):
-                return try transform(value, nullable: nullable, index: index, trim: true) {
-                    return $0 == trueValue
-                }
-            case .datetime(let formatter, let nullable):
-                return try transform(value, nullable: nullable, index: index, trim: true) {
-                    guard let transformed = formatter.date(from: $0) else {
-                        throw FixedWidthParserError.invalidDate($0, at: index)
-                    }
-                    return transformed
-                }
-            case .fixedWidthArray(let width, let convert, let nullable, let trim, let emptyPlaceholders):
-                if let placeholders = emptyPlaceholders {
-                    if placeholders.contains(value) { return [] }
-                }
-                let array = try value.partition(by: width).map { part in
-                    return try transform(part, nullable: nullable, index: index, trim: trim) {
-                        if let convert = convert {
-                            do {
-                                return try convert($0)
-                            } catch (let e) {
-                                throw FixedWidthParserError.conversionError($0, error: e, at: index)
-                            }
+                case .recordType: return nil
+                case .null: return nil
+                case let .string(nullable):
+                    return try transform(value, nullable: nullable, index: index, trim: true) { $0 }
+                case .integer(let nullable):
+                    return try transform(value, nullable: nullable, index: index, trim: true) {
+                        guard let transformed = Int($0) else {
+                            throw FixedWidthParserError.invalidNumber($0, at: index)
                         }
-                        else { return $0 }
+                        return transformed
                     }
-                }
-                switch nullable { case .compact: return array.compactMap { $0 }; default: return array }
-            case .delimitedArray(let delimiter, let convert, let nullable, let trim, let emptyPlaceholders):
-                if value.isEmpty { return [] }
-                if let placeholders = emptyPlaceholders {
-                    if placeholders.contains(value) { return [] }
-                }
-                
-                do {
-                    let array = try value.components(separatedBy: delimiter)
-                        .map { part in
-                            return try transform(part, nullable: nullable, index: index, trim: trim) {
+                case let .unsignedInteger(nullable):
+                    return try transform(value, nullable: nullable, index: index, trim: true) {
+                        guard let transformed = UInt($0) else {
+                            throw FixedWidthParserError.invalidNumber($0, at: index)
+                        }
+                        return transformed
+                    }
+                case let .float(nullable):
+                    return try transform(value, nullable: nullable, index: index, trim: true) {
+                        guard let transformed = Float($0) else {
+                            throw FixedWidthParserError.invalidNumber($0, at: index)
+                        }
+                        return transformed
+                    }
+                case let .DDMMSS(nullable):
+                    return try transform(value, nullable: nullable, index: index, trim: true) {
+                        guard let result = Self.parseDDMMSS($0) else {
+                            throw FixedWidthParserError.invalidGeodesic($0, at: index)
+                        }
+                        return result
+                    }
+                case let .frequency(nullable):
+                    return try transform(value, nullable: nullable, index: index, trim: true) {
+                        guard let result = Self.parseFrequency($0) else {
+                            throw FixedWidthParserError.invalidFrequency($0, at: index)
+                        }
+                        return result
+                    }
+                case let .boolean(trueValue, nullable):
+                    return try transform(value, nullable: nullable, index: index, trim: true) {
+                        return $0 == trueValue
+                    }
+                case let .datetime(formatter, nullable):
+                    return try transform(value, nullable: nullable, index: index, trim: true) {
+                        guard let transformed = formatter.date(from: $0) else {
+                            throw FixedWidthParserError.invalidDate($0, at: index)
+                        }
+                        return transformed
+                    }
+                case let .fixedWidthArray(width, convert, nullable, trim, emptyPlaceholders):
+                    if let placeholders = emptyPlaceholders {
+                        if placeholders.contains(value) { return [] }
+                    }
+                    let array = try value.partition(by: width).map { part in
+                        return try transform(part, nullable: nullable, index: index, trim: trim) {
+                            if let convert = convert {
                                 do {
                                     return try convert($0)
                                 } catch (let e) {
                                     throw FixedWidthParserError.conversionError($0, error: e, at: index)
                                 }
                             }
+                            else { return $0 }
                         }
-                    switch nullable { case .compact: return array.compactMap { $0 }; default: return array }
-                } catch (let e) {
-                    throw FixedWidthParserError.conversionError(value, error: e, at: index)
-                }
-            case .generic(let convert, let nullable, let trim):
-                return try transform(value, nullable: nullable, index: index, trim: trim) {
-                    do {
-                        guard let transformed = try convert($0) else {
-                            throw ParserError.invalidValue($0)
-                        }
-                        return transformed
-                    } catch (let e) {
-                        throw FixedWidthParserError.conversionError($0, error: e, at: index)
                     }
-                }
+                    guard case .compact = nullable else { return array }
+                    return array.compactMap { $0 }
+                case let .delimitedArray(delimiter, convert, nullable, trim, emptyPlaceholders):
+                    if value.isEmpty { return [] }
+                    if let placeholders = emptyPlaceholders {
+                        if placeholders.contains(value) { return [] }
+                    }
+                    
+                    do {
+                        let array = try value.components(separatedBy: delimiter)
+                            .map { part in
+                                return try transform(part, nullable: nullable, index: index, trim: trim) {
+                                    do {
+                                        return try convert($0)
+                                    } catch (let e) {
+                                        throw FixedWidthParserError.conversionError($0, error: e, at: index)
+                                    }
+                                }
+                            }
+                        guard case .compact = nullable else { return array }
+                        return array.compactMap { $0 }
+                    } catch (let e) {
+                        throw FixedWidthParserError.conversionError(value, error: e, at: index)
+                    }
+                case let .generic(convert, nullable, trim):
+                    return try transform(value, nullable: nullable, index: index, trim: trim) {
+                        do {
+                            guard let transformed = try convert($0) else {
+                                throw ParserError.invalidValue($0)
+                            }
+                            return transformed
+                        } catch (let e) {
+                            throw FixedWidthParserError.conversionError($0, error: e, at: index)
+                        }
+                    }
             }
         }
     }
@@ -172,7 +174,7 @@ struct FixedWidthTransformer {
             case .blank, .compact:
                 if trimmed.isEmpty { return nil }
                 else { return try transformation(trimmed) }
-            case .sentinel(let sentinels):
+            case let .sentinel(sentinels):
                 if sentinels.contains(trimmed) { return nil }
                 else { return try transformation(trimmed) }
         }

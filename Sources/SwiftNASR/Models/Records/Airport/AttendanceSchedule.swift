@@ -28,12 +28,12 @@ public enum AttendanceSchedule: Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
-            case .components(let monthly, let daily, let hourly):
+            case let .components(monthly, daily, hourly):
                 try container.encode(Kinds.components.rawValue, forKey: .type)
                 try container.encode(monthly, forKey: .monthly)
                 try container.encode(daily, forKey: .daily)
                 try container.encode(hourly, forKey: .hourly)
-            case .custom(let schedule):
+            case let .custom(schedule):
                 try container.encode(Kinds.custom.rawValue, forKey: .type)
                 try container.encode(schedule, forKey: .schedule)
         }

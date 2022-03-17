@@ -357,7 +357,7 @@ public class RunwayEnd: Codable {
                     case .tower: return "TOWER"
                     case .trees: return "TREES"
                     case .tree: return "TREE"
-                    case .other(let value): return value ?? Self.otherValue
+                    case let .other(value): return value ?? Self.otherValue
                 }
             }
             

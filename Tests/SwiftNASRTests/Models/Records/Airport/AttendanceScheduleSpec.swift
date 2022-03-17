@@ -32,26 +32,24 @@ class AttendanceScheduleSpec: QuickSpec {
                 let encoded = #"{"daily":"2","hourly":"3","monthly":"1","type":"components"}"#.data(using: .utf8)!
                 let schedule = try! decoder.decode(AttendanceSchedule.self, from: encoded)
                 
-                switch schedule {
-                    case .components(let monthly, let daily, let hourly):
-                        expect(monthly).to(equal("1"))
-                        expect(daily).to(equal("2"))
-                        expect(hourly).to(equal("3"))
-                    case .custom(_):
-                        fail("Expected AttendanceSchedule.components, got .custom")
+                guard case let .components(monthly, daily, hourly) = schedule else {
+                    fail("Expected AttendanceSchedule.components, got .custom")
+                    return
                 }
+                expect(monthly).to(equal("1"))
+                expect(daily).to(equal("2"))
+                expect(hourly).to(equal("3"))
             }
             
             it("decodes a .custom instance") {
                 let encoded = #"{"schedule":"hello world","type":"custom"}"#.data(using: .utf8)!
                 let schedule = try! decoder.decode(AttendanceSchedule.self, from: encoded)
                 
-                switch schedule {
-                    case .components(_, _, _):
-                        fail("Expected AttendanceSchedule.custom, got .components")
-                    case .custom(let value):
-                        expect(value).to(equal("hello world"))
+                guard case let .custom(value) = schedule else {
+                    fail("Expected AttendanceSchedule.custom, got .components")
+                    return
                 }
+                expect(value).to(equal("hello world"))
             }
         }
     }

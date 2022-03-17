@@ -37,14 +37,14 @@ class ArchiveDataDownloaderSpec: QuickSpec {
                         _ = self.downloader.load { result in
                             expect({
                                 switch result {
-                                case .success(let distribution):
+                                case let .success(distribution):
                                     let data = (distribution as! ArchiveDataDistribution).data
                                     if data == self.mockData {
                                         return { .succeeded }
                                     } else {
                                         return { .failed(reason: "wrong data") }
                                     }
-                                case .failure(let error):
+                                case let .failure(error):
                                     return { .failed(reason: "\(error)") }
                                 }
                                 }).to(succeed())
@@ -70,12 +70,10 @@ class ArchiveDataDownloaderSpec: QuickSpec {
                                 switch result {
                                 case .success:
                                     return { .failed(reason: "expected error, got data") }
-                                case .failure(let error):
+                                case let .failure(error):
                                     switch error {
-                                    case Error.badResponse:
-                                        return { .succeeded }
-                                    default:
-                                        return { .failed(reason: "wrong error \(error)") }
+                                    case Error.badResponse: return { .succeeded }
+                                    default: return { .failed(reason: "wrong error \(error)") }
                                     }
                                 }
                                 }).to(succeed())
@@ -97,7 +95,7 @@ class ArchiveDataDownloaderSpec: QuickSpec {
                                 switch result {
                                 case .success:
                                     return { .failed(reason: "expected error, got data") }
-                                case .failure(let error):
+                                case let .failure(error):
                                     let cocoaError = error as NSError
                                     if cocoaError.domain == "TestDomain" && cocoaError.code == -1 {
                                         return { .succeeded }

@@ -15,10 +15,8 @@ class NASRDataSpec: QuickSpec {
             
             waitUntil { done in
                 _ = nasr.load { result in
-                    switch result {
-                    case .failure(let error): fail((error as CustomStringConvertible).description)
-                    default: break
-                    }
+                    guard case let .failure(error) = result else { return }
+                    fail((error as CustomStringConvertible).description)
                     done()
                 }
             }

@@ -133,7 +133,7 @@ public final class NASR {
     public func load(callback: @escaping (_ result: Result<Void, Swift.Error>) -> Void) -> Progress {
         return loader.load { result in
             switch result {
-            case .success(let distribution):
+            case let .success(distribution):
                 self.distribution = distribution
                 do {
                     try distribution.readCycle { cycle in
@@ -143,7 +143,7 @@ public final class NASR {
                 } catch (let error) {
                     callback(.failure(error))
                 }
-            case .failure(let error):
+            case let .failure(error):
                 callback(.failure(error))
             }
         }
@@ -217,7 +217,7 @@ public final class NASR {
                 }
                 
                 parser.finish(data: self.data)
-            case .failure(let error):
+            case let .failure(error):
                 let shouldContinue = errorHandler(error)
                 if !shouldContinue { return }
             }

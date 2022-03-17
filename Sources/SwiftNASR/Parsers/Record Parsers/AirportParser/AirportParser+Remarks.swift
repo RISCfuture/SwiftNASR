@@ -267,17 +267,17 @@ enum AirportRemarksError: Swift.Error, CustomStringConvertible {
     
     public var description: String {
         switch self {
-            case .invalidGeneralRemarkSequence(let airport, let fieldID):
+            case let .invalidGeneralRemarkSequence(airport, fieldID):
                 return "Invalid general remarks sequence for field '\(fieldID)' at '\(airport.LID)'"
-            case .unknownFieldID(let fieldID, let airport):
+            case let .unknownFieldID(fieldID, airport):
                 return "Unknown field ID '\(fieldID)' at '\(airport.LID)'"
-            case .invalidFieldID(let fieldID, let airport):
+            case let .invalidFieldID(fieldID, airport):
                 return "Invalid field ID '\(fieldID)' at '\(airport.LID)'"
-            case .unknownRunway(let runwayID, let airport):
+            case let .unknownRunway(runwayID, airport):
                 return "Unknown runway '\(runwayID)' at '\(airport.LID)'"
-            case .unknownRunwayEnd(let endID, let airport):
+            case let .unknownRunwayEnd(endID, airport):
                 return "Unknown runway end '\(endID)' at '\(airport.LID)'"
-            case .unknownFuelType(let fuelType, let airport):
+            case let .unknownFuelType(fuelType, airport):
                 return "Unknown fuel type '\(fuelType)' at '\(airport.LID)'"
         }
     }

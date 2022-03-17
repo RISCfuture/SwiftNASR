@@ -35,13 +35,13 @@ class ArchiveLoaderSpec: QuickSpec {
                     _ = loader.load { result in
                         expect({
                             switch result {
-                            case .success(let distribution):
+                            case let .success(distribution):
                                 if (distribution as! ArchiveFileDistribution).location == location {
                                     return { .succeeded }
                                 } else {
                                     return { .failed(reason: "wrong location") }
                                 }
-                            case .failure(let error):
+                            case let .failure(error):
                                 return { .failed(reason: "\(error)") }
                             }
                             }).to(succeed())

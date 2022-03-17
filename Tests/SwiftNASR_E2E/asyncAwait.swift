@@ -10,6 +10,7 @@ class AsyncAwaitTest: E2ETest {
     private func testWithAsyncAwait() async {
         print("Loading…")
         let _ = try! await nasr.load(progress: &progress)
+        print("Done loading; parsing…")
         
         async let airports = try! nasr.parseAirports() { error in
             print(error)

@@ -18,11 +18,8 @@ public struct Remarks<RemarkField>: Codable where RemarkField: Codable & Equatab
         var remarks = Array<String>()
         
         for remark in self.remarks {
-            switch remark {
-                case .general(let content):
-                    remarks.append(content)
-                default: break
-            }
+            guard case let .general(content) = remark else { break }
+            remarks.append(content)
         }
         
         return remarks
@@ -39,11 +36,11 @@ public struct Remarks<RemarkField>: Codable where RemarkField: Codable & Equatab
         
         for remark in self.remarks {
             switch remark {
-                case .field(let remarkField, _):
+                case let .field(remarkField, _):
                     if field == remarkField {
                         remarks.append(remark)
                     }
-                case .fuel(let remarkField, _, _):
+                case let .fuel(remarkField, _, _):
                     if field == remarkField {
                         remarks.append(remark)
                     }
@@ -98,14 +95,14 @@ public enum Remark<RemarkField>: Codable where RemarkField: Codable & Equatable 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
-            case .general(let content):
+            case let .general(content):
                 try container.encode(Kinds.general.rawValue, forKey: .type)
                 try container.encode(content, forKey: .content)
-            case .field(let field, let content):
+            case let .field(field, content):
                 try container.encode(Kinds.field.rawValue, forKey: .type)
                 try container.encode(field, forKey: .field)
                 try container.encode(content, forKey: .content)
-            case .fuel(let field, let fuel, let content):
+            case let .fuel(field, fuel, content):
                 try container.encode(Kinds.fuel.rawValue, forKey: .type)
                 try container.encode(field, forKey: .field)
                 try container.encode(fuel, forKey: .fuel)
