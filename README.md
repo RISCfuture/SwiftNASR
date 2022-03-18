@@ -53,10 +53,10 @@ SwiftNASR is a work in progress. Here's what's currently ready:
 SwiftNASR is a Swift Package Manager project. To use SwiftNASR, simply add this project
 to your `Package.swift` file. Example:
 
-``` swift
+```swift
 // [...]
 dependencies: [
-    .package(url: "https://github.com/RISCfuture/SwiftNASR/", .branch("master")),
+    .package(url: "https://github.com/RISCfuture/SwiftNASR.git", .branch("master")),
 ]
 // [...]
 ```
@@ -67,7 +67,7 @@ The `NASR` class is used to load NASR distributions. If you have not already dow
 NASR distribution, you can do so using the `fromInternetToFile` method, which will
 download the distribution to a file, so you can avoid having to re-download it later:
 
-``` swift
+```swift
 import SwiftNASR
 
 let workingURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
@@ -78,21 +78,21 @@ let distribution = NASR.fromInternetToFile(distributionURL)!
 If you have already downloaded the distribution, you can load it using
 `fromLocalArchive`:
 
-``` swift
+```swift
 let distribution = NASR.fromLocalArchive(distributionURL)
 ```
 
 Once you have your distribution, use the `NASR` class to asynchronously load the data and
 parse it:
 
-``` swift
+```swift
 distribution.load { result in
     switch result {
         case .success:
             try! distribution.parse(.airports, errorHandler: { error in
                 // [...]
             })
-            
+
         case .failure(let error):
             // [...]
     }
@@ -105,8 +105,8 @@ recommended to serialize this data once parsed using an encoder (see below).
 Once you've completed parsing the data you're interested in, you can access it from
 `NASR.data`:
 
-``` swift
-let sanCarlos = distribution.data.airports!.first { $0.LID == "KSQL" }
+```swift
+let sanCarlos = distribution.data.airports!.first { $0.LID == "SQL" }!
 print(sanCarlos.runways[0].length)
 ```
 
@@ -120,15 +120,16 @@ cut down on space when needed.
 
 You can encode the whole object, containing all the data you've loaded:
 
-``` swift
+```swift
 let encoder = JSONZipEncoder()
 let data = try encoder.encode(distribution.data)
 try data.write(to: workingURL.appendingPathComponent("distribution.json.zip"))
 ```
+
 or you can encode just the data you need; for example, filtering in only the airports that you
 care about, to improve space and time efficiency when loading and working with the data:
 
-``` swift
+```swift
 let validAirports = distribution.data.airports!.filter { airport in
     return airport.publicUse &&
         airport.runways.filter { $0.isPaved && $0.length > 3000 }.count > 0
@@ -145,7 +146,7 @@ SwiftNASR can also be used as a `Publisher` for reactive apps written using Comb
 The `load` method has a variation that returns a publisher that emits when loading is
 complete:
 
-``` swift
+```swift
 let distribution = NASR.fromLocalArchive(distributionURL)
 let cancelable = distribution.load().sink { distribution in
     // [...]
@@ -166,8 +167,10 @@ Publishers that emit when parsing is complete:
                     // [...]
             }
         }
+
 }
-    ```
+
+```
 
 ### Customizing loader behavior
 
@@ -186,3 +189,4 @@ A `SwiftNASR_E2E` target is also available to do an end-to-end test. This will d
 distribution (or load one from file, if already downloaded) and load all data from the
 distribution, then write it out to a `.json.zip` file. The whole process takes some time, but
 if it completes successfully without error, that's a pretty good sign the code hasn't broken.
+```
