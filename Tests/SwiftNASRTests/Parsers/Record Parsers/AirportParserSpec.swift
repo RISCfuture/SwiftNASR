@@ -12,9 +12,11 @@ class AirportParserSpec: QuickSpec {
 
             beforeEach {
                 waitUntil { done in
-                    _ = nasr.load { result in
-                        guard case let .failure(error) = result else { return }
-                        fail((error as CustomStringConvertible).description)
+                    nasr.load { result in
+                        if case let .failure(error) = result {
+                            fail((error as CustomStringConvertible).description)
+                            return
+                        }
                         done()
                     }
                 }
@@ -23,11 +25,11 @@ class AirportParserSpec: QuickSpec {
             it("parses airports, runways, attendance schedules, and remarks") {
                 waitUntil { done in
                     try! nasr.parse(RecordType.airports, errorHandler: {
-                        fail(($0 as CustomStringConvertible).description)
-                        done()
+                        print(($0 as CustomStringConvertible).description)
                         return false
                     }, completionHandler: { done() })
                 }
+                expect(nasr.data.airports).notTo(beNil())
                 expect(nasr.data.airports!.count).to(equal(2))
                 
                 let SQL = nasr.data.airports!.first(where: { $0.LID == "SQL" })!

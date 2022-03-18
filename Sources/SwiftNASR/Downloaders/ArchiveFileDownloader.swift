@@ -29,7 +29,7 @@ public class ArchiveFileDownloader: Downloader {
         self.location = location
     }
 
-    override public func load(callback: @escaping (Result<Distribution, Swift.Error>) -> Void) -> Progress {
+    override public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (Result<Distribution, Swift.Error>) -> Void) {
         let task = session.downloadTask(with: cycleURL) { tempfileURL, response, error in
             do {
                 if let error = error { callback(.failure(error)) }
@@ -62,14 +62,14 @@ public class ArchiveFileDownloader: Downloader {
                 return
             }
         }
+        progressHandler(task.progress)
         task.resume()
-        return task.progress
     }
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public override func loadPublisher() -> AnyPublisher<Distribution, Swift.Error> {
+    public override func loadPublisher(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) -> AnyPublisher<Distribution, Swift.Error> {
         return Future { promise in
-            self.session.downloadTask(with: self.cycleURL) { tempfileURL, response, error in
+            let task = self.session.downloadTask(with: self.cycleURL) { tempfileURL, response, error in
                 do {
                     if let error = error {
                         throw error
@@ -101,13 +101,17 @@ public class ArchiveFileDownloader: Downloader {
                 } catch (let error) {
                     promise(.failure(error))
                 }
-            }.resume()
+            }
+            progressHandler(task.progress)
+            task.resume()
         }.eraseToAnyPublisher()
     }
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    override public func load(progress: inout Progress) async throws -> Distribution {
-        let delegate = DownloadDelegate(progress: &progress)
+    override public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) async throws -> Distribution {
+        let delegate = DownloadDelegate()
+        progressHandler(delegate.progress)
+        
         let (tempfileURL, response) = try await session.download(from: cycleURL, delegate: delegate)
         
         let HTTPResponse = response as! HTTPURLResponse

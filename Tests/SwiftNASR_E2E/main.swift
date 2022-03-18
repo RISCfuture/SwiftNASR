@@ -17,7 +17,7 @@ class E2ETest {
     
     let loadingQueue = DispatchQueue(label: "SwiftNASR_E2E.loading", qos: .utility)
     let updatingQueue = DispatchQueue(label: "SwiftNASR_E2E.updating", qos: .userInteractive, attributes: .concurrent)
-    var progress = Progress(totalUnitCount: 140)
+    var progress = Progress(totalUnitCount: 100)
     var group = DispatchGroup()
     
     func run() {
@@ -53,15 +53,22 @@ class E2ETestWithProgress: E2ETest {
     private var progressCancellable: Cancellable!
     private let monitoringQueue = DispatchQueue(label: "SwiftNASR_E2E.monitoring", qos: .background)
     
+    override func run() {
+        group.enter()
+        
+        test()
+        trackProgress()
+        
+        group.wait()
+    }
+    
     func trackProgress() {
-        loadingQueue.async {
-            self.progressCancellable = self.monitoringQueue.schedule(after: .init(.now()), interval: 2, tolerance: 1) {
-                repeat {
-                    sleep(1)
-                    let pct = Int((self.progress.fractionCompleted*100).rounded())
-                    self.updatingQueue.async { print("\(pct)% \r", terminator: "") }
-                } while self.progress.fractionCompleted < 1.0
-            }
+        self.progressCancellable = self.monitoringQueue.schedule(after: .init(.now()), interval: 2, tolerance: 1) {
+            repeat {
+                sleep(1)
+                let pct = Int((self.progress.fractionCompleted*100).rounded())
+                self.updatingQueue.async { print("\(pct)% \r", terminator: "") }
+            } while self.progress.fractionCompleted < 1.0
         }
     }
 }

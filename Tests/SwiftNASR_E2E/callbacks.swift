@@ -15,9 +15,8 @@ class CallbacksTest: E2ETest {
     }
 
     private func parseAirports() {
-        var airportsAdded = false
-        try! nasr.parse(.airports, progressHandler: {
-            self.addProgress($0, weight: 100, added: &airportsAdded)
+        try! nasr.parse(.airports, withProgress: {
+            self.progress.addChild($0, withPendingUnitCount: 89)
         }, errorHandler: { error in
             fputs("\(error)\n", stderr)
             return true
@@ -25,9 +24,8 @@ class CallbacksTest: E2ETest {
     }
     
     private func parseARTCCs() {
-        var ARTCCsAdded = false
-        try! nasr.parse(.ARTCCFacilities, progressHandler: {
-            self.addProgress($0, weight: 20, added: &ARTCCsAdded)
+        try! nasr.parse(.ARTCCFacilities, withProgress: {
+            self.progress.addChild($0, withPendingUnitCount: 5)
         }, errorHandler: { error in
             fputs("\(error)\n", stderr)
             return true
@@ -35,9 +33,8 @@ class CallbacksTest: E2ETest {
     }
     
     private func parseFSSes() {
-        var FSSesAdded = false
-        try! nasr.parse(.flightServiceStations, progressHandler: {
-            self.addProgress($0, weight: 10, added: &FSSesAdded)
+        try! nasr.parse(.flightServiceStations, withProgress: {
+            self.progress.addChild($0, withPendingUnitCount: 5)
         }, errorHandler: { error in
             fputs("\(error)\n", stderr)
             return true
@@ -46,7 +43,7 @@ class CallbacksTest: E2ETest {
     
     private func load() {
         print("Loading…")
-        let loadProgress = nasr.load { result in
+        nasr.load(withProgress: { self.progress.addChild($0, withPendingUnitCount: 1) }) { result in
             switch result {
             case .success:
                 self.parseAirports()
@@ -56,7 +53,6 @@ class CallbacksTest: E2ETest {
                 fatalError("\(error)")
             }
         }
-        progress.addChild(loadProgress, withPendingUnitCount: 10)
     }
     
     private func waitAndSave() {
@@ -66,11 +62,5 @@ class CallbacksTest: E2ETest {
         
         print("Saving…")
         saveData()
-    }
-    
-    private func addProgress(_ newProgress: Progress, weight: Int64, added: inout Bool) -> Void {
-        if added { return }
-        updatingQueue.async { self.progress.addChild(newProgress, withPendingUnitCount: weight) }
-        added = true
     }
 }

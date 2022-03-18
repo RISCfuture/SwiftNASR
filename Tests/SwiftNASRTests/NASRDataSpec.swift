@@ -14,9 +14,11 @@ class NASRDataSpec: QuickSpec {
             let nasr = NASR.fromLocalDirectory(distURL)
             
             waitUntil { done in
-                _ = nasr.load { result in
-                    guard case let .failure(error) = result else { return }
-                    fail((error as CustomStringConvertible).description)
+                nasr.load { result in
+                    if case let .failure(error) = result {
+                        fail((error as CustomStringConvertible).description)
+                        return
+                    }
                     done()
                 }
             }

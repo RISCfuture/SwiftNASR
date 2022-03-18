@@ -80,7 +80,7 @@ extension LayoutDataParser {
         var formats = Array<NASRTable>()
         var error: Swift.Error? = nil
         
-        try distribution.readFile(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt") { data, progress in
+        try distribution.readFile(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt", withProgress: { _ in }) { data in
             do {
                 try parseLine(data: data, formats: &formats)
             } catch (let lineError) {
@@ -147,7 +147,8 @@ extension LayoutDataParser {
     }
     
     func formatsForPublisher(type: RecordType, distribution: Distribution) -> AnyPublisher<Array<NASRTable>, Swift.Error> {
-        return distribution.readFilePublisher(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt").tryReduce(Array<NASRTable>()) { formats, data in
+        return distribution.readFilePublisher(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt", withProgress: { _ in }, returningLines: { _ in })
+            .tryReduce(Array<NASRTable>()) { formats, data in
             return try self.parseLine(data: data, oldFormats: formats)
         }.eraseToAnyPublisher()
     }
@@ -169,8 +170,8 @@ extension LayoutDataParser {
         var formats = Array<NASRTable>()
         var error: Swift.Error? = nil
         
-        let lines: AsyncThrowingStream = distribution.readFile(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt")
-        for try await (data, _) in lines {
+        let lines: AsyncThrowingStream = distribution.readFile(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt", withProgress: { _ in }, returningLines: { _ in })
+        for try await data in lines {
             do {
                 try parseLine(data: data, formats: &formats)
             } catch (let lineError) {

@@ -24,7 +24,7 @@ public class DirectoryDistribution: ConcurrentDistribution {
         self.location = location
     }
     
-    func readFileWithCallback(path: String, eachLine: (Data, Progress) -> Void) throws {
+    @discardableResult func readFileWithCallback(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, eachLine: (Data) -> Void) throws -> UInt {
         let fileURL = location.appendingPathComponent(path)
         let handle: FileHandle
         do {
@@ -38,7 +38,10 @@ public class DirectoryDistribution: ConcurrentDistribution {
         }
         var buffer = Data(capacity: chunkSize)
         let filesize = try FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as! NSNumber
+        var lines: UInt = 0
+        
         let progress = Progress(totalUnitCount: filesize.int64Value)
+        progressHandler(progress)
 
         while true {
             if let EOL = buffer.range(of: delimiter) {
@@ -50,26 +53,35 @@ public class DirectoryDistribution: ConcurrentDistribution {
                 let subrange = buffer.startIndex..<EOL.lowerBound
                 let subdata = buffer.subdata(in: subrange)
                 progressQueue.async { progress.completedUnitCount += Int64(subdata.count) }
-                eachLine(subdata, progress)
+                
+                eachLine(subdata)
+                lines += 1
+                
                 buffer.removeSubrange(subrange)
             } else {
                 let data = handle.readData(ofLength: chunkSize)
                 progressQueue.async { progress.completedUnitCount += Int64(data.count) }
                 guard data.count > 0 else {
-                    if buffer.count > 0 { eachLine(buffer, progress) }
-                    return
+                    if buffer.count > 0 {
+                        eachLine(buffer)
+                        lines += 1
+                    }
+                    return lines
                 }
                 buffer.append(data)
             }
         }
+        
+        return lines
     }
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func readFileWithCombine(path: String, subject: CurrentValueSubject<Data, Swift.Error>) {
+    func readFileWithCombine(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (UInt) -> Void = { _ in }, subject: CurrentValueSubject<Data, Swift.Error>) {
         do {
-            try readFileWithCallback(path: path) { data, progress in
+            let lines = try readFileWithCallback(path: path, withProgress: progressHandler) { data in
                 subject.send(data)
             }
+            linesHandler(lines)
             subject.send(completion: .finished)
         } catch (let error) {
             subject.send(completion: .failure(error))
@@ -77,12 +89,13 @@ public class DirectoryDistribution: ConcurrentDistribution {
     }
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    func readFileWithAsyncAwait(path: String) -> AsyncThrowingStream<(Data, Progress), Swift.Error> {
+    func readFileWithAsyncAwait(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
         return AsyncThrowingStream { continuation in
             do {
-                try readFileWithCallback(path: path) { data, progress in
-                    continuation.yield((data, progress))
+                let lines = try readFileWithCallback(path: path, withProgress: progressHandler) { data in
+                    continuation.yield(data)
                 }
+                linesHandler(lines)
                 continuation.finish()
             } catch (let error) {
                 continuation.finish(throwing: error)

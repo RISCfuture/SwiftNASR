@@ -12,9 +12,11 @@ class ARTCCParserSpec: QuickSpec {
 
             beforeEach {
                 waitUntil { done in
-                    _ = nasr.load { result in
-                        guard case let .failure(error) = result else { return }
-                        fail((error as CustomStringConvertible).description)
+                    nasr.load { result in
+                        if case let .failure(error) = result {
+                            fail((error as CustomStringConvertible).description)
+                            return
+                        }
                         done()
                     }
                 }
@@ -23,11 +25,11 @@ class ARTCCParserSpec: QuickSpec {
             it("parses centers, frequencies, and remarks") {
                 waitUntil { done in
                     try! nasr.parse(RecordType.ARTCCFacilities, errorHandler: {
-                        fail(($0 as CustomStringConvertible).description)
-                        done()
+                        print(($0 as CustomStringConvertible).description)
                         return false
                     }, completionHandler: { done() })
                 }
+                expect(nasr.data.ARTCCs).notTo(beNil())
                 expect(nasr.data.ARTCCs!.count).to(equal(94))
                 
                 let anchorage = nasr.data.ARTCCs!.first(where: { $0.ID == "ZAN" && $0.locationName == "ANCHORAGE" && $0.type == ARTCC.FacilityType.ARTCC })!
