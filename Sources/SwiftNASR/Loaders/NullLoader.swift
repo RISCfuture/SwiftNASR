@@ -53,19 +53,19 @@ public class NullLoader: Loader {
      */
     
     public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) {
-        progressHandler(completedProgress)
+        progressHandler(completedProgress())
         callback(.success(NullDistribution()))
     }
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public func loadPublisher(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) -> AnyPublisher<Distribution, Swift.Error> {
-        progressHandler(completedProgress)
+        progressHandler(completedProgress())
         return Result.Publisher(NullDistribution()).eraseToAnyPublisher()
     }
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) async throws -> Distribution {
-        progressHandler(completedProgress)
+        progressHandler(completedProgress())
         return NullDistribution()
     }
 }
