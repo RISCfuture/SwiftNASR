@@ -92,7 +92,20 @@ func parserFor(recordType: RecordType) -> Parser {
         case .states: return StateParser()
         case .ARTCCFacilities: return ARTCCParser()
         case .flightServiceStations: return FSSParser()
+        case .navaids: return NavaidParser()
     default:
         preconditionFailure("No parser for \(recordType)")
     }
+}
+
+func parseMagVar(_ string: String, fieldIndex: Int) throws -> Int {
+    guard let magvarNum = Int(string[string.startIndex..<string.index(before: string.endIndex)]) else {
+        throw FixedWidthParserError.invalidValue(string, at: fieldIndex)
+    }
+    var magvar = magvarNum
+    if string[string.index(string.endIndex, offsetBy: -1)] == Character("W") {
+        magvar = -magvar
+    }
+    
+    return magvar
 }

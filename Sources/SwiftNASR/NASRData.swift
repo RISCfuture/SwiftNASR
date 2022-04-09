@@ -70,6 +70,20 @@ public class NASRData: Codable {
         }
     }
     
+    /// Navaids loaded by SwiftNASR.
+    public var navaids: Array<Navaid>? = nil {
+        didSet {
+            if let navaids = navaids {
+                for navaid in navaids {
+                    navaid.data = self
+                    for i in 0..<navaid.checkpoints.count {
+                        navaid.checkpoints[i].findStateByCode = navaid.findStateByCode()
+                    }
+                }
+            }
+        }
+    }
+    
     enum CodingKeys: String, CodingKey {
         case cycle, states, airports, ARTCCs, FSSes
     }
@@ -95,12 +109,6 @@ public class NASRData: Codable {
         }
     }
 }
-
-/**
- Adds methods to `Airport` for accessing associated objects in the containing
- `NASRData` instance. These methods return `nil` unless the associated data has
- already been loaded.
- */
 
 public extension Airport {
     
@@ -248,5 +256,62 @@ public extension FSS.CommFacility {
     var state: State? {
         guard let stateName = stateName else { return nil }
         return findStateByName(stateName)
+    }
+}
+
+extension Navaid {
+    func findAirportByID() -> ((_ airportID: String) -> Airport?) {
+        return { airportID in
+            guard let airports = self.data?.airports else { return nil }
+            
+            return airports.first(where: { $0.LID == airportID })
+        }
+    }
+    
+    func findStateByCode() -> ((_ code: String) -> State?) {
+        return { code in
+            guard let states = self.data?.states else { return nil }
+            return states.first(where: { $0.postOfficeCode == code })
+        }
+    }
+}
+
+public extension Navaid {
+    
+    /// The state associated with the navaid.
+    var state: State? {
+        return data?.states?.first(where: { $0.name == stateName })
+    }
+    
+    /// The high-altitude ARTCC containing this navaid.
+    var highAltitudeARTCC: ARTCC? {
+        guard let highAltitudeARTCCCode = highAltitudeARTCCCode else { return nil }
+        return data?.ARTCCs?.first(where: { $0.ID == highAltitudeARTCCCode })
+    }
+    
+    /// The low-altitude ARTCC containing this navaid.
+    var lowAltitudeARTCC: ARTCC? {
+        guard let lowAltitudeARTCCCode = lowAltitudeARTCCCode else { return nil }
+        return data?.ARTCCs?.first(where: { $0.ID == lowAltitudeARTCCCode })
+    }
+    
+    /// The FSS that controls this navaid.
+    var controllingFSS: FSS? {
+        guard let controllingFSSCode = controllingFSSCode else { return nil }
+        return data?.FSSes?.first(where: { $0.ID == controllingFSSCode })
+    }
+}
+
+public extension VORCheckpoint {
+    
+    /// The state associated with the checkpoint.
+    var state: State? {
+        return findStateByCode(stateCode)
+    }
+    
+    /// The associated airport, if this facility is associated with an airport.
+    var airport: Airport? {
+        guard let airportID = airportID else { return nil }
+        return findAirportByID(airportID)
     }
 }

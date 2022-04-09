@@ -51,6 +51,13 @@ class NASRDataSpec: QuickSpec {
                     return false
                 }, completionHandler: { done() })
             }
+            waitUntil { done in
+                try! nasr.parse(RecordType.navaids, errorHandler: {
+                    fail(($0 as CustomStringConvertible).description)
+                    done()
+                    return false
+                }, completionHandler: { done() })
+            }
             
             parsedData = nasr.data
             let encodedData = try! JSONEncoder().encode(parsedData)
@@ -186,6 +193,38 @@ class NASRDataSpec: QuickSpec {
                         expect(parsedOAK.commFacilities[0].state!.postOfficeCode).to(equal("CA"))
                         expect(decodedOAK.commFacilities[0].state!.postOfficeCode).to(equal("CA"))
                     }
+                }
+            }
+        }
+        
+        describe("navaid") {
+            var parsedAST: Navaid!
+            
+            beforeEach {
+                parsedAST = parsedData.navaids!.first!
+            }
+            
+            describe("state") {
+                it("returns the object") {
+                    expect(parsedAST.state!.postOfficeCode).to(equal("OR"))
+                }
+            }
+            
+            describe("highAltitudeARTCC") {
+                it("returns the object") {
+                    expect(parsedAST.highAltitudeARTCC!.ID).to(equal("ZAN"))
+                }
+            }
+            
+            describe("lowAltitudeARTCC") {
+                it("returns the object") {
+                    expect(parsedAST.lowAltitudeARTCC!.ID).to(equal("ZAN"))
+                }
+            }
+            
+            describe("controllingFSS") {
+                it("returns the object") {
+                    expect(parsedAST.controllingFSS!.ID).to(equal("FTW"))
                 }
             }
         }

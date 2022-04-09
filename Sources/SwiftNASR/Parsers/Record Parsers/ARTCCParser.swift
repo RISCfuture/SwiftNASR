@@ -102,14 +102,10 @@ class ARTCCParser: FixedWidthParser {
 
     func parseValues(_ values: Array<String>, for identifier: ARTCCRecordIdentifier) throws {
         switch identifier {
-        case .generalData:
-            try parseGeneralRecord(values)
-        case .remarks:
-            try parseRemarks(values)
-        case .frequencies:
-            try parseFrequency(values)
-        case .frequencyRemarks:
-            try parseFrequencyRemarks(values)
+            case .generalData: try parseGeneralRecord(values)
+            case .remarks: try parseRemarks(values)
+            case .frequencies: try parseFrequency(values)
+            case .frequencyRemarks: try parseFrequencyRemarks(values)
         }
     }
     

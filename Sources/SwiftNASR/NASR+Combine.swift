@@ -37,7 +37,7 @@ extension NASR {
      - Parameter progress: A child Progress object you can add to your parent
                            Progress.
      - Returns: A publisher that publishes the final states array, and any
-                errors that occur while states. The subscriber can then choose
+                errors that occur while parsing. The subscriber can then choose
                 whether to unsubscribe from the publisher or let it continue
                 parsing, for each published error. Errors published as part of
                 the _failure_ state of the publisher are fatal and unrelated to
@@ -56,7 +56,7 @@ extension NASR {
                                encountered. Parsing will always continue.
      - Parameter error: The parse error.
      - Returns: A publisher that publishes the final airports array, and any
-                errors that occur while airports. The subscriber can then choose
+                errors that occur while parsing. The subscriber can then choose
                 whether to unsubscribe from the publisher or let it continue
                 parsing, for each published error. Errors published as part of
                 the _failure_ state of the publisher are fatal and unrelated to
@@ -79,7 +79,7 @@ extension NASR {
                                encountered. Parsing will always continue.
      - Parameter error: The parse error.
      - Returns: A publisher that publishes the final ARTCCs array, and any
-                errors that occur while ARTCCs. The subscriber can then choose
+                errors that occur while parsing. The subscriber can then choose
                 whether to unsubscribe from the publisher or let it continue
                 parsing, for each published error. Errors published as part of
                 the _failure_ state of the publisher are fatal and unrelated to
@@ -96,13 +96,13 @@ extension NASR {
     }
     
     /**
-     Parses airports from the NASR distribution. Populates `data.airports`.
+     Parses FSSes from the NASR distribution. Populates `data.FSSes`.
      
      - Parameter errorHandler: A block to call when a parse error is
                                encountered. Parsing will always continue.
      - Parameter error: The parse error.
-     - Returns: A publisher that publishes the final airports array, and any
-                errors that occur while airports. The subscriber can then choose
+     - Returns: A publisher that publishes the final FSSes array, and any
+                errors that occur while parsing. The subscriber can then choose
                 whether to unsubscribe from the publisher or let it continue
                 parsing, for each published error. Errors published as part of
                 the _failure_ state of the publisher are fatal and unrelated to
@@ -116,6 +116,29 @@ extension NASR {
     public func parseFSSesPublisher(errorHandler: ((_ error: Swift.Error) -> Void)? = { _ in }, withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }) -> AnyPublisher<Array<FSS>, Swift.Error> {
         return parsePublisher(.flightServiceStations, errorHandler: errorHandler!, withProgress: progressHandler)
             .map { _ in self.data.FSSes! }.eraseToAnyPublisher()
+    }
+    
+    /**
+     Parses navaids from the NASR distribution. Populates `data.navaids`.
+     
+     - Parameter errorHandler: A block to call when a parse error is
+     encountered. Parsing will always continue.
+     - Parameter error: The parse error.
+     - Returns: A publisher that publishes the final navaids array, and any
+     errors that occur while parsing. The subscriber can then choose
+     whether to unsubscribe from the publisher or let it continue
+     parsing, for each published error. Errors published as part of
+     the _failure_ state of the publisher are fatal and unrelated to
+     parsing.
+     - Parameter progressHandler: A block that receives the Progress object when
+     the task begins.
+     - Parameter progress: A child Progress object you can add to your parent
+     Progress.
+     */
+    
+    public func parseNavaidsPublisher(errorHandler: ((_ error: Swift.Error) -> Void)? = { _ in }, withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }) -> AnyPublisher<Array<Navaid>, Swift.Error> {
+        return parsePublisher(.navaids, errorHandler: errorHandler!, withProgress: progressHandler)
+            .map { _ in self.data.navaids! }.eraseToAnyPublisher()
     }
     
     private func parsePublisher(_ type: RecordType, errorHandler: @escaping (_ error: Swift.Error) -> Void, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) -> AnyPublisher<Void, Swift.Error> {
