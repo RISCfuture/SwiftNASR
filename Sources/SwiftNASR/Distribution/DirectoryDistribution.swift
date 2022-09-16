@@ -24,6 +24,11 @@ public class DirectoryDistribution: ConcurrentDistribution {
         self.location = location
     }
     
+    public func findFile(prefix: String) throws -> String? {
+        let children = try FileManager.default.contentsOfDirectory(at: location, includingPropertiesForKeys: [.nameKey])
+        return children.first(where: { $0.lastPathComponent.hasPrefix(prefix) })?.lastPathComponent
+    }
+    
     @discardableResult func readFileWithCallback(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, eachLine: (Data) -> Void) throws -> UInt {
         let fileURL = location.appendingPathComponent(path)
         let handle: FileHandle
