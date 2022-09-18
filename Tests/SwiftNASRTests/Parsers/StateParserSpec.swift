@@ -12,9 +12,11 @@ class StateParserSpec: QuickSpec {
 
             beforeEach {
                 waitUntil { done in
-                    _ = nasr.load { result in
-                        guard case let .failure(error) = result else { return }
-                        fail((error as CustomStringConvertible).description)
+                    nasr.load { result in
+                        if case let .failure(error) = result {
+                            fail((error as CustomStringConvertible).description)
+                            return
+                        }
                         done()
                     }
                 }
@@ -23,11 +25,11 @@ class StateParserSpec: QuickSpec {
             it("parses states") {
                 waitUntil { done in
                     try! nasr.parse(.states, errorHandler: {
-                        fail(($0 as CustomStringConvertible).description)
-                        done()
+                        print(($0 as CustomStringConvertible).description)
                         return false
                     }, completionHandler: { done() })
                 }
+                expect(nasr.data.states).notTo(beNil())
                 expect(nasr.data.states!.count).to(equal(66))
             }
             

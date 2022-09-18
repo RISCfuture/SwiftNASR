@@ -1,27 +1,6 @@
 import Foundation
 import Combine
 
-class ObservedProgress: Progress {
-    private var observation: NSKeyValueObservation!
-    
-    init(child: Progress, queue: DispatchQueue) {
-        super.init(parent: nil, userInfo: nil)
-        
-        observation = child.observe(\.completedUnitCount) { _, change in
-            if let count = change.newValue {
-                queue.async { self.completedUnitCount = count }
-            }
-        }
-        
-        totalUnitCount = child.totalUnitCount
-        completedUnitCount = child.completedUnitCount
-    }
-    
-    deinit {
-        observation.invalidate()
-    }
-}
-
 /**
  A downloader that downloads a distribution archive into memory. No data is
  saved to disk and no buffering is done.
@@ -32,7 +11,7 @@ public class ArchiveDataDownloader: Downloader {
     /// The `URLSession` to use for downloading.
     public var session = URLSession.shared
 
-    override public func load(callback: @escaping (Result<Distribution, Swift.Error>) -> Void) -> Progress {
+    override public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (Result<Distribution, Swift.Error>) -> Void) {
         let task = session.dataTask(with: cycleURL) { data, response, error in
             if let error = error { callback(.failure(error)) }
             else if let response = response {
@@ -49,15 +28,19 @@ public class ArchiveDataDownloader: Downloader {
                 else { callback(.failure(Error.noData)) }
             }
         }
-        let progress = ObservedProgress(child: task.progress, queue: Self.progressQueue)
+        progressHandler(task.progress)
         task.resume()
-        return progress
     }
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public override func loadPublisher() -> AnyPublisher<Distribution, Swift.Error> {
-        return session.dataTaskPublisher(for: cycleURL)
-            .tryMap { data, response -> Distribution in
+    public override func loadPublisher(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) -> AnyPublisher<Distribution, Swift.Error> {
+        let task = session.dataTaskPublisher(for: cycleURL)
+        session.getTasksWithCompletionHandler { dataTasks, _, _ in
+            if let progress = dataTasks.last?.progress {
+                progressHandler(progress)
+            }
+        }
+        return task.tryMap { data, response -> Distribution in
                 guard let HTTPResponse = response as? HTTPURLResponse, HTTPResponse.statusCode == 200 else {
                     throw Error.badResponse(response)
                 }
@@ -69,8 +52,10 @@ public class ArchiveDataDownloader: Downloader {
     }
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    override public func load(progress: inout Progress) async throws -> Distribution {
-        let delegate = DownloadDelegate(progress: &progress)
+    override public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) async throws -> Distribution {
+        let delegate = DownloadDelegate()
+        progressHandler(delegate.progress)
+        
         let (data, response) = try await session.data(from: cycleURL, delegate: delegate)
         
         let HTTPResponse = response as! HTTPURLResponse

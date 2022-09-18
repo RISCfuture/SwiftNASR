@@ -124,14 +124,17 @@ public final class NASR {
     /**
      Asynchronously loads data, either from disk or from the Internet.
      
+     - Parameter progressHandler: This block is called before processing begins
+                                  with a Progress object that you can use to
+                                  track loading progress. You would add this
+                                  object to your parent Progress object.
      - Parameter callback: A block to call when the data is loaded.
      - Parameter result: If successful, contains `Void`. If not, contains the
                          error.
-    - Returns: A progress instance for the loading operation.
      */
 
-    public func load(callback: @escaping (_ result: Result<Void, Swift.Error>) -> Void) -> Progress {
-        return loader.load { result in
+    public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (_ result: Result<Void, Swift.Error>) -> Void) {
+        loader.load(withProgress: progressHandler) { result in
             switch result {
             case let .success(distribution):
                 self.distribution = distribution
@@ -154,19 +157,20 @@ public final class NASR {
      Populates the corresponding field in the `data` field of this instance.
      
      - Parameter type: The type of data to parse.
+     - Parameter progressHandler: This block is called before processing begins
+                                  with a Progress object that you can use to
+                                  track loading progress. You would add this
+                                  object to your parent Progress object.
      - Parameter errorHandler: A block of code to call if parsing fails. If the
                                block returns `true`, parsing will continue even
                                if a specific record has an error. If not given,
                                any error will be swallowed but parsing will
                                continue.
      - Parameter error: The parsing error that occurred.
-     - Parameter progressHandler: A block of code to call periodically with
-                                  updating parsing progress.
-     - Parameter progress: The progress through the parsing operation.
      */
     
     public func parse(_ type: RecordType,
-                      progressHandler: @escaping (_ progress: Progress) -> Void = { _ in },
+                      withProgress progressHandler: @escaping (Progress) -> Void = { _ in },
                       errorHandler: @escaping (_ error: Swift.Error) -> Bool,
                       completionHandler: @escaping () -> Void) throws {
         guard let distribution = self.distribution else {
@@ -178,14 +182,12 @@ public final class NASR {
         try parse(parser: parser, processor: { process in
             switch type {
                 case .states:
-                    try distribution.readFile(path: "State_&_Country_Codes/STATE.txt") { data, progress in
+                    try distribution.readFile(path: "State_&_Country_Codes/STATE.txt", withProgress: progressHandler) { data in
                         process(data)
-                        progressHandler(progress)
                     }
                 default:
-                    try distribution.read(type: type) { data, progress in
+                    try distribution.read(type: type, withProgress: progressHandler) { data in
                         process(data)
-                        progressHandler(progress)
                     }
             }
             completionHandler()

@@ -20,19 +20,20 @@ public class DirectoryLoader: Loader {
         self.location = location
     }
 
-    public func load(callback: @escaping (Result<Distribution, Swift.Error>) -> Void) -> Progress {
+    public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (Result<Distribution, Swift.Error>) -> Void) {
+        progressHandler(completedProgress)
         callback(.success(DirectoryDistribution(location: location)))
-        return completedProgress
     }
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func loadPublisher() -> AnyPublisher<Distribution, Swift.Error> {
+    public func loadPublisher(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) -> AnyPublisher<Distribution, Swift.Error> {
+        progressHandler(completedProgress)
         return Result.Publisher(DirectoryDistribution(location: location)).eraseToAnyPublisher()
     }
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    public func load(progress: inout Progress) async throws -> Distribution {
-        progress = completedProgress
+    public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) async throws -> Distribution {
+        progressHandler(completedProgress)
         return DirectoryDistribution(location: location)
     }
 }

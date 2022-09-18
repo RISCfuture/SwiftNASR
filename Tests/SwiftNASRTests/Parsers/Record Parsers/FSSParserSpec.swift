@@ -12,9 +12,11 @@ class FSSParserSpec: QuickSpec {
 
             beforeEach {
                 waitUntil { done in
-                    _ = nasr.load { result in
-                        guard case let .failure(error) = result else { return }
-                        fail((error as CustomStringConvertible).description)
+                    nasr.load { result in
+                        if case let .failure(error) = result {
+                            fail((error as CustomStringConvertible).description)
+                            return
+                        }
                         done()
                     }
                 }
@@ -23,11 +25,11 @@ class FSSParserSpec: QuickSpec {
             it("parses FSSes") {
                 waitUntil { done in
                     try! nasr.parse(RecordType.flightServiceStations, errorHandler: {
-                        fail(($0 as CustomStringConvertible).description)
-                        done()
+                        print(($0 as CustomStringConvertible).description)
                         return false
                     }, completionHandler: { done() })
                 }
+                expect(nasr.data.FSSes).notTo(beNil())
                 expect(nasr.data.FSSes!.count).to(equal(2))
                 
                 let FTW = nasr.data.FSSes!.first(where: { $0.ID == "FTW" })!

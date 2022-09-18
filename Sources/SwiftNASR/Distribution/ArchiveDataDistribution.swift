@@ -30,10 +30,13 @@ public class ArchiveDataDistribution: ConcurrentDistribution {
         self.archive = archive
     }
     
-    func readFileWithCallback(path: String, eachLine: (Data, Progress) -> Void) throws {
+    @discardableResult func readFileWithCallback(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, eachLine: (Data) -> Void) throws -> UInt {
         guard let entry = archive[path] else { throw Error.noSuchFile(path: path) }
         var buffer = Data(capacity: Int(chunkSize))
+        var lines: UInt = 0
+        
         let progress = Progress(totalUnitCount: Int64(entry.uncompressedSize))
+        progressHandler(progress)
 
         let _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: false, progress: nil) { data in
             buffer.append(data)
@@ -46,19 +49,28 @@ public class ArchiveDataDistribution: ConcurrentDistribution {
                 
                 let subrange = buffer.startIndex..<EOL.lowerBound
                 let subdata = buffer.subdata(in: subrange)
-                eachLine(subdata, progress)
+                
+                eachLine(subdata)
+                lines += 1
+                
                 buffer.removeSubrange(subrange)
             }
         }
-        if buffer.count > 0 { eachLine(buffer, progress) }
+        if buffer.count > 0 {
+            eachLine(buffer)
+            lines += 1
+        }
+        
+        return lines
     }
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func readFileWithCombine(path: String, subject: CurrentValueSubject<Data, Swift.Error>) {
+    func readFileWithCombine(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (UInt) -> Void = { _ in }, subject: CurrentValueSubject<Data, Swift.Error>) {
         do {
-            try readFileWithCallback(path: path) { data, progress in
+            let lines = try readFileWithCallback(path: path, withProgress: progressHandler) { data in
                 subject.send(data)
             }
+            linesHandler(lines)
             subject.send(completion: .finished)
         } catch (let error) {
             subject.send(completion: .failure(error))
@@ -66,11 +78,11 @@ public class ArchiveDataDistribution: ConcurrentDistribution {
     }
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    func readFileWithAsyncAwait(path: String) -> AsyncThrowingStream<(Data, Progress), Swift.Error> {
+    func readFileWithAsyncAwait(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
         return AsyncThrowingStream { continuation in
             do {
-                try readFileWithCallback(path: path) { data, progress in
-                    continuation.yield((data, progress))
+                try readFileWithCallback(path: path, withProgress: progressHandler) { data in
+                    continuation.yield(data)
                 }
                 continuation.finish()
             } catch (let error) {

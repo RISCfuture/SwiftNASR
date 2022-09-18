@@ -54,8 +54,8 @@ open class Downloader: Loader {
      - Returns: A progress value that is updated during the download.
      */
 
-    open func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) -> Progress {
-        return completedProgress
+    open func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) {
+        progressHandler(completedProgress)
     }
     
     /**
@@ -65,29 +65,26 @@ open class Downloader: Loader {
      */
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    open func loadPublisher() -> AnyPublisher<Distribution, Swift.Error> {
+    open func loadPublisher(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) -> AnyPublisher<Distribution, Swift.Error> {
+        progressHandler(completedProgress)
         return Empty(completeImmediately: true).eraseToAnyPublisher()
     }
     
     /**
      Downloads the NASR data asynchronously.
      
-     - Returns: The downloaded distribution.
+     - Returns: The downloaded distribution, and an object for tracking progress.
      - Throws: If the distribution could not be downloaded.
      */
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    open func load(progress: inout Progress) async throws -> Distribution {
-        progress = completedProgress
+    open func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) async throws -> Distribution {
+        progressHandler(completedProgress)
         return NullDistribution()
     }
     
     @objc class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
-        var progress: Progress
-        
-        init(progress: inout Progress) {
-            self.progress = progress
-        }
+        var progress = Progress(totalUnitCount: 0)
         
         func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
             // noop

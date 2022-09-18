@@ -9,41 +9,41 @@ import Combine
  */
 
 protocol ConcurrentDistribution: Distribution {
-    func readFileWithCallback(path: String, eachLine: (Data, Progress) -> Void) throws
+    @discardableResult func readFileWithCallback(path: String, withProgress progressHandler: @escaping (Progress) -> Void, eachLine: (Data) -> Void) throws -> UInt
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func readFileWithCombine(path: String, subject: CurrentValueSubject<Data, Swift.Error>)
+    func readFileWithCombine(path: String, withProgress progressHandler: @escaping (Progress) -> Void, returningLines linesHandler: @escaping (UInt) -> Void, subject: CurrentValueSubject<Data, Swift.Error>)
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    func readFileWithAsyncAwait(path: String) -> AsyncThrowingStream<(Data, Progress), Swift.Error>
+    func readFileWithAsyncAwait(path: String, withProgress progressHandler: @escaping (Progress) -> Void, returningLines linesHandler: @escaping (UInt) -> Void) -> AsyncThrowingStream<Data, Swift.Error>
 }
 
 extension ConcurrentDistribution {
-    public func readFile(path: String, eachLine: (_ data: Data, _ progress: Progress) -> Void) throws {
+    @discardableResult public func readFile(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, eachLine: (_ data: Data) -> Void) throws -> UInt {
         mutex.wait()
         defer { mutex.signal() }
         
-        try readFileWithCallback(path: path, eachLine: eachLine)
+        return try readFileWithCallback(path: path, withProgress: progressHandler, eachLine: eachLine)
     }
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func readFilePublisher(path: String) -> AnyPublisher<Data, Swift.Error> {
+    public func readFilePublisher(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (UInt) -> Void = { _ in }) -> AnyPublisher<Data, Swift.Error> {
         let subject = CurrentValueSubject<Data, Swift.Error>(Data())
         
         queue.async { [self] in
             mutex.wait()
             defer { mutex.signal() }
-            readFileWithCombine(path: path, subject: subject)
+            readFileWithCombine(path: path, withProgress: progressHandler, returningLines: linesHandler, subject: subject)
         }
         
         return subject.eraseToAnyPublisher()
     }
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    public func readFile(path: String) -> AsyncThrowingStream<(Data, Progress), Swift.Error> {
+    public func readFile(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
         mutex.wait()
         defer { mutex.signal() }
-        return readFileWithAsyncAwait(path: path)
+        return readFileWithAsyncAwait(path: path, withProgress: progressHandler, returningLines: linesHandler)
     }
 }
 

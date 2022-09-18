@@ -14,7 +14,7 @@ class DirectoryLoaderSpec: QuickSpec {
 
             it("calls back with the directory") {
                 waitUntil { done in
-                    _ = loader.load { result in
+                    loader.load { result in
                         expect({
                             switch result {
                             case let .success(distribution):

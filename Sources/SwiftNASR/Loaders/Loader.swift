@@ -21,32 +21,43 @@ public protocol Loader {
      in an appropriate `Distribution` implementation.
      
      - Parameter callback: Called when the data processing task is complete.
+     - Parameter progressHandler: This block is called before processing begins
+                                  with a Progress object you can use to track
+                                  loading progress. You would add this object to
+                                  your parent Progress object.
      - Parameter result: If successful, contains the distribution data wrapped
                          in the appropriate implementation. If not, contains the
                          error.
-     - Returns: A progress value that is updated during the loading process.
      */
     
-    func load(callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) -> Progress
+    func load(withProgress progressHandler: @escaping (Progress) -> Void, callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void)
     
     /**
      Asynchronously wraps downloaded data (or data loaded from disk or memory)
      in an appropriate `Distribution` implementation.
      
+     - Parameter progressHandler: This block is called before processing begins
+                                   with a Progress object you can use to track
+                                   loading progress. You would add this object to
+                                   your parent Progress object.
      - Returns: A publisher that publishes the distribution data wrapped in the
                 appropriate implementation.
      */
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func loadPublisher() -> AnyPublisher<Distribution, Swift.Error>
+    func loadPublisher(withProgress progressHandler: @escaping (Progress) -> Void) -> AnyPublisher<Distribution, Swift.Error>
     
     /**
      Asynchronously wraps downloaded data (or data loaded from disk or memory)
      in an appropriate `Distribution` implementation.
      
-     - Returns: The distribution data wrapped in the appropriate implementation.
+     - Parameter progressHandler: This block is called before processing begins
+                                  with a Progress object you can use to track
+                                  loading progress. You would add this object to
+                                  your parent Progress object.
+     - Returns: The distribution data wrapped in the appropriate implementation, and an object you can use to track progress..
      */
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    func load(progress: inout Progress) async throws -> Distribution
+    func load(withProgress progressHandler: @escaping (Progress) -> Void) async throws -> Distribution
 }

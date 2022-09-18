@@ -30,7 +30,9 @@ class ArchiveFileDistributionSpec: QuickSpec {
         describe("readFile") {
             it("reads each line from the file") {
                 var count = 0
-                try! distribution.readFile(path: "APT.TXT") { data, progress in
+                var progress = Progress(totalUnitCount: 0)
+                
+                try! distribution.readFile(path: "APT.TXT", withProgress: { progress = $0 }) { data in
                     expect(progress.completedUnitCount).toEventually(equal(21))
                     if count == 0 {
                         expect(data).to(equal("Hello, world!".data(using: .ascii)!))
@@ -45,7 +47,7 @@ class ArchiveFileDistributionSpec: QuickSpec {
             }
 
             it("throws an error if the file doesn't exist") {
-                expect { try distribution.readFile(path: "unknown") { _, _ in } }
+                expect { try distribution.readFile(path: "unknown") { _ in } }
                     .to(throwError(Error.noSuchFile(path: "n/a")))
             }
         }

@@ -9,17 +9,17 @@ import Combine
  */
 
 public class NullDistribution: Distribution {
-    public func readFile(path: String, eachLine: (Data, Progress) -> Void) throws {
+    @discardableResult public func readFile(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, eachLine: (Data) -> Void) throws -> UInt {
         throw Error.nullDistribution
     }
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func readFilePublisher(path: String) -> AnyPublisher<Data, Swift.Error> {
+    public func readFilePublisher(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (UInt) -> Void = { _ in }) -> AnyPublisher<Data, Swift.Error> {
         return Fail(error: Error.nullDistribution).eraseToAnyPublisher()
     }
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    public func readFile(path: String) -> AsyncThrowingStream<(Data, Progress), Swift.Error> {
+    public func readFile(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
         return AsyncThrowingStream { $0.finish(throwing: Error.nullDistribution) }
     }
     
