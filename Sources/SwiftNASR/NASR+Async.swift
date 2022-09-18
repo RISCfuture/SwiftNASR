@@ -111,7 +111,7 @@ extension NASR {
                 let shouldContinue = errorHandler(error)
                 if !shouldContinue { break }
             }
-            parseProgress.completedUnitCount += 1
+            Task { parseProgress.completedUnitCount += 1 }
         }
         
         parser.finish(data: data)
