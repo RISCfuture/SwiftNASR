@@ -91,8 +91,10 @@ open class Downloader: Loader {
         }
         
         func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-            progress.completedUnitCount = totalBytesWritten
-            progress.totalUnitCount = totalBytesExpectedToWrite
+            DispatchQueue.main.async { [weak self] in
+                self?.progress.completedUnitCount = totalBytesWritten
+                self?.progress.totalUnitCount = totalBytesExpectedToWrite
+            }
         }
     }
 }
