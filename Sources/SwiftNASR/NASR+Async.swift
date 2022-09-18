@@ -13,6 +13,7 @@ extension NASR {
      - Returns: `self` once the data is loaded.
      */
     
+    @discardableResult
     public func load(withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }) async throws -> NASR {
         let distribution = try await loader.load(withProgress: progressHandler)
         self.distribution = distribution
@@ -31,6 +32,7 @@ extension NASR {
      - Returns: The parsed states.
      */
     
+    @discardableResult
     public func parseStates(withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }) async throws -> Array<State> {
         try await parse(.states, withProgress: progressHandler) { _ in true }
         return self.data.states!
@@ -47,6 +49,7 @@ extension NASR {
      - Returns: The parsed airports.
      */
     
+    @discardableResult
     public func parseAirports(withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }, errorHandler: (Swift.Error) -> Bool) async throws -> Array<Airport> {
         try await parse(.airports, withProgress: progressHandler, errorHandler: errorHandler)
         return self.data.airports!
@@ -63,6 +66,7 @@ extension NASR {
      - Returns: The parsed ARTCC records.
      */
     
+    @discardableResult
     public func parseARTCCs(withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }, errorHandler: (Swift.Error) -> Bool) async throws -> Array<ARTCC> {
         try await parse(.ARTCCFacilities, withProgress: progressHandler, errorHandler: errorHandler)
         return self.data.ARTCCs!
@@ -79,6 +83,7 @@ extension NASR {
      - Returns: The parsed FSS records.
      */
     
+    @discardableResult
     public func parseFSSes(withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }, errorHandler: (Swift.Error) -> Bool) async throws -> Array<FSS> {
         try await parse(.flightServiceStations, withProgress: progressHandler, errorHandler: errorHandler)
         return self.data.FSSes!
@@ -95,6 +100,7 @@ extension NASR {
      - Returns: The parsed navaid records.
      */
     
+    @discardableResult
     public func parseNavaids(withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }, errorHandler: (Swift.Error) -> Bool) async throws -> Array<Navaid> {
         try await parse(.navaids, withProgress: progressHandler, errorHandler: errorHandler)
         return self.data.navaids!
