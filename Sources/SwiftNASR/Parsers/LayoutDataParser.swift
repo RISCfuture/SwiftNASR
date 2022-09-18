@@ -35,7 +35,7 @@ struct NASRTableField {
             switch self {
                 case .none: return "NONE"
                 case .databaseLocatorID: return "DLID"
-                case .number(let value): return value
+                case let .number(value): return value
             }
         }
     }
@@ -46,19 +46,15 @@ struct NASRTable {
     
     func field(forID number: String) -> NASRTableField? {
         return fields.first(where: { field -> Bool in
-            switch field.identifier {
-                case .number(let value): return value == number
-                default: return false
-            }
+            guard case let .number(value) = field.identifier else { return false }
+            return value == number
         })
     }
     
     func fieldOffset(forID number: String) -> Int? {
         return fields.firstIndex(where: { field -> Bool in
-            switch field.identifier {
-                case .number(let value): return value == number
-                default: return false
-            }
+            guard case let .number(value) = field.identifier else { return false }
+            return value == number
         })
     }
 }
@@ -193,7 +189,7 @@ enum LayoutParserError: Swift.Error, CustomStringConvertible {
     
     public var description: String {
         switch self {
-            case .badData(let reason):
+            case let .badData(reason):
                 return "Invalid data: \(reason)"
         }
     }

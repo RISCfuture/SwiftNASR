@@ -7,13 +7,13 @@ class E2ETest {
     private var workingURL: URL { URL(fileURLWithPath: FileManager.default.currentDirectoryPath) }
     var distributionURL: URL { workingURL.appendingPathComponent("distribution.zip") }
     
-    var nasr: NASR {
+    lazy var nasr: NASR = {
         if FileManager.default.fileExists(atPath: distributionURL.path) {
             return NASR.fromLocalArchive(distributionURL)
         } else {
             return NASR.fromInternetToFile(distributionURL)!
         }
-    }
+    }()
     
     let loadingQueue = DispatchQueue(label: "SwiftNASR_E2E.loading", qos: .utility)
     let updatingQueue = DispatchQueue(label: "SwiftNASR_E2E.updating", qos: .userInteractive, attributes: .concurrent)

@@ -57,19 +57,19 @@ enum FixedWidthParserError: Swift.Error, CustomStringConvertible {
     
     public var description: String {
         switch self {
-            case .required(let field):
+            case let .required(field):
                 return "Field #\(field) is required"
-            case .invalidNumber(let value, let field):
+            case let .invalidNumber(value, field):
                 return "Field #\(field) contains invalid number '\(value)'"
-            case .invalidDate(let value, let field):
+            case let .invalidDate(value, field):
                 return "Field #\(field) contains invalid date '\(value)'"
-            case .invalidFrequency(let value, let field):
+            case let .invalidFrequency(value, field):
                 return "Field #\(field) contains invalid frequency '\(value)'"
-            case .invalidGeodesic(let value, let field):
+            case let .invalidGeodesic(value, field):
                 return "Field #\(field) contains invalid geodesic '\(value)'"
-            case .conversionError(_, let error, let field):
+            case let .conversionError(_, error, field):
                 return "Field #\(field) contains invalid value: \(error)"
-            case .invalidValue(let value, let field):
+            case let .invalidValue(value, field):
                 return "Field #\(field) contains invalid value '\(value)'"
         }
     }

@@ -108,20 +108,19 @@ extension NASR {
             switch type {
                 case .states:
                     return distribution.readFilePublisher(path: "State_&_Country_Codes/STATE.txt")
-                default:
-                return distribution.readPublisher(type: type)
+                default: return distribution.readPublisher(type: type)
             }
         }.switchToLatest()
-        .map { data in
-            guard !data.isEmpty else { return } // initial subject value
-            do {
-                try parser.parse(data: data)
-            } catch (let error) {
-                errorHandler(error)
+            .map { data in
+                guard !data.isEmpty else { return } // initial subject value
+                do {
+                    try parser.parse(data: data)
+                } catch (let error) {
+                    errorHandler(error)
+                }
             }
-        }
-        .last()
-        .map { _ in parser.finish(data: self.data) }
-        .eraseToAnyPublisher()
+            .last()
+            .map { _ in parser.finish(data: self.data) }
+            .eraseToAnyPublisher()
     }
 }
