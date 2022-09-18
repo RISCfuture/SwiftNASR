@@ -123,6 +123,14 @@ extension Distribution {
         return readFilePublisher(path: "\(type.rawValue).txt")
     }
     
+    /**
+     Reads the data for a given record type from the distribution.
+     
+     - Parameter type: The record type to read data for.
+     - Returns: An async stream of data from the record file, and the progress
+                through that file.
+     */
+    
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     public func read(type: RecordType) -> AsyncThrowingStream<(Data, Progress), Swift.Error> {
         return readFile(path: "\(type.rawValue).txt")
