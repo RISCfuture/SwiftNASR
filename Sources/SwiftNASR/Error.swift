@@ -64,6 +64,13 @@ public enum Error: Swift.Error, LocalizedError {
      */
     case unknownARTCCFrequency(_ frequency: UInt, ARTCC: ARTCC)
     
+    /***
+     Parsed an unknown navigation aid.
+     
+     - Parameter ID: The unknown identifier.
+     */
+    case unknownNavaid(_ ID: String)
+    
     /**
      Parsed an unknown ARTCC data field identifier.
      
@@ -129,6 +136,8 @@ public enum Error: Swift.Error, LocalizedError {
                 return String(format: NSLocalizedString("Unknown pavement classification ‘%@’ for PCN.", comment: "SwiftNASR error"), string)
             case let .invalidVGSI(string):
                 return String(format: NSLocalizedString("Unknown VGSI identifier ‘%@’.", comment: "SwiftNASR error"), string)
+            case let .unknownNavaid(string):
+                return String(format: NSLocalizedString("Unknown navaid ‘%@’.", comment: "SwiftNASR error"), string)
         }
     }
 }

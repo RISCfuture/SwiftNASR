@@ -16,7 +16,7 @@ class CallbacksTest: E2ETest {
 
     private func parseAirports() {
         try! nasr.parse(.airports, withProgress: {
-            self.progress.addChild($0, withPendingUnitCount: 89)
+            self.progress.addChild($0, withPendingUnitCount: 80)
         }, errorHandler: { error in
             fputs("\(error)\n", stderr)
             return true
@@ -35,6 +35,15 @@ class CallbacksTest: E2ETest {
     private func parseFSSes() {
         try! nasr.parse(.flightServiceStations, withProgress: {
             self.progress.addChild($0, withPendingUnitCount: 5)
+        }, errorHandler: { error in
+            fputs("\(error)\n", stderr)
+            return true
+        }, completionHandler: { self.FSSesDone = true })
+    }
+    
+    private func parseNavaids() {
+        try! nasr.parse(.navaids, withProgress: {
+            self.progress.addChild($0, withPendingUnitCount: 10)
         }, errorHandler: { error in
             fputs("\(error)\n", stderr)
             return true

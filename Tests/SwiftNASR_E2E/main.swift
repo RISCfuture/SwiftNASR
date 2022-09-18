@@ -36,6 +36,7 @@ class E2ETest {
         print("Airports: \(nasr.data.airports!.count)")
         print("ARTCCs: \(nasr.data.ARTCCs!.count)")
         print("FSSes: \(nasr.data.FSSes!.count)")
+        print("Navaids: \(nasr.data.navaids!.count)")
         
         do {
             let encoder = JSONZipEncoder()

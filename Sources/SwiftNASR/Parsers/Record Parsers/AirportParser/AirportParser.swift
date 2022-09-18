@@ -55,7 +55,7 @@ class AirportParser: FixedWidthParser {
         .float(),                                                               //  28 elevation
         .generic({ try raw($0, toEnum: Airport.LocationDeterminationMethod.self) },
                  nullable: .blank),                                             //  29 elevation determination method
-        .string(nullable: .blank),                                              //  30 magvar
+        .generic({ try parseMagVar($0, fieldIndex: 30) }, nullable: .blank),    //  30 magvar
         .datetime(formatter: FixedWidthTransformer.yearOnly, nullable: .blank), //  31 magvar epoch
         .integer(nullable: .blank),                                             //  32 TPA
         .string(nullable: .blank),                                              //  33 sectional
@@ -199,17 +199,6 @@ class AirportParser: FixedWidthParser {
         let owner = parsePerson(values: transformedValues[15...18])
         let manager = parsePerson(values: transformedValues[19...22])
 
-        var magvar: Int? = nil
-        if let magvarString = transformedValues[30] as! String? {
-            guard let magvarNum = Int(magvarString[magvarString.startIndex..<magvarString.index(before: magvarString.endIndex)]) else {
-                throw FixedWidthParserError.invalidValue(magvarString, at: 30)
-            }
-            magvar = magvarNum
-            if magvarString[magvarString.index(magvarString.endIndex, offsetBy: -1)] == Character("W") {
-                magvar = -magvar!
-            }
-        }
-
         var ARFFCapability: Airport.ARFFCapability? = nil
         let ARFFString = transformedValues[55] as! Array<String>
         if !ARFFString.isEmpty {
@@ -254,7 +243,7 @@ class AirportParser: FixedWidthParser {
                               referencePoint: location,
                               referencePointDeterminationMethod: transformedValues[27] as! Airport.LocationDeterminationMethod,
                               elevationDeterminationMethod: transformedValues[29] as! Airport.LocationDeterminationMethod?,
-                              magneticVariation: magvar,
+                              magneticVariation: transformedValues[30] as! Int?,
                               magneticVariationEpoch: transformedValues[31] as! Date?,
                               trafficPatternAltitude: transformedValues[32] as! Int?,
                               sectionalChart: transformedValues[33] as! String?,

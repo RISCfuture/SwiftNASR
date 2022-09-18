@@ -84,6 +84,22 @@ extension NASR {
         return self.data.FSSes!
     }
     
+    /**
+     Parses navaids from the NASR distribution. Populates `data.navaids`.
+     
+     - Note: Parsing errors are ignored. Parsing always continues.
+     - Parameter progressHandler: A block that receives the Progress object when
+     the task begins.
+     - Parameter progress: A child Progress object you can add to your parent
+     Progress.
+     - Returns: The parsed navaid records.
+     */
+    
+    public func parseNavaids(withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }, errorHandler: (Swift.Error) -> Bool) async throws -> Array<Navaid> {
+        try await parse(.navaids, withProgress: progressHandler, errorHandler: errorHandler)
+        return self.data.navaids!
+    }
+    
     private func parse(_ type: RecordType, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, errorHandler: (Swift.Error) -> Bool) async throws {
         guard let distribution = self.distribution else {
             throw Error.notYetLoaded

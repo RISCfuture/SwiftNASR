@@ -9,25 +9,30 @@ class AsyncAwaitTest: E2ETestWithProgress {
     
     private func testWithAsyncAwait() async {
         print("Loading…")
-        let _ = try! await nasr.load(withProgress: { self.progress.addChild($0, withPendingUnitCount: 1)})
+        let _ = try! await nasr.load(withProgress: { self.progress.addChild($0, withPendingUnitCount: 5)})
         print("Done loading; parsing…")
         
-        async let airports = try! nasr.parseAirports(withProgress: { self.progress.addChild($0, withPendingUnitCount: 89) }) { error in
+        async let airports = try! nasr.parseAirports(withProgress: { self.progress.addChild($0, withPendingUnitCount: 75) }) { error in
             print(error)
             return true
         }
-        
+
         async let artccs = try! nasr.parseARTCCs(withProgress: { self.progress.addChild($0, withPendingUnitCount: 5) }) { error in
             print(error)
             return true
         }
-        
+
         async let fsses = try! nasr.parseFSSes(withProgress: { self.progress.addChild($0, withPendingUnitCount: 5) }) { error in
             print(error)
             return true
         }
         
-        let _ = await [airports, artccs, fsses] as [Any]
+        async let navaids = try! nasr.parseNavaids(withProgress: { self.progress.addChild($0, withPendingUnitCount: 10) }) { error in
+            print(error)
+            return true
+        }
+        
+        let _ = await [airports, artccs, fsses, navaids] as [Any]
         
         print("Saving…")
         saveData()
