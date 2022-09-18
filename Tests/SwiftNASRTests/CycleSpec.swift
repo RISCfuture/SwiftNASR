@@ -54,5 +54,18 @@ class CycleSpec: QuickSpec {
                 expect(cycle.contains(date)).to(beFalse())
             }
         }
+        
+        describe("description") {
+            var dateComponents = DateComponents()
+            dateComponents.year = 2021
+            dateComponents.month = 1
+            dateComponents.day = 28
+            
+            let cycle = Cycle.effectiveCycle(for: calendar.date(from: dateComponents)!)!
+            
+            it("returns the cycle in YYYY-mm-dd format") {
+                expect(cycle.description).to(equal("2021-01-28"))
+            }
+        }
     }
 }

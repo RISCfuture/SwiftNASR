@@ -5,8 +5,7 @@ import Foundation
  time period. Cycles are defined by the first day of their effectivity period.
  */
 
-public struct Cycle: Codable {
-    
+public struct Cycle: Codable, CustomStringConvertible {
     /// The year of the first date of the cycle.
     public let year: UInt
     
@@ -62,6 +61,11 @@ public struct Cycle: Codable {
     
     /// Whether or not this cycle is currently effective.
     public var isEffective: Bool { contains(Date()) }
+    
+    /// The cycle in YYYY-mm-dd format.
+    public var description: String {
+        String(format: "%04d-%02d-%02d", year, month, day)
+    }
     
     /**
      Generates a cycle from a month, day, and year. Does not validate the cycle.
