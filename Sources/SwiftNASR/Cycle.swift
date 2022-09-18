@@ -62,6 +62,19 @@ public struct Cycle: Codable {
     
     /// Whether or not this cycle is currently effective.
     public var isEffective: Bool { contains(Date()) }
+    
+    /**
+     Generates a cycle from a month, day, and year. Does not validate the cycle.
+     
+     - Parameter year: The cycle year (2020 or later.
+     - Parameter month: The cycle month (1–12).
+     - Parameter day: The cycle day (1–31).
+     */
+    public init(year: UInt, month: UInt8, day: UInt8) {
+        self.year = year
+        self.month = month
+        self.day = day
+    }
 
     /**
      Returns the cycle whose effectivity period includes the given date.
