@@ -30,6 +30,10 @@ public class ArchiveFileDistribution: ConcurrentDistribution {
         self.archive = archive
     }
     
+    public func findFile(prefix: String) throws -> String? {
+        return archive.first(where: { $0.path.components(separatedBy: "/").last?.hasPrefix(prefix) ?? false })?.path
+    }
+    
     @discardableResult func readFileWithCallback(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, eachLine: (Data) -> Void) throws -> UInt {
         guard let entry = archive[path] else { throw Error.noSuchFile(path: path) }
         var buffer = Data(capacity: Int(chunkSize))

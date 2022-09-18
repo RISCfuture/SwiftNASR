@@ -17,8 +17,8 @@ extension NASR {
     public func loadPublisher(withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }) -> AnyPublisher<NASR, Swift.Error> {
         return loader.loadPublisher(withProgress: progressHandler)
             .handleEvents(receiveOutput: { self.distribution = $0 })
-            .map { distribution in
-                distribution.readCyclePublisher()
+            .tryMap { distribution in
+                try distribution.readCyclePublisher()
                     .handleEvents(receiveOutput: { cycle in self.data.cycle = cycle })
             }
             .switchToLatest()

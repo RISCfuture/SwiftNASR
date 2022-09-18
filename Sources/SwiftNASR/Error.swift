@@ -16,7 +16,11 @@ public enum Error: Swift.Error, LocalizedError {
     /// Downloaded tempfile unexpectedly missing.
     case noFile
     
+    /// No file in distribution archive.
     case noSuchFile(path: String)
+    
+    /// No such file by prefix in distribution archive.
+    case noSuchFilePrefix(_ prefix: String)
     
     /// Response did not contain any body.
     case noData
@@ -110,6 +114,8 @@ public enum Error: Swift.Error, LocalizedError {
                 return String(format: NSLocalizedString("Bad response: %@.", comment: "SwiftNASR error"), response.description)
             case .noFile:
                 return NSLocalizedString("Couldn’t find file to load.", comment: "SwiftNASR error")
+            case let .noSuchFilePrefix(prefix):
+                return String(format: NSLocalizedString("Couldn’t find file in archive with prefix “%@.”", comment: "SwiftNASR error"), prefix)
             case .noData:
                 return NSLocalizedString("No data was downloaded.", comment: "SwiftNASR error")
             case .badData:

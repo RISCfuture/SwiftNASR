@@ -9,6 +9,10 @@ import Combine
  */
 
 public class NullDistribution: Distribution {
+    public func findFile(prefix: String) throws -> String? {
+        throw Error.nullDistribution
+    }
+    
     @discardableResult public func readFile(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, eachLine: (Data) -> Void) throws -> UInt {
         throw Error.nullDistribution
     }

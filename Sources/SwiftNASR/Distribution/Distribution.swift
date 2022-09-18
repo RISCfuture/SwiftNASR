@@ -61,6 +61,16 @@ public enum RecordType: String, Codable {
 public protocol Distribution {
     
     /**
+     Locates a file in the distribution by its prefix.
+     
+     - Parameter prefix: The filename prefix.
+     - Returns: The first matching file, or `nil` if no file names match the
+                prefix.
+     */
+    
+    func findFile(prefix: String) throws -> String?
+    
+    /**
      Reads a file from the distribution.
      
      - Parameter path: The path to the file within the distribution.
