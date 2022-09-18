@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-protocol Parser: class {
+protocol Parser: AnyObject {
     func prepare(distribution: Distribution) throws
     @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     func preparePublisher(distribution: Distribution) -> AnyPublisher<Void, Swift.Error>
