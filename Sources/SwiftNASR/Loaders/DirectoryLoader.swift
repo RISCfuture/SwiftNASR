@@ -25,8 +25,14 @@ public class DirectoryLoader: Loader {
         return completedProgress
     }
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func load() -> AnyPublisher<Distribution, Swift.Error> {
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func loadPublisher() -> AnyPublisher<Distribution, Swift.Error> {
         return Result.Publisher(DirectoryDistribution(location: location)).eraseToAnyPublisher()
+    }
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    public func load(progress: inout Progress) async throws -> Distribution {
+        progress = completedProgress
+        return DirectoryDistribution(location: location)
     }
 }

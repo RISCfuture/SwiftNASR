@@ -1,4 +1,4 @@
-// swift-tools-version:5.1
+// swift-tools-version:5.5
 
 import PackageDescription
 
@@ -7,7 +7,7 @@ let package = Package(
     platforms: [
         .macOS(.v10_13), .iOS(.v11), .tvOS(.v11), .watchOS(.v4)
     ],
-
+    
     products: [
         .library(
             name: "SwiftNASR",
@@ -22,14 +22,22 @@ let package = Package(
     targets: [
         .target(
             name: "SwiftNASR",
-            dependencies: ["ZIPFoundation"]),
+            dependencies: ["ZIPFoundation"],
+            linkerSettings: [.linkedLibrary("swift_Concurrency")]),
         .testTarget(
             name: "SwiftNASRTests",
-            dependencies: ["SwiftNASR", "Quick", "Nimble"]),
-        .target(
+            dependencies: ["SwiftNASR", "Quick", "Nimble"],
+            resources: [
+                .copy("Resources/MockDistribution"),
+                .copy("Resources/FailingMockDistribution")
+            ],
+            linkerSettings: [.linkedLibrary("swift_Concurrency")]),
+        .executableTarget(
             name: "SwiftNASR_E2E",
             dependencies: ["SwiftNASR"],
-            path: "Tests/SwiftNASR_E2E")
+            path: "Tests/SwiftNASR_E2E",
+            linkerSettings: [.linkedLibrary("swift_Concurrency")]),
     ],
     swiftLanguageVersions: [.v5]
 )
+

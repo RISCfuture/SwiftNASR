@@ -13,17 +13,27 @@ public class NullDistribution: Distribution {
         throw Error.nullDistribution
     }
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func readFile(path: String) -> AnyPublisher<Data, Swift.Error> {
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func readFilePublisher(path: String) -> AnyPublisher<Data, Swift.Error> {
         return Fail(error: Error.nullDistribution).eraseToAnyPublisher()
+    }
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    public func readFile(path: String) -> AsyncThrowingStream<(Data, Progress), Swift.Error> {
+        return AsyncThrowingStream { $0.finish(throwing: Error.nullDistribution) }
     }
     
     public func readCycle(callback: (_ cycle: Cycle?) -> Void) throws {
         callback(nil)
     }
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func readCycle() -> AnyPublisher<Cycle?, Error> {
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func readCyclePublisher() -> AnyPublisher<Cycle?, Error> {
         return Result.Publisher(nil).eraseToAnyPublisher()
+    }
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    public func readCycle() throws -> Cycle? {
+        return nil
     }
 }

@@ -31,8 +31,8 @@ public class ArchiveLoader: Loader {
         return completedProgress
     }
     
-    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func load() -> AnyPublisher<Distribution, Swift.Error> {
+    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func loadPublisher() -> AnyPublisher<Distribution, Swift.Error> {
         return Future { promise in
             self.queue.async {
                 guard let distribution = ArchiveFileDistribution(location: self.location) else {
@@ -42,5 +42,15 @@ public class ArchiveLoader: Loader {
                 promise(.success(distribution))
             }
         }.eraseToAnyPublisher()
+    }
+    
+    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+    public func load(progress: inout Progress) async throws -> Distribution {
+        guard let distribution = ArchiveFileDistribution(location: location) else {
+            progress = completedProgress
+            throw Error.badData
+        }
+        
+        return distribution
     }
 }

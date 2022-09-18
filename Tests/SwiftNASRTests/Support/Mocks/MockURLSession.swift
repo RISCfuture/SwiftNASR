@@ -1,6 +1,6 @@
 import Foundation
 
-@available(OSX 10.12, *)
+@available(macOS 10.12, *)
 class MockURLSession: URLSession {
     var nextResponse: (Data?, URLResponse?, Error?) = (nil, nil, nil)
     var lastURL: URL? = nil

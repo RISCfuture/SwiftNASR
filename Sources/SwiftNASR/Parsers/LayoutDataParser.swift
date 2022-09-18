@@ -69,8 +69,15 @@ protocol LayoutDataParser: Parser {
 }
 
 extension LayoutDataParser {
-    func prepare(distribution: Distribution) throws {
-        formats = try formatsFor(type: Self.type, distribution: distribution)
+    func prepare(distribution: Distribution, callback: @escaping ((Result<Void, Swift.Error>) -> Void) = { _ in }) {
+        DispatchQueue.global(qos: .utility).async {
+            do {
+                self.formats = try self.formatsFor(type: Self.type, distribution: distribution)
+                callback(.success(()))
+            } catch (let error) {
+                callback(.failure(error))
+            }
+        }
     }
         
     func formatsFor(type: RecordType, distribution: Distribution) throws -> Array<NASRTable> {
@@ -137,14 +144,14 @@ extension LayoutDataParser {
     }
 }
 
-@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension LayoutDataParser {
     func preparePublisher(distribution: Distribution) -> AnyPublisher<Void, Swift.Error> {
         return formatsForPublisher(type: Self.type, distribution: distribution).map { self.formats = $0 }.eraseToAnyPublisher()
     }
     
     func formatsForPublisher(type: RecordType, distribution: Distribution) -> AnyPublisher<Array<NASRTable>, Swift.Error> {
-        return distribution.readFile(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt").tryReduce(Array<NASRTable>()) { formats, data in
+        return distribution.readFilePublisher(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt").tryReduce(Array<NASRTable>()) { formats, data in
             return try self.parseLine(data: data, oldFormats: formats)
         }.eraseToAnyPublisher()
     }
@@ -152,6 +159,31 @@ extension LayoutDataParser {
     private func parseLine(data: Data, oldFormats: Array<NASRTable>) throws -> Array<NASRTable> {
         var formats = oldFormats
         try parseLine(data: data, formats: &formats)
+        return formats
+    }
+}
+    
+@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+extension LayoutDataParser {
+    func prepare(distribution: Distribution) async throws {
+        self.formats = try await formatsFor(type: Self.type, distribution: distribution)
+    }
+    
+    func formatsFor(type: RecordType, distribution: Distribution) async throws -> Array<NASRTable> {
+        var formats = Array<NASRTable>()
+        var error: Swift.Error? = nil
+        
+        let lines: AsyncThrowingStream = distribution.readFile(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt")
+        for try await (data, _) in lines {
+            do {
+                try parseLine(data: data, formats: &formats)
+            } catch (let lineError) {
+                error = lineError
+            }
+        }
+        
+        if let error = error { throw error }
+        if formats.last?.fields.isEmpty ?? false { formats.removeLast() }
         return formats
     }
 }

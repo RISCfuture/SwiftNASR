@@ -5,7 +5,7 @@ import ZIPFoundation
 
 @testable import SwiftNASR
 
-@available(OSX 10.12, *)
+@available(macOS 10.12, *)
 class DirectoryDistributionSpec: QuickSpec {
     private var mockData = "Hello, world!\r\nLine 2".data(using: .ascii)!
 

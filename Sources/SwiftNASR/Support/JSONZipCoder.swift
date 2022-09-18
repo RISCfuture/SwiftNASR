@@ -7,8 +7,8 @@ public class JSONZipEncoder: JSONEncoder {
         guard let archive = Archive(accessMode: .create) else {
             throw JSONZipError.couldntCreateArchive
         }
-        _ = try archive.addEntry(with: "distribution.json", type: .file, uncompressedSize: UInt32(data.count), permissions: nil, compressionMethod: .deflate, progress: nil) { (position, size) -> Data in
-            data.subdata(in: position..<position+size)
+        _ = try archive.addEntry(with: "distribution.json", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) -> Data in
+            data.subdata(in: Data.Index(position)..<Int(position)+size)
         }
         guard let zippedData = archive.data else {
             throw JSONZipError.emptyArchive
@@ -25,10 +25,10 @@ public class JSONZipDecoder: JSONDecoder {
         guard let entry = archive["distribution.json"] else {
             throw JSONZipError.noDistributionFile
         }
-        
-        var json = Data(capacity: entry.uncompressedSize)
+
+        var json = Data(capacity: Int(entry.uncompressedSize))
         _ = try archive.extract(entry) { json.append($0) }
-        
+
         return try super.decode(type, from: json)
     }
 }

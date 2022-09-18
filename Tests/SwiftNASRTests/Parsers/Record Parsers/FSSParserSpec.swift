@@ -5,24 +5,31 @@ import Nimble
 @testable import SwiftNASR
 
 class FSSParserSpec: QuickSpec {
-    let fixturesURL = URL(fileURLWithPath: #file)
-        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        .appendingPathComponent("Support").appendingPathComponent("Fixtures")
-    
     override func spec() {
         describe("parse") {
-            let distURL = fixturesURL.appendingPathComponent("MockDistribution")
+            let distURL = Bundle.module.resourceURL!.appendingPathComponent("MockDistribution", isDirectory: true)
             let nasr = NASR.fromLocalDirectory(distURL)
 
             beforeEach {
-                let group = DispatchGroup()
-                group.enter()
-                _ = nasr.load { _ in group.leave() }
-                group.wait()
+                waitUntil { done in
+                    _ = nasr.load { result in
+                        switch result {
+                        case .failure(let error): fail((error as CustomStringConvertible).description)
+                        default: break
+                        }
+                        done()
+                    }
+                }
             }
 
             it("parses FSSes") {
-                try! nasr.parse(.flightServiceStations) { _ in false }
+                waitUntil { done in
+                    try! nasr.parse(RecordType.flightServiceStations, errorHandler: {
+                        fail(($0 as CustomStringConvertible).description)
+                        done()
+                        return false
+                    }, completionHandler: { done() })
+                }
                 expect(nasr.data.FSSes!.count).to(equal(2))
                 
                 let FTW = nasr.data.FSSes!.first(where: { $0.ID == "FTW" })!
@@ -31,7 +38,7 @@ class FSSParserSpec: QuickSpec {
             }
             
             it("returns a Publisher") {
-                let publisher = nasr.parseFSSes()
+                let publisher = nasr.parseFSSesPublisher()
                 _ = publisher.sink(receiveCompletion: { _ in }, receiveValue: { FSSes in
                     expect(FSSes.count).to(equal(2))
                 })

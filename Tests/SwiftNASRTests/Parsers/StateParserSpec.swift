@@ -5,29 +5,36 @@ import Nimble
 @testable import SwiftNASR
 
 class StateParserSpec: QuickSpec {
-    let fixturesURL = URL(fileURLWithPath: #file)
-        .deletingLastPathComponent().deletingLastPathComponent()
-        .appendingPathComponent("Support").appendingPathComponent("Fixtures")
-    
     override func spec() {
         describe("parse") {
-            let distURL = fixturesURL.appendingPathComponent("MockDistribution")
+            let distURL = Bundle.module.resourceURL!.appendingPathComponent("MockDistribution", isDirectory: true)
             let nasr = NASR.fromLocalDirectory(distURL)
 
             beforeEach {
-                let group = DispatchGroup()
-                group.enter()
-                _ = nasr.load { _ in group.leave() }
-                group.wait()
+                waitUntil { done in
+                    _ = nasr.load { result in
+                        switch result {
+                        case .failure(let error): fail((error as CustomStringConvertible).description)
+                        default: break
+                        }
+                        done()
+                    }
+                }
             }
 
             it("parses states") {
-                try! nasr.parse(.states) { _ in false }
+                waitUntil { done in
+                    try! nasr.parse(.states, errorHandler: {
+                        fail(($0 as CustomStringConvertible).description)
+                        done()
+                        return false
+                    }, completionHandler: { done() })
+                }
                 expect(nasr.data.states!.count).to(equal(66))
             }
             
             it("returns a Publisher") {
-                let publisher = nasr.parseStates()
+                let publisher = nasr.parseStatesPublisher()
                 _ = publisher.sink(receiveCompletion: { _ in }, receiveValue: { states in
                     expect(states.count).to(equal(66))
                 })

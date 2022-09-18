@@ -167,7 +167,8 @@ public final class NASR {
     
     public func parse(_ type: RecordType,
                       progressHandler: @escaping (_ progress: Progress) -> Void = { _ in },
-                      errorHandler: @escaping (_ error: Swift.Error) -> Bool) throws {
+                      errorHandler: @escaping (_ error: Swift.Error) -> Bool,
+                      completionHandler: @escaping () -> Void) throws {
         guard let distribution = self.distribution else {
             throw Error.notYetLoaded
         }
@@ -187,6 +188,7 @@ public final class NASR {
                         progressHandler(progress)
                     }
             }
+            completionHandler()
         }, errorHandler: errorHandler)
     }
     
@@ -197,17 +199,28 @@ public final class NASR {
             throw Error.notYetLoaded
         }
 
-        try parser.prepare(distribution: distribution)
-
-        try processor() { recordData in
-            do {
-                try parser.parse(data: recordData)
-            } catch (let e) {
-                let shouldContinue = errorHandler(e)
+        parser.prepare(distribution: distribution) { result in
+            switch result {
+            case .success(_):
+                do {
+                    try processor() { recordData in
+                        do {
+                            try parser.parse(data: recordData)
+                        } catch (let e) {
+                            let shouldContinue = errorHandler(e)
+                            if !shouldContinue { return }
+                        }
+                    }
+                } catch (let error) {
+                    let shouldContinue = errorHandler(error)
+                    if !shouldContinue { return }
+                }
+                
+                parser.finish(data: self.data)
+            case .failure(let error):
+                let shouldContinue = errorHandler(error)
                 if !shouldContinue { return }
             }
         }
-
-        parser.finish(data: data)
     }
 }
