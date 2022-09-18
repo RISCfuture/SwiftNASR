@@ -14,9 +14,8 @@ jobs:
         os: [macos-12, macos-11]
         swift: ["5.5"]
         xcode:
-          - /Applications/Xcode_13.0.app
-          - /Applications/Xcode_13.1.app
           - /Applications/Xcode_13.2.1.app
+          - /Applications/Xcode_14.0.app
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -24,7 +23,7 @@ jobs:
         with:
           swift-version: ${{ matrix.swift }}
       - name: Set Xcode version
-        run: sudo xcode-select -s "/Applications/Xcode_13.2.1.app"
+        run: sudo xcode-select -s "${{ matrix.xcode }}"
       - name: Build
         run: swift build -v
       - name: Run tests
