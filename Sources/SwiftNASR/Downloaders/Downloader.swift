@@ -77,7 +77,7 @@ open class Downloader: Loader {
      */
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    public func load(progress: inout Progress) async throws -> Distribution {
+    open func load(progress: inout Progress) async throws -> Distribution {
         progress = completedProgress
         return NullDistribution()
     }
