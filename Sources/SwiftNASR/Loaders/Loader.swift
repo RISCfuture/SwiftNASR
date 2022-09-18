@@ -1,11 +1,11 @@
 import Foundation
 import Combine
 
-let completedProgress = { () -> Progress in
+func completedProgress() -> Progress {
     let progress = Progress(totalUnitCount: 1)
     progress.completedUnitCount = 1
     return progress
-}()
+}
 
 /**
  Loaders create the appropriate `Distribution` for a `Downloader`. For example,

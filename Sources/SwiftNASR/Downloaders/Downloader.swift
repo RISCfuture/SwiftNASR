@@ -55,7 +55,7 @@ open class Downloader: Loader {
      */
 
     open func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) {
-        progressHandler(completedProgress)
+        progressHandler(completedProgress())
     }
     
     /**
@@ -66,7 +66,7 @@ open class Downloader: Loader {
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open func loadPublisher(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) -> AnyPublisher<Distribution, Swift.Error> {
-        progressHandler(completedProgress)
+        progressHandler(completedProgress())
         return Empty(completeImmediately: true).eraseToAnyPublisher()
     }
     
@@ -79,7 +79,7 @@ open class Downloader: Loader {
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     open func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) async throws -> Distribution {
-        progressHandler(completedProgress)
+        progressHandler(completedProgress())
         return NullDistribution()
     }
     

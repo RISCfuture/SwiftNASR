@@ -23,7 +23,7 @@ public class ArchiveLoader: Loader {
     }
 
     public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (Result<Distribution, Swift.Error>) -> Void) {
-        progressHandler(completedProgress)
+        progressHandler(completedProgress())
         guard let distribution = ArchiveFileDistribution(location: location) else {
             callback(.failure(Error.badData))
             return
@@ -33,7 +33,7 @@ public class ArchiveLoader: Loader {
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public func loadPublisher(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) -> AnyPublisher<Distribution, Swift.Error> {
-        progressHandler(completedProgress)
+        progressHandler(completedProgress())
         return Future { promise in
             self.queue.async {
                 guard let distribution = ArchiveFileDistribution(location: self.location) else {
@@ -47,7 +47,7 @@ public class ArchiveLoader: Loader {
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) async throws -> Distribution {
-        progressHandler(completedProgress)
+        progressHandler(completedProgress())
         
         guard let distribution = ArchiveFileDistribution(location: location) else {
             throw Error.badData
