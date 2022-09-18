@@ -12,12 +12,6 @@ open class Downloader: Loader {
     
     /// The distribution cycle.
     public let cycle: Cycle
-    
-    /// The queue that progress updates are processed on. By default, an
-    /// internal queue at the `userInteractive` QoS level. If you have a main
-    /// thread where progress updates must be made, then set this var to that
-    /// thread.
-    public static var progressQueue = DispatchQueue(label: "codes.tim.SwiftNASR.Downloader.progress", qos: .userInteractive)
 
     private static var cycleDateFormatter: DateFormatter {
         let formatter = DateFormatter()

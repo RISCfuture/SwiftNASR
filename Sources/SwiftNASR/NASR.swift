@@ -19,6 +19,12 @@ let zulu = TimeZone(secondsFromGMT: 0)!
 
 public final class NASR {
     
+    /// The queue that progress updates are processed on. By default, an
+    /// internal queue at the `userInteractive` QoS level. If you have a main
+    /// thread where progress updates must be made, then set this var to that
+    /// thread.
+    public static var progressQueue = DispatchQueue(label: "codes.tim.SwiftNASR.progress", qos: .userInteractive)
+    
     /**
      Loads NASR data from a local ZIP file. The file must have already been
      downloaded from the FAA's NASR website.

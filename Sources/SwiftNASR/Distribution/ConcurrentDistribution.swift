@@ -47,12 +47,6 @@ extension ConcurrentDistribution {
     }
 }
 
-/// The queue that progress updates are processed on. By default, an
-/// internal queue at the `userInteractive` QoS level. If you have a main
-/// thread where progress updates must be made, then set this var to that
-/// thread.
-public var progressQueue = DispatchQueue(label: "codes.tim.SwiftNASR.ConcurrentDistribution.progress", qos: .userInteractive)
-
 fileprivate let queue = DispatchQueue(label: "codes.tim.SwiftNASR.ConcurrentDistribution", qos: .utility, attributes: [], autoreleaseFrequency: .workItem)
 fileprivate let mutex = DispatchSemaphore(value: 1)
 

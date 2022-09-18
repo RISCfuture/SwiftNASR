@@ -57,7 +57,7 @@ public class DirectoryDistribution: ConcurrentDistribution {
                 
                 let subrange = buffer.startIndex..<EOL.lowerBound
                 let subdata = buffer.subdata(in: subrange)
-                progressQueue.async { progress.completedUnitCount += Int64(subdata.count) }
+                NASR.progressQueue.async { progress.completedUnitCount += Int64(subdata.count) }
                 
                 eachLine(subdata)
                 lines += 1
@@ -65,7 +65,7 @@ public class DirectoryDistribution: ConcurrentDistribution {
                 buffer.removeSubrange(subrange)
             } else {
                 let data = handle.readData(ofLength: chunkSize)
-                progressQueue.async { progress.completedUnitCount += Int64(data.count) }
+                NASR.progressQueue.async { progress.completedUnitCount += Int64(data.count) }
                 guard data.count > 0 else {
                     if buffer.count > 0 {
                         eachLine(buffer)
