@@ -22,7 +22,8 @@ extension Distribution {
     
     public func readCycle(callback: (_ cycle: Cycle?) -> Void) throws {
         var cycle: Cycle? = nil
-        guard let path = try findFile(prefix: "Read_me") else { throw Error.noSuchFilePrefix("Read_me") }
+        let path = try findFile(prefix: "Read_me") ?? "README.txt"
+        
         try readFile(path: path, withProgress: { _ in }) { line in
             if line.starts(with: readmeFirstLine) {
                 if cycle == nil { cycle = parseCycleFrom(line) }
@@ -39,7 +40,8 @@ extension Distribution {
     
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     public func readCyclePublisher() throws -> AnyPublisher<Cycle?, Swift.Error> {
-        guard let path = try findFile(prefix: "Read_me") else { throw Error.noSuchFilePrefix("Read_me") }
+        let path = try findFile(prefix: "Read_me") ?? "README.txt"
+        
         return readFilePublisher(path: path, withProgress: { _ in }, returningLines: { _ in })
             .filter { $0.starts(with: readmeFirstLine) }
             .map { parseCycleFrom($0) }
@@ -56,7 +58,8 @@ extension Distribution {
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     public func readCycle() async throws -> Cycle? {
         var cycle: Cycle? = nil
-        guard let path = try findFile(prefix: "Read_me") else { throw Error.noSuchFilePrefix("Read_me") }
+        let path = try findFile(prefix: "Read_me") ?? "README.txt"
+        
         let lines: AsyncThrowingStream = readFile(path: path, withProgress: { _ in }, returningLines: { _ in })
         for try await line in lines {
             if line.starts(with: readmeFirstLine) {
