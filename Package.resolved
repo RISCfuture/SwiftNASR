@@ -38,12 +38,21 @@
         }
       },
       {
+        "package": "SwiftDocCPlugin",
+        "repositoryURL": "https://github.com/apple/swift-docc-plugin",
+        "state": {
+          "branch": null,
+          "revision": "3303b164430d9a7055ba484c8ead67a52f7b74f6",
+          "version": "1.0.0"
+        }
+      },
+      {
         "package": "ZIPFoundation",
         "repositoryURL": "https://github.com/weichsel/ZIPFoundation/",
         "state": {
           "branch": null,
-          "revision": "7254c74b49cec2cb81520523ba993c671f71b066",
-          "version": "0.9.14"
+          "revision": "f6a22e7da26314b38bf9befce34ae8e4b2543090",
+          "version": "0.9.15"
         }
       }
     ]

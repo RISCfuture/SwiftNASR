@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 /**
- Wraps distribution data in an `ArchiveFileDistribution`.
+ Wraps distribution data in an ``ArchiveFileDistribution``.
  */
 
 public class ArchiveLoader: Loader {

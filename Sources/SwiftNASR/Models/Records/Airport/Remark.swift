@@ -4,8 +4,8 @@
  to the FAA. Remarks can be applied to a record as a whole, or to a specific
  field within the record.
  
- The `RemarkField` type will be a Codable enum representing all the fields in
- a record type that can have a remark applied to them.
+ The `RemarkField` type will be a Codable enum representing all the fields in a
+ record type that can have a remark applied to them.
  */
 
 public struct Remarks<RemarkField>: Codable where RemarkField: Codable & Equatable {

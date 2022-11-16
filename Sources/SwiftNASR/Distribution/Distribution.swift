@@ -82,7 +82,7 @@ public protocol Distribution {
      - Parameter data: A line of text from the file being read.
      - Returns: The number of lines in the file.
      
-     - Throws: `DistributionError.noSuchFile` if a file at `path` doesn't exist
+     - Throws: ``Error```.noSuchFile` if a file at `path` doesn't exist
                within the distribution.
      */
     

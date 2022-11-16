@@ -2,8 +2,8 @@ import Foundation
 
 /// Errors that can occur in SwiftNASR methods.
 public enum Error: Swift.Error, LocalizedError {
-    /// Tried to call `load` on a `SwiftNASR` instance with a null
-    /// distribution.
+    /// Tried to call ``NASR/load(withProgress:callback:)`` on a ``NASR``
+    /// instance with a null distribution.
     case nullDistribution
     
     /**
@@ -28,7 +28,8 @@ public enum Error: Swift.Error, LocalizedError {
     /// Response body was not parseable.
     case badData
     
-    /// `parse` was called before `load`.
+    /// ``NASR/parse(_:withProgress:errorHandler:completionHandler:)`` was
+    /// called before ``NASR/load(withProgress:callback:)``.
     case notYetLoaded
     
     /**

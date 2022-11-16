@@ -17,7 +17,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     // MARK: - Properties
 
     /// A unique identifier for this airport. This field should be used to
-    /// uniquely identify an airport, as the `LID` for an airport
+    /// uniquely identify an airport, as the ``LID`` for an airport
     /// can sometimes change.
     public var id: String
     
@@ -879,7 +879,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
             /// certificated by the Civil Aeronautics Board
             case scheduled = "S"
             
-            /// Airports not receiving services indicated by `.scheduled`.
+            /// Airports not receiving services indicated by ``scheduled``.
             case unscheduled = "U"
         }
     }

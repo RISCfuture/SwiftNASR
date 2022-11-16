@@ -4,10 +4,10 @@ import Foundation
  A runway at an airport (or other surface used for taking off or landing
  aircraft, such as a helipad or waterway).
  
- Runways consist of one or two runway "ends" (`RunwayEnd`), which are directions
- along that runway that an aircraft can use to take off or land. A typical
- runway has two ends, called the base end and reciprocal end. Which is the base
- end is chosen arbitrarily. Helipads and one-way runways do not have a
+ Runways consist of one or two runway "ends" (``RunwayEnd``), which are
+ directions along that runway that an aircraft can use to take off or land. A
+ typical runway has two ends, called the base end and reciprocal end. Which is
+ the base end is chosen arbitrarily. Helipads and one-way runways do not have a
  reciprocal end.
  */
 

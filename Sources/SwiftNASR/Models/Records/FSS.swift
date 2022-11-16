@@ -4,6 +4,11 @@ import Foundation
  Flight service stations are FAA facilities that provide in-flight information
  to pilots but do not provide separation services (except in limited local cases
  when the FSS is associated with an uncontrolled airport).
+ 
+ Fields in this model that reference other record types (e.g.,
+ ``airport``, which references ``Airport``) will be `nil` unless the
+ associated type has been parsed with ``NASR/parse(_:withProgress:errorHandler:completionHandler:)`` or one of its
+ variants.
  */
 
 public class FSS: Record, Equatable, Codable {

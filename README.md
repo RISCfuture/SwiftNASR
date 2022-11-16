@@ -148,7 +148,7 @@ complete:
 
 ```swift
 let distribution = NASR.fromLocalArchive(distributionURL)
-let cancelable = distribution.load().sink { distribution in
+let cancelable = distribution.loadPublisher().sink { distribution in
     // [...]
 }
 ```
@@ -156,18 +156,17 @@ let cancelable = distribution.load().sink { distribution in
 There are also variations of the `parse` method for each parseable type that return
 Publishers that emit when parsing is complete:
 
-    ``` swift
-    let distribution = NASR.fromLocalArchive(distributionURL)
-    let cancelable = distribution.load().map { $0.parseAirports() }
-        .switchToLatest().sink { event in _
-            switch event {
-                case let .error(error): // parse error for one row only
-                    // [...] (decide if you want to keep parsing or cancel)
-                case let .complete(airports):
-                    // [...]
-            }
+``` swift
+let distribution = NASR.fromLocalArchive(distributionURL)
+let cancelable = distribution.loadPublisher().map { $0.parseAirports() }
+    .switchToLatest().sink { event in _
+        switch event {
+            case let .error(error): // parse error for one row only
+                // [...] (decide if you want to keep parsing or cancel)
+            case let .complete(airports):
+                // [...]
         }
-
+    }
 }
 
 ```
@@ -179,6 +178,21 @@ If you need to customize loader behavior (e.g., using your own
 initializer. The different `NASR` class constructors are simply syntactic sugar for different
 loader implementations. See the documentation for each `Loader` implementation for
 more information.
+
+## Documentation
+
+DocC documentation is available, including tutorials and API documentation. For
+Xcode documentation, you can run
+
+``` sh
+swift package generate-documentation --target SwiftMETAR
+```
+
+to generate a docarchive at
+`.build/plugins/Swift-DocC/outputs/SwiftMETAR.doccarchive`. You can open this
+docarchive file in Xcode for browseable API documentation. Or, within Xcode,
+open the SwiftNASR package in Xcode and choose **Build Documentation** from the
+**Product** menu.
 
 ## Tests
 

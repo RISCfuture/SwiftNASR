@@ -3,18 +3,19 @@ import Foundation
 let zulu = TimeZone(secondsFromGMT: 0)!
 
 /**
- The `SwiftNASR` class provides top-level access to loading, parsing, and
- accessing aeronautical data disseminated via NASR distributions. To use this
- class, you must first create an instance, use that instance to load the NASR
- data (from the Internet or locally), parse the data, and then you can access
- it. See the `README.md` file for basic information on how to use this class to
- load, parse, and access aeronautical data.
+ The `NASR` class provides top-level access to loading, parsing, and accessing
+ aeronautical data disseminated via NASR distributions.
  
- The `SwiftNASR` class provides a number of different static methods you can use
- to load and parse NASR data. Parsing is computationally intensive, so it is
- recommended to do it only once. See `README.md` or the documentation for the
- `NASRData` for information on how to serialize parsed data to storage for more
- efficient retrieval.
+ To use this class, you must first create an instance, use that instance to load
+ the NASR data (from the Internet or locally), parse the data, and then you can
+ access it. See the documentation overview for basic information on how to use
+ this class to load, parse, and access aeronautical data.
+ 
+ The `NASR` class provides a number of different static methods you can use to
+ load and parse NASR data. Parsing is computationally intensive, so it is
+ recommended to do it only once. See the documentation overview or the
+ documentation for ``NASRData`` for information on how to serialize parsed data
+ to storage for more efficient retrieval.
  */
 
 public final class NASR {
@@ -118,8 +119,10 @@ public final class NASR {
 
     /**
      Aeronautical data is stored into this field once it is parsed. All members
-     of this instance are `nil` until the `parse` function is called for each
-     data type. The `data` object can be serialized to disk using an `Encoder`.
+     of this instance are `nil` until the
+     ``parse(_:withProgress:errorHandler:completionHandler:)`` function is
+     called for each data type. The ``NASRData`` object can be serialized to
+     disk using an `Encoder`.
      */
     public var data = NASRData()
 
@@ -129,6 +132,10 @@ public final class NASR {
     
     /**
      Asynchronously loads data, either from disk or from the Internet.
+     
+     There is another variation of this method that uses a Combine publisher
+     (``NASR/loadPublisher(withProgress:)``) and one that uses `async`/`await`
+     (``NASR/load(withProgress:)``).
      
      - Parameter progressHandler: This block is called before processing begins
                                   with a Progress object that you can use to
@@ -160,7 +167,11 @@ public final class NASR {
     
     /**
      Parses data of a certain type (e.g., airports) from the NASR distribution.
-     Populates the corresponding field in the `data` field of this instance.
+     Populates the corresponding field in the ``NASRData`` field of ``data``.
+     
+     There are other variations of this method that use Combine publishers
+     (e.g., ``NASR/parseAirportsPublisher(errorHandler:withProgress:)``) or
+     `async`/`await` (e.g., ``NASR/parseAirports(withProgress:errorHandler:)``).
      
      - Parameter type: The type of data to parse.
      - Parameter progressHandler: This block is called before processing begins

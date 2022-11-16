@@ -21,7 +21,7 @@ open class Downloader: Loader {
         return formatter
     }
     
-    /// The URL to download the NASR data from, given `cycle`.
+    /// The URL to download the NASR data from, given ``cycle``.
     public var cycleURL: URL {
         let cycleString = Downloader.cycleDateFormatter.string(from: cycle.date!)
         return URL(string: "https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_\(cycleString).zip")!

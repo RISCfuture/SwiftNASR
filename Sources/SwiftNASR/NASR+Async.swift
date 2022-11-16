@@ -22,7 +22,7 @@ extension NASR {
     }
     
     /**
-     Parses states from the NASR distribution. Populates `data.states`.
+     Parses states from the NASR distribution. Populates ``NASRData/states``.
      
      - Note: Parsing errors are ignored. Parsing always continues.
      - Parameter progressHandler: A block that receives the Progress object when
@@ -39,7 +39,8 @@ extension NASR {
     }
     
     /**
-     Parses airports from the NASR distribution. Populates `data.airports`.
+     Parses airports from the NASR distribution. Populates
+     ``NASRData/airports``.
      
      - Note: Parsing errors are ignored. Parsing always continues.
      - Parameter progressHandler: A block that receives the Progress object when
@@ -56,7 +57,7 @@ extension NASR {
     }
     
     /**
-     Parses ARTCCs from the NASR distribution. Populates `data.ARTCCs`.
+     Parses ARTCCs from the NASR distribution. Populates ``NASRData/ARTCCs``.
      
      - Note: Parsing errors are ignored. Parsing always continues.
      - Parameter progressHandler: A block that receives the Progress object when
@@ -73,7 +74,7 @@ extension NASR {
     }
     
     /**
-     Parses FSSes from the NASR distribution. Populates `data.FSSes`.
+     Parses FSSes from the NASR distribution. Populates ``NASRData/FSSes``.
      
      - Note: Parsing errors are ignored. Parsing always continues.
      - Parameter progressHandler: A block that receives the Progress object when
@@ -90,7 +91,7 @@ extension NASR {
     }
     
     /**
-     Parses navaids from the NASR distribution. Populates `data.navaids`.
+     Parses navaids from the NASR distribution. Populates ``NASRData/navaids``.
      
      - Note: Parsing errors are ignored. Parsing always continues.
      - Parameter progressHandler: A block that receives the Progress object when

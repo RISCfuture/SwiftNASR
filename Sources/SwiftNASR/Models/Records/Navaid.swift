@@ -6,6 +6,11 @@ import Foundation
  Navaids are uniquely identified by their name and facility type; for example,
  the Astoria VOR/DME is distinct from the Astoria fan marker though they both
  have the identifier "AST".
+ 
+ Fields in this model that reference other record types (e.g.,
+ ``lowAltitudeARTCC``, which references ``ARTCC``) will be `nil` unless the
+ associated type has been parsed with ``NASR/parse(_:withProgress:errorHandler:completionHandler:)`` or one of its
+ variants.
  */
 public class Navaid: Record, Equatable, Codable {
     
@@ -21,7 +26,7 @@ public class Navaid: Record, Equatable, Codable {
     /// The city that the navaid is associated with.
     public let city: String
     
-    /// The name of the state containing `city`.
+    /// The name of the state containing ``city``.
     public let stateName: String?
     
     /// The FAA administrative region responsible for this navaid.
@@ -583,7 +588,7 @@ public struct HoldingPatternID: Codable, Equatable, Hashable {
     public let name: String
     
     /// A number that uniquely identifies this holding pattern within the scope
-    /// of `name`.
+    /// of ``name``.
     public let number: UInt
 }
 

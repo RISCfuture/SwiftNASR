@@ -27,7 +27,7 @@ extension NASR {
     }
     
     /**
-     Parses states from the NASR distribution. Populates `data.states`.
+     Parses states from the NASR distribution. Populates ``NASRData/states``.
      
      - Parameter errorHandler: A block to call when a parse error is
                                encountered. Parsing will always continue.
@@ -50,7 +50,8 @@ extension NASR {
     }
     
     /**
-     Parses airports from the NASR distribution. Populates `data.airports`.
+     Parses airports from the NASR distribution. Populates
+     ``NASRData/airports``.
      
      - Parameter errorHandler: A block to call when a parse error is
                                encountered. Parsing will always continue.
@@ -73,7 +74,7 @@ extension NASR {
     }
     
     /**
-     Parses ARTCCs from the NASR distribution. Populates `data.ARTCCs`.
+     Parses ARTCCs from the NASR distribution. Populates ``NASRData/ARTCCs``.
      
      - Parameter errorHandler: A block to call when a parse error is
                                encountered. Parsing will always continue.
@@ -96,7 +97,7 @@ extension NASR {
     }
     
     /**
-     Parses FSSes from the NASR distribution. Populates `data.FSSes`.
+     Parses FSSes from the NASR distribution. Populates ``NASRData/FSSes``.
      
      - Parameter errorHandler: A block to call when a parse error is
                                encountered. Parsing will always continue.
@@ -119,7 +120,7 @@ extension NASR {
     }
     
     /**
-     Parses navaids from the NASR distribution. Populates `data.navaids`.
+     Parses navaids from the NASR distribution. Populates ``NASRData/navaids``.
      
      - Parameter errorHandler: A block to call when a parse error is
      encountered. Parsing will always continue.

@@ -3,20 +3,20 @@ import Foundation
 /**
  A Codable class containing all data parsed from a NASR distribution. The
  members of this class will be `nil` until their respective calls to
- `NASR.parse` have been made.
+ ``NASR/parse(_:withProgress:errorHandler:completionHandler:)`` have been made.
  
  This class can be encoded to disk using an `Encoder` of your choice, retrieved
- later using the corresponding `Decoder`, and re-associated with a `SwiftNASR`
- object using `NASR.fromData`. Parsing the data takes much longer than decoding
- it, so it is recommended to parse the data only once per cycle, and retrieve it
- using a `Decoder` thereafter.
+ later using the corresponding `Decoder`, and re-associated with a SwiftNASR
+ object using ``NASR/fromData(_:)``. Parsing the data takes much longer than
+ decoding it, so it is recommended to parse the data only once per cycle, and
+ retrieve it using a `Decoder` thereafter.
  
  NASRData is also responsible for providing cross-references between classes.
- For example, the `associatedAirport` property on `FSS` references an `Airport`
- which is part of the same containing `NASRData` instance. Rather than directly
- set a reference between the FSS and the airport (which can create circular
- dependencies), `FSS.associatedAirpßort` is a computed property that uses the
- containing `NASRData` instance to find the associated airport.
+ For example, the ``FSS/airport`` property references an ``Airport``
+ which is part of the same containing ``NASRData`` instance. Rather than
+ directly set a reference between the FSS and the airport (which can create
+ circular dependencies), ``FSS/airport`` is a computed property that uses the
+ containing ``NASRData`` instance to find the associated airport.
  */
 
 public class NASRData: Codable {

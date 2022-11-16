@@ -85,7 +85,7 @@ public struct Cycle: Codable, CustomStringConvertible {
      
      - Parameter date: The date to use.
      - Returns: The cycle covering that date, or `nil` if the date is before the
-                `datum` date.
+                ``datum`` date.
      */
     public static func effectiveCycle(for date: Date) -> Cycle? {
         guard var cycle = datum.date else { return nil }
