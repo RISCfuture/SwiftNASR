@@ -181,6 +181,9 @@ more information.
 
 ## Documentation
 
+Online API documentation and tutorials are available at
+https://riscfuture.github.io/SwiftNASR/documentation/swiftnasr/
+
 DocC documentation is available, including tutorials and API documentation. For
 Xcode documentation, you can run
 

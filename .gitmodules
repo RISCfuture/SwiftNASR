@@ -1,0 +1,4 @@
+[submodule "doc"]
+	path = doc
+	url = git@github.com:RISCfuture/SwiftNASR.git
+	branch = docs
