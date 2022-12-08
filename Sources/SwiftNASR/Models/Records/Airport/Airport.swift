@@ -781,19 +781,19 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     public enum LensColor: String, Codable, RecordEnum {
         
         /// White-green (lighted public land airport)
-        case clearGreen = "CG"
+        case whiteGreen = "WG"
         
         /// White-yellow (lighted public seaport)
-        case clearYellow = "CY"
+        case whiteYellow = "WY"
         
         /// White-green-yellow (public heliport)
-        case clearGreenYellow = "CGY"
+        case whiteGreenYellow = "WGY"
         
         /// white-white-green (lighted military airport)
-        case splitClearGreen = "SCG"
+        case splitWhiteGreen = "SWG"
         
         /// White (unlighted land airport)
-        case clear = "C"
+        case white = "W"
         
         /// Yellow (unlighted seaport)
         case yellow = "Y"
