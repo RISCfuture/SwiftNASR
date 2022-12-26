@@ -44,6 +44,7 @@ public struct Cycle: Codable, CustomStringConvertible {
     
     /// The length of time a cycle is effective for.
     public static let cycleDuration: DateComponents = .init(day: 28)
+    private static let negativeCycleDuration: DateComponents = .init(day: -28)
     
     /// The last date when this cycle is effective.
     public var endDate: Date? {
@@ -61,6 +62,29 @@ public struct Cycle: Codable, CustomStringConvertible {
     
     /// Whether or not this cycle is currently effective.
     public var isEffective: Bool { contains(Date()) }
+    
+    /// The next active cycle following this one.
+    public var next: Cycle? {
+        guard let endDate = endDate else { return nil }
+        let components = Self.calendar.dateComponents([.year, .month, .day], from: endDate)
+        guard let year = components.year,
+              let month = components.month,
+              let day = components.day else { return nil }
+        return Cycle(year: UInt(year), month: UInt8(month), day: UInt8(day))
+    }
+    
+    /// The previously active cycle before this one.
+    public var previous: Cycle? {
+        guard let date = date else { return nil }
+        guard let prevDate = Self.calendar.date(byAdding: Self.negativeCycleDuration, to: date) else {
+            return nil
+        }
+        let components = Self.calendar.dateComponents([.year, .month, .day], from: prevDate)
+        guard let year = components.year,
+              let month = components.month,
+              let day = components.day else { return nil }
+        return Cycle(year: UInt(year), month: UInt8(month), day: UInt8(day))
+    }
     
     /// The cycle in YYYY-mm-dd format.
     public var description: String {
