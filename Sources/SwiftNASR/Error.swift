@@ -1,7 +1,7 @@
 import Foundation
 
 /// Errors that can occur in SwiftNASR methods.
-public enum Error: Swift.Error, LocalizedError {
+public enum Error: Swift.Error {
     /// Tried to call ``NASR/load(withProgress:callback:)`` on a ``NASR``
     /// instance with a null distribution.
     case nullDistribution
@@ -106,45 +106,103 @@ public enum Error: Swift.Error, LocalizedError {
      - Parameter string: The unknown FSS ID.
      */
     case unknownFSS(_ ID: String)
-    
+}
+
+extension Error: LocalizedError {
     public var errorDescription: String? {
         switch self {
-            case .nullDistribution:
-                return NSLocalizedString("Called .load() on a null distribution.", comment: "SwiftNASR error")
-            case let .badResponse(response):
-                return String(format: NSLocalizedString("Bad response: %@.", comment: "SwiftNASR error"), response.description)
-            case .noFile:
-                return NSLocalizedString("Couldn’t find file to load.", comment: "SwiftNASR error")
-            case let .noSuchFilePrefix(prefix):
-                return String(format: NSLocalizedString("Couldn’t find file in archive with prefix “%@.”", comment: "SwiftNASR error"), prefix)
-            case .noData:
-                return NSLocalizedString("No data was downloaded.", comment: "SwiftNASR error")
-            case .badData:
-                return NSLocalizedString("Data is invalid.", comment: "SwiftNASR error")
-            case let .unknownARTCC(ID):
-                return String(format: NSLocalizedString("Referenced undefined ARTCC record with ID ‘%@’.", comment: "SwiftNASR error"), ID)
-            case let .unknownARTCCFrequency(frequency, ARTCC):
-                return String(format: NSLocalizedString("Referenced undefined frequency ‘%@’ for ARTCC %@.", comment: "SwiftNASR error"), frequency, ARTCC.ID)
-            case let .unknownFieldID(fieldID, ARTCC):
-                return String(format: NSLocalizedString("Unknown field ID ‘%@’ at ‘%@ %@’.", comment: "SwiftNASR error"), fieldID, ARTCC.ID, ARTCC.locationName)
-            case let .unknownFrequencyFieldID(fieldID, frequency, ARTCC):
-                return String(format: NSLocalizedString("Unknown field ID ‘%@’ for %@ kHz at ‘%@ %@’.", comment: "SwiftNASR error"), fieldID, frequency.frequency, ARTCC.ID, ARTCC.locationName)
-            case let .invalidFrequency(string):
-                return String(format: NSLocalizedString("Invalid frequency ‘%@’.", comment: "SwiftNASR error"), string)
-            case let .unknownFSS(ID):
-                return String(format: NSLocalizedString("Continuation record references unknown FSS ‘%@’.", comment: "SwiftNASR error"), ID)
+            case .nullDistribution, .noFile, .noSuchFilePrefix, .noSuchFile:
+                return t("Couldn’t load distribution.", comment: "error description")
+            case .badResponse, .noData, .badData:
+                return t("Couldn’t download distribution.", comment: "error description")
+            case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldID,
+                    .unknownFrequencyFieldID, .invalidFrequency, .unknownFSS,
+                    .invalidRunwaySurface, .invalidPavementClassification,
+                    .invalidVGSI, .unknownNavaid:
+                return t("Couldn’t parse distribution data.", comment: "error description")
             case .notYetLoaded:
-                return NSLocalizedString("This NASR has not been loaded yet.", comment: "SwiftNASR error")
-            case let .noSuchFile(path):
-                return String(format: NSLocalizedString("No such file in distribution: %@.", comment: "SwiftNASR error"), path)
-            case let .invalidRunwaySurface(string):
-                return String(format: NSLocalizedString("Unknown runway surface ‘%@’.", comment: "SwiftNASR error"), string)
-            case let .invalidPavementClassification(string):
-                return String(format: NSLocalizedString("Unknown pavement classification ‘%@’ for PCN.", comment: "SwiftNASR error"), string)
-            case let .invalidVGSI(string):
-                return String(format: NSLocalizedString("Unknown VGSI identifier ‘%@’.", comment: "SwiftNASR error"), string)
-            case let .unknownNavaid(string):
-                return String(format: NSLocalizedString("Unknown navaid ‘%@’.", comment: "SwiftNASR error"), string)
+                return t("This NASR has not been loaded yet.", comment: "error description")
         }
+    }
+    
+    public var failureReason: String? {
+        switch self {
+            case .nullDistribution:
+                return t("Called .load() on a null distribution.", comment: "failure reason")
+            case let .badResponse(response):
+                return t("Bad response: %@.", comment: "failure reason",
+                         response.description)
+            case .noFile:
+                return t("Couldn’t find file to load.", comment: "failure reason")
+            case let .noSuchFilePrefix(prefix):
+                return t("Couldn’t find file in archive with prefix “%@.”", comment: "failure reason",
+                         prefix)
+            case .noData:
+                return t("No data was downloaded.", comment: "failure reason")
+            case .badData:
+                return t("Data is invalid.", comment: "failure reason")
+            case let .unknownARTCC(ID):
+                return t("Referenced undefined ARTCC record with ID ‘%@’.", comment: "failure reason",
+                         ID)
+            case let .unknownARTCCFrequency(frequency, ARTCC):
+                return t("Referenced undefined frequency ‘%@’ for ARTCC %@.", comment: "failure reason",
+                         frequency, ARTCC.ID)
+            case let .unknownFieldID(fieldID, ARTCC):
+                return t("Unknown field ID ‘%@’ at ‘%@ %@’.", comment: "failure reason",
+                         fieldID, ARTCC.ID, ARTCC.locationName)
+            case let .unknownFrequencyFieldID(fieldID, frequency, ARTCC):
+                return t("Unknown field ID ‘%@’ for %@ kHz at ‘%@ %@’.", comment: "failure reason",
+                         fieldID, frequency.frequency, ARTCC.ID, ARTCC.locationName)
+            case let .invalidFrequency(string):
+                return t("Invalid frequency ‘%@’.", comment: "failure reason",
+                         string)
+            case let .unknownFSS(ID):
+                return t("Continuation record references unknown FSS ‘%@’.", comment: "failure reason",
+                         ID)
+            case .notYetLoaded:
+                return t("Attempted to access NASR data before .load() weas called.", comment: "failure reason")
+            case let .noSuchFile(path):
+                return t("No such file in distribution: %@.", comment: "failure reason",
+                         path)
+            case let .invalidRunwaySurface(string):
+                return t("Unknown runway surface ‘%@’.", comment: "failure reason",
+                         string)
+            case let .invalidPavementClassification(string):
+                return t("Unknown pavement classification ‘%@’ for PCN.", comment: "failure reason",
+                         string)
+            case let .invalidVGSI(string):
+                return t("Unknown VGSI identifier ‘%@’.", comment: "failure reason",
+                         string)
+            case let .unknownNavaid(string):
+                return t("Unknown navaid ‘%@’.", comment: "failure reason",
+                         string)
+        }
+    }
+    
+    public var recoverySuggestion: String? {
+        switch self {
+            case .nullDistribution:
+                return t("Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk.", comment: "recovery suggestion")
+            case .noFile:
+                return t("Verify that the path to the distribution is correct.", comment: "recovery suggestion")
+            case .badResponse, .noData, .badData:
+                return t("Verify that the URL to the distribution is correct and accessible.", comment: "recovery suggestion")
+            case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldID,
+                    .unknownFrequencyFieldID, .invalidFrequency, .unknownFSS,
+                    .invalidRunwaySurface, .invalidPavementClassification,
+                    .invalidVGSI, .unknownNavaid, .noSuchFilePrefix, .noSuchFile:
+                return t("The NASR FADDS format may have changed, requiring an update to SwiftNASR.", comment: "recovery suggestion")
+            case .notYetLoaded:
+                return t("Call .load() before accessing NASR data.", comment: "recovery suggestion")
+        }
+    }
+}
+
+fileprivate func t(_ key: String, comment: String, _ arguments: CVarArg...) -> String {
+    let format = NSLocalizedString(key, bundle: Bundle.module, comment: comment)
+    if arguments.isEmpty {
+        return format
+    } else {
+        return String(format: format, arguments: arguments)
     }
 }
