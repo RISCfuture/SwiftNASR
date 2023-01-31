@@ -27,6 +27,7 @@ SwiftNASR is a work in progress. Here's what's currently ready:
 - [x] Airports
 - [x] ARTCCs
 - [x] FSSes
+- [x] Navaids
 - [ ] ARTCC boundary segments
 - [ ] Airways
 - [ ] AWOSes
@@ -41,7 +42,6 @@ SwiftNASR is a work in progress. Here's what's currently ready:
 - [ ] Miscellaneous activity areas
 - [ ] Military training routes
 - [ ] Enroute fixes
-- [ ] Navaids
 - [ ] Preferred routes
 - [ ] Parachute jump activity areas
 - [ ] DPs and STARs
@@ -171,6 +171,12 @@ let cancelable = distribution.loadPublisher().map { $0.parseAirports() }
 
 ```
 
+### Use with `async`/`await`
+
+There are variations of the `NASR/load(withProgress:)` and parse methods (such
+as `NASR/parseAirports(withProgress:errorHandler:)`) that work with
+`async`/`await`.
+
 ### Customizing loader behavior
 
 If you need to customize loader behavior (e.g., using your own
@@ -188,11 +194,11 @@ DocC documentation is available, including tutorials and API documentation. For
 Xcode documentation, you can run
 
 ``` sh
-swift package generate-documentation --target SwiftMETAR
+swift package generate-documentation --target SwiftNASR
 ```
 
 to generate a docarchive at
-`.build/plugins/Swift-DocC/outputs/SwiftMETAR.doccarchive`. You can open this
+`.build/plugins/Swift-DocC/outputs/SwiftNASR.doccarchive`. You can open this
 docarchive file in Xcode for browseable API documentation. Or, within Xcode,
 open the SwiftNASR package in Xcode and choose **Build Documentation** from the
 **Product** menu.
