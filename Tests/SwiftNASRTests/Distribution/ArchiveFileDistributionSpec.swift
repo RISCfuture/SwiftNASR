@@ -47,7 +47,7 @@ class ArchiveFileDistributionSpec: QuickSpec {
             }
 
             it("throws an error if the file doesn't exist") {
-                expect { try distribution.readFile(path: "unknown") { _ in } }
+                expect { try distribution.readFile(path: "unknown", eachLine: { _ in }) }
                     .to(throwError(Error.noSuchFile(path: "n/a")))
             }
         }
