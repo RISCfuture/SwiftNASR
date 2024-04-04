@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/mattgallagher/CwlCatchException.git",
         "state": {
           "branch": null,
-          "revision": "3b123999de19bf04905bc1dfdb76f817b0f2cc00",
-          "version": "2.1.2"
+          "revision": "3ef6999c73b6938cc0da422f2c912d0158abb0a0",
+          "version": "2.2.0"
         }
       },
       {
@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/mattgallagher/CwlPreconditionTesting.git",
         "state": {
           "branch": null,
-          "revision": "dc9af4781f2afdd1e68e90f80b8603be73ea7abc",
-          "version": "2.2.0"
+          "revision": "2ef56b2caf25f55fa7eef8784c30d5a767550f54",
+          "version": "2.2.1"
         }
       },
       {
@@ -60,8 +60,8 @@
         "repositoryURL": "https://github.com/weichsel/ZIPFoundation/",
         "state": {
           "branch": null,
-          "revision": "a3f5c2bae0f04b0bce9ef3c4ba6bd1031a0564c4",
-          "version": "0.9.17"
+          "revision": "02b6abe5f6eef7e3cbd5f247c5cc24e246efcfe0",
+          "version": "0.9.19"
         }
       }
     ]

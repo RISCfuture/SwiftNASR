@@ -1,14 +1,12 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.9
 
 import PackageDescription
 
 let package = Package(
     name: "SwiftNASR",
     defaultLocalization: "en",
-    platforms: [
-        .macOS(.v10_15), .iOS(.v13), .tvOS(.v13), .watchOS(.v6)
-    ],
-    
+    platforms: [.macOS(.v13), .iOS(.v16), .watchOS(.v9), .tvOS(.v16)],
+
     products: [
         .library(
             name: "SwiftNASR",

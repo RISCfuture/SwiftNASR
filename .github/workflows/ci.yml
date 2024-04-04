@@ -2,24 +2,29 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   tests:
     name: Build and Test
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
-        swift: ["5.8", "5.7", "5.6"]
+        swift: ["5.9", "5.10"]
+        os: [macos-14]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - uses: swift-actions/setup-swift@v1
+      - uses: swift-actions/setup-swift@v2
         with:
           swift-version: ${{ matrix.swift }}
       - name: Build
         run: swift build -v
-      - name: Run tests
+      - name: Test
         run: swift test -v
