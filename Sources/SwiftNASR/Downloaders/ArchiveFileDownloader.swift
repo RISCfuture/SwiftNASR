@@ -18,17 +18,17 @@ public class ArchiveFileDownloader: Downloader {
      Creates a new downloader.
      
      - Parameter cycle: The cycle to download NASR data for. If not specified,
-                        uses the current cycle.
+     uses the current cycle.
      - Parameter location: The location to save the downloaded archive. If
-                           `nil`, saves to a tempfile.
+     `nil`, saves to a tempfile.
      */
-
+    
     public init(cycle: Cycle? = nil, location: URL? = nil) {
         if let cycle = cycle { super.init(cycle: cycle) }
         else { super.init() }
         self.location = location
     }
-
+    
     override public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (Result<Distribution, Swift.Error>) -> Void) {
         let task = session.downloadTask(with: cycleURL) { tempfileURL, response, error in
             do {
@@ -39,18 +39,22 @@ public class ArchiveFileDownloader: Downloader {
                     else if let tempfileURL = tempfileURL {
                         if let location = self.location {
                             try FileManager.default.copyItem(at: tempfileURL, to: location)
-                            guard let distribution = ArchiveFileDistribution(location: location) else {
-                                callback(.failure(Error.badData))
+                            do {
+                                let distribution = try ArchiveFileDistribution(location: location)
+                                callback(.success(distribution))
+                            } catch {
+                                callback(.failure(error))
                                 return
                             }
-                            callback(.success(distribution))
                         }
                         else {
-                            guard let distribution = ArchiveFileDistribution(location: tempfileURL) else {
-                                callback(.failure(Error.badData))
+                            do {
+                                let distribution = try ArchiveFileDistribution(location: tempfileURL)
+                                callback(.success(distribution))
+                            } catch {
+                                callback(.failure(error))
                                 return
                             }
-                            callback(.success(distribution))
                         }
                     }
                     else {
@@ -82,15 +86,11 @@ public class ArchiveFileDownloader: Downloader {
                         else if let tempfileURL = tempfileURL {
                             if let location = self.location {
                                 try FileManager.default.copyItem(at: tempfileURL, to: location)
-                                guard let distribution = ArchiveFileDistribution(location: location) else {
-                                    throw Error.badData
-                                }
+                                let distribution = try ArchiveFileDistribution(location: location)
                                 promise(.success(distribution))
                             }
                             else {
-                                guard let distribution = ArchiveFileDistribution(location: tempfileURL) else {
-                                    throw Error.badData
-                                }
+                                let distribution = try ArchiveFileDistribution(location: tempfileURL)
                                 promise(.success(distribution))
                             }
                         }
@@ -119,12 +119,10 @@ public class ArchiveFileDownloader: Downloader {
         
         if let location = self.location {
             try FileManager.default.copyItem(at: tempfileURL, to: location)
-            guard let distribution = ArchiveFileDistribution(location: location) else { throw Error.badData }
-            return distribution
+            return try ArchiveFileDistribution(location: location)
         }
         else {
-            guard let distribution = ArchiveFileDistribution(location: tempfileURL) else { throw Error.badData }
-            return distribution
+            return try ArchiveFileDistribution(location: tempfileURL)
         }
     }
 }

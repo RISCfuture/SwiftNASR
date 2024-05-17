@@ -9,7 +9,7 @@ import ZIPFoundation
 class ArchiveFileDistributionSpec: QuickSpec {
     private var mockData: Data {
         let data = "Hello, world!\r\nLine 2".data(using: .ascii)!
-        let archive = Archive(accessMode: .create)!
+        let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
             return data.subdata(in: Data.Index(position)..<(Int(position)+size))
         }
@@ -20,7 +20,7 @@ class ArchiveFileDistributionSpec: QuickSpec {
         let tempfile = FileManager.default.temporaryDirectory.appendingPathComponent(ProcessInfo().globallyUniqueString)
         var distribution: ArchiveFileDistribution {
             try! self.mockData.write(to: tempfile)
-            return ArchiveFileDistribution(location: tempfile)!
+            return try! ArchiveFileDistribution(location: tempfile)
         }
 
         afterSuite {

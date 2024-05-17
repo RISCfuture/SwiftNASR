@@ -10,7 +10,7 @@ public class ArchiveDataDownloader: Downloader {
     
     /// The `URLSession` to use for downloading.
     public var session = URLSession.shared
-
+    
     override public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (Result<Distribution, Swift.Error>) -> Void) {
         let task = session.dataTask(with: cycleURL) { data, response, error in
             if let error = error { callback(.failure(error)) }
@@ -18,12 +18,13 @@ public class ArchiveDataDownloader: Downloader {
                 let HTTPResponse = response as! HTTPURLResponse
                 if HTTPResponse.statusCode/100 != 2 { callback(.failure(Error.badResponse(HTTPResponse))) }
                 else if let data = data {
-                    guard let distribution = ArchiveDataDistribution(data: data) else {
-                        callback(.failure(Error.badData))
+                    do {
+                        let distribution = try ArchiveDataDistribution(data: data)
+                        callback(.success(distribution))
+                    } catch {
+                        callback(.failure(error))
                         return
                     }
-                    callback(.success(distribution))
-
                 }
                 else { callback(.failure(Error.noData)) }
             }
@@ -41,14 +42,11 @@ public class ArchiveDataDownloader: Downloader {
             }
         }
         return task.tryMap { data, response -> Distribution in
-                guard let HTTPResponse = response as? HTTPURLResponse, HTTPResponse.statusCode == 200 else {
-                    throw Error.badResponse(response)
-                }
-                guard let distribution = ArchiveDataDistribution(data: data) else {
-                    throw Error.badData
-                }
-                return distribution
-            }.share().eraseToAnyPublisher()
+            guard let HTTPResponse = response as? HTTPURLResponse, HTTPResponse.statusCode == 200 else {
+                throw Error.badResponse(response)
+            }
+            return try ArchiveDataDistribution(data: data)
+        }.share().eraseToAnyPublisher()
     }
     
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
@@ -61,7 +59,6 @@ public class ArchiveDataDownloader: Downloader {
         let HTTPResponse = response as! HTTPURLResponse
         if HTTPResponse.statusCode/100 != 2 { throw Error.badResponse(HTTPResponse) }
         
-        guard let distribution = ArchiveDataDistribution(data: data) else { throw Error.badData }
-        return distribution
+        return try ArchiveDataDistribution(data: data)
     }
 }

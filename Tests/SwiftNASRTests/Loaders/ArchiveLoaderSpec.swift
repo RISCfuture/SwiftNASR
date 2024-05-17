@@ -9,7 +9,7 @@ import ZIPFoundation
 class ArchiveLoaderSpec: QuickSpec {
     private var mockData: Data {
         let data = "Hello, world!".data(using: .ascii)!
-        let archive = Archive(accessMode: .create)!
+        let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
             return data.subdata(in: Data.Index(position)..<(Int(position)+size))
         }

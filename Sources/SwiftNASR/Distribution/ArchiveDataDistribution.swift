@@ -22,11 +22,12 @@ public class ArchiveDataDistribution: ConcurrentDistribution {
      Creates a new instance from the given data.
      
      - Parameter data: The compressed distribution.
+     - Throws: If the archive could not be read.
      */
 
-    public init?(data: Data) {
+    public init(data: Data) throws {
         self.data = data
-        guard let archive = Archive(data: data, accessMode: .read, preferredEncoding: .ascii) else { return nil }
+        let archive = try Archive(data: data, accessMode: .read, pathEncoding: .ascii)
         self.archive = archive
     }
     

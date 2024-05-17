@@ -25,9 +25,6 @@ public enum Error: Swift.Error {
     /// Response did not contain any body.
     case noData
     
-    /// Response body was not parseable.
-    case badData
-    
     /// ``NASR/parse(_:withProgress:errorHandler:completionHandler:)`` was
     /// called before ``NASR/load(withProgress:callback:)``.
     case notYetLoaded
@@ -113,7 +110,7 @@ extension Error: LocalizedError {
         switch self {
             case .nullDistribution, .noFile, .noSuchFilePrefix, .noSuchFile:
                 return t("Couldn’t load distribution.", comment: "error description")
-            case .badResponse, .noData, .badData:
+            case .badResponse, .noData:
                 return t("Couldn’t download distribution.", comment: "error description")
             case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldID,
                     .unknownFrequencyFieldID, .invalidFrequency, .unknownFSS,
@@ -139,8 +136,6 @@ extension Error: LocalizedError {
                          prefix)
             case .noData:
                 return t("No data was downloaded.", comment: "failure reason")
-            case .badData:
-                return t("Data is invalid.", comment: "failure reason")
             case let .unknownARTCC(ID):
                 return t("Referenced undefined ARTCC record with ID ‘%@’.", comment: "failure reason",
                          ID)
@@ -185,7 +180,7 @@ extension Error: LocalizedError {
                 return t("Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk.", comment: "recovery suggestion")
             case .noFile:
                 return t("Verify that the path to the distribution is correct.", comment: "recovery suggestion")
-            case .badResponse, .noData, .badData:
+            case .badResponse, .noData:
                 return t("Verify that the URL to the distribution is correct and accessible.", comment: "recovery suggestion")
             case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldID,
                     .unknownFrequencyFieldID, .invalidFrequency, .unknownFSS,

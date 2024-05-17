@@ -22,11 +22,12 @@ public class ArchiveFileDistribution: ConcurrentDistribution {
      Creates a new instance from the given file.
      
      - Parameter location: The path to the compressed distribution file.
+     - Throws: If the archive could not be read.
      */
 
-    public init?(location: URL) {
+    public init(location: URL) throws {
         self.location = location
-        guard let archive = Archive(url: location, accessMode: .read) else { return nil }
+        let archive = try Archive(url: location, accessMode: .read)
         self.archive = archive
     }
     

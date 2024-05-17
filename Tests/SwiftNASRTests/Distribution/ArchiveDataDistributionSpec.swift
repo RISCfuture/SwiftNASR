@@ -8,7 +8,7 @@ import ZIPFoundation
 class ArchiveDataDistributionSpec: QuickSpec {
     private var mockDataReadmePrefix: Data {
         let data = "Hello, world!\r\nLine 2".data(using: .ascii)!
-        let archive = Archive(accessMode: .create)!
+        let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
             return data.subdata(in: Data.Index(position)..<(Int(position)+size))
         }
@@ -21,7 +21,7 @@ class ArchiveDataDistributionSpec: QuickSpec {
     
     private var mockDataReadme: Data {
         let data = "Hello, world!\r\nLine 2".data(using: .ascii)!
-        let archive = Archive(accessMode: .create)!
+        let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
             return data.subdata(in: Data.Index(position)..<(Int(position)+size))
         }
@@ -33,8 +33,8 @@ class ArchiveDataDistributionSpec: QuickSpec {
     }
 
     override func spec() {
-        let distributionPrefix = ArchiveDataDistribution(data: mockDataReadmePrefix)!
-        let distributionReadme = ArchiveDataDistribution(data: mockDataReadme)!
+        let distributionPrefix = try! ArchiveDataDistribution(data: mockDataReadmePrefix)
+        let distributionReadme = try! ArchiveDataDistribution(data: mockDataReadme)
 
         describe("readFile") {
             it("reads each line from the file") {

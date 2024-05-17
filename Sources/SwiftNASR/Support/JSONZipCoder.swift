@@ -3,33 +3,37 @@ import ZIPFoundation
 
 public class JSONZipEncoder: JSONEncoder {
     public override func encode<T>(_ value: T) throws -> Data where T : Encodable {
-        let data = try super.encode(value)
-        guard let archive = Archive(accessMode: .create) else {
-            throw JSONZipError.couldntCreateArchive
+        do {
+            let data = try super.encode(value)
+            let archive = try Archive(accessMode: .create)
+            _ = try archive.addEntry(with: "distribution.json", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) -> Data in
+                data.subdata(in: Data.Index(position)..<Int(position)+size)
+            }
+            guard let zippedData = archive.data else {
+                throw JSONZipError.emptyArchive
+            }
+            return zippedData
+        } catch (_ as Archive.ArchiveError) {
+            throw JSONZipError.couldntReadArchive
         }
-        _ = try archive.addEntry(with: "distribution.json", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) -> Data in
-            data.subdata(in: Data.Index(position)..<Int(position)+size)
-        }
-        guard let zippedData = archive.data else {
-            throw JSONZipError.emptyArchive
-        }
-        return zippedData
     }
 }
 
 public class JSONZipDecoder: JSONDecoder {
     public override func decode<T>(_ type: T.Type, from data: Data) throws -> T where T : Decodable {
-        guard let archive = Archive(data: data, accessMode: .read, preferredEncoding: .ascii) else {
+        do {
+            let archive = try Archive(data: data, accessMode: .read, pathEncoding: .ascii)
+            guard let entry = archive["distribution.json"] else {
+                throw JSONZipError.noDistributionFile
+            }
+            
+            var json = Data(capacity: Int(entry.uncompressedSize))
+            _ = try archive.extract(entry) { json.append($0) }
+            
+            return try super.decode(type, from: json)
+        } catch (_ as Archive.ArchiveError) {
             throw JSONZipError.couldntReadArchive
         }
-        guard let entry = archive["distribution.json"] else {
-            throw JSONZipError.noDistributionFile
-        }
-
-        var json = Data(capacity: Int(entry.uncompressedSize))
-        _ = try archive.extract(entry) { json.append($0) }
-
-        return try super.decode(type, from: json)
     }
 }
 
