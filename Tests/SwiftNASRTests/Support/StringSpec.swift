@@ -5,7 +5,7 @@ import Nimble
 @testable import SwiftNASR
 
 class StringSpec: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("partition") {
             it("partitions by length") {
                 let partitions = "abc123def".partition(by: 3)

@@ -18,7 +18,7 @@ class MockParser: LayoutDataParser {
 }
 
 class ParserSpec: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("prepare") {
             it("sets the ranges for a layout file") {
                 let distURL = Bundle.module.resourceURL!.appendingPathComponent("MockDistribution", isDirectory: true)

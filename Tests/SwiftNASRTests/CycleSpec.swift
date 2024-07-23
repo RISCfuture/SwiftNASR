@@ -5,7 +5,7 @@ import Nimble
 @testable import SwiftNASR
 
 class CycleSpec: QuickSpec {
-    override func spec() {
+    override class func spec() {
         let calendar = Calendar(identifier: .iso8601)
 
         describe("effectiveCycle") {

@@ -7,7 +7,7 @@ import ZIPFoundation
 
 @available(macOS 10.12, *)
 class ArchiveFileDistributionSpec: QuickSpec {
-    private var mockData: Data {
+    private class var mockData: Data {
         let data = "Hello, world!\r\nLine 2".data(using: .ascii)!
         let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
@@ -16,7 +16,7 @@ class ArchiveFileDistributionSpec: QuickSpec {
         return archive.data!
     }
 
-    override func spec() {
+    override class func spec() {
         let tempfile = FileManager.default.temporaryDirectory.appendingPathComponent(ProcessInfo().globallyUniqueString)
         var distribution: ArchiveFileDistribution {
             try! self.mockData.write(to: tempfile)

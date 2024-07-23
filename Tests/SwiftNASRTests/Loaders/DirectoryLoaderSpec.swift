@@ -6,7 +6,7 @@ import Nimble
 
 @available(macOS 10.12, *)
 class DirectoryLoaderSpec: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("load") {
             let location = FileManager.default.temporaryDirectory
                 .appendingPathComponent(ProcessInfo().globallyUniqueString)
@@ -15,18 +15,9 @@ class DirectoryLoaderSpec: QuickSpec {
             it("calls back with the directory") {
                 waitUntil { done in
                     loader.load { result in
-                        expect({
-                            switch result {
-                            case let .success(distribution):
-                                if (distribution as! DirectoryDistribution).location == location {
-                                    return { .succeeded }
-                                } else {
-                                    return { .failed(reason: "wrong location") }
-                                }
-                            case let .failure(error):
-                                return { .failed(reason: "\(error)") }
-                            }
-                            }).to(succeed())
+                        expect(result).to(beSuccess { distribution in
+                            expect((distribution as! DirectoryDistribution).location).to(equal(location))
+                        })
                         done()
                     }
                 }

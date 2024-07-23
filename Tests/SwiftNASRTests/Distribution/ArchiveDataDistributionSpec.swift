@@ -6,7 +6,7 @@ import ZIPFoundation
 @testable import SwiftNASR
 
 class ArchiveDataDistributionSpec: QuickSpec {
-    private var mockDataReadmePrefix: Data {
+    private class var mockDataReadmePrefix: Data {
         let data = "Hello, world!\r\nLine 2".data(using: .ascii)!
         let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
@@ -19,7 +19,7 @@ class ArchiveDataDistributionSpec: QuickSpec {
         return archive.data!
     }
     
-    private var mockDataReadme: Data {
+    private class var mockDataReadme: Data {
         let data = "Hello, world!\r\nLine 2".data(using: .ascii)!
         let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
@@ -32,7 +32,7 @@ class ArchiveDataDistributionSpec: QuickSpec {
         return archive.data!
     }
 
-    override func spec() {
+    override class func spec() {
         let distributionPrefix = try! ArchiveDataDistribution(data: mockDataReadmePrefix)
         let distributionReadme = try! ArchiveDataDistribution(data: mockDataReadme)
 

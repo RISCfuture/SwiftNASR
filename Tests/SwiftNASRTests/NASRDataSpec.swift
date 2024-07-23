@@ -5,7 +5,7 @@ import Nimble
 @testable import SwiftNASR
 
 class NASRDataSpec: QuickSpec {
-    override func spec() {
+    override class func spec() {
         var parsedData = NASRData()
         var decodedData = NASRData()
         

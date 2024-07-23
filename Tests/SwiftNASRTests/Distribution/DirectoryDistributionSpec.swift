@@ -7,9 +7,9 @@ import ZIPFoundation
 
 @available(macOS 10.12, *)
 class DirectoryDistributionSpec: QuickSpec {
-    private var mockData = "Hello, world!\r\nLine 2".data(using: .ascii)!
+    private static var mockData = "Hello, world!\r\nLine 2".data(using: .ascii)!
 
-    override func spec() {
+    override class func spec() {
         let tempdir = FileManager.default.temporaryDirectory.appendingPathComponent(ProcessInfo().globallyUniqueString)
         var distribution: DirectoryDistribution {
             try! FileManager.default.createDirectory(at: tempdir, withIntermediateDirectories: true)

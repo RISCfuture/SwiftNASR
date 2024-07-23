@@ -15,7 +15,7 @@ enum TestEnum: String, RecordEnum {
 }
 
 class RecordEnumSpec: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("for") {
             it("returns an enum value by raw value") {
                 let value = TestEnum.for("1")
