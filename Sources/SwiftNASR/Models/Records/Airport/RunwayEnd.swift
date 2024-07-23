@@ -49,7 +49,9 @@ public class RunwayEnd: Codable {
     public let touchdownZoneElevation: Float?
     
     /// The height angle between the approach and departure ends of the runway,
-    /// in degrees.
+    /// in percent. The gradient is the slope expressed as a percentage. A
+    /// positive value indicates a runway that slopes up towards the reciprocal
+    /// end.
     public let gradient: Float?
     
     /// The takeoff run available; the portion of the runway available for a
