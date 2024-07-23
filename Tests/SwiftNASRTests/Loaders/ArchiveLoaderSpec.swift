@@ -7,7 +7,7 @@ import ZIPFoundation
 
 @available(macOS 10.12, *)
 class ArchiveLoaderSpec: QuickSpec {
-    private var mockData: Data {
+    private class var mockData: Data {
         let data = "Hello, world!".data(using: .ascii)!
         let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
@@ -16,7 +16,7 @@ class ArchiveLoaderSpec: QuickSpec {
         return archive.data!
     }
 
-    override func spec() {
+    override static func spec() {
         describe("load") {
             let location = FileManager.default.temporaryDirectory
                 .appendingPathComponent(ProcessInfo().globallyUniqueString)
@@ -33,18 +33,9 @@ class ArchiveLoaderSpec: QuickSpec {
             it("calls back with the archive") {
                 waitUntil { done in
                     loader.load { result in
-                        expect({
-                            switch result {
-                            case let .success(distribution):
-                                if (distribution as! ArchiveFileDistribution).location == location {
-                                    return { .succeeded }
-                                } else {
-                                    return { .failed(reason: "wrong location") }
-                                }
-                            case let .failure(error):
-                                return { .failed(reason: "\(error)") }
-                            }
-                            }).to(succeed())
+                        expect(result).to(beSuccess { distribution in
+                            expect((distribution as! ArchiveFileDistribution).location).to(equal(location))
+                        })
                         done()
                     }
                 }

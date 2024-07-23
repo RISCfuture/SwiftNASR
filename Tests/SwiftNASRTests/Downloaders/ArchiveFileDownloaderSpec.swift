@@ -7,14 +7,14 @@ import ZIPFoundation
 
 @available(macOS 10.12, *)
 class ArchiveFileDownloaderSpec: QuickSpec {
-    private var downloader: ArchiveFileDownloader {
+    private static var downloader: ArchiveFileDownloader {
         let d = ArchiveFileDownloader(cycle: Cycle(year: 2020, month: 1, day: 30))
         d.session = mockSession
         return d
     }
 
-    private var mockSession = MockURLSession()
-    private var mockData: Data {
+    private static var mockSession = MockURLSession()
+    private class var mockData: Data {
         let data = "Hello, world!".data(using: .ascii)!
         let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
@@ -22,9 +22,9 @@ class ArchiveFileDownloaderSpec: QuickSpec {
         }
         return archive.data!
     }
-    private var mockURL = URL(string: "http://test.host")!
+    private static var mockURL = URL(string: "http://test.host")!
 
-    override func spec() {
+    override class func spec() {
         afterSuite {
             self.mockSession.cleanup()
         }
@@ -39,19 +39,10 @@ class ArchiveFileDownloaderSpec: QuickSpec {
                 it("calls back with the file") {
                     waitUntil { done in
                         self.downloader.load { result in
-                            expect({
-                                switch result {
-                                case let .success(distribution):
-                                    let file = (distribution as! ArchiveFileDistribution).location
-                                    if try! Data(contentsOf: file) == self.mockData {
-                                        return { .succeeded }
-                                    } else {
-                                        return { .failed(reason: "wrong data") }
-                                    }
-                                case let .failure(error):
-                                    return { .failed(reason: "\(error)") }
-                                }
-                                }).to(succeed())
+                            expect(result).to(beSuccess { distribution in
+                                let file = (distribution as! ArchiveFileDistribution).location
+                                expect(try! Data(contentsOf: file)).to(equal(self.mockData))
+                            })
                             expect(self.mockSession.lastURL!.absoluteString)
                                 .to(equal("https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_2020-01-30.zip"))
                             done()
@@ -70,17 +61,9 @@ class ArchiveFileDownloaderSpec: QuickSpec {
                 it("calls back with an error") {
                     waitUntil { done in
                         self.downloader.load { result in
-                            expect({
-                                switch result {
-                                case .success:
-                                    return { .failed(reason: "expected error, got data") }
-                                case let .failure(error):
-                                    switch error {
-                                    case Error.badResponse: return { .succeeded }
-                                    default: return { .failed(reason: "wrong error \(error)") }
-                                    }
-                                }
-                                }).to(succeed())
+                            expect(result).to(beFailure { error in
+                                expect(error).to(matchError(Error.badResponse(URLResponse())))
+                            })
                             done()
                         }
                     }
@@ -95,19 +78,7 @@ class ArchiveFileDownloaderSpec: QuickSpec {
                 it("calls back with an error") {
                     waitUntil { done in
                         self.downloader.load { result in
-                            expect({
-                                switch result {
-                                case .success:
-                                    return { .failed(reason: "expected error, got data") }
-                                case let .failure(error):
-                                    let cocoaError = error as NSError
-                                    if cocoaError.domain == "TestDomain" && cocoaError.code == -1 {
-                                        return { .succeeded }
-                                    } else {
-                                        return { .failed(reason: "wrong error \(error)") }
-                                    }
-                                }
-                                }).to(succeed())
+                            expect(result).to(beFailure(matchError(NSError(domain: "TestDomain", code: -1))))
                             done()
                         }
                     }

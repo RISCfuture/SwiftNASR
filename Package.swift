@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version: 5.9
 
 import PackageDescription
 
@@ -14,10 +14,10 @@ let package = Package(
         .executable(name: "SwiftNASR_E2E", targets: ["SwiftNASR_E2E"])
     ],
     dependencies: [
-        .package(url: "https://github.com/weichsel/ZIPFoundation/", .upToNextMajor(from: "0.9.12")),
-        .package(url: "https://github.com/Quick/Quick.git", .upToNextMajor(from: "4.0.0")),
-        .package(url: "https://github.com/Quick/Nimble.git", .upToNextMajor(from: "9.2.0")),
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.12"),
+        .package(url: "https://github.com/Quick/Quick.git", from: "7.6.1"),
+        .package(url: "https://github.com/Quick/Nimble.git", from: "13.3.0"),
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin.git", from: "1.0.0")
     ],
     targets: [
         .target(

@@ -5,7 +5,7 @@ import Nimble
 @testable import SwiftNASR
 
 class AttendanceScheduleSpec: QuickSpec {
-    override func spec() {
+    override class func spec() {
         var encoder: JSONEncoder {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys

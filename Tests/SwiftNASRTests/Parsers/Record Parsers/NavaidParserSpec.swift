@@ -5,7 +5,7 @@ import Nimble
 @testable import SwiftNASR
 
 class NavaidParserSpec: QuickSpec {
-    override func spec() {
+    override class func spec() {
         describe("parse") {
             let distURL = Bundle.module.resourceURL!.appendingPathComponent("MockDistribution", isDirectory: true)
             let nasr = NASR.fromLocalDirectory(distURL)
