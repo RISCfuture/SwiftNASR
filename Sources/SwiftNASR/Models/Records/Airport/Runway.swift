@@ -90,6 +90,21 @@ public class Runway: Record, Codable {
         return true
     }
     
+    /**
+     Returns the estimated gradient of the runway, calculated using the base
+     and reciprocal end TDZEs and the runway length. This value could be used in
+     lieu of ``RunwayEnd/gradient`` if that data is unavailable. Returns `nil`
+     if a necessary value is not present. A positive value indicates a runway
+     that slopes up towards the reciprocal end.
+     */
+    public var estimatedGradient: Float? {
+        guard let baseElevation = self.baseEnd.touchdownZoneElevation,
+              let reciprocalElevation = self.reciprocalEnd?.touchdownZoneElevation,
+              let runwayLength = self.length else { return nil }
+        
+        return (reciprocalElevation - baseElevation)/Float(runwayLength) * 100.0
+    }
+    
     // MARK: - Methods
     
     init(identification: String, length: UInt?, width: UInt?, lengthSource: String?, lengthSourceDate: Date?, materials: Set<Material>, condition: Condition?, treatment: Treatment?, pavementClassification: PavementClassification?, edgeLightsIntensity: EdgeLightIntensity?, baseEnd: RunwayEnd, reciprocalEnd: RunwayEnd?, singleWheelWeightBearingCapacity: UInt?, dualWheelWeightBearingCapacity: UInt?, tandemDualWheelWeightBearingCapacity: UInt?, doubleTandemDualWheelWeightBearingCapacity: UInt?) {
