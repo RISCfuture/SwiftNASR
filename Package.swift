@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10
 
 import PackageDescription
 
@@ -23,7 +23,6 @@ let package = Package(
         .target(
             name: "SwiftNASR",
             dependencies: ["ZIPFoundation"],
-            resources: [.process("Resources")],
             linkerSettings: [.linkedLibrary("swift_Concurrency")]),
         .testTarget(
             name: "SwiftNASRTests",

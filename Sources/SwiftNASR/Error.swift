@@ -109,95 +109,73 @@ extension Error: LocalizedError {
     public var errorDescription: String? {
         switch self {
             case .nullDistribution, .noFile, .noSuchFilePrefix, .noSuchFile:
-                return t("Couldn’t load distribution.", comment: "error description")
+                return String(localized: "Couldn’t load distribution.", comment: "error description")
             case .badResponse, .noData:
-                return t("Couldn’t download distribution.", comment: "error description")
+                return String(localized: "Couldn’t download distribution.", comment: "error description")
             case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldID,
                     .unknownFrequencyFieldID, .invalidFrequency, .unknownFSS,
                     .invalidRunwaySurface, .invalidPavementClassification,
                     .invalidVGSI, .unknownNavaid:
-                return t("Couldn’t parse distribution data.", comment: "error description")
+                return String(localized: "Couldn’t parse distribution data.", comment: "error description")
             case .notYetLoaded:
-                return t("This NASR has not been loaded yet.", comment: "error description")
+                return String(localized: "This NASR has not been loaded yet.", comment: "error description")
         }
     }
     
     public var failureReason: String? {
         switch self {
             case .nullDistribution:
-                return t("Called .load() on a null distribution.", comment: "failure reason")
+                return String(localized: "Called .load() on a null distribution.", comment: "failure reason")
             case let .badResponse(response):
-                return t("Bad response: %@.", comment: "failure reason",
-                         response.description)
+                return String(localized: "Bad response: \(response.description).", comment: "failure reason")
             case .noFile:
-                return t("Couldn’t find file to load.", comment: "failure reason")
+                return String(localized: "Couldn’t find file to load.", comment: "failure reason")
             case let .noSuchFilePrefix(prefix):
-                return t("Couldn’t find file in archive with prefix “%@.”", comment: "failure reason",
-                         prefix)
+                return String(localized: "Couldn’t find file in archive with prefix “\(prefix).”", comment: "failure reason")
             case .noData:
-                return t("No data was downloaded.", comment: "failure reason")
+                return String(localized: "No data was downloaded.", comment: "failure reason")
             case let .unknownARTCC(ID):
-                return t("Referenced undefined ARTCC record with ID ‘%@’.", comment: "failure reason",
-                         ID)
+                return String(localized: "Referenced undefined ARTCC record with ID ‘\(ID)’.", comment: "failure reason")
             case let .unknownARTCCFrequency(frequency, ARTCC):
-                return t("Referenced undefined frequency ‘%@’ for ARTCC %@.", comment: "failure reason",
-                         frequency, ARTCC.ID)
+                return String(localized: "Referenced undefined frequency ‘\(frequency)’ for ARTCC \(ARTCC.ID).", comment: "failure reason")
             case let .unknownFieldID(fieldID, ARTCC):
-                return t("Unknown field ID ‘%@’ at ‘%@ %@’.", comment: "failure reason",
-                         fieldID, ARTCC.ID, ARTCC.locationName)
+                return String(localized: "Unknown field ID ‘\(fieldID)’ at ‘\(ARTCC.ID) \(ARTCC.locationName)’.", comment: "failure reason")
             case let .unknownFrequencyFieldID(fieldID, frequency, ARTCC):
-                return t("Unknown field ID ‘%@’ for %@ kHz at ‘%@ %@’.", comment: "failure reason",
-                         fieldID, frequency.frequency, ARTCC.ID, ARTCC.locationName)
+                return String(localized: "Unknown field ID ‘\(fieldID)’ for \(frequency.frequency) kHz at ‘\(ARTCC.ID) \(ARTCC.locationName)’.", comment: "failure reason")
             case let .invalidFrequency(string):
-                return t("Invalid frequency ‘%@’.", comment: "failure reason",
-                         string)
+                return String(localized: "Invalid frequency ‘\(string)’.", comment: "failure reason")
             case let .unknownFSS(ID):
-                return t("Continuation record references unknown FSS ‘%@’.", comment: "failure reason",
-                         ID)
+                return String(localized: "Continuation record references unknown FSS ‘\(ID)’.", comment: "failure reason")
             case .notYetLoaded:
-                return t("Attempted to access NASR data before .load() weas called.", comment: "failure reason")
+                return String(localized: "Attempted to access NASR data before .load() weas called.", comment: "failure reason")
             case let .noSuchFile(path):
-                return t("No such file in distribution: %@.", comment: "failure reason",
-                         path)
+                return String(localized: "No such file in distribution: \(path).", comment: "failure reason")
             case let .invalidRunwaySurface(string):
-                return t("Unknown runway surface ‘%@’.", comment: "failure reason",
-                         string)
+                return String(localized: "Unknown runway surface ‘\(string)’.", comment: "failure reason")
             case let .invalidPavementClassification(string):
-                return t("Unknown pavement classification ‘%@’ for PCN.", comment: "failure reason",
-                         string)
+                return String(localized: "Unknown pavement classification ‘\(string)’ for PCN.", comment: "failure reason")
             case let .invalidVGSI(string):
-                return t("Unknown VGSI identifier ‘%@’.", comment: "failure reason",
-                         string)
+                return String(localized: "Unknown VGSI identifier ‘\(string)’.", comment: "failure reason")
             case let .unknownNavaid(string):
-                return t("Unknown navaid ‘%@’.", comment: "failure reason",
-                         string)
+                return String(localized: "Unknown navaid ‘\(string)’.", comment: "failure reason")
         }
     }
     
     public var recoverySuggestion: String? {
         switch self {
             case .nullDistribution:
-                return t("Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk.", comment: "recovery suggestion")
+                return String(localized: "Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk.", comment: "recovery suggestion")
             case .noFile:
-                return t("Verify that the path to the distribution is correct.", comment: "recovery suggestion")
+                return String(localized: "Verify that the path to the distribution is correct.", comment: "recovery suggestion")
             case .badResponse, .noData:
-                return t("Verify that the URL to the distribution is correct and accessible.", comment: "recovery suggestion")
+                return String(localized: "Verify that the URL to the distribution is correct and accessible.", comment: "recovery suggestion")
             case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldID,
                     .unknownFrequencyFieldID, .invalidFrequency, .unknownFSS,
                     .invalidRunwaySurface, .invalidPavementClassification,
                     .invalidVGSI, .unknownNavaid, .noSuchFilePrefix, .noSuchFile:
-                return t("The NASR FADDS format may have changed, requiring an update to SwiftNASR.", comment: "recovery suggestion")
+                return String(localized: "The NASR FADDS format may have changed, requiring an update to SwiftNASR.", comment: "recovery suggestion")
             case .notYetLoaded:
-                return t("Call .load() before accessing NASR data.", comment: "recovery suggestion")
+                return String(localized: "Call .load() before accessing NASR data.", comment: "recovery suggestion")
         }
-    }
-}
-
-fileprivate func t(_ key: String, comment: String, _ arguments: CVarArg...) -> String {
-    let format = NSLocalizedString(key, bundle: Bundle.module, comment: comment)
-    if arguments.isEmpty {
-        return format
-    } else {
-        return String(format: format, arguments: arguments)
     }
 }

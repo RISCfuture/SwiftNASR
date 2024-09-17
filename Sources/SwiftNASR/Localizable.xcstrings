@@ -1,0 +1,108 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Attempted to access NASR data before .load() weas called." : {
+      "comment" : "failure reason"
+    },
+    "Bad response: %@." : {
+      "comment" : "failure reason"
+    },
+    "Call .load() before accessing NASR data." : {
+      "comment" : "recovery suggestion"
+    },
+    "Called .load() on a null distribution." : {
+      "comment" : "failure reason"
+    },
+    "Continuation record references unknown FSS ‘%@’." : {
+      "comment" : "failure reason"
+    },
+    "Couldn’t download distribution." : {
+      "comment" : "error description"
+    },
+    "Couldn’t find file in archive with prefix “%@.”" : {
+      "comment" : "failure reason"
+    },
+    "Couldn’t find file to load." : {
+      "comment" : "failure reason"
+    },
+    "Couldn’t load distribution." : {
+      "comment" : "error description"
+    },
+    "Couldn’t parse distribution data." : {
+      "comment" : "error description"
+    },
+    "Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk." : {
+      "comment" : "recovery suggestion"
+    },
+    "Invalid frequency ‘%@’." : {
+      "comment" : "failure reason"
+    },
+    "No data was downloaded." : {
+      "comment" : "failure reason"
+    },
+    "No such file in distribution: %@." : {
+      "comment" : "failure reason"
+    },
+    "Referenced undefined ARTCC record with ID ‘%@’." : {
+      "comment" : "failure reason"
+    },
+    "Referenced undefined frequency ‘%llu’ for ARTCC %@." : {
+      "comment" : "failure reason",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Referenced undefined frequency ‘%1$llu’ for ARTCC %2$@."
+          }
+        }
+      }
+    },
+    "The NASR FADDS format may have changed, requiring an update to SwiftNASR." : {
+      "comment" : "recovery suggestion"
+    },
+    "This NASR has not been loaded yet." : {
+      "comment" : "error description"
+    },
+    "Unknown field ID ‘%@’ at ‘%@ %@’." : {
+      "comment" : "failure reason",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unknown field ID ‘%1$@’ at ‘%2$@ %3$@’."
+          }
+        }
+      }
+    },
+    "Unknown field ID ‘%@’ for %llu kHz at ‘%@ %@’." : {
+      "comment" : "failure reason",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unknown field ID ‘%1$@’ for %2$llu kHz at ‘%3$@ %4$@’."
+          }
+        }
+      }
+    },
+    "Unknown navaid ‘%@’." : {
+      "comment" : "failure reason"
+    },
+    "Unknown pavement classification ‘%@’ for PCN." : {
+      "comment" : "failure reason"
+    },
+    "Unknown runway surface ‘%@’." : {
+      "comment" : "failure reason"
+    },
+    "Unknown VGSI identifier ‘%@’." : {
+      "comment" : "failure reason"
+    },
+    "Verify that the path to the distribution is correct." : {
+      "comment" : "recovery suggestion"
+    },
+    "Verify that the URL to the distribution is correct and accessible." : {
+      "comment" : "recovery suggestion"
+    }
+  },
+  "version" : "1.0"
+}
