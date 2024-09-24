@@ -1,7 +1,7 @@
 import Foundation
 import ZIPFoundation
 
-public class JSONZipEncoder: JSONEncoder {
+public class JSONZipEncoder: JSONEncoder, @unchecked Sendable {
     public override func encode<T>(_ value: T) throws -> Data where T : Encodable {
         do {
             let data = try super.encode(value)
@@ -19,7 +19,7 @@ public class JSONZipEncoder: JSONEncoder {
     }
 }
 
-public class JSONZipDecoder: JSONDecoder {
+public class JSONZipDecoder: JSONDecoder, @unchecked Sendable {
     public override func decode<T>(_ type: T.Type, from data: Data) throws -> T where T : Decodable {
         do {
             let archive = try Archive(data: data, accessMode: .read, pathEncoding: .ascii)

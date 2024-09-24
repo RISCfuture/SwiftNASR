@@ -1,4 +1,4 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 6.0
 
 import PackageDescription
 
@@ -38,6 +38,6 @@ let package = Package(
             path: "Tests/SwiftNASR_E2E",
             linkerSettings: [.linkedLibrary("swift_Concurrency")]),
     ],
-    swiftLanguageVersions: [.v5]
+    swiftLanguageModes: [.v5]
 )
 
