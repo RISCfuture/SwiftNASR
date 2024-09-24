@@ -52,7 +52,7 @@ class ARTCCParser: FixedWidthParser {
         .null,                                                                  // 10 latitude - decimal
         .DDMMSS(nullable: .blank),                                              // 11 longitude - formatted
         .null,                                                                  // 12 longitude - decimal
-        .string(),                                                              // 13 ICAO ID
+        .string(nullable: .blank),                                              // 13 ICAO ID
         .null                                                                   // 14 blank
     ])
 
@@ -124,7 +124,7 @@ class ARTCCParser: FixedWidthParser {
         }
 
         let center = ARTCC(ID: transformedValues[1] as! String,
-                           ICAOID: transformedValues[13] as! String,
+                           ICAOID: transformedValues[13] as! String?,
                            type: transformedValues[5] as! ARTCC.FacilityType,
                            name: transformedValues[2] as! String,
                            alternateName: transformedValues[4] as! String?,

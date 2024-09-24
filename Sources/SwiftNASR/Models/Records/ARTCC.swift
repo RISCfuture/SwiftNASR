@@ -14,7 +14,7 @@ public class ARTCC: Record, Equatable, Codable {
     public let ID: String
     
     /// The ICAO ID for the FIR, e.g. "KZOA" for Oakland Center.
-    public let ICAOID: String
+    public let ICAOID: String?
 
     /// The facility type.
     public let type: FacilityType
@@ -46,7 +46,7 @@ public class ARTCC: Record, Equatable, Codable {
 
     // MARK: - Methods
 
-    init(ID: String, ICAOID: String, type: ARTCC.FacilityType, name: String,
+    init(ID: String, ICAOID: String?, type: ARTCC.FacilityType, name: String,
          alternateName: String?, locationName: String, stateCode: String?,
          location: Location?) {
         self.ID = ID
