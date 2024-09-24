@@ -12,7 +12,7 @@ public class DirectoryDistribution: ConcurrentDistribution {
     public let location: URL
 
     private var chunkSize = 4096
-    private var delimiter = "\r\n".data(using: .ascii)!
+    private var delimiter = "\r\n".data(using: .isoLatin1)!
     
     /**
      Creates a new instance from the given directory.

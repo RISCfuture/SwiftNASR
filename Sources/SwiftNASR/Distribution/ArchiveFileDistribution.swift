@@ -16,7 +16,7 @@ public class ArchiveFileDistribution: ConcurrentDistribution {
     private let archive: Archive
     
     private var chunkSize = defaultReadChunkSize
-    private var delimiter = "\r\n".data(using: .ascii)!
+    private var delimiter = "\r\n".data(using: .isoLatin1)!
     
     /**
      Creates a new instance from the given file.

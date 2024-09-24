@@ -94,8 +94,8 @@ extension LayoutDataParser {
     }
     
     fileprivate func parseLine(data lineData: Data, formats: inout Array<NASRTable>) throws {
-        guard let line = String(data: lineData, encoding: .ascii) else {
-            throw LayoutParserError.badData("Not ASCII formatted")
+        guard let line = String(data: lineData, encoding: .isoLatin1) else {
+            throw LayoutParserError.badData("Not ISO-Latin1 formatted")
         }
         
         if groupRegex.rangeOfFirstMatch(in: line, options: .anchored, range: line.nsRange).location != NSNotFound {

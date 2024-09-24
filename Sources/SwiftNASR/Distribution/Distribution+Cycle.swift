@@ -10,8 +10,8 @@ extension Distribution {
         return formatter
     }
     
-    private var readmeFirstLine: Data { "AIS subscriber files effective date ".data(using: .ascii)! }
-    
+    private var readmeFirstLine: Data { "AIS subscriber files effective date ".data(using: .isoLatin1)! }
+
     /**
      Reads the cycle from the README file.
      
@@ -74,7 +74,7 @@ extension Distribution {
     
     private func parseCycleFrom(_ line: Data) -> Cycle? {
         let cycleDateData = line[readmeFirstLine.count..<(line.count - 1)]
-        guard let cycleDateString = String(data: cycleDateData, encoding: .ascii) else {
+        guard let cycleDateString = String(data: cycleDateData, encoding: .isoLatin1) else {
             return nil
         }
         guard let cycleDate = cycleDateFormatter.date(from: cycleDateString) else {

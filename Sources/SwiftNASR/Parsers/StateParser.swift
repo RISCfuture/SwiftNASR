@@ -10,8 +10,8 @@ class StateParser: Parser {
     }
     
     func parse(data: Data) throws {
-        guard let line = String(data: data, encoding: .ascii) else { throw ParserError.badData("Not ASCII formatted") }
-        
+        guard let line = String(data: data, encoding: .isoLatin1) else { throw ParserError.badData("Not ISO-Latin1 formatted") }
+
         if line.starts(with: "STATE_CODE NON_US_STATE_CODE") {
             seenStateCode = true
             return

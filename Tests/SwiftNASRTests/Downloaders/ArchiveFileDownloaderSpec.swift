@@ -15,7 +15,7 @@ class ArchiveFileDownloaderSpec: QuickSpec {
 
     private static var mockSession = MockURLSession()
     private class var mockData: Data {
-        let data = "Hello, world!".data(using: .ascii)!
+        let data = "Hello, world!".data(using: .isoLatin1)!
         let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
             return data.subdata(in: Data.Index(position)..<(Int(position)+size))

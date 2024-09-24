@@ -7,7 +7,7 @@ import ZIPFoundation
 
 @available(macOS 10.12, *)
 class DirectoryDistributionSpec: QuickSpec {
-    private static var mockData = "Hello, world!\r\nLine 2".data(using: .ascii)!
+    private static var mockData = "Hello, world!\r\nLine 2".data(using: .isoLatin1)!
 
     override class func spec() {
         let tempdir = FileManager.default.temporaryDirectory.appendingPathComponent(ProcessInfo().globallyUniqueString)
@@ -29,10 +29,10 @@ class DirectoryDistributionSpec: QuickSpec {
                 try! distribution.readFile(path: "APT.TXT", withProgress: { progress = $0 }) { data in
                     if count == 0 {
                         expect(progress.completedUnitCount).toEventually(equal(34))
-                        expect(data).to(equal("Hello, world!".data(using: .ascii)!))
+                        expect(data).to(equal("Hello, world!".data(using: .isoLatin1)!))
                     }
                     else if count == 1 {
-                        expect(data).to(equal("Line 2".data(using: .ascii)!))
+                        expect(data).to(equal("Line 2".data(using: .isoLatin1)!))
                     }
                     else { fail("too many lines") }
 

@@ -8,7 +8,7 @@ import ZIPFoundation
 @available(macOS 10.12, *)
 class ArchiveFileDistributionSpec: QuickSpec {
     private class var mockData: Data {
-        let data = "Hello, world!\r\nLine 2".data(using: .ascii)!
+        let data = "Hello, world!\r\nLine 2".data(using: .isoLatin1)!
         let archive = try! Archive(accessMode: .create)
         try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
             return data.subdata(in: Data.Index(position)..<(Int(position)+size))
@@ -35,10 +35,10 @@ class ArchiveFileDistributionSpec: QuickSpec {
                 try! distribution.readFile(path: "APT.TXT", withProgress: { progress = $0 }) { data in
                     expect(progress.completedUnitCount).toEventually(equal(21))
                     if count == 0 {
-                        expect(data).to(equal("Hello, world!".data(using: .ascii)!))
+                        expect(data).to(equal("Hello, world!".data(using: .isoLatin1)!))
                     }
                     else if count == 1 {
-                        expect(data).to(equal("Line 2".data(using: .ascii)!))
+                        expect(data).to(equal("Line 2".data(using: .isoLatin1)!))
                     }
                     else { fail("too many lines") }
 

@@ -8,7 +8,7 @@ protocol FixedWidthNoRecordIDParser: LayoutDataParser {
 extension FixedWidthNoRecordIDParser {
     func parse(data: Data) throws {
         let values = try formatForData(data).fields.map { field in
-            return String(data: data[field.range], encoding: .ascii)!
+            return String(data: data[field.range], encoding: .isoLatin1)!
         }
 
         try parseValues(values)

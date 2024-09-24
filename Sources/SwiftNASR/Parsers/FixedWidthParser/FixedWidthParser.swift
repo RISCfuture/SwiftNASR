@@ -24,7 +24,7 @@ extension FixedWidthParser {
         let recordIdentifier = try readIdentifier(data: data)
         let layoutFormat = format(forRecordIdentifier: recordIdentifier)
         let values = layoutFormat.fields.map { field in
-            return String(data: data[field.range], encoding: .ascii)!
+            return String(data: data[field.range], encoding: .isoLatin1)!
         }
 
         try parseValues(values, for: recordIdentifier)
@@ -35,8 +35,8 @@ extension FixedWidthParser {
     }
     
     private func readIdentifier(data: Data) throws -> RecordIdentifier {
-        guard let identifierString = String(data: data[recordTypeRange], encoding: .ascii) else {
-            throw ParserError.badData("Invalid ASCII character")
+        guard let identifierString = String(data: data[recordTypeRange], encoding: .isoLatin1) else {
+            throw ParserError.badData("Invalid ISO-Latin1 character")
         }
         guard let identifier = RecordIdentifier(rawValue: identifierString) else {
             throw ParserError.badData("Invalid record identifier '\(identifierString)'")
