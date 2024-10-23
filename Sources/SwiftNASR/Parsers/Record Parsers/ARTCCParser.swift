@@ -109,8 +109,8 @@ class ARTCCParser: FixedWidthParser {
         }
     }
     
-    func finish(data: NASRData) {
-        data.ARTCCs = Array(ARTCCs.values)
+    func finish(data: NASRData) async {
+        await data.finishParsing(ARTCCs: Array(ARTCCs.values))
     }
 
     private func parseGeneralRecord(_ values: Array<String>) throws {
@@ -137,37 +137,41 @@ class ARTCCParser: FixedWidthParser {
 
     private func parseRemarks(_ values: Array<String>) throws {
         let transformedValues = try remarksTransformer.applyTo(values)
-        guard let center = ARTCCs[ARTCCKey(values: transformedValues)] else {
-            throw Error.unknownARTCC(transformedValues[1] as! String)
+        try updateARTCC(transformedValues) { center in
+            center.remarks.append(.general(transformedValues[5] as! String))
         }
-        
-        center.remarks.append(.general(transformedValues[5] as! String))
     }
 
     private func parseFrequency(_ values: Array<String>) throws {
         let transformedValues = try frequencyTransformer.applyTo(values)
-        guard let center = ARTCCs[ARTCCKey(values: transformedValues)] else {
-            throw Error.unknownARTCC(transformedValues[1] as! String)
-        }
 
-        let frequency = ARTCC.CommFrequency(frequency: transformedValues[4] as! UInt,
-                                            altitude: transformedValues[5] as! Array<ARTCC.CommFrequency.Altitude>,
-                                            specialUsageName: transformedValues[6] as! String?,
-                                            remoteOutletFrequencyCharted: transformedValues[7] as! Bool?,
-                                            associatedAirportCode: transformedValues[8] as! String?)
-        center.frequencies.append(frequency)
+        try updateARTCC(transformedValues) { center in
+            let frequency = ARTCC.CommFrequency(frequency: transformedValues[4] as! UInt,
+                                                altitude: transformedValues[5] as! Array<ARTCC.CommFrequency.Altitude>,
+                                                specialUsageName: transformedValues[6] as! String?,
+                                                remoteOutletFrequencyCharted: transformedValues[7] as! Bool?,
+                                                associatedAirportCode: transformedValues[8] as! String?)
+            center.frequencies.append(frequency)
+        }
     }
 
     private func parseFrequencyRemarks(_ values: Array<String>) throws {
         let transformedValues = try frequencyRemarksTransformer.applyTo(values)
-        guard let center = ARTCCs[ARTCCKey(values: transformedValues)] else {
-            throw Error.unknownARTCC(transformedValues[1] as! String)
+
+        try updateARTCC(transformedValues) { center in
+            guard let freqIndex = center.frequencies.firstIndex(where: { $0.frequency == transformedValues[4] as! UInt }) else {
+                throw Error.unknownARTCCFrequency(transformedValues[4] as! UInt, ARTCC: center)
+            }
+            center.frequencies[freqIndex].remarks.append(.general(transformedValues[6] as! String))
         }
-        
-        guard let freqIndex = center.frequencies.firstIndex(where: { $0.frequency == transformedValues[4] as! UInt }) else {
-            throw Error.unknownARTCCFrequency(transformedValues[4] as! UInt, ARTCC: center)
+    }
+
+    private func updateARTCC(_ values: Array<Any?>, process: (inout ARTCC) throws -> Void) throws {
+        guard var center = ARTCCs[ARTCCKey(values: values)] else {
+            throw Error.unknownARTCC(values[1] as! String)
         }
 
-        center.frequencies[freqIndex].remarks.append(.general(transformedValues[6] as! String))
+        try process(&center)
+        ARTCCs[ARTCCKey(values: values)] = center
     }
 }

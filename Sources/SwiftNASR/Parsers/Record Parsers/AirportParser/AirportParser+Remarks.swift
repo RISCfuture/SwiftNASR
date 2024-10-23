@@ -1,41 +1,45 @@
 fileprivate let arrestingSystemDLIDOffsetRange = 3...4
 // these should be labeled "DLID" but they're not
 
-fileprivate let remarkTransformer = FixedWidthTransformer([
-    .recordType,                                                                // 0 record type
-    .string(),                                                                  // 1 site number
-    .string(nullable: .blank),                                                  // 2 state post office code
-    .string(),                                                                  // 3 data element
-    .string(),                                                                  // 4 remark
-])
-
 extension AirportParser {
+    private var remarkTransformer: FixedWidthTransformer {
+        .init([
+            .recordType,                                                                // 0 record type
+            .string(),                                                                  // 1 site number
+            .string(nullable: .blank),                                                  // 2 state post office code
+            .string(),                                                                  // 3 data element
+            .string(),                                                                  // 4 remark
+        ])
+    }
+
     func parseRemarkRecord(_ values: Array<String>) throws {
         if (values[4].trimmingCharacters(in: .whitespaces).isEmpty) { return }
         let transformedValues = try remarkTransformer.applyTo(values)
         
-        guard let airport = airports[transformedValues[1] as! String] else { return }
+        guard var airport = airports[transformedValues[1] as! String] else { return }
         let fieldID = String((transformedValues[3] as! String).split(separator: Character(" "))[0])
         let remark = transformedValues[4] as! String
-        
-        if try tryAirportGeneralRemark(remark, airport, fieldID) { return }
-        if try tryAirportLightingRemark(remark, airport, fieldID) { return }
-        if try tryAttendanceScheduleRemark(remark, airport, fieldID) { return }
-        if try tryRunwayOrEndFieldRemark(remark, airport, fieldID) { return }
-        if try tryAirportFieldRemark(remark, airport, fieldID) { return }
-        if try tryAirportFuelRemark(remark, airport, fieldID) { return }
-        
-        throw AirportRemarksError.unknownFieldID(fieldID, airport: airport)
+
+        var remarkParsed = false
+        if try tryAirportGeneralRemark(remark, &airport, fieldID) { remarkParsed = true }
+        else if try tryAirportLightingRemark(remark, &airport, fieldID) { remarkParsed = true }
+        else if try tryAttendanceScheduleRemark(remark, &airport, fieldID) { remarkParsed = true }
+        else if try tryRunwayOrEndFieldRemark(remark, &airport, fieldID) { remarkParsed = true }
+        else if try tryAirportFieldRemark(remark, &airport, fieldID) { remarkParsed = true }
+        else if try tryAirportFuelRemark(remark, &airport, fieldID) { remarkParsed = true }
+        if !remarkParsed { throw AirportRemarksError.unknownFieldID(fieldID, airport: airport) }
+
+        airports[transformedValues[1] as! String] = airport
     }
     
-    private func tryAirportGeneralRemark(_ remark: String, _ airport: Airport, _ fieldID: String) throws -> Bool {
+    private func tryAirportGeneralRemark(_ remark: String, _ airport: inout Airport, _ fieldID: String) throws -> Bool {
         guard fieldID.starts(with: "A110-") || fieldID.starts(with: "A110*") else { return false }
         airport.remarks.append(.general(remark))
         
         return true
     }
     
-    private func tryAirportLightingRemark(_ remark: String, _ airport: Airport, _ fieldID: String) throws -> Bool {
+    private func tryAirportLightingRemark(_ remark: String, _ airport: inout Airport, _ fieldID: String) throws -> Bool {
         if fieldID == "A81-APT" {
             airport.remarks.append(.field(field: .airportLightingSchedule, content: remark))
             return true
@@ -47,13 +51,13 @@ extension AirportParser {
         return false
     }
     
-    private func tryAttendanceScheduleRemark(_ remark: String, _ airport: Airport, _ fieldID: String) throws -> Bool {
+    private func tryAttendanceScheduleRemark(_ remark: String, _ airport: inout Airport, _ fieldID: String) throws -> Bool {
         guard attendanceScheduleFieldForID(fieldID) else { return false }
         airport.remarks.append(.field(field: .attendanceSchedule, content: remark))
         return true
     }
     
-    private func tryAirportFuelRemark(_ remark: String, _ airport: Airport, _ combinedFieldID: String) throws -> Bool {
+    private func tryAirportFuelRemark(_ remark: String, _ airport: inout Airport, _ combinedFieldID: String) throws -> Bool {
         let parts = combinedFieldID.split(separator: "-")
         guard parts.count == 3 else { return false }
         guard parts[0] == "A70" else { return false }
@@ -65,55 +69,63 @@ extension AirportParser {
         return true
     }
     
-    private func tryRunwayOrEndFieldRemark(_ remark: String, _ airport: Airport, _ combinedFieldID: String) throws -> Bool {
+    private func tryRunwayOrEndFieldRemark(_ remark: String, _ airport: inout Airport, _ combinedFieldID: String) throws -> Bool {
         guard let separatorIndex = combinedFieldID.firstIndex(of: Character("-")) else {
             return false
         }
         let fieldID = String(combinedFieldID[combinedFieldID.startIndex..<separatorIndex])
         let objectID = String(combinedFieldID[combinedFieldID.index(after: separatorIndex)...])
         
-        if try tryArrestingSystemRemark(remark, airport, objectID, fieldID) { return true }
-        if try tryRunwayEndFieldRemark(remark, airport, objectID, fieldID) { return true }
-        if try tryRunwayEndGeneralRemark(remark, airport, objectID, fieldID) { return true }
-        if try tryRunwayFieldRemark(remark, airport, objectID, fieldID) { return true }
-        
+        if try tryArrestingSystemRemark(remark, &airport, objectID, fieldID) { return true }
+        if try tryRunwayEndFieldRemark(remark, &airport, objectID, fieldID) { return true }
+        if try tryRunwayEndGeneralRemark(remark, &airport, objectID, fieldID) { return true }
+        if try tryRunwayFieldRemark(remark, &airport, objectID, fieldID) { return true }
+
         return false
     }
     
-    private func tryArrestingSystemRemark(_ remark: String, _ airport: Airport, _ endID: String, _ fieldID: String) throws -> Bool {
+    private func tryArrestingSystemRemark(_ remark: String, _ airport: inout Airport, _ endID: String, _ fieldID: String) throws -> Bool {
         guard arrestingSystemFieldForID(fieldID) else { return false }
-        guard let end = runwayEndForID(endID, inAirport: airport) else {
-            throw AirportRemarksError.unknownRunwayEnd(endID, airport: airport)
+
+        let found = updateRunwayEnd(endID, inAirport: &airport) { end in
+            end.remarks.append(.field(field: .arrestingSystems, content: remark))
         }
-        end.remarks.append(.field(field: .arrestingSystems, content: remark))
+        if !found { throw AirportRemarksError.unknownRunwayEnd(endID, airport: airport) }
+
         return true
     }
     
-    private func tryRunwayEndFieldRemark(_ remark: String, _ airport: Airport, _ endID: String, _ fieldID: String) throws -> Bool {
-        if let end = runwayEndForID(endID, inAirport: airport) {
-            if try tryLAHSOFieldRemark(remark, airport, end, fieldID) { return true }
-            if try tryControllingObjectFieldRemark(remark, airport, end, fieldID) { return true }
-            
-            guard let field = runwayEndFieldForID(fieldID) else { return false }
-            switch field {
-                case .LAHSO:
-                    preconditionFailure("NASR field defined in RunwayEnd.Field.fieldOrder but not LAHSO.Field.fieldOrder")
-                case .controllingObject:
-                    preconditionFailure("NASR field defined in RunwayEnd.Field.fieldOrder but not ControllingObject.Field.fieldOrder")
-                default:
-                    end.remarks.append(.field(field: field, content: remark))
-                    return true
+    private func tryRunwayEndFieldRemark(_ remark: String, _ airport: inout Airport, _ endID: String, _ fieldID: String) throws -> Bool {
+        var endUpdated = false
+        let endFound = try updateRunwayEnd(endID, inAirport: &airport) { end in
+            if try tryLAHSOFieldRemark(remark, &end, fieldID) { endUpdated = true }
+            else if try tryControllingObjectFieldRemark(remark, &end, fieldID) { endUpdated = true }
+            else {
+                guard let field = runwayEndFieldForID(fieldID) else { return }
+                switch field {
+                    case .LAHSO:
+                        preconditionFailure("NASR field defined in RunwayEnd.Field.fieldOrder but not LAHSO.Field.fieldOrder")
+                    case .controllingObject:
+                        preconditionFailure("NASR field defined in RunwayEnd.Field.fieldOrder but not ControllingObject.Field.fieldOrder")
+                    default:
+                        end.remarks.append(.field(field: field, content: remark))
+                        endUpdated = true
+                }
             }
-            
-        } else if runwayEndFieldForID(fieldID) != nil {
+        }
+
+        if endFound && endUpdated { return true }
+        else if endFound && !endUpdated { return false }
+        else if runwayEndFieldForID(fieldID) != nil {
             throw AirportRemarksError.unknownRunwayEnd(endID, airport: airport)
         } else {
             return false
         }
     }
     
-    private func tryLAHSOFieldRemark(_ remark: String, _ airport: Airport, _ end: RunwayEnd, _ fieldID: String) throws -> Bool {
+    private func tryLAHSOFieldRemark(_ remark: String, _ end: inout RunwayEnd, _ fieldID: String) throws -> Bool {
         guard let field = LAHSOFieldForID(fieldID) else { return false }
+
         if end.LAHSO == nil {
             end.remarks.append(.general(remark))
             return true
@@ -123,8 +135,9 @@ extension AirportParser {
         return true
     }
     
-    private func tryControllingObjectFieldRemark(_ remark: String, _ airport: Airport, _ end: RunwayEnd, _ fieldID: String) throws -> Bool {
+    private func tryControllingObjectFieldRemark(_ remark: String, _ end: inout RunwayEnd, _ fieldID: String) throws -> Bool {
         guard let field = controllingObjectFieldForID(fieldID) else { return false }
+
         if end.controllingObject == nil {
             end.remarks.append(.general(remark))
             return true
@@ -134,29 +147,31 @@ extension AirportParser {
         return true
     }
     
-    private func tryRunwayEndGeneralRemark(_ remark: String, _ airport: Airport, _ endID: String, _ fieldID: String) throws -> Bool {
+    private func tryRunwayEndGeneralRemark(_ remark: String, _ airport: inout Airport, _ endID: String, _ fieldID: String) throws -> Bool {
         guard fieldID == "A58" else { return false } // A58 is not defined; probably legacy
-        guard let end = runwayEndForID(endID, inAirport: airport) else {
-            throw AirportRemarksError.unknownRunwayEnd(endID, airport: airport)
+
+        let found = updateRunwayEnd(endID, inAirport: &airport) { end in
+            end.remarks.append(.general(remark))
         }
-        
-        end.remarks.append(.general(remark))
+        if !found { throw AirportRemarksError.unknownRunwayEnd(endID, airport: airport) }
+
         return true
     }
     
-    private func tryRunwayFieldRemark(_ remark: String, _ airport: Airport, _ runwayID: String, _ fieldID: String) throws -> Bool {
+    private func tryRunwayFieldRemark(_ remark: String, _ airport: inout Airport, _ runwayID: String, _ fieldID: String) throws -> Bool {
         guard let field = runwayFieldForID(fieldID) else { return false }
-        guard let runway = runwayForID(runwayID, inAirport: airport) else {
-            throw AirportRemarksError.unknownRunway(runwayID, airport: airport)
+
+        let found = updateRunway(runwayID, inAirport: &airport) { runway in
+            runway.remarks.append(.field(field: field, content: remark))
         }
-        
-        runway.remarks.append(.field(field: field, content: remark))
+        if !found { throw AirportRemarksError.unknownRunway(runwayID, airport: airport) }
+
         return true
     }
     
-    private func tryAirportFieldRemark(_ remark: String, _ airport: Airport, _ fieldID: String) throws -> Bool {
-        if try tryAirportPersonRemark(remark, airport, fieldID) { return true }
-        
+    private func tryAirportFieldRemark(_ remark: String, _ airport: inout Airport, _ fieldID: String) throws -> Bool {
+        if try tryAirportPersonRemark(remark, &airport, fieldID) { return true }
+
         guard let field = airportFieldForID(fieldID) else { return false }
         
         switch field {
@@ -168,7 +183,7 @@ extension AirportParser {
         }
     }
     
-    private func tryAirportPersonRemark(_ remark: String, _ airport: Airport, _ fieldID: String) throws -> Bool {
+    private func tryAirportPersonRemark(_ remark: String, _ airport: inout Airport, _ fieldID: String) throws -> Bool {
         guard let airportField = airportFieldForID(fieldID) else { return false}
         guard let field = personFieldForID(fieldID) else { return false }
         
@@ -192,25 +207,57 @@ extension AirportParser {
         }
     }
     
-    private func runwayForID(_ identifier: String, inAirport airport: Airport) -> Runway? {
-        let strippedID = identifier.split(separator: Character(" "))[0]
-        return airport.runways.first(where: { $0.identification == strippedID })
-    }
-    
     private func runwayFieldForID(_ fieldID: String) -> Runway.Field? {
         let layout = format(forRecordIdentifier: .runway)
         guard let offset = layout.fieldOffset(forID: fieldID) else { return nil }
         return Runway.Field.fieldOrder[offset]
     }
-    
-    private func runwayEndForID(_ identifier: String, inAirport airport: Airport) -> RunwayEnd? {
-        for runway in airport.runways {
-            if runway.baseEnd.ID == identifier { return runway.baseEnd }
-            if runway.reciprocalEnd?.ID == identifier { return runway.reciprocalEnd }
+
+    enum RunwayEndType { case base, reciprocal }
+
+    private func runwayEndIndexForID(_ identifier: String, inAirport airport: Airport) -> (Int, RunwayEndType)? {
+        for (index, runway) in airport.runways.enumerated() {
+            if runway.baseEnd.ID == identifier { return (index, .base) }
+            if runway.reciprocalEnd?.ID == identifier { return (index, .reciprocal) }
         }
         return nil
     }
-    
+
+    @discardableResult
+    private func updateRunwayEnd(_ identifier: String, inAirport airport: inout Airport, process: (inout RunwayEnd) throws -> Void) rethrows -> Bool {
+        guard let (index, endType) = runwayEndIndexForID(identifier, inAirport: airport) else {
+            return false
+        }
+        var end = switch endType {
+            case .base: airport.runways[index].baseEnd
+            case .reciprocal: airport.runways[index].reciprocalEnd!
+        }
+
+        try process(&end)
+
+        switch endType {
+            case .base: airport.runways[index].baseEnd = end
+            case .reciprocal: airport.runways[index].reciprocalEnd = end
+        }
+
+        return true
+    }
+
+    @discardableResult
+    private func updateRunway(_ identifier: String, inAirport airport: inout Airport, process: (inout Runway) throws -> Void) rethrows -> Bool {
+        let strippedID = identifier.split(separator: Character(" "))[0]
+        guard let index =  airport.runways.firstIndex(where: { $0.identification == strippedID }) else {
+            return false
+        }
+        var runway = airport.runways[index]
+
+        try process(&runway)
+
+        airport.runways[index] = runway
+        return true
+
+    }
+
     private func airportFieldForID(_ fieldID: String) -> Airport.Field? {
         if fieldID == "E80A" { return .customsLandingRightsAirport } // special user fee remark
         

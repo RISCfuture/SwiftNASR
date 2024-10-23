@@ -1,12 +1,11 @@
 import Foundation
 
-class StateParser: Parser {
+actor StateParser: Parser {
     private var states: Array<State> = []
     private var seenStateCode = false
     
-    func prepare(distribution: Distribution, callback: @escaping ((Result<Void, Swift.Error>) -> Void) = { _ in }) {
+    func prepare(distribution: any Distribution) async throws {
         states = []
-        callback(.success(()))
     }
     
     func parse(data: Data) throws {
@@ -30,7 +29,7 @@ class StateParser: Parser {
         states.append(State(name: name, code: String(code)))
     }
     
-    func finish(data: NASRData) {
-        data.states = states
+    func finish(data: NASRData) async {
+        await data.finishParsing(states: states)
     }
 }

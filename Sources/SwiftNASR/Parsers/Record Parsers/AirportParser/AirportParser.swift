@@ -311,8 +311,8 @@ class AirportParser: FixedWidthParser {
         airports[airport.id] = airport
     }
     
-    func finish(data: NASRData) {
-        data.airports = Array(airports.values)
+    func finish(data: NASRData) async {
+        await data.finishParsing(airports: Array(airports.values))
     }
     
     // MARK: - Support Methods

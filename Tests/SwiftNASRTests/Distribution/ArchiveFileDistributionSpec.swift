@@ -5,8 +5,7 @@ import ZIPFoundation
 
 @testable import SwiftNASR
 
-@available(macOS 10.12, *)
-class ArchiveFileDistributionSpec: QuickSpec {
+class ArchiveFileDistributionSpec: AsyncSpec {
     private class var mockData: Data {
         let data = "Hello, world!\r\nLine 2".data(using: .isoLatin1)!
         let archive = try! Archive(accessMode: .create)
@@ -32,8 +31,10 @@ class ArchiveFileDistributionSpec: QuickSpec {
                 var count = 0
                 var progress = Progress(totalUnitCount: 0)
                 
-                try! distribution.readFile(path: "APT.TXT", withProgress: { progress = $0 }) { data in
-                    expect(progress.completedUnitCount).toEventually(equal(21))
+                let stream = await distribution.readFile(path: "APT.TXT", withProgress: { progress = $0 })
+                await expect(progress.completedUnitCount).toEventually(equal(21))
+
+                for try await data in stream {
                     if count == 0 {
                         expect(data).to(equal("Hello, world!".data(using: .isoLatin1)!))
                     }
@@ -47,8 +48,10 @@ class ArchiveFileDistributionSpec: QuickSpec {
             }
 
             it("throws an error if the file doesn't exist") {
-                expect { try distribution.readFile(path: "unknown", eachLine: { _ in }) }
-                    .to(throwError(Error.noSuchFile(path: "n/a")))
+                await expect {
+                    let data = await distribution.readFile(path: "unknown")
+                    for try await _ in data {}
+                }.to(throwError(Error.noSuchFile(path: "n/a")))
             }
         }
     }

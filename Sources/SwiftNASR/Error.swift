@@ -2,8 +2,8 @@ import Foundation
 
 /// Errors that can occur in SwiftNASR methods.
 public enum Error: Swift.Error {
-    /// Tried to call ``NASR/load(withProgress:callback:)`` on a ``NASR``
-    /// instance with a null distribution.
+    /// Tried to call ``NASR/load(withProgress:)`` on a ``NASR`` instance with
+    /// a ``NullDistribution``.
     case nullDistribution
     
     /**
@@ -12,10 +12,7 @@ public enum Error: Swift.Error {
      - Parameter response: The HTTP response.
      */
     case badResponse(_ response: URLResponse)
-    
-    /// Downloaded tempfile unexpectedly missing.
-    case noFile
-    
+
     /// No file in distribution archive.
     case noSuchFile(path: String)
     
@@ -25,8 +22,8 @@ public enum Error: Swift.Error {
     /// Response did not contain any body.
     case noData
     
-    /// ``NASR/parse(_:withProgress:errorHandler:completionHandler:)`` was
-    /// called before ``NASR/load(withProgress:callback:)``.
+    /// ``NASR/parse(_:withProgress:errorHandler:)`` was called before
+    /// ``NASR/load(withProgress:)``.
     case notYetLoaded
     
     /**
@@ -108,7 +105,7 @@ public enum Error: Swift.Error {
 extension Error: LocalizedError {
     public var errorDescription: String? {
         switch self {
-            case .nullDistribution, .noFile, .noSuchFilePrefix, .noSuchFile:
+            case .nullDistribution, .noSuchFilePrefix, .noSuchFile:
                 return String(localized: "Couldn’t load distribution.", comment: "error description")
             case .badResponse, .noData:
                 return String(localized: "Couldn’t download distribution.", comment: "error description")
@@ -128,8 +125,6 @@ extension Error: LocalizedError {
                 return String(localized: "Called .load() on a null distribution.", comment: "failure reason")
             case let .badResponse(response):
                 return String(localized: "Bad response: \(response.description).", comment: "failure reason")
-            case .noFile:
-                return String(localized: "Couldn’t find file to load.", comment: "failure reason")
             case let .noSuchFilePrefix(prefix):
                 return String(localized: "Couldn’t find file in archive with prefix “\(prefix).”", comment: "failure reason")
             case .noData:
@@ -165,8 +160,6 @@ extension Error: LocalizedError {
         switch self {
             case .nullDistribution:
                 return String(localized: "Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk.", comment: "recovery suggestion")
-            case .noFile:
-                return String(localized: "Verify that the path to the distribution is correct.", comment: "recovery suggestion")
             case .badResponse, .noData:
                 return String(localized: "Verify that the URL to the distribution is correct and accessible.", comment: "recovery suggestion")
             case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldID,

@@ -1,20 +1,23 @@
-fileprivate let attendanceTransformer = FixedWidthTransformer([
-    .recordType,                                                                // 0 record type
-    .string(),                                                                  // 1 site number
-    .string(nullable: .blank),                                                  // 2 state post office code
-    .unsignedInteger(),                                                         // 3 sequence number
-    .string(),                                                                  // 4 attendance schedule
-    .null                                                                       // 5 blank
-])
-
 extension AirportParser {
+    private var attendanceTransformer: FixedWidthTransformer {
+        .init([
+            .recordType,                                                                // 0 record type
+            .string(),                                                                  // 1 site number
+            .string(nullable: .blank),                                                  // 2 state post office code
+            .unsignedInteger(),                                                         // 3 sequence number
+            .string(),                                                                  // 4 attendance schedule
+            .null                                                                       // 5 blank
+        ])
+    }
+
     func parseAttendanceRecord(_ values: Array<String>) throws {
         if values[4].trimmingCharacters(in: .whitespaces).isEmpty { return }
         let transformedValues = try attendanceTransformer.applyTo(values)
         
-        guard let airport = airports[transformedValues[1] as! String] else { return }
-        
+        let airportID = transformedValues[1] as! String
+        guard var airport = airports[airportID] else { return }
         airport.attendanceSchedule.append(parseAttendanceSchedule(transformedValues[4] as! String))
+        airports[airportID] = airport
     }
     
     private func parseAttendanceSchedule(_ value: String) -> AttendanceSchedule {

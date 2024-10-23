@@ -7,7 +7,7 @@ download those files, or work with previously-downloaded files.
 ## Overview
 
 Subclasses of the ``Loader`` superclass are used to load distributions
-from memory, disk, or the FADDS website (see <doc:Loaders>). The
+from memory, disk, or the FADDS website (see <doc:Working-with-Loaders>). The
 ``Distribution`` protocol describes those classes intended for processing
 downloaded distributions data from the FADDS website. You would choose a
 subclass of ``Distribution`` depending on how your data is stored:

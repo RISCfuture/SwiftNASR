@@ -1,5 +1,5 @@
 /// A schedule that an airport or other facility can be attended during.
-public enum AttendanceSchedule: Codable {
+public enum AttendanceSchedule: Record {
     
     /// An attendance schedule consisting of monthly, daily, and hourly
     /// components.

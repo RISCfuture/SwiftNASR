@@ -2,8 +2,8 @@
  The latitude, longitude, and elevation of a point on the earth.
  */
 
-public struct Location: Codable {
-    
+public struct Location: Record {
+
     /// The latitude in arc-seconds (positive is north).
     public let latitude: Float
     
@@ -22,7 +22,7 @@ public struct Location: Codable {
  An offset from a location or extended centerline.
  */
 
-public struct Offset: Codable {
+public struct Offset: Record {
     
     /// The distance from an extended centerline, in feet.
     public let distance: UInt
@@ -32,7 +32,7 @@ public struct Offset: Codable {
     
     
     /// Possible directions from an extended centerline.
-    public enum Direction: String, Codable {
+    public enum Direction: String, Record {
         case left = "L"
         case right = "R"
         
@@ -43,8 +43,8 @@ public struct Offset: Codable {
 }
 
 /// Types of navigation aid facilities.
-public enum NavaidFacilityType: String, Codable {
-    
+public enum NavaidFacilityType: String, Record {
+
     /// Combined VOR and TACAN facility.
     case VORTAC = "C"
     
@@ -95,7 +95,7 @@ public enum NavaidFacilityType: String, Codable {
  airport.
  */
 
-public enum Direction: String, Codable, RecordEnum {
+public enum Direction: String, RecordEnum {
     case north = "N"
     case northNortheast = "NNE"
     case northeast = "NE"

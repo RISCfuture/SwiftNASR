@@ -49,7 +49,7 @@ struct FixedWidthTransformer {
         return df
     }
     
-    var fields: Array<FixedWidthField>
+    let fields: Array<FixedWidthField>
     
     init(_ fields: Array<FixedWidthField>) {
         self.fields = fields

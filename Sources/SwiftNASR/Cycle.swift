@@ -5,7 +5,8 @@ import Foundation
  time period. Cycles are defined by the first day of their effectivity period.
  */
 
-public struct Cycle: Codable, CustomStringConvertible {
+public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, Equatable, Hashable {
+
     /// The year of the first date of the cycle.
     public let year: UInt
     
@@ -90,7 +91,9 @@ public struct Cycle: Codable, CustomStringConvertible {
     public var description: String {
         String(format: "%04d-%02d-%02d", year, month, day)
     }
-    
+
+    public var id: String { description }
+
     /**
      Generates a cycle from a month, day, and year. Does not validate the cycle.
      

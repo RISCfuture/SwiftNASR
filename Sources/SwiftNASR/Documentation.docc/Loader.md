@@ -1,9 +1,5 @@
 # ``SwiftNASR/Loader``
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: append)
-}
-
 Loaders create a `Distribution` from a NASR archive, on disk, in memory, or
 downloaded from the Internet (see `Downloader`).. For example,
 `ArchiveDataDownloader` produces a ZIP-compressed archive, and so the
@@ -20,10 +16,6 @@ each of which returns a ``Distribution`` instance that wraps the data from the
 loader. The ``Distribution`` is responsible for parsing the data; the `Loader`
 only retrieves it from disk, memory, or the Internet.
 
-In order to support Swift's numerous types of concurrency, the `load`
-methods appear thrice: once with a traditional callback, once as a Combine
-publisher, and once in an `async`/`await` style.
-
 ## Topics
 
 ### Subclasses
@@ -35,6 +27,4 @@ publisher, and once in an `async`/`await` style.
 
 ### Loading Data
 
-- ``load(withProgress:callback:)``
-- ``loadPublisher(withProgress:)``
 - ``load(withProgress:)``

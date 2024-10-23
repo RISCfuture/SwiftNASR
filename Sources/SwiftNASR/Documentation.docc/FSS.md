@@ -1,9 +1,5 @@
 # ``SwiftNASR/FSS``
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: append)
-}
-
 ## Topics
 
 ### Properties

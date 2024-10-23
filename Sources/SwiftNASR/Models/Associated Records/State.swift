@@ -3,8 +3,9 @@
  or `INTERNATIONAL` for non-US locations.
  */
 
-public class State: Record, Codable {
-    
+public struct State: ParentRecord {
+    public var id: String { postOfficeCode }
+
     /// The state or territory name.
     public let name: String
     

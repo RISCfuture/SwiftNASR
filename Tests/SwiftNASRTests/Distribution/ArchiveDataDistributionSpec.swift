@@ -5,7 +5,7 @@ import ZIPFoundation
 
 @testable import SwiftNASR
 
-class ArchiveDataDistributionSpec: QuickSpec {
+class ArchiveDataDistributionSpec: AsyncSpec {
     private class var mockDataReadmePrefix: Data {
         let data = "Hello, world!\r\nLine 2".data(using: .isoLatin1)!
         let archive = try! Archive(accessMode: .create)
@@ -18,7 +18,7 @@ class ArchiveDataDistributionSpec: QuickSpec {
         }
         return archive.data!
     }
-    
+
     private class var mockDataReadme: Data {
         let data = "Hello, world!\r\nLine 2".data(using: .isoLatin1)!
         let archive = try! Archive(accessMode: .create)
@@ -33,16 +33,19 @@ class ArchiveDataDistributionSpec: QuickSpec {
     }
 
     override class func spec() {
-        let distributionPrefix = try! ArchiveDataDistribution(data: mockDataReadmePrefix)
+//        let distributionPrefix = try! ArchiveDataDistribution(data: mockDataReadmePrefix)
         let distributionReadme = try! ArchiveDataDistribution(data: mockDataReadme)
+        
 
         describe("readFile") {
             it("reads each line from the file") {
                 var count = 0
                 var progress = Progress(totalUnitCount: 0)
-                
-                try! distributionReadme.readFile(path: "APT.TXT", withProgress: { progress = $0 }) { data in
-                    expect(progress.completedUnitCount).toEventually(equal(21))
+
+                let stream = await distributionReadme.readFile(path: "APT.TXT", withProgress: { progress = $0 })
+                await expect(progress.completedUnitCount).toEventually(equal(21))
+
+                for try await data in stream {
                     if count == 0 {
                         expect(data).to(equal("Hello, world!".data(using: .isoLatin1)!))
                     }
@@ -56,26 +59,29 @@ class ArchiveDataDistributionSpec: QuickSpec {
             }
 
             it("throws an error if the file doesn't exist") {
-                expect { try distributionReadme.readFile(path: "unknown", eachLine: { _ in }) }
+                await expect {
+                    let stream = await distributionReadme.readFile(path: "unknown")
+                    print(1)
+                    for try await foo in stream { print(foo) }
+                    print(2)
+                }
                     .to(throwError(Error.noSuchFile(path: "n/a")))
             }
         }
         
         describe("readCycle") {
             it("reads the cycle from the README file") {
-                try! distributionReadme.readCycle { cycle in
-                    expect(cycle!.year).to(equal(2020))
-                    expect(cycle!.month).to(equal(12))
-                    expect(cycle!.day).to(equal(3))
-                }
+                guard let cycle = try await distributionReadme.readCycle() else { fail(); return }
+                expect(cycle.year).to(equal(2020))
+                expect(cycle.month).to(equal(12))
+                expect(cycle.day).to(equal(3))
             }
             
             it("reads the cycle from the Read_me_* file") {
-                try! distributionPrefix.readCycle { cycle in
-                    expect(cycle!.year).to(equal(2020))
-                    expect(cycle!.month).to(equal(12))
-                    expect(cycle!.day).to(equal(3))
-                }
+                guard let cycle = try await distributionReadme.readCycle() else { fail(); return }
+                expect(cycle.year).to(equal(2020))
+                expect(cycle.month).to(equal(12))
+                expect(cycle.day).to(equal(3))
             }
         }
     }

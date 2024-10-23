@@ -1,14 +1,13 @@
 import Foundation
-import Combine
 
 fileprivate let metatypes = [
     (RecordType.states, State.self),
     (RecordType.airports, Airport.self),
     (RecordType.ARTCCFacilities, ARTCC.self)
-] as [(RecordType, Record.Type)]
+] as [(RecordType, any Record.Type)]
 
 /// Record types available to load from a distribution.
-public enum RecordType: String, Codable {
+public enum RecordType: String, Codable, Sendable {
     case ARTCCFacilities = "AFF"
     case airports = "APT"
     case ARTCCBoundarySegments = "ARB"
@@ -38,14 +37,14 @@ public enum RecordType: String, Codable {
     /// `states` is not a loadable record type.
     case states = "_ST"
     
-    var metatype: Record.Type {
+    var metatype: any Record.Type {
         guard let type = metatypes.first(where: { $0.0 == self })?.1 else {
             preconditionFailure("Unsupported type \(self)")
         }
         return type
    }
     
-    static func forType(_ type: Record.Type) -> Self {
+    static func forType(_ type: any Record.Type) -> Self {
         guard let value = metatypes.first(where: { $0.1 == type })?.0 else {
             preconditionFailure("Unsupported type \(type)")
         }
@@ -53,13 +52,20 @@ public enum RecordType: String, Codable {
     }
 }
 
+/// Global actor that guarantees exclusive access to the distribution file.
+@globalActor public actor FileReadActor: GlobalActor {
+    public static let shared = FileReadActor()
+
+    private init() {}
+}
+
 /**
  Protocol that describes classes that can load NASR data from different ways of
  storing distribution data.
  */
 
-public protocol Distribution {
-    
+public protocol Distribution: Sendable {
+
     /**
      Locates a file in the distribution by its prefix.
      
@@ -69,41 +75,6 @@ public protocol Distribution {
      */
     
     func findFile(prefix: String) throws -> String?
-    
-    /**
-     Reads a file from the distribution.
-     
-     - Parameter path: The path to the file within the distribution.
-     - Parameter progressHandler: A block that receives the Progress object when
-                                  the task begins.
-     - Parameter progress: A child Progress object you can add to your parent
-                           Progress.
-     - Parameter eachLine: A callback for each line of text in the file.
-     - Parameter data: A line of text from the file being read.
-     - Returns: The number of lines in the file.
-     
-     - Throws: ``Error```.noSuchFile` if a file at `path` doesn't exist
-               within the distribution.
-     */
-    
-    @discardableResult func readFile(path: String, withProgress progressHandler: @escaping (_ progress: Progress) -> Void, eachLine: (_ data: Data) -> Void) throws -> UInt
-    
-    /**
-     Reads a file from the distribution.
-     
-     - Parameter path: The path to the file within the distribution.
-     - Parameter progressHandler: A block that receives the Progress object when
-                                  the task begins.
-     - Parameter progress: A child Progress object you can add to your parent
-                           Progress.
-     - Parameter linesHandler: Called when the number of lines in the file is
-                               known.
-     - Parameter lines: The number of lines in the file.
-     - Returns: A publisher that publishes each line of the file.
-     */
-    
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func readFilePublisher(path: String, withProgress progressHandler: @escaping (_ progress: Progress) -> Void, returningLines linesHandler: @escaping (_ lines: UInt) -> Void) -> AnyPublisher<Data, Swift.Error>
     
     /**
      Decompresses and reads a file asynchronously from a distribution.
@@ -119,66 +90,30 @@ public protocol Distribution {
      - Returns: An `AsyncStream` that contains each line, in order, from the
      file.
      */
-    
-    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    func readFile(path: String, withProgress progressHandler: @escaping (_ progress: Progress) -> Void, returningLines linesHandler: @escaping (_ lines: UInt) -> Void) -> AsyncThrowingStream<Data, Swift.Error>
+
+    @FileReadActor
+    func readFile(path: String, withProgress progressHandler: @Sendable (_ progress: Progress) -> Void, returningLines linesHandler: (_ lines: UInt) -> Void) -> AsyncThrowingStream<Data, Swift.Error>
 }
 
 extension Distribution {
-    
-    /**
-     Synchronously reads the data for a given record type from the distribution.
-     
-     - Parameter type: The record type to read data for.
-     - Parameter progressHandler: A block that receives the Progress object when
-                                  the task begins.
-     - Parameter progress: A child Progress object you can add to your parent
-                           Progress.
-     - Parameter eachRecord: A callback for each data record in the file.
-     - Parameter data: The data for an individual record.
-     - Returns: The number of lines in the file.
-     */
-    
-    @discardableResult public func read(type: RecordType, withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }, eachRecord: @escaping (_ data: Data) -> Void) throws -> UInt {
-        return try readFile(path: "\(type.rawValue).txt", withProgress: progressHandler, eachLine: { data in eachRecord(data) })
-    }
-    
+
     /**
      Reads the data for a given record type from the distribution.
-     
+
      - Parameter type: The record type to read data for.
      - Parameter progressHandler: A block that receives the Progress object when
-                                  the task begins.
+     the task begins.
      - Parameter progress: A child Progress object you can add to your parent
-                           Progress.
+     Progress.
      - Parameter linesHandler: Called when the number of lines in the file is
-                               known.
-     - Parameter lines: The number of lines in the file.
-     - Returns: A publisher that publishes each data record from the file.
-     */
-    
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func readPublisher(type: RecordType, withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (_ lines: UInt) -> Void = { _ in }) -> AnyPublisher<Data, Swift.Error> {
-        return readFilePublisher(path: "\(type.rawValue).txt", withProgress: progressHandler, returningLines: linesHandler)
-    }
-    
-    /**
-     Reads the data for a given record type from the distribution.
-     
-     - Parameter type: The record type to read data for.
-     - Parameter progressHandler: A block that receives the Progress object when
-                                  the task begins.
-     - Parameter progress: A child Progress object you can add to your parent
-                           Progress.
-     - Parameter linesHandler: Called when the number of lines in the file is
-                               known.
+     known.
      - Parameter lines: The number of lines in the file.
      - Returns: An async stream of data from the record file, and the progress
-                through that file.
+     through that file.
      */
-    
-    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    public func read(type: RecordType, withProgress progressHandler: @escaping (_ progress: Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (_ lines: UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
+
+    @FileReadActor
+    public func read(type: RecordType, withProgress progressHandler: @Sendable (_ progress: Progress) -> Void = { _ in }, returningLines linesHandler: (_ lines: UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
         return readFile(path: "\(type.rawValue).txt", withProgress: progressHandler, returningLines: linesHandler)
     }
 }

@@ -1,18 +1,11 @@
 import Foundation
-import Combine
 
 protocol Parser: AnyObject {
-    func prepare(distribution: Distribution, callback: @escaping ((Result<Void, Swift.Error>) -> Void))
-    
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func preparePublisher(distribution: Distribution) -> AnyPublisher<Void, Swift.Error>
-    
-    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
     func prepare(distribution: Distribution) async throws
     
-    func parse(data: Data) throws
-    
-    func finish(data: NASRData)
+    func parse(data: Data) async throws
+
+    func finish(data: NASRData) async
 }
 
 extension Parser {
@@ -44,34 +37,12 @@ extension Parser {
     }
 }
 
-@available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-extension Parser {
-    func preparePublisher(distribution: Distribution) -> AnyPublisher<Void, Swift.Error> {
-        return Future { promise in
-            self.prepare(distribution: distribution) { result in
-                promise(result)
-            }
-        }.eraseToAnyPublisher()
-    }
-}
-
-@available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-extension Parser {
-    func prepare(distribution: Distribution) async throws -> Void {
-        return try await withCheckedThrowingContinuation { continuation in
-            self.prepare(distribution: distribution) { result in
-                continuation.resume(with: result)
-            }
-        }
-    }
-}
-
 enum ParserError: Swift.Error, CustomStringConvertible {
     case badData(_ reason: String)
     case unknownRecordIdentifier(_ recordIdentifier: String)
-    case unknownRecordEnumValue(_ value: Any)
-    case invalidValue(_ value: Any)
-    
+    case unknownRecordEnumValue(_ value: Sendable)
+    case invalidValue(_ value: Sendable)
+
     public var description: String {
         switch self {
             case let .badData(reason):

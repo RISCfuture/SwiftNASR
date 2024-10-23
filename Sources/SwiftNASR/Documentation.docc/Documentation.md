@@ -30,7 +30,7 @@ itself (type safety, compile-time checks, etc.).
 
 ### Basics
 
-- <doc:GettingStarted>
+- <doc:Getting-Started>
 - ``NASR``
 - ``NASRData``
 
@@ -44,12 +44,12 @@ itself (type safety, compile-time checks, etc.).
 
 ### Distributions
 
-- <doc:Distributions>
+- <doc:Working-with-Distributions>
 - ``Distribution``
 
 ### Loaders
 
-- <doc:Loaders>
+- <doc:Working-with-Loaders>
 - ``Loader``
 - ``Downloader``
 

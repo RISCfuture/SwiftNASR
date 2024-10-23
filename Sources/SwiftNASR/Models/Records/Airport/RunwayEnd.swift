@@ -7,7 +7,7 @@ import Foundation
  one-way runways have only one end, the base end.
  */
 
-public class RunwayEnd: Codable {
+public struct RunwayEnd: Record {
     // MARK: - Properties
     
     /// The name of the runway direction, for example "29" for the northwest
@@ -178,8 +178,8 @@ public class RunwayEnd: Codable {
     // MARK: - Types
     
     /// Visual glideslope indicating (VGSI) equipment.
-    public struct VisualGlideslopeIndicator: Codable {
-        
+    public struct VisualGlideslopeIndicator: Record {
+
         /// The type of VGSI.
         public let type: Classification
         
@@ -197,8 +197,8 @@ public class RunwayEnd: Codable {
         }
         
         /// VGSI types.
-        public enum Classification: String, Codable {
-            
+        public enum Classification: String, Record {
+
             /// Simplified abbreviated visual approach slope indicator
             case SAVASI = "SAVASI"
             
@@ -229,7 +229,7 @@ public class RunwayEnd: Codable {
         }
         
         /// The side(s) of the runway a VGSI is on.
-        public enum Side: String, Codable, RecordEnum {
+        public enum Side: String, RecordEnum {
             case left = "L"
             case right = "R"
             case both = "B"
@@ -242,8 +242,8 @@ public class RunwayEnd: Codable {
     
     /// An obstacle or group of obstacles whose location and height affects the
     /// approach path to a runway.
-    public struct ControllingObject: Codable {
-        
+    public struct ControllingObject: Record {
+
         /// The type of obstacle.
         public let category: Category
         
@@ -269,7 +269,7 @@ public class RunwayEnd: Codable {
         public var remarks = Remarks<Field>()
         
         /// Obstacle categories.
-        public enum Category: Codable, RawRepresentable, RecordEnum {
+        public enum Category: RecordEnum {
             case aircraft
             
             /// Antenna or mast
@@ -404,7 +404,7 @@ public class RunwayEnd: Codable {
         }
         
         /// Methods by which an obstacle can be marked.
-        public enum Marking: String, Codable, RecordEnum {
+        public enum Marking: String, RecordEnum {
             
             /// Obstacle has visible markings such as paint.
             case marked = "M"
@@ -414,7 +414,7 @@ public class RunwayEnd: Codable {
         }
         
         /// Fields that per-field remarks can be associated with.
-        public enum Field: String, Codable {
+        public enum Field: String, RemarkField {
             case category, markings, runwayCategory, clearanceSlope, heightAboveRunway, distanceFromRunway, offsetFromCenterline
             
             static var fieldOrder: Array<Self?> {
@@ -434,8 +434,8 @@ public class RunwayEnd: Codable {
     
     /// A location on the runway that aircraft are expected to stop before when
     /// land-and-hold-short operations are in effect.
-    public struct LAHSOPoint: Codable {
-        
+    public struct LAHSOPoint: Record {
+
         /// The distance from the landing threshold to the LAHSO point, in feet.
         public let availableDistance: UInt
         
@@ -460,10 +460,10 @@ public class RunwayEnd: Codable {
         public var remarks = Remarks<Field>()
         
         // for accessing other runways in the parent Airport
-        var findRunwayByID: ((_ runwayID: String) -> Runway?)!
+        var findRunwayByID: (@Sendable (_ runwayID: String) -> Runway?)!
         
         /// Fields that per-field remarks can be associated with.
-        public enum Field: String, Codable {
+        public enum Field: String, RemarkField {
             case availableDistance, intersectingRunwayID, definingEntity, position, positionSource, positionSourceDate
             
             static var fieldOrder: Array<Self?> {
@@ -485,7 +485,7 @@ public class RunwayEnd: Codable {
     // MARK: - Enums
     
     /// Instrument landing equipment.
-    public enum InstrumentLandingSystem: String, Codable, RecordEnum {
+    public enum InstrumentLandingSystem: String, RecordEnum {
         
         /// Instrument landing system
         case ILS = "ILS"
@@ -518,14 +518,14 @@ public class RunwayEnd: Codable {
         /// LDA with distance measuring equipment
         case LDA_DME = "LDA/DME"
         
-        static var synonyms: Dictionary<RawValue, Self> = [
+        static let synonyms: Dictionary<RawValue, Self> = [
             "LOC/GS": .ILS
         ]
     }
     
     /// Runway end markings (typically painted on the runway)
     /// (see AC 150/5340-1).
-    public enum Marking: String, Codable, RecordEnum {
+    public enum Marking: String, RecordEnum {
         
         /// Designation, centerline, threshold, aimpoint, touchdown zone, and
         /// side stripe markings.
@@ -554,14 +554,14 @@ public class RunwayEnd: Codable {
     }
     
     /// Visible condition of markings.
-    public enum MarkingCondition: String, Codable, RecordEnum {
+    public enum MarkingCondition: String, RecordEnum {
         case good = "G"
         case fair = "F"
         case poor = "P"
     }
     
     /// Location of runway visual range sensors.
-    public enum RVRSensor: String, Codable, RecordEnum {
+    public enum RVRSensor: String, RecordEnum {
         
         /// Located 0 to 2500 feet from the approach end runway threshold,
         /// normally behind the ILS or VGSI equipment.
@@ -576,7 +576,7 @@ public class RunwayEnd: Codable {
     }
     
     /// Approach lighting equipment.
-    public enum ApproachLighting: String, Codable, RecordEnum {
+    public enum ApproachLighting: String, RecordEnum {
         
         /// 3000-foot high-intensity approach lighting system with centerline
         /// sequenced flashers
@@ -629,7 +629,7 @@ public class RunwayEnd: Codable {
         /// Any other lighting configuration
         case nonstandard = "NSTD"
         
-        static var synonyms: Dictionary<RawValue, Self> = [
+        static let synonyms: Dictionary<RawValue, Self> = [
             "AFOVRN": .militaryOverrun, "MIL_OVRN": .militaryOverrun,
             "SALS": .SSALS,
             "SALSF": .SSALF
@@ -637,7 +637,7 @@ public class RunwayEnd: Codable {
     }
     
     /// Fields that per-field remarks can be associated with.
-    public enum Field: String, Codable {
+    public enum Field: String, RemarkField {
         case ID, trueHeading, instrumentLandingSystem, rightTraffic, marking, markingCondition, threshold, thresholdCrossingHeight, visualGlidepath, displacedThreshold, thresholdDisplacement, touchdownZoneElevation, gradient, TORA, TODA, ASDA, LDA, LAHSO, visualGlideslopeIndicator, RVRSensors, hasRVV, approachLighting, hasREIL, hasCenterlineLighting, endTouchdownLighting, controllingObject, positionSource, positionSourceDate, elevationSource, elevationSourceDate, displacedThresholdPositionSource, displacedThresholdPositionSourceDate, displacedThresholdElevationSource, displacedThresholdElevationSourceDate, touchdownZoneElevationSource, touchdownZoneElevationSourceDate
         
         case arrestingSystems

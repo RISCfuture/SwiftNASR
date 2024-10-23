@@ -1,9 +1,5 @@
 # ``SwiftNASR/Navaid``
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: append)
-}
-
 ## Topics
 
 ### Identification

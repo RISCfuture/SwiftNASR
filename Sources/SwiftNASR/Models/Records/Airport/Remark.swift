@@ -4,15 +4,15 @@
  to the FAA. Remarks can be applied to a record as a whole, or to a specific
  field within the record.
  
- The `RemarkField` type will be a Codable enum representing all the fields in a
+ The `F` type will be a ``RemarkField`` enum representing all the fields in a
  record type that can have a remark applied to them.
  */
 
-public struct Remarks<RemarkField>: Codable where RemarkField: Codable & Equatable {
-    
+public struct Remarks<F: RemarkField>: Record {
+
     /// All remarks added to the record.
-    public var remarks = Array<Remark<RemarkField>>()
-    
+    public var remarks = Array<Remark<F>>()
+
     /// Remarks applied to a record as a whole.
     var general: Array<String> {
         var remarks = Array<String>()
@@ -31,9 +31,9 @@ public struct Remarks<RemarkField>: Codable where RemarkField: Codable & Equatab
      - Parameter field: The field to get remarks for.
      - Returns: The remarks for that field (if any).
      */
-    public func forField(_ field: RemarkField) -> Array<Remark<RemarkField>> {
-        var remarks = Array<Remark<RemarkField>>()
-        
+    public func forField(_ field: F) -> Array<Remark<F>> {
+        var remarks = Array<Remark<F>>()
+
         for remark in self.remarks {
             switch remark {
                 case let .field(remarkField, _):
@@ -51,7 +51,7 @@ public struct Remarks<RemarkField>: Codable where RemarkField: Codable & Equatab
         return remarks
     }
     
-    mutating public func append(_ remark: Remark<RemarkField>) {
+    mutating public func append(_ remark: Remark<F>) {
         remarks.append(remark)
     }
 }
@@ -60,17 +60,17 @@ public struct Remarks<RemarkField>: Codable where RemarkField: Codable & Equatab
  Contains remarks about a record or a field within a record.
  */
 
-public enum Remark<RemarkField>: Codable where RemarkField: Codable & Equatable {
-    
+public enum Remark<F: RemarkField>: Record {
+
     /// A remark that applies to the record in general.
     case general(_ content: String)
     
     /// A remark that applies to a specific field.
-    case field(field: RemarkField, content: String)
-    
+    case field(field: F, content: String)
+
     /// A remark that applies to a specific fuel type (e.g., 100LL).
-    case fuel(field: RemarkField, fuel: Airport.FuelType, content: String)
-    
+    case fuel(field: F, fuel: Airport.FuelType, content: String)
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         guard let type = Kinds(rawValue: try container.decode(String.self, forKey: .type)) else {
@@ -81,11 +81,11 @@ public enum Remark<RemarkField>: Codable where RemarkField: Codable & Equatable 
                 let content = try container.decode(String.self, forKey: .content)
                 self = .general(content)
             case .field:
-                let field = try container.decode(RemarkField.self, forKey: .field)
+                let field = try container.decode(F.self, forKey: .field)
                 let content = try container.decode(String.self, forKey: .content)
                 self = .field(field: field, content: content)
             case .fuel:
-                let field = try container.decode(RemarkField.self, forKey: .field)
+                let field = try container.decode(F.self, forKey: .field)
                 let fuel = try container.decode(Airport.FuelType.self, forKey: .fuel)
                 let content = try container.decode(String.self, forKey: .content)
                 self = .fuel(field: field, fuel: fuel, content: content)

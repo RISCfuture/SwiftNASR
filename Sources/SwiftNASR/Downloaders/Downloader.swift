@@ -1,6 +1,4 @@
 import Foundation
-import Combine
-import Dispatch
 
 /**
  A downloader is a class that can download a NASR distribution from the FAA's
@@ -8,24 +6,13 @@ import Dispatch
  downloaders.
  */
 
-open class Downloader: Loader {
-    
-    /// The distribution cycle.
-    public let cycle: Cycle
+public protocol Downloader: Loader {
 
-    private static var cycleDateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = zulu
-        return formatter
-    }
-    
+    /// The distribution cycle.
+    var cycle: Cycle { get }
+
     /// The URL to download the NASR data from, given ``cycle``.
-    public var cycleURL: URL {
-        let cycleString = Downloader.cycleDateFormatter.string(from: cycle.date!)
-        return URL(string: "https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_\(cycleString).zip")!
-    }
+    var cycleURL: URL { get }
 
     /**
      Creates a downloader for a given cycle.
@@ -34,35 +21,7 @@ open class Downloader: Loader {
                         uses the current cycle.
      */
     
-    public init(cycle: Cycle? = nil) {
-        if let cycle = cycle { self.cycle = cycle }
-        else { self.cycle = Cycle.current }
-    }
-    
-    /**
-     Downloads the NASR data asynchronously.
-     
-     - Parameter callback: A function to call with the completed download.
-     - Parameter result: If successful, cointains the distribution. If not,
-                         contains the error.
-     - Returns: A progress value that is updated during the download.
-     */
-
-    open func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) {
-        progressHandler(completedProgress())
-    }
-    
-    /**
-     Downloads the NASR data asynchronously.
-     
-     - Returns: A publisher that publishes the downloaded distribution.
-     */
-    
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    open func loadPublisher(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) -> AnyPublisher<Distribution, Swift.Error> {
-        progressHandler(completedProgress())
-        return Empty(completeImmediately: true).eraseToAnyPublisher()
-    }
+    init(cycle: Cycle?)
     
     /**
      Downloads the NASR data asynchronously.
@@ -71,24 +30,40 @@ open class Downloader: Loader {
      - Throws: If the distribution could not be downloaded.
      */
     
-    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    open func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) async throws -> Distribution {
+    func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws -> Distribution
+}
+
+@objc final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
+    let progress = Progress(totalUnitCount: 0)
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        // noop
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        DispatchQueue.main.async { [weak self] in
+            self?.progress.completedUnitCount = totalBytesWritten
+            self?.progress.totalUnitCount = totalBytesExpectedToWrite
+        }
+    }
+}
+
+fileprivate var cycleDateFormatter: DateFormatter {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.dateFormat = "yyyy-MM-dd"
+    formatter.timeZone = zulu
+    return formatter
+}
+
+extension Downloader {
+    public var cycleURL: URL {
+        let cycleString = cycleDateFormatter.string(from: cycle.date!)
+        return URL(string: "https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_\(cycleString).zip")!
+    }
+
+    func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) async throws -> Distribution {
         progressHandler(completedProgress())
         return NullDistribution()
-    }
-    
-    @objc class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
-        var progress = Progress(totalUnitCount: 0)
-        
-        func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-            // noop
-        }
-        
-        func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-            DispatchQueue.main.async { [weak self] in
-                self?.progress.completedUnitCount = totalBytesWritten
-                self?.progress.totalUnitCount = totalBytesExpectedToWrite
-            }
-        }
     }
 }

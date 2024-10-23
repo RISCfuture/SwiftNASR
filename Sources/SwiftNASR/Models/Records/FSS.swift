@@ -7,12 +7,11 @@ import Foundation
  
  Fields in this model that reference other record types (e.g.,
  ``airport``, which references ``Airport``) will be `nil` unless the
- associated type has been parsed with ``NASR/parse(_:withProgress:errorHandler:completionHandler:)`` or one of its
- variants.
+ associated type has been parsed with ``NASR/parse(_:withProgress:errorHandler:)``.
  */
 
-public class FSS: Record, Equatable, Codable {
-    
+public struct FSS: ParentRecord {
+
     // MARK: - Properties
     
     // MARK: Identifiers
@@ -127,7 +126,9 @@ public class FSS: Record, Equatable, Codable {
     
     /// Communications remarks for the FSS.
     public var commRemarks: Array<String>
-    
+
+    weak var data: NASRData? = nil
+
     // MARK: - Methods
     
     init(ID: String, airportID: String?, name: String, radioIdentifier: String?, type: FSSType, hoursOfOperation: String, status: Status?, lowAltEnrouteChartNumber: String?, frequencies: Array<Frequency>, commFacilities: Array<CommFacility>, outlets: Array<Outlet>, navaids: Array<Navaid>, airportAdvisoryFrequencies: Array<Frequency>, VOLMETs: Array<VOLMET>, owner: Operator?, ownerName: String?, operator: Operator, operatorName: String?, hasWeatherRadar: Bool?, hasEFAS: Bool, flightWatchAvailability: String?, nearestFSSIDWithTeletype: String?, city: String?, stateName: String?, region: String?, location: Location?, DFEquipment: DirectionFindingEquipment?, phoneNumber: String?, remarks: Array<String>, commRemarks: Array<String>) {
@@ -163,14 +164,16 @@ public class FSS: Record, Equatable, Codable {
         self.commRemarks = commRemarks
     }
     
-    public static func == (lhs: FSS, rhs: FSS) -> Bool {
-        return lhs.ID == rhs.ID
+    public var id: String { return self.ID }
+
+    private enum CodingKeys: String, CodingKey {
+        case ID, name, radioIdentifier, type, hoursOfOperation, status, lowAltEnrouteChartNumber, phoneNumber, frequencies, commFacilities, outlets, navaids, airportAdvisoryFrequencies, VOLMETs, owner, ownerName, `operator`, operatorName, hasWeatherRadar, hasEFAS, flightWatchAvailability, DFEquipment, nearestFSSIDWithTeletype, airportID, city, region, location, remarks, commRemarks, stateName
     }
-    
+
     // MARK: - Enums
 
     /// FSS facility types.
-    public enum FSSType: String, Codable, RecordEnum {
+    public enum FSSType: String, RecordEnum {
         
         /// Flight service station
         case FSS = "FSS"
@@ -199,8 +202,8 @@ public class FSS: Record, Equatable, Codable {
 
     
     /// A communications frequency used by an FSS to communicate with aircraft.
-    public struct Frequency: Codable {
-        
+    public struct Frequency: Record {
+
         /// The radio frequency, in kHz.
         let frequency: UInt
         
@@ -215,8 +218,8 @@ public class FSS: Record, Equatable, Codable {
         let use: Use?
 
         /// Frequency use by the FSS.
-        public enum Use: String, Codable {
-            
+        public enum Use: String, Record {
+
             /// The FSS transmits only on this frequency.
             case transmitOnly = "T"
             
@@ -230,8 +233,8 @@ public class FSS: Record, Equatable, Codable {
     
     /// A remote communications outlet (transmit/receive facility) used by an
     /// FSS.
-    public struct Outlet: Codable {
-        
+    public struct Outlet: Record {
+
         /// The outlet ID.
         public let identification: String
         
@@ -239,15 +242,15 @@ public class FSS: Record, Equatable, Codable {
         public let type: OutletType
         
         /// Type of remote communications outlets.
-        public enum OutletType: String, Codable, RecordEnum {
+        public enum OutletType: String, RecordEnum {
             case RCO = "RCO"
             case RCO1 = "RCO1"
         }
     }
     
     /// A navigational facility monitored by an FSS.
-    public struct Navaid: Codable {
-        
+    public struct Navaid: Record {
+
         /// The navaid identifier.
         public let identification: String
         
@@ -258,8 +261,8 @@ public class FSS: Record, Equatable, Codable {
     
     /// A frequency that automatically transmits meteorological information to
     /// pilots.
-    public struct VOLMET: Codable {
-        
+    public struct VOLMET: Record {
+
         /// The frequency the meteorological information is transmitted on.
         public let frequency: Frequency
         
@@ -268,8 +271,8 @@ public class FSS: Record, Equatable, Codable {
     }
     
     /// A communications facility used by an FSS.
-    public struct CommFacility: Codable {
-        
+    public struct CommFacility: Record {
+
         /// The frequency that the FSS uses to communicate with aircraft.
         public let frequency: Frequency
         
@@ -316,15 +319,15 @@ public class FSS: Record, Equatable, Codable {
         public let navaidType: NavaidFacilityType?
         
         // for loading states from the parent FSS object
-        var findStateByName: ((_ name: String) -> State?)!
-        
+        var findStateByName: (@Sendable (_ name: String) async -> State?)!
+
         enum CodingKeys: String, CodingKey {
             case frequency, operationalHours, city, stateName, location, lowAltEnrouteChart, timezone, owner, ownerName, `operator`, operatorName, status, statusDate, navaid, navaidType
         }
     }
     
     /// Direction-finding equipment that an FSS can use to locate aircraft.
-    public struct DirectionFindingEquipment: Codable {
+    public struct DirectionFindingEquipment: Record {
         
         /// The direction-finding equipment type.
         public let type: String //TODO enum?
@@ -336,7 +339,7 @@ public class FSS: Record, Equatable, Codable {
     // MARK: - Enums
 
     /// Owner or operator of an FSS.
-    public enum Operator: String, Codable, RecordEnum {
+    public enum Operator: String, RecordEnum {
         
         /// United States Air Force
         case USAF = "A"
@@ -373,7 +376,7 @@ public class FSS: Record, Equatable, Codable {
     }
 
     /// FSS statuses.
-    public enum Status: String, Codable, RecordEnum {
+    public enum Status: String, RecordEnum {
         
         /// Operational and providing IFR services
         case operationalIFR = "OPERATIONAL-IFR"
