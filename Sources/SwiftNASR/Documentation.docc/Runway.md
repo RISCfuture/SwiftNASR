@@ -1,9 +1,5 @@
 # ``SwiftNASR/Runway``
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: append)
-}
-
 ## Topics
 
 ### Associations

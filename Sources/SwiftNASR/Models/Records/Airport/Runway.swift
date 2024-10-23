@@ -11,8 +11,8 @@ import Foundation
  reciprocal end.
  */
 
-public class Runway: Record, Codable {
-    
+public struct Runway: Record {
+
     // MARK: - Properties
     
     /// The unique name of the runway, such as "11/29" for a runway with two
@@ -50,12 +50,12 @@ public class Runway: Record, Codable {
     
     /// The runway base-end direction (or the only direction, for a helipad or
     /// one-way runway). This would be runway 29 for a runway labeled "29/11".
-    public let baseEnd: RunwayEnd
-    
+    public package(set) var baseEnd: RunwayEnd
+
     /// The runway reciprocal-end direction. This would be runway 11 for a
     /// runway labeled "29/11".
-    public let reciprocalEnd: RunwayEnd?
-    
+    public package(set) var reciprocalEnd: RunwayEnd?
+
     /// The maximum weight of an aircraft with single-wheel type landing gear
     /// (e.g., Douglas DC-3, F-15 Eagle).
     public let singleWheelWeightBearingCapacity: UInt?
@@ -130,7 +130,7 @@ public class Runway: Record, Codable {
     
     /// A runway pavement classification number (PCN) and its attributes. See
     /// AC 150/5335-5 for detailed information on how PCN is calculated.
-    public struct PavementClassification: Codable {
+    public struct PavementClassification: Record {
         
         /// The determined PCN, a broad classification of runway strength.
         public let number: UInt
@@ -149,7 +149,7 @@ public class Runway: Record, Codable {
         public let determinationMethod: DeterminationMethod
         
         /// PCN pavement types, used to determine how the PCN is calculated.
-        public enum Classification: String, Codable, RecordEnum {
+        public enum Classification: String, RecordEnum {
             
             /// PCN is calculated for rigid pavements using the Westergaard
             /// theory.
@@ -163,7 +163,7 @@ public class Runway: Record, Codable {
         /// Subgrade strength categories, standardized strengths of rigid or
         /// flexible pavements used to calculate the ACN (aircraft
         /// classification number).
-        public enum SubgradeStrengthCategory: String, Codable, RecordEnum {
+        public enum SubgradeStrengthCategory: String, RecordEnum {
             
             /// Rigid pavements: Characterized by _K_ = 150 MN/m^3 and
             /// representing all _K_ values above 120 MN/m^3. Flexible
@@ -191,7 +191,7 @@ public class Runway: Record, Codable {
         }
         
         /// Maximum allowable tire pressure values.
-        public enum TirePressureLimit: String, Codable, RecordEnum {
+        public enum TirePressureLimit: String, RecordEnum {
             
             /// No pressure limit.
             case unlimited = "W"
@@ -207,7 +207,7 @@ public class Runway: Record, Codable {
         }
         
         /// Methods by which PCN can be determined.
-        public enum DeterminationMethod: String, Codable, RecordEnum {
+        public enum DeterminationMethod: String, RecordEnum {
             
             /// PCN was determined using aircraft.
             case aircraft = "U"
@@ -229,7 +229,7 @@ public class Runway: Record, Codable {
     
     
     /// Materials that a runway can be made from.
-    public enum Material: String, Codable, RecordEnum {
+    public enum Material: String, RecordEnum {
         
         /// Concrete or Portland cement
         case concrete = "CONC"
@@ -271,7 +271,7 @@ public class Runway: Record, Codable {
         /// Graded or rolled earth
         case gradedOrRolledEarth = "GRE"
         
-        static var synonyms: Dictionary<RawValue, Self> = [
+        static let synonyms: Dictionary<RawValue, Self> = [
             "GRAVEL": .gravel, "TRTD": .treated, "ALUMINUM": .metal,
             "STEEL": .metal, "OIL&CHIP": .treated, "CORAL": .gravel,
             "CALICHE": .gravel, "TOP": .roof, "PSP": .piercedSteel,
@@ -280,7 +280,7 @@ public class Runway: Record, Codable {
     }
     
     /// The condition of the runway surface.
-    public enum Condition: String, Codable, RecordEnum {
+    public enum Condition: String, RecordEnum {
         
         /// New pavement or pavement with no cracks or a few hairline cracks.
         case excellent = "E"
@@ -314,7 +314,7 @@ public class Runway: Record, Codable {
     }
     
     /// Treatment applied to a runway surface.
-    public enum Treatment: String, Codable, RecordEnum {
+    public enum Treatment: String, RecordEnum {
         
         /// Saw-cut or plastic grooved
         case grooved = "GRVD"
@@ -333,7 +333,7 @@ public class Runway: Record, Codable {
     }
     
     /// The intensity of runway edge lights.
-    public enum EdgeLightIntensity: String, Codable, RecordEnum {
+    public enum EdgeLightIntensity: String, RecordEnum {
         case high = "HIGH"
         case medium = "MED"
         case low = "LOW"
@@ -349,13 +349,13 @@ public class Runway: Record, Codable {
         /// (helipads only) Strobe lighting
         case strobe = "STROBE"
         
-        static var synonyms: Dictionary<String, Runway.EdgeLightIntensity> = [
+        static let synonyms: Dictionary<String, Runway.EdgeLightIntensity> = [
             "FLD": .flood, "STRB": .strobe
         ]
     }
     
     /// Fields that per-field remarks can be associated with.
-    public enum Field: String, Codable {
+    public enum Field: String, RemarkField {
         case identification, length, width, lengthSource, lengthSourceDate, materials, condition, treatment, pavementClassification, edgeLightsIntensity, baseEnd, reciprocalEnd, singleWheelWeightBearingCapacity, dualWheelWeightBearingCapacity, tandemDualWheelWeightBearingCapacity, doubleTandemDualWheelWeightBearingCapacity
         
         static var fieldOrder: Array<Self?> {

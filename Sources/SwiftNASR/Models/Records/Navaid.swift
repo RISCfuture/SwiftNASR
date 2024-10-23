@@ -9,11 +9,10 @@ import Foundation
  
  Fields in this model that reference other record types (e.g.,
  ``lowAltitudeARTCC``, which references ``ARTCC``) will be `nil` unless the
- associated type has been parsed with ``NASR/parse(_:withProgress:errorHandler:completionHandler:)`` or one of its
- variants.
+ associated type has been parsed with ``NASR/parse(_:withProgress:errorHandler:)`.
  */
-public class Navaid: Record, Equatable, Codable {
-    
+public struct Navaid: ParentRecord {
+
     /// The FAA identifier for this navaid (e.g., "OAK").
     public var ID: String
     
@@ -171,7 +170,9 @@ public class Navaid: Record, Equatable, Codable {
     
     /// VOR test checkpoints (airborne or ground) defined by this navaid.
     public var checkpoints = Array<VORCheckpoint>()
-    
+
+    weak var data: NASRData? = nil
+
     /// True if this navaid is available for use (IFR or VFR).
     public var isOperational: Bool {
         status == .operationalIFR || status == .operationalVFR || status == .operationalRestricted
@@ -245,9 +246,15 @@ public class Navaid: Record, Equatable, Codable {
         self.fanMarkers = fanMarkers
         self.checkpoints = checkpoints
     }
-    
+
+    public var id: String { return self.ID }
+
+    public enum CodingKeys: String, CodingKey {
+        case ID, name, type, city, stateName, FAARegion, country, ownerName, operatorName, commonSystemUsage, publicUse, navaidClass, hoursOfOperation, highAltitudeARTCCCode, lowAltitudeARTCCCode, position, TACANPosition, surveyAccuracy, magneticVariation, magneticVariationEpoch, simultaneousVoice, powerOutput, automaticVoiceID, monitoringCategory, radioVoiceCall, TACANChannel, frequency, beaconIdentifier, fanMarkerType, fanMarkerMajorBearing, VORServiceVolume, DMEServiceVolume, lowAltitudeInHighStructure, ZMarkerAvailable, TWEBHours, TWEBPhone, controllingFSSCode, NOTAMAccountabilityCode, LFRLegs, status, pitchFlag, catchFlag, SUAFlag, restrictionFlag, HIWASFlag, TWEBRestrictionFlag, remarks, associatedFixNames, associatedHoldingPatterns, fanMarkers, checkpoints
+    }
+
     /// The types of navaid facilities provided by this class.
-    public enum FacilityType: String, Codable, RecordEnum {
+    public enum FacilityType: String, RecordEnum {
         
         /// A VOR and associated TACAN facility.
         case VORTAC = "VORTAC"
@@ -296,15 +303,15 @@ public class Navaid: Record, Equatable, Codable {
     }
     
     /// A description of the capabilities of a navaid.
-    public struct NavaidClass: Codable {
-        
+    public struct NavaidClass: Record {
+
         /// The altitude class.
         public var altitude: AltitudeCode? = nil
         
         /// The navaid class codes.
         public var codes = Set<ClassCode>()
         
-        public enum ClassCode: String, Codable, RecordEnum, CaseIterable {
+        public enum ClassCode: String, RecordEnum, CaseIterable {
             
             case automaticWeatherBroadcast = "AB"
             
@@ -377,7 +384,7 @@ public class Navaid: Record, Equatable, Codable {
         
         /// Indicates what altitude ranges a facility is intended to be used
         /// with.
-        public enum AltitudeCode: String, CaseIterable, Codable, RecordEnum {
+        public enum AltitudeCode: String, CaseIterable, RecordEnum {
             
             /// Intended for use up to 60,000 feet.
             case high = "H"
@@ -391,8 +398,8 @@ public class Navaid: Record, Equatable, Codable {
     }
 
     /// Indicates the airspace volume the facility should be receivable within.
-    public enum ServiceVolume: String, Codable {
-        
+    public enum ServiceVolume: String, Record {
+
         /// Receivable up to 60,000 feet and out to 130 NM (though radius varies
         /// with altitude).
         case high = "H"
@@ -419,8 +426,8 @@ public class Navaid: Record, Equatable, Codable {
     }
     
     /// A measure of how accurately a navaid's location was surveyed.
-    public enum SurveyAccuracy: Codable {
-        
+    public enum SurveyAccuracy: Record {
+
         case unknown
         
         /**
@@ -437,7 +444,7 @@ public class Navaid: Record, Equatable, Codable {
     }
     
     /// The status of a navaid's monitoring system.
-    public enum MonitoringCategory: String, Codable, RecordEnum {
+    public enum MonitoringCategory: String, RecordEnum {
         
         /// Internal monitoring available plus a status indicator installed at
         /// the control point.
@@ -458,8 +465,8 @@ public class Navaid: Record, Equatable, Codable {
     
     
     /// The channel and band that a TACAN station transmits on.
-    public struct TACANChannel: Codable {
-        
+    public struct TACANChannel: Record {
+
         /// The transmission channel (1-126). Each channel corresponds to a
         /// specific UHF frequency for a given band.
         public let channel: UInt8
@@ -469,7 +476,7 @@ public class Navaid: Record, Equatable, Codable {
         public let band: Band
         
         /// TACAN frequency bands.
-        public enum Band: String, Codable, RecordEnum {
+        public enum Band: String, RecordEnum {
             
             /// Channels in the X-ray band are from 962 to 1087 MHz in 1-MHz
             /// increments.
@@ -482,7 +489,7 @@ public class Navaid: Record, Equatable, Codable {
     }
     
     /// The shapes of a fan marker's service volume.
-    public enum FanMarkerType: String, Codable, RecordEnum {
+    public enum FanMarkerType: String, RecordEnum {
         
         /// A bone-shaped service volume has a narrow reception range at the
         /// center of the minor axis (i.e., centered along the airway), getting
@@ -496,7 +503,7 @@ public class Navaid: Record, Equatable, Codable {
     }
     
     /// The operational status of a navaid.
-    public enum Status: String, Codable, RecordEnum {
+    public enum Status: String, RecordEnum {
         
         /// Operational and usable for IFR flight.
         case operationalIFR = "OPERATIONAL IFR"
@@ -513,10 +520,6 @@ public class Navaid: Record, Equatable, Codable {
         /// Operational but not usable for IFR flight.
         case operationalVFR = "OPERATIONAL VFR ONLY"
     }
-    
-    public static func == (lhs: Navaid, rhs: Navaid) -> Bool {
-        lhs.ID == rhs.ID
-    }
 }
 
 /**
@@ -524,8 +527,8 @@ public class Navaid: Record, Equatable, Codable {
  more navigational facilities. The checkpoint can be used to cross-check
  navigation receivers for accuracy.
  */
-public struct VORCheckpoint: Codable {
-    
+public struct VORCheckpoint: Record {
+
     public let type: CheckpointType
     
     /// The bearing that the checkpoint (for VOTs).
@@ -558,7 +561,7 @@ public struct VORCheckpoint: Codable {
         case type, bearing, altitude, airportID, stateCode, airDescription, groundDescription
     }
     
-    public enum CheckpointType: String, Codable, RecordEnum {
+    public enum CheckpointType: String, RecordEnum {
         
         /// A checkpoint intended to be used while airborne.
         case air = "A"
@@ -570,26 +573,28 @@ public struct VORCheckpoint: Codable {
     }
     
     /// The airport associated with the checkpoint.
-    public func airport(data: NASRData) -> Airport? {
-        data.airports?.first(where: { $0.id == airportID })
+    public func airport(data: NASRData) async -> Airport? {
+        await data.airports?.first(where: { $0.id == airportID })
     }
     
     // for loading states from the parent FSS object
-    var findStateByCode: ((_ code: String) -> State?)!
-    
+    var findStateByCode: (@Sendable (_ code: String) async -> State?)!
+
     // for loading states from the parent FSS object
-    var findAirportByID: ((_ id: String) -> Airport?)!
+    var findAirportByID: (@Sendable (_ id: String) async -> Airport?)!
 }
 
 /// A unique identifier of a holding pattern.
-public struct HoldingPatternID: Codable, Equatable, Hashable {
-    
+public struct HoldingPatternID: ParentRecord {
+
     /// The name of the facility or fix that anchors this holding pattern.
     public let name: String
     
     /// A number that uniquely identifies this holding pattern within the scope
     /// of ``name``.
     public let number: UInt
+
+    public var id: String { "\(name).\(number)" }
 }
 
 /**
@@ -602,8 +607,8 @@ public struct HoldingPatternID: Codable, Equatable, Hashable {
  oriented 360° and labeled "N" means the "N" quadrant spans from 360° to 90°
  around the LFR station.
  */
-public struct LFRLeg: Codable {
-    
+public struct LFRLeg: Record {
+
     /// The quadrant identifier clockwise from this leg.
     public let quadrant: Quadrant
     
@@ -615,7 +620,7 @@ public struct LFRLeg: Codable {
      between two quadrants, its Morse code identifiers overlap to produce a
      solid tone.
      */
-    public enum Quadrant: String, Codable, RecordEnum {
+    public enum Quadrant: String, RecordEnum {
         
         /// An "A" quadrant transmits "dit-dah".
         case A = "A"

@@ -1,9 +1,5 @@
 # ``SwiftNASR/Airport``
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: append)
-}
-
 ## Topics
 
 ### Associations

@@ -152,8 +152,8 @@ class FSSParser: FixedWidthNoRecordIDParser {
         else { return formats[1] }
     }
     
-    func finish(data: NASRData) {
-        data.FSSes = Array(FSSes.values)
+    func finish(data: NASRData) async {
+        await data.finishParsing(FSSes: Array(FSSes.values))
     }
     
     private let facilityCount = 20 //TODO then why are do some fields have cardinalities of 30 or 40?
@@ -289,27 +289,35 @@ class FSSParser: FixedWidthNoRecordIDParser {
     }
     
     private func parseContinuation(_ transformedValues: Array<Any?>) throws {
+        try updateFSS(transformedValues) { fss in
+            for IDAndType in transformedValues[1] as! Array<Array<Substring>> {
+                let type = try Self.raw(String(IDAndType[1]), toEnum: FSS.Outlet.OutletType.self)
+                fss.outlets.append(FSS.Outlet(identification: String(IDAndType[0]),
+                                              type: type))
+            }
+
+            for IDAndType in transformedValues[2] as! Array<Array<Substring>> {
+                let navaid = String(IDAndType[0])
+                let typeString = String(IDAndType[1])
+                guard let navaidType = NavaidFacilityType(rawValue: typeString) else {
+                    throw FixedWidthParserError.invalidValue(typeString, at: 54)
+                }
+                fss.navaids.append(FSS.Navaid(identification: navaid,
+                                              type: navaidType))
+            }
+
+            fss.remarks.append(contentsOf: (transformedValues[3] as! Array<String>))
+        }
+    }
+
+    private func updateFSS(_ transformedValues: Array<Any?>, process: (inout FSS) throws -> Void) throws {
         let IDAndStar = transformedValues[0] as! Substring
         let ID = String(IDAndStar[IDAndStar.startIndex..<IDAndStar.index(before: IDAndStar.endIndex)])
-        guard let fss = FSSes[ID] else { throw Error.unknownFSS(ID) }
-        
-        for IDAndType in transformedValues[1] as! Array<Array<Substring>> {
-            let type = try Self.raw(String(IDAndType[1]), toEnum: FSS.Outlet.OutletType.self)
-            fss.outlets.append(FSS.Outlet(identification: String(IDAndType[0]),
-                                          type: type))
-        }
-        
-        for IDAndType in transformedValues[2] as! Array<Array<Substring>> {
-            let navaid = String(IDAndType[0])
-            let typeString = String(IDAndType[1])
-            guard let navaidType = NavaidFacilityType(rawValue: typeString) else {
-                throw FixedWidthParserError.invalidValue(typeString, at: 54)
-            }
-            fss.navaids.append(FSS.Navaid(identification: navaid,
-                                          type: navaidType))
-        }
-        
-        fss.remarks.append(contentsOf: (transformedValues[3] as! Array<String>))
+        guard var fss = FSSes[ID] else { throw Error.unknownFSS(ID) }
+
+        try process(&fss)
+
+        FSSes[ID] = fss
     }
 
     private static let frequencyPattern = #"^(\d+)(?:\.(\d+))?([TRX]?)(\(SSB\))?(?: (.+))?$"#

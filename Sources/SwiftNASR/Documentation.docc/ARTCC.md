@@ -1,9 +1,5 @@
 # ``SwiftNASR/ARTCC``
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: append)
-}
-
 ## Topics
 
 ### Properties

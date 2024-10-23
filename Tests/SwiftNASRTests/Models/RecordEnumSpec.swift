@@ -8,7 +8,7 @@ enum TestEnum: String, RecordEnum {
     case first = "1"
     case second = "2"
     
-    static var synonyms: Dictionary<RawValue, TestEnum> = [
+    static let synonyms: Dictionary<RawValue, TestEnum> = [
         "ONE": .first,
         "TWO": .second
     ]

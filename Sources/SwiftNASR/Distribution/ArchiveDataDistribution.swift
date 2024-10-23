@@ -1,6 +1,5 @@
 import Foundation
-import Combine
-import ZIPFoundation
+@preconcurrency import ZIPFoundation
 
 /**
  A NASR distribution that has been loaded from a ZIP archive and stored in
@@ -8,15 +7,15 @@ import ZIPFoundation
  buffered chunks.
  */
 
-public class ArchiveDataDistribution: ConcurrentDistribution {
-    
+public final class ArchiveDataDistribution: Distribution {
+
     /// The compressed distribution data.
     public let data: Data
     
     private let archive: Archive
 
-    private var chunkSize = defaultReadChunkSize
-    private var delimiter = "\r\n".data(using: .isoLatin1)!
+    private let chunkSize = defaultReadChunkSize
+    private let delimiter = "\r\n".data(using: .isoLatin1)!
     
     /**
      Creates a new instance from the given data.
@@ -35,7 +34,7 @@ public class ArchiveDataDistribution: ConcurrentDistribution {
         return archive.first(where: { $0.path.components(separatedBy: "/").last?.hasPrefix(prefix) ?? false })?.path
     }
     
-    @discardableResult func readFileWithCallback(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, eachLine: (Data) -> Void) throws -> UInt {
+    @discardableResult private func readFileWithCallback(path: String, withProgress progressHandler: (Progress) -> Void = { _ in }, eachLine: (Data) -> Void) throws -> UInt {
         guard let entry = archive[path] else { throw Error.noSuchFile(path: path) }
         var buffer = Data(capacity: Int(chunkSize))
         var lines: UInt = 0
@@ -45,7 +44,7 @@ public class ArchiveDataDistribution: ConcurrentDistribution {
 
         let _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: false, progress: nil) { data in
             buffer.append(data)
-            NASR.progressQueue.async { progress.completedUnitCount += Int64(data.count) }
+            Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
             while let EOL = buffer.range(of: delimiter) {
                 if EOL.startIndex == 0 {
                     buffer.removeSubrange(EOL)
@@ -69,21 +68,7 @@ public class ArchiveDataDistribution: ConcurrentDistribution {
         return lines
     }
     
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    func readFileWithCombine(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (UInt) -> Void = { _ in }, subject: CurrentValueSubject<Data, Swift.Error>) {
-        do {
-            let lines = try readFileWithCallback(path: path, withProgress: progressHandler) { data in
-                subject.send(data)
-            }
-            linesHandler(lines)
-            subject.send(completion: .finished)
-        } catch (let error) {
-            subject.send(completion: .failure(error))
-        }
-    }
-    
-    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    func readFileWithAsyncAwait(path: String, withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, returningLines linesHandler: @escaping (UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
+    public func readFile(path: String, withProgress progressHandler: (Progress) -> Void = { _ in }, returningLines linesHandler: (UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
         return AsyncThrowingStream { continuation in
             do {
                 try readFileWithCallback(path: path, withProgress: progressHandler) { data in

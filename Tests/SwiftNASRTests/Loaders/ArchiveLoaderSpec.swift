@@ -5,8 +5,7 @@ import ZIPFoundation
 
 @testable import SwiftNASR
 
-@available(macOS 10.12, *)
-class ArchiveLoaderSpec: QuickSpec {
+class ArchiveLoaderSpec: AsyncSpec {
     private class var mockData: Data {
         let data = "Hello, world!".data(using: .isoLatin1)!
         let archive = try! Archive(accessMode: .create)
@@ -23,7 +22,7 @@ class ArchiveLoaderSpec: QuickSpec {
             let loader = ArchiveLoader(location: location)
 
             beforeSuite {
-                try! self.mockData.write(to: location)
+                try self.mockData.write(to: location)
             }
 
             afterSuite {
@@ -31,14 +30,8 @@ class ArchiveLoaderSpec: QuickSpec {
             }
 
             it("calls back with the archive") {
-                waitUntil { done in
-                    loader.load { result in
-                        expect(result).to(beSuccess { distribution in
-                            expect((distribution as! ArchiveFileDistribution).location).to(equal(location))
-                        })
-                        done()
-                    }
-                }
+                let distribution = try await loader.load() as! ArchiveFileDistribution
+                expect(distribution.location).to(equal(location))
             }
         }
     }

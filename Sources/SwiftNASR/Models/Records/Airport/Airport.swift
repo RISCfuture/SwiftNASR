@@ -12,7 +12,7 @@ import Foundation
  or a landing.
  */
 
-public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
+public struct Airport: ParentRecord {
 
     // MARK: - Properties
 
@@ -256,7 +256,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     
     /// `true` if this airport is used by MEDEVAC operators.
     public let medicalUse: Bool?
-    
+
     /// Whether this airport has a windsock or other wind direction indicator.
     public let windIndicator: AirportMarker?
 
@@ -320,7 +320,9 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     
     /// General remarks and per-field remarks.
     public var remarks = Remarks<Field>()
-    
+
+    weak var data: NASRData? = nil
+
     // MARK: - Methods
 
     init(id: String, name: String, LID: String, ICAOIdentifier: String?, facilityType: Airport.FacilityType, FAARegion: Airport.FAARegion?, FAAFieldOfficeCode: String?, stateCode: String?, county: String, countyStateCode: String, city: String, ownership: Airport.Ownership, publicUse: Bool, owner: Airport.Person?, manager: Airport.Person?, referencePoint: Location, referencePointDeterminationMethod: Airport.LocationDeterminationMethod, elevationDeterminationMethod: Airport.LocationDeterminationMethod?, magneticVariation: Int?, magneticVariationEpoch: Date?, trafficPatternAltitude: Int?, sectionalChart: String?, distanceCityToAirport: UInt?, directionCityToAirport: Direction?, landArea: Float?, boundaryARTCCID: String, responsibleARTCCID: String, tieInFSSOnStation: Bool?, tieInFSSID: String, alternateFSSID: String?, NOTAMIssuerID: String?, NOTAMDAvailable: Bool?, activationDate: Date?, status: Airport.Status, ARFFCapability: Airport.ARFFCapability?, agreements: Array<Airport.FederalAgreement>, airspaceAnalysisDetermination: Airport.AirspaceAnalysisDetermination?, customsEntryAirport: Bool?, customsLandingRightsAirport: Bool?, jointUseAgreement: Bool?, militaryLandingRights: Bool?, inspectionMethod: Airport.InspectionMethod?, inspectionAgency: Airport.InspectionAgency?, lastPhysicalInspectionDate: Date?, lastInformationRequestCompletedDate: Date?, fuelsAvailable: Array<Airport.FuelType>, airframeRepairAvailable: Airport.RepairService?, powerplantRepairAvailable: Airport.RepairService?, bottledOxygenAvailable: Array<Airport.OxygenPressure>, bulkOxygenAvailable: Array<Airport.OxygenPressure>, airportLightingSchedule: Airport.LightingSchedule?, beaconLightingSchedule: Airport.LightingSchedule?, controlTower: Bool, UNICOMFrequency: UInt?, CTAF: UInt?, segmentedCircle: Airport.AirportMarker?, beaconColor: Airport.LensColor?, landingFee: Bool?, medicalUse: Bool?, basedSingleEngineGA: UInt?, basedMultiEngineGA: UInt?, basedJetGA: UInt?, basedHelicopterGA: UInt?, basedOperationalGliders: UInt?, basedOperationalMilitary: UInt?, basedUltralights: UInt?, annualCommercialOps: UInt?, annualCommuterOps: UInt?, annualAirTaxiOps: UInt?, annualLocalGAOps: UInt?, annualTransientGAOps: UInt?, annualMilitaryOps: UInt?, annualPeriodEndDate: Date?, positionSource: String?, positionSourceDate: Date?, elevationSource: String?, elevationSourceDate: Date?, contractFuelAvailable: Bool?, transientStorageFacilities: Array<Airport.StorageFacility>?, otherServices: Array<Airport.Service>, windIndicator: Airport.AirportMarker?, minimumOperationalNetwork: Bool) {
@@ -407,22 +409,14 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
         self.windIndicator = windIndicator
         self.minimumOperationalNetwork = minimumOperationalNetwork
     }
-
-    public static func == (lhs: Airport, rhs: Airport) -> Bool {
-        return lhs.id == rhs.id
-    }
     
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-
     // MARK: - Types
 
     /**
      A person or organization responsible for an airport.
      */
-    public struct Person: Codable {
-        
+    public struct Person: Record {
+
         /// The person or organization name.
         public let name: String
         
@@ -440,7 +434,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
         public var remarks = Remarks<Field>()
         
         /// Fields that per-field remarks can be associated with.
-        public enum Field: String, Codable {
+        public enum Field: String, RemarkField {
             case name
             case address1
             case address2
@@ -463,7 +457,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     // MARK: - Enums
 
     /// Types of airports facilities.
-    public enum FacilityType: String, Codable, RecordEnum {
+    public enum FacilityType: String, RecordEnum {
         case airport = "AIRPORT"
         case balloonport = "BALLOONPORT"
         case seaport = "SEAPLANE BASE"
@@ -473,7 +467,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// FAA administrative regions.
-    public enum FAARegion: String, Codable, RecordEnum {
+    public enum FAARegion: String, RecordEnum {
         case alaska = "AAL"
         case central = "ACE"
         case eastern = "AEA"
@@ -487,7 +481,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Airport ownership types.
-    public enum Ownership: String, Codable, RecordEnum {
+    public enum Ownership: String, RecordEnum {
         
         /// Publicly-owned airport.
         case `public` = "PU"
@@ -509,7 +503,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Methods for determining an ARP.
-    public enum LocationDeterminationMethod: String, Codable, RecordEnum {
+    public enum LocationDeterminationMethod: String, RecordEnum {
         /// ARP was estimated.
         case estimated = "E"
         
@@ -518,7 +512,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Airport availability status.
-    public enum Status: String, Codable, RecordEnum {
+    public enum Status: String, RecordEnum {
         
         /// Airport has been closed for an indefinite time.
         case closedIndefinitely = "CI"
@@ -531,7 +525,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Federal agreements that can be in place for an airport.
-    public enum FederalAgreement: String, Codable, RecordEnum {
+    public enum FederalAgreement: String, RecordEnum {
         
         /// National Plan of Integrated Airport Systems
         case NPIAS = "N"
@@ -596,7 +590,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Airspace analysis determinations.
-    public enum AirspaceAnalysisDetermination: String, Codable, RecordEnum {
+    public enum AirspaceAnalysisDetermination: String, RecordEnum {
         case conditional = "CONDL"
         case notAnalyzed = "NOT ANALYZED"
         case noObjection = "NO OBJECTION"
@@ -608,7 +602,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Methods for airport inspection.
-    public enum InspectionMethod: String, Codable, RecordEnum {
+    public enum InspectionMethod: String, RecordEnum {
         case federal = "F"
         case state = "S"
         case contractor = "C"
@@ -621,7 +615,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Agency performing physical inspection.
-    public enum InspectionAgency: String, Codable, RecordEnum {
+    public enum InspectionAgency: String, RecordEnum {
         /// FAA airports field personnel
         case FAAPersonnel = "F"
         
@@ -635,8 +629,8 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Types of aviation gasoline.
-    public enum FuelType: String, Codable, RecordEnum {
-        
+    public enum FuelType: String, RecordEnum {
+
         /// Grade 80 avgas (red) (ASTM D910)
         case avgas80 = "80"
         
@@ -708,21 +702,21 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Repair service levels available.
-    public enum RepairService: String, Codable, RecordEnum {
+    public enum RepairService: String, RecordEnum {
         case major = "MAJOR"
         case minor = "MINOR"
         case none = "NONE"
     }
 
     /// Oxygen pressure levels available for bulk or bottled purchase.
-    public enum OxygenPressure: String, Codable, RecordEnum {
+    public enum OxygenPressure: String, RecordEnum {
         case high = "HIGH"
         case low = "LOW"
         case none = "NONE"
     }
 
     /// Types of aircraft storage facilities available.
-    public enum StorageFacility: String, Codable, RecordEnum {
+    public enum StorageFacility: String, RecordEnum {
         case buoys = "BUOY"
         case hangars = "HANGAR"
         case tiedowns = "TIEDOWN"
@@ -734,7 +728,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Additional services available at an airport.
-    public enum Service: String, Codable, RecordEnum {
+    public enum Service: String, RecordEnum {
         case airFreight = "AFRT"
         case cropDusting = "AGRI"
         case airAmbulance = "AMB"
@@ -752,7 +746,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Airport surface or beacon lighting schedules.
-    public enum LightingSchedule: String, Codable, RecordEnum {
+    public enum LightingSchedule: String, RecordEnum {
         
         /// From sunset to sunrise=
         case sunsetSunrise = "SS-SR"
@@ -765,7 +759,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Types of airport indicators (segmented circle, windsock).
-    public enum AirportMarker: String, Codable, RecordEnum {
+    public enum AirportMarker: String, RecordEnum {
         
         /// No indication of wind or traffic pattern
         case none = "N"
@@ -778,7 +772,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Airport rotating beacon colors.
-    public enum LensColor: String, Codable, RecordEnum {
+    public enum LensColor: String, RecordEnum {
         
         /// White-green (lighted public land airport)
         case whiteGreen = "WG"
@@ -806,8 +800,8 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     }
 
     /// Aircraft rescue and firefighting capabilities as defined by FAR 139.
-    public struct ARFFCapability: Codable {
-        
+    public struct ARFFCapability: Record {
+
         /// Airport class
         public let `class`: Class
         
@@ -827,7 +821,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
         /// Airport classes as defined by FAR 139.5. For purposes of this enum,
         /// a "large" aircraft has 31 seats or more, and a "small" aircraft has
         /// more than 9 but fewer than 31 seats.
-        public enum Class: String, Codable, RecordEnum {
+        public enum Class: String, RecordEnum {
             
             /// Class-I airports serve scheduled and unscheduled operations of
             /// large and small air carrier aircraft.
@@ -851,7 +845,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
 
         /// Aircraft indexes are based on the length of the aircraft, defined by
         /// FAR 139.315(b).
-        public enum Index: String, Codable, RecordEnum {
+        public enum Index: String, RecordEnum {
             
             /// Aircraft under 90 feet in length
             case A = "A"
@@ -873,7 +867,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
         }
 
         /// Type of air service the airport receives.
-        public enum AirService: String, Codable, RecordEnum {
+        public enum AirService: String, RecordEnum {
             
             /// Airports receiving scheduled air carrier service from carriers
             /// certificated by the Civil Aeronautics Board
@@ -887,7 +881,7 @@ public class Airport: Record, Identifiable, Equatable, Codable, Hashable {
     // MARK: - Remarks
     
     /// Fields that per-field remarks can be associated with.
-    public enum Field: String, Codable {
+    public enum Field: String, RemarkField {
         case id, name, LID, ICAOIdentifier, facilityType
 
         case FAARegion, FAAFieldOfficeCode, stateCode, county, countyStateCode, city

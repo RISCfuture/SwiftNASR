@@ -1,9 +1,5 @@
 # ``SwiftNASR/Downloader``
 
-@Metadata {
-    @DocumentationExtension(mergeBehavior: append)
-}
-
 A downloader is a class that can download a NASR distribution from the FAA's
 website. This abstract superclass contains functionality common to all
 downloaders.
@@ -17,10 +13,6 @@ A `Downloader` is instantiated with a ``Cycle`` (``init(cycle:)``) to download.
 From that cycle, the `Downloader` can generate a ``cycleURL``. When one of the
 `load` methods is called, the data is downloaded to the appropriate destination,
 and a subclass of ``Distribution`` is generated to process that data.
-
-In order to support Swift's numerous types of concurrency, some `Downloader`
-methods appear thrice: once with a traditional callback, once as a Combine
-publisher, and once in an `async`/`await` style.
 
 ## Topics
 
@@ -40,6 +32,4 @@ publisher, and once in an `async`/`await` style.
 
 ### Downloading Distributions
 
-- ``load(withProgress:callback:)``
-- ``loadPublisher(withProgress:)``
 - ``load(withProgress:)``

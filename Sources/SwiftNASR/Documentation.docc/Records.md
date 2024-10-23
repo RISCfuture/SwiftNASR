@@ -4,13 +4,8 @@ SwiftNASR records represent the data types present in a NASR distribution.
 After one of the `load` methods is called (see _Loaders_), records can be
 parsed.
 
-Records are stored in a ``NASRData`` instance after being loaded by one of the
-`parse` methods:
-
-* ``NASR/parse(_:withProgress:errorHandler:completionHandler:)``
-* The publisher methods:
-  ``NASR/parseAirportsPublisher(errorHandler:withProgress:)`` etc.
-* The async methods: ``NASR/parseAirports(withProgress:errorHandler:)``, etc.
+Records are stored in a ``NASRData`` instance after being loaded by the
+``NASR/parse(_:withProgress:errorHandler:)`` method.
 
 Each record maintains an internal link back to its parent ``NASRData`` object.
 This is used to allow records to cross-reference each other; e.g., the
@@ -19,11 +14,14 @@ records have been loaded with a prior `load` call:
 
 ``` swift
 let data: NASRData // previously initialized
-await data.parseAirports()
-data.airports[0].tieInFSS // will always be nil since FSSes have not been loaded
-await data.parseFSSes()
-data.airports[0].tieInFSS // will not be nil if present in the distribution data
+await data.parse(.airports)
+await data.airports[0].tieInFSS // will always be nil since FSSes have not been loaded
+await data.parse(.flightServiceStations)
+await data.airports[0].tieInFSS // will not be nil if present in the distribution data
 ```
+
+(Note that since `NASRData` is an actor, you need to `await` access to its
+members.)
 
 Even if you do not have the related record loaded, you can still retrieve the
 record identifier:
@@ -47,21 +45,7 @@ data.airports[0].tieInFSSID // returns a String identifier
 
 - ``NASR``
 - ``NASRData``
-- ``NASR/parse(_:withProgress:errorHandler:completionHandler:)``
-
-### Parsing with Combine
-
-- ``NASR/parseAirportsPublisher(errorHandler:withProgress:)``
-- ``NASR/parseARTCCsPublisher(errorHandler:withProgress:)``
-- ``NASR/parseFSSesPublisher(errorHandler:withProgress:)``
-- ``NASR/parseNavaidsPublisher(errorHandler:withProgress:)``
-
-### Parsing Async
-
-- ``NASR/parseAirports(withProgress:errorHandler:)``
-- ``NASR/parseARTCCs(withProgress:errorHandler:)``
-- ``NASR/parseFSSes(withProgress:errorHandler:)``
-- ``NASR/parseNavaids(withProgress:errorHandler:)``
+- ``NASR/parse(_:withProgress:errorHandler:)``
 
 ### Associated Types
 

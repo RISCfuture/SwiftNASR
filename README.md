@@ -86,17 +86,10 @@ Once you have your distribution, use the `NASR` class to asynchronously load the
 parse it:
 
 ```swift
-distribution.load { result in
-    switch result {
-        case .success:
-            try! distribution.parse(.airports, errorHandler: { error in
-                // [...]
-            })
-
-        case .failure(let error):
-            // [...]
-    }
-}
+try await distribution.load()
+try await distribution.parse(.airports, errorHandler: { error in
+    // [...]
+})
 ```
 
 Note that larger datasets, such as airports, can take several moments to parse. It's
@@ -122,7 +115,7 @@ You can encode the whole object, containing all the data you've loaded:
 
 ```swift
 let encoder = JSONZipEncoder()
-let data = try encoder.encode(distribution.data)
+let data = try encoder.encode(NASRDataCodable(data: distribution.data))
 try data.write(to: workingURL.appendingPathComponent("distribution.json.zip"))
 ```
 
@@ -139,43 +132,6 @@ let data = try encoder.encode(validAirports)
 
 For more information on the data you have available to work with, see the class
 documentation for each of the record classes, such as `Airport`.
-
-### Use as a Publisher
-
-SwiftNASR can also be used as a `Publisher` for reactive apps written using Combine.
-The `load` method has a variation that returns a publisher that emits when loading is
-complete:
-
-```swift
-let distribution = NASR.fromLocalArchive(distributionURL)
-let cancelable = distribution.loadPublisher().sink { distribution in
-    // [...]
-}
-```
-
-There are also variations of the `parse` method for each parseable type that return
-Publishers that emit when parsing is complete:
-
-``` swift
-let distribution = NASR.fromLocalArchive(distributionURL)
-let cancelable = distribution.loadPublisher().map { $0.parseAirports() }
-    .switchToLatest().sink { event in _
-        switch event {
-            case let .error(error): // parse error for one row only
-                // [...] (decide if you want to keep parsing or cancel)
-            case let .complete(airports):
-                // [...]
-        }
-    }
-}
-
-```
-
-### Use with `async`/`await`
-
-There are variations of the `NASR/load(withProgress:)` and parse methods (such
-as `NASR/parseAirports(withProgress:errorHandler:)`) that work with
-`async`/`await`.
 
 ### Customizing loader behavior
 

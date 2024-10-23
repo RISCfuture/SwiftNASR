@@ -5,12 +5,12 @@ let zulu = TimeZone(secondsFromGMT: 0)!
 /**
  The `NASR` class provides top-level access to loading, parsing, and accessing
  aeronautical data disseminated via NASR distributions.
- 
+
  To use this class, you must first create an instance, use that instance to load
  the NASR data (from the Internet or locally), parse the data, and then you can
  access it. See the documentation overview for basic information on how to use
  this class to load, parse, and access aeronautical data.
- 
+
  The `NASR` class provides a number of different static methods you can use to
  load and parse NASR data. Parsing is computationally intensive, so it is
  recommended to do it only once. See the documentation overview or the
@@ -18,52 +18,46 @@ let zulu = TimeZone(secondsFromGMT: 0)!
  to storage for more efficient retrieval.
  */
 
-public final class NASR {
-    
-    /// The queue that progress updates are processed on. By default, an
-    /// internal queue at the `userInteractive` QoS level. If you have a main
-    /// thread where progress updates must be made, then set this var to that
-    /// thread.
-    public static var progressQueue = DispatchQueue(label: "codes.tim.SwiftNASR.progress", qos: .userInteractive)
-    
+public actor NASR {
+
     /**
      Loads NASR data from a local ZIP file. The file must have already been
      downloaded from the FAA's NASR website.
-     
+
      - Parameter location: The URL for the ZIP file on disk.
      - Returns: The instance for loading, parsing, and accessing that data.
      */
-    
-    public class func fromLocalArchive(_ location: URL) -> NASR {
+
+    public static func fromLocalArchive(_ location: URL) -> NASR {
         let loader = ArchiveLoader(location: location)
         return self.init(loader: loader)
     }
-    
+
     /**
      Loads NASR data from a directory created by unzipping a ZIP file that has
      been downloaded from the FAA's NASR website.
-     
+
      - Parameter location: The URL for the unzipped directory on disk.
      - Returns: The instance for loading, parsing, and accessing that data.
      */
 
-    public class func fromLocalDirectory(_ location: URL) -> NASR {
+    public static func fromLocalDirectory(_ location: URL) -> NASR {
         let loader = DirectoryLoader(location: location)
         return self.init(loader: loader)
     }
-    
+
     /**
      Loads NASR data from the FAA website. The data is downloaded into memory
      and not saved to a file.
-     
+
      - Parameter date: The date to use for determining the data cycle. The data
-                       downloaded will be the data active during `date`. If not
-                       given, the current data is used.
+     downloaded will be the data active during `date`. If not
+     given, the current data is used.
      - Returns: The instance for loading, parsing, and accessing that data, or
-                nil if no cycle is/was effective for `date`.
+     nil if no cycle is/was effective for `date`.
      */
 
-    public class func fromInternetToMemory(activeAt date: Date? = nil) -> NASR? {
+    public static func fromInternetToMemory(activeAt date: Date? = nil) -> NASR? {
         let loader: Loader
         if let date = date {
             guard let cycle = Cycle.effectiveCycle(for: date) else { return nil }
@@ -74,21 +68,21 @@ public final class NASR {
 
         return self.init(loader: loader)
     }
-    
+
     /**
      Loads NASR data from the FAA website. The data is downloaded to a ZIP file
      on disk.
-     
+
      - Parameter location: The location on disk to save the ZIP file. If not
-                           given, a tempfile is created.
+     given, a tempfile is created.
      - Parameter date: The date to use for determining the data cycle. The data
-                       downloaded will be the data active during `date`. If not
-                       given, the current data is used.
+     downloaded will be the data active during `date`. If not
+     given, the current data is used.
      - Returns: The instance for loading, parsing, and accessing that data, or
-                nil if no cycle is/was effective for `date`.
+     nil if no cycle is/was effective for `date`.
      */
 
-    public class func fromInternetToFile(_ location: URL? = nil, activeAt date: Date? = nil) -> NASR? {
+    public static func fromInternetToFile(_ location: URL? = nil, activeAt date: Date? = nil) -> NASR? {
         let loader: Loader
         if let date = date {
             guard let cycle = Cycle.effectiveCycle(for: date) else { return nil }
@@ -99,19 +93,17 @@ public final class NASR {
 
         return self.init(loader: loader)
     }
-    
+
     /**
      Creates an instance for working with NASR data that was parsed and
      serialized at a prior time.
-     
+
      - Parameter data: The deserialized parsed data.
      - Returns: The instance for accessing that data.
      */
-    
-    public class func fromData(_ data: NASRData) -> NASR {
-        let NASR = self.init(loader: NullLoader())
-        NASR.data = data
-        return NASR
+
+    public static func fromData(_ data: NASRData) -> NASR {
+        return self.init(data: data)
     }
 
     let loader: Loader
@@ -119,127 +111,99 @@ public final class NASR {
 
     /**
      Aeronautical data is stored into this field once it is parsed. All members
-     of this instance are `nil` until the
-     ``parse(_:withProgress:errorHandler:completionHandler:)`` function is
-     called for each data type. The ``NASRData`` object can be serialized to
-     disk using an `Encoder`.
+     of this instance are `nil` until the ``parse(_:withProgress:errorHandler:)``
+     function is called for each data type. The ``NASRData`` object can be
+     serialized to disk using an `Encoder`.
      */
     public var data = NASRData()
 
-    public required init(loader: Loader) {
+    public init(loader: Loader) {
         self.loader = loader
     }
-    
+
+    init(data: NASRData) {
+        self.data = data
+        self.loader = NullLoader()
+    }
+
     /**
      Asynchronously loads data, either from disk or from the Internet.
-     
-     There is another variation of this method that uses a Combine publisher
-     (``NASR/loadPublisher(withProgress:)``) and one that uses `async`/`await`
-     (``NASR/load(withProgress:)``).
-     
+
      - Parameter progressHandler: This block is called before processing begins
-                                  with a Progress object that you can use to
-                                  track loading progress. You would add this
-                                  object to your parent Progress object.
-     - Parameter callback: A block to call when the data is loaded.
+     with a Progress object that you can use to
+     track loading progress. You would add this
+     object to your parent Progress object.
      - Parameter result: If successful, contains `Void`. If not, contains the
-                         error.
+     error.
      */
 
-    public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (_ result: Result<Void, Swift.Error>) -> Void) {
-        loader.load(withProgress: progressHandler) { result in
-            switch result {
-            case let .success(distribution):
-                self.distribution = distribution
-                do {
-                    try distribution.readCycle { cycle in
-                        self.data.cycle = cycle
-                        callback(.success(()))
-                    }
-                } catch (let error) {
-                    callback(.failure(error))
-                }
-            case let .failure(error):
-                callback(.failure(error))
-            }
-        }
+    public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) async throws {
+        distribution = try await loader.load(withProgress: progressHandler)
+        let cycle = try await distribution!.readCycle()
+        await data.finishParsing(cycle: cycle)
     }
-    
+
     /**
      Parses data of a certain type (e.g., airports) from the NASR distribution.
      Populates the corresponding field in the ``NASRData`` field of ``data``.
-     
-     There are other variations of this method that use Combine publishers
-     (e.g., ``NASR/parseAirportsPublisher(errorHandler:withProgress:)``) or
-     `async`/`await` (e.g., ``NASR/parseAirports(withProgress:errorHandler:)``).
-     
+
      - Parameter type: The type of data to parse.
      - Parameter progressHandler: This block is called before processing begins
-                                  with a Progress object that you can use to
-                                  track loading progress. You would add this
-                                  object to your parent Progress object.
+     with a Progress object that you can use to
+     track loading progress. You would add this
+     object to your parent Progress object.
      - Parameter errorHandler: A block of code to call if parsing fails. If the
-                               block returns `true`, parsing will continue even
-                               if a specific record has an error. If not given,
-                               any error will be swallowed but parsing will
-                               continue.
+     block returns `true`, parsing will continue even
+     if a specific record has an error. If not given,
+     any error will be swallowed but parsing will
+     continue.
      - Parameter error: The parsing error that occurred.
+     - Returns: `true` if the parsing completed, or `false` if it was aborted by
+     `errorHandler`.
      */
-    
+
+    @discardableResult
     public func parse(_ type: RecordType,
-                      withProgress progressHandler: @escaping (Progress) -> Void = { _ in },
-                      errorHandler: @escaping (_ error: Swift.Error) -> Bool,
-                      completionHandler: @escaping () -> Void) throws {
-        guard let distribution = self.distribution else {
-            throw Error.notYetLoaded
-        }
-        
+                      withProgress progressHandler: @Sendable (Progress) -> Void = { _ in },
+                      errorHandler: @Sendable (_ error: Swift.Error) -> Bool) async throws -> Bool {
+        guard let distribution = self.distribution else { throw Error.notYetLoaded }
         let parser = parserFor(recordType: type)
-        
-        try parse(parser: parser, processor: { process in
-            switch type {
-                case .states:
-                    try distribution.readFile(path: "State_&_Country_Codes/STATE.txt", withProgress: progressHandler) { data in
-                        process(data)
-                    }
-                default:
-                    try distribution.read(type: type, withProgress: progressHandler) { data in
-                        process(data)
-                    }
-            }
-            completionHandler()
-        }, errorHandler: errorHandler)
-    }
-    
-    private func parse(parser: Parser,
-                       processor: @escaping (@escaping (Data) -> Void) throws -> Void,
-                       errorHandler: @escaping (Swift.Error) -> Bool) throws {
-        guard let distribution = self.distribution else {
-            throw Error.notYetLoaded
+        try await parser.prepare(distribution: distribution)
+
+        let progress = Progress(totalUnitCount: 10)
+        progressHandler(progress)
+        var parseProgress: Progress!
+
+        let data = switch type {
+            case .states:
+                await distribution.readFile(path: "State_&_Country_Codes/STATE.txt", withProgress: { readProgress in
+                    progress.addChild(readProgress, withPendingUnitCount: 1)
+                }, returningLines: { lines in
+                    parseProgress = Progress(totalUnitCount: Int64(lines), parent: progress, pendingUnitCount: 9)
+                })
+            default:
+                await distribution.read(type: type, withProgress: { readProgress in
+                    progress.addChild(readProgress, withPendingUnitCount: 1)
+                }, returningLines: { lines in
+                    parseProgress = Progress(totalUnitCount: Int64(lines), parent: progress, pendingUnitCount: 9)
+                })
         }
 
-        parser.prepare(distribution: distribution) { result in
-            switch result {
-            case .success(_):
-                do {
-                    try processor() { recordData in
-                        do {
-                            try parser.parse(data: recordData)
-                        } catch (let e) {
-                            let shouldContinue = errorHandler(e)
-                            if !shouldContinue { return }
-                        }
-                    }
-                } catch (let error) {
-                    let shouldContinue = errorHandler(error)
-                    if !shouldContinue { return }
-                }
-                
-                parser.finish(data: self.data)
-            case let .failure(error):
+        for try await chunk in data {
+            do {
+                try await parser.parse(data: chunk)
+                parseProgress.completedUnitCount += 1
+            } catch {
                 let shouldContinue = errorHandler(error)
-                if !shouldContinue { return }
+                if !shouldContinue {
+                    await parser.finish(data: self.data)
+                    return false
+                }
             }
         }
+
+        await parser.finish(data: self.data)
+        return true
     }
 }
+

@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 /**
  `NullLoader` is provided for API compatibility between loading data from a
@@ -46,25 +45,13 @@ import Combine
  ``NASR/fromData(_:)`` uses `NullLoader` to accomplish this.
  */
 
-public class NullLoader: Loader {
-    
+public final class NullLoader: Loader {
+
     /**
      Yields a ``NullDistribution`` that cannot be used to parse NASR data.
      */
     
-    public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }, callback: @escaping (_ result: Result<Distribution, Swift.Error>) -> Void) {
-        progressHandler(completedProgress())
-        callback(.success(NullDistribution()))
-    }
-    
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    public func loadPublisher(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) -> AnyPublisher<Distribution, Swift.Error> {
-        progressHandler(completedProgress())
-        return Result.Publisher(NullDistribution()).eraseToAnyPublisher()
-    }
-    
-    @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, *)
-    public func load(withProgress progressHandler: @escaping (Progress) -> Void = { _ in }) async throws -> Distribution {
+    public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) async throws -> Distribution {
         progressHandler(completedProgress())
         return NullDistribution()
     }

@@ -22,9 +22,6 @@
     "Couldn’t find file in archive with prefix “%@.”" : {
       "comment" : "failure reason"
     },
-    "Couldn’t find file to load." : {
-      "comment" : "failure reason"
-    },
     "Couldn’t load distribution." : {
       "comment" : "error description"
     },
@@ -96,9 +93,6 @@
     },
     "Unknown VGSI identifier ‘%@’." : {
       "comment" : "failure reason"
-    },
-    "Verify that the path to the distribution is correct." : {
-      "comment" : "recovery suggestion"
     },
     "Verify that the URL to the distribution is correct and accessible." : {
       "comment" : "recovery suggestion"

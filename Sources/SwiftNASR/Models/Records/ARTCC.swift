@@ -6,13 +6,13 @@
  type. There is one entry for each combination of those three fields.
  */
 
-public class ARTCC: Record, Equatable, Codable {
+public struct ARTCC: ParentRecord {
 
     // MARK: - Properties
 
     /// The computer ID for the FIR, e.g. "ZOA" for Oakland Center.
     public let ID: String
-    
+
     /// The ICAO ID for the FIR, e.g. "KZOA" for Oakland Center.
     public let ICAOID: String?
 
@@ -39,7 +39,11 @@ public class ARTCC: Record, Equatable, Codable {
     
     /// The frequencies this Center communicates on.
     public var frequencies: Array<CommFrequency> = []
-    
+
+    public var id: String { "\(self.ID).\(type).\(locationName)" }
+
+    weak var data: NASRData? = nil
+
     enum CodingKeys: String, CodingKey {
         case ID, ICAOID, type, name, alternateName, locationName, stateCode, location, remarks, frequencies
     }
@@ -58,18 +62,12 @@ public class ARTCC: Record, Equatable, Codable {
         self.stateCode = stateCode
         self.location = location
     }
-    
-    public static func == (lhs: ARTCC, rhs: ARTCC) -> Bool {
-        return lhs.ID == rhs.ID &&
-            lhs.type == rhs.type &&
-            lhs.locationName == rhs.locationName
-    }
 
     // MARK: - Enums
 
     /// ARTCC facility types.
-    public enum FacilityType: String, Codable, RecordEnum {
-        
+    public enum FacilityType: String, RecordEnum {
+
         /// Air route surveillance radar
         case ARSR = "ARSR"
         
@@ -87,7 +85,7 @@ public class ARTCC: Record, Equatable, Codable {
     }
     
     /// Fields that per-field remarks can be associated with.
-    public enum Field: String, Codable {
+    public enum Field: String, RemarkField {
         case alternateName, stateCode, location
         
         static let fieldOrder: Array<Self?> = [
@@ -99,8 +97,8 @@ public class ARTCC: Record, Equatable, Codable {
     // MARK: - Classes
 
     /// A radio frequency that a Center controller communicates over.
-    public struct CommFrequency: Codable {
-        
+    public struct CommFrequency: Record {
+
         /// The radio frequency, in kHz.
         public let frequency: UInt
         
@@ -122,10 +120,10 @@ public class ARTCC: Record, Equatable, Codable {
         public var remarks = Remarks<Field>()
         
         // used to cross-reference airport from airport code
-        var findAirportByID: ((_ airportID: String) -> Airport?)!
-        
+        var findAirportByID: (@Sendable (_ airportID: String) async -> Airport?)!
+
         /// Fields that per-field remarks can be associated with.
-        public enum Field: String, Codable {
+        public enum Field: String, RemarkField {
             case altitude, specialUsageName, associatedAirportCode
 
             static let fieldOrder: Array<Self?> = [
@@ -153,8 +151,8 @@ public class ARTCC: Record, Equatable, Codable {
         }
 
         /// Altitude blocks that a frequency is used to control traffic within.
-        public enum Altitude: String, Codable, RecordEnum {
-            
+        public enum Altitude: String, RecordEnum {
+
             /// Flight levels 230 and below
             case low = "LOW"
             
