@@ -24,6 +24,7 @@ let package = Package(
         .target(
             name: "SwiftNASR",
             dependencies: ["ZIPFoundation"],
+            resources: [.process("Resources")],
             linkerSettings: [.linkedLibrary("swift_Concurrency")]),
         .testTarget(
             name: "SwiftNASRTests",
