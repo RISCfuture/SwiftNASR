@@ -70,7 +70,7 @@ download the distribution to a file, so you can avoid having to re-download it l
 ```swift
 import SwiftNASR
 
-let workingURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+let workingURL = URL.currentDirectory()
 let distributionURL = workingURL.appendingPathComponent("distribution.zip")
 let distribution = NASR.fromInternetToFile(distributionURL)!
 ```

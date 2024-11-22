@@ -32,7 +32,7 @@ actor ProgressTracker {
     @Option(name: .shortAndLong,
             help: "The working directory to store the distribution data.",
             transform: { URL(filePath: $0) })
-    var workingDirectory = URL(filePath: FileManager.default.currentDirectoryPath)
+    var workingDirectory = URL.currentDirectory()
 
     private var distributionURL: URL { workingDirectory.appendingPathComponent("distribution.zip") }
 
