@@ -1,5 +1,5 @@
 {
-  "originHash" : "f9552aa119bc15e3fea40337c2c2f1317c9d8a4e007523e9b4dacf642270441e",
+  "originHash" : "dda8a7419248dcf34304e3238768fcd1aed6334344abd7ac4a5483decaf988dd",
   "pins" : [
     {
       "identity" : "cwlcatchexception",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Quick/Nimble.git",
       "state" : {
-        "revision" : "6416749c3c0488664fff6b42f8bf3ea8dc282ca1",
-        "version" : "13.6.0"
+        "revision" : "7795df4fff1a9cd231fe4867ae54f4dc5f5734f9",
+        "version" : "13.7.1"
       }
     },
     {
@@ -85,7 +85,7 @@
     {
       "identity" : "zipfoundation",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/weichsel/ZIPFoundation.git",
+      "location" : "https://github.com/weichsel/ZIPFoundation/",
       "state" : {
         "revision" : "02b6abe5f6eef7e3cbd5f247c5cc24e246efcfe0",
         "version" : "0.9.19"
