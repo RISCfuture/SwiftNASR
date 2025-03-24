@@ -24,9 +24,7 @@ extension RecordEnum {
     static var synonyms: Dictionary<RawValue, Self> { [:] }
 
     static func `for`(_ raw: RawValue) -> Self? {
-        if let val = Self(rawValue: raw) { return val }
-        if let synVal = synonyms[raw] { return synVal }
-        return nil
+        return Self(rawValue: raw) ?? synonyms[raw]
     }
 }
 

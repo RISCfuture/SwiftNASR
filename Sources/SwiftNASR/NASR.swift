@@ -59,7 +59,7 @@ public actor NASR {
 
     public static func fromInternetToMemory(activeAt date: Date? = nil) -> NASR? {
         let loader: Loader
-        if let date = date {
+        if let date {
             guard let cycle = Cycle.effectiveCycle(for: date) else { return nil }
             loader = ArchiveDataDownloader(cycle: cycle)
         } else {
@@ -84,7 +84,7 @@ public actor NASR {
 
     public static func fromInternetToFile(_ location: URL? = nil, activeAt date: Date? = nil) -> NASR? {
         let loader: Loader
-        if let date = date {
+        if let date {
             guard let cycle = Cycle.effectiveCycle(for: date) else { return nil }
             loader = ArchiveFileDownloader(cycle: cycle, location: location)
         } else {

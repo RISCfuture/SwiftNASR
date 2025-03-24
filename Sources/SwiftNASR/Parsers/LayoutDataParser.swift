@@ -80,7 +80,7 @@ extension LayoutDataParser {
             }
         }
 
-        if let error = error { throw error }
+        if let error { throw error }
         if formats.last?.fields.isEmpty ?? false { formats.removeLast() }
         return formats
     }

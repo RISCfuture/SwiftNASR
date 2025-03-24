@@ -181,10 +181,8 @@ class NavaidParser: FixedWidthParser {
         let position = Location(latitude: transformedValues[22] as! Float,
                                 longitude: transformedValues[24] as! Float,
                                 elevation: transformedValues[31] as! Float?)
-        var TACANPosition: Location? = nil
-        if let lat = transformedValues[27] as? Float,
-           let lon = transformedValues[29] as? Float {
-            TACANPosition = Location(latitude: lat, longitude: lon, elevation: nil)
+        let TACANPosition = zipOptionals(transformedValues[27], transformedValues[29]).map {
+            Location(latitude: $0 as! Float, longitude: $1 as! Float, elevation: nil)
         }
 
         let navaid = Navaid(id: transformedValues[1] as! String,

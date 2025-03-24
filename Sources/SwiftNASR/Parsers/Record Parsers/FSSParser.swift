@@ -234,22 +234,20 @@ class FSSParser: FixedWidthNoRecordIDParser {
             let schedule = (transformedValues[33] as! Array<String?>)[i]
             VOLMETs.append(FSS.VOLMET(frequency: frequency, schedule: schedule!))
         }
-        
-        var DFEquipment: FSS.DirectionFindingEquipment? = nil
-        if let DFType = (transformedValues[34] as! String?) {
-            DFEquipment = FSS.DirectionFindingEquipment(
-                type: DFType,
+
+        let DFEquipment = (transformedValues[34] as! String?).map {
+            FSS.DirectionFindingEquipment(
+                type: $0,
                 location: Location(
                     latitude: transformedValues[35] as! Float,
                     longitude: transformedValues[36] as! Float,
                     elevation: nil))
         }
         
-        var location: Location? = nil
-        if transformedValues[27] != nil && transformedValues[28] != nil {
-            location = Location(latitude: transformedValues[27] as! Float,
-                                longitude: transformedValues[28] as! Float,
-                                elevation: nil)
+        let location = zipOptionals(transformedValues[27], transformedValues[28]).map {
+            Location(latitude: $0 as! Float,
+                     longitude: $1 as! Float,
+                     elevation: nil)
         }
         
         let commRemarks = (transformedValues[57] as! Array<String>)

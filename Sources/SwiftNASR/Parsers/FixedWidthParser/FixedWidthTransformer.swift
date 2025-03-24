@@ -109,12 +109,10 @@ struct FixedWidthTransformer {
                         return transformed
                     }
                 case let .fixedWidthArray(width, convert, nullable, trim, emptyPlaceholders):
-                    if let placeholders = emptyPlaceholders {
-                        if placeholders.contains(value) { return Array<Any?>() }
-                    }
+                    if emptyPlaceholders?.contains(value) ?? false { return Array<Any?>() }
                     let array = try value.partition(by: width).map { part in
                         return try transform(part, nullable: nullable, index: index, trim: trim) {
-                            if let convert = convert {
+                            if let convert {
                                 do {
                                     return try convert($0)
                                 } catch (let e) {
@@ -128,10 +126,8 @@ struct FixedWidthTransformer {
                     return array.compactMap { $0 }
                 case let .delimitedArray(delimiter, convert, nullable, trim, emptyPlaceholders):
                     if value.isEmpty { return Array<Any?>() }
-                    if let placeholders = emptyPlaceholders {
-                        if placeholders.contains(value) { return Array<Any?>() }
-                    }
-                    
+                    if emptyPlaceholders?.contains(value) ?? false { return Array<Any?>() }
+
                     do {
                         let array = try value.components(separatedBy: delimiter)
                             .map { part in
