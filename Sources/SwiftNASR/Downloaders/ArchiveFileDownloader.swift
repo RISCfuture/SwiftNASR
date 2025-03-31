@@ -4,7 +4,7 @@ import Foundation
  A downloader that downloads a distribution archive to a file on disk.
  */
 
-final public class ArchiveFileDownloader: Downloader {
+public final class ArchiveFileDownloader: Downloader {
     public let cycle: Cycle
 
     /// The `URLSession` to use for downloading.
@@ -25,22 +25,20 @@ final public class ArchiveFileDownloader: Downloader {
         self.location = location
         self.session = session
     }
-    
+
     public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) async throws -> Distribution {
         let delegate = DownloadDelegate()
         progressHandler(delegate.progress)
-        
+
         let (tempfileURL, response) = try await session.download(from: cycleURL, delegate: delegate)
-        
+
         let HTTPResponse = response as! HTTPURLResponse
-        if HTTPResponse.statusCode/100 != 2 { throw Error.badResponse(HTTPResponse) }
-        
+        if HTTPResponse.statusCode / 100 != 2 { throw Error.badResponse(HTTPResponse) }
+
         if let location = self.location {
             try FileManager.default.copyItem(at: tempfileURL, to: location)
             return try ArchiveFileDistribution(location: location)
         }
-        else {
-            return try ArchiveFileDistribution(location: tempfileURL)
-        }
+        return try ArchiveFileDistribution(location: tempfileURL)
     }
 }

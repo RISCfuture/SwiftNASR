@@ -1,36 +1,37 @@
 import Foundation
-import Quick
 import Nimble
+import Quick
 import ZIPFoundation
 
 @testable import SwiftNASR
 
 class ArchiveLoaderSpec: AsyncSpec {
-    private class var mockData: Data {
-        let data = "Hello, world!".data(using: .isoLatin1)!
-        let archive = try! Archive(accessMode: .create)
-        try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
-            return data.subdata(in: Data.Index(position)..<(Int(position)+size))
+    private static var mockData: Data {
+        get throws {
+            let data = "Hello, world!".data(using: .isoLatin1)!
+            let archive = try Archive(accessMode: .create)
+            try archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
+                return data.subdata(in: Data.Index(position)..<(Int(position) + size))
+            }
+            return archive.data!
         }
-        return archive.data!
     }
 
     override static func spec() {
+        let location = FileManager.default.temporaryDirectory.appendingPathComponent(ProcessInfo().globallyUniqueString)
+        var loader: ArchiveLoader!
+
         describe("load") {
-            let location = FileManager.default.temporaryDirectory
-                .appendingPathComponent(ProcessInfo().globallyUniqueString)
-            let loader = ArchiveLoader(location: location)
-
-            beforeSuite {
+            aroundEach { test in
                 try self.mockData.write(to: location)
-            }
+                loader = ArchiveLoader(location: location)
 
-            afterSuite {
-                try? FileManager.default.removeItem(at: location)
+                await test()
+                try FileManager.default.removeItem(at: location)
             }
 
             it("calls back with the archive") {
-                let distribution = try await loader.load() as! ArchiveFileDistribution
+                let distribution = try loader.load() as! ArchiveFileDistribution
                 expect(distribution.location).to(equal(location))
             }
         }

@@ -1,6 +1,6 @@
 import Foundation
 
-fileprivate let metatypes = [
+private let metatypes = [
     (RecordType.states, State.self),
     (RecordType.airports, Airport.self),
     (RecordType.ARTCCFacilities, ARTCC.self)
@@ -32,18 +32,18 @@ public enum RecordType: String, Codable, Sendable {
     case departureArrivalProceduresComplete = "STARDP"
     case terminalCommFacilities = "TWR"
     case weatherReportingLocations = "WXL"
-    
+
     /// This is a pseudo-record-type intended to represent the `STATE.txt` file.
     /// `states` is not a loadable record type.
     case states = "_ST"
-    
+
     var metatype: any Record.Type {
         guard let type = metatypes.first(where: { $0.0 == self })?.1 else {
             preconditionFailure("Unsupported type \(self)")
         }
         return type
    }
-    
+
     static func forType(_ type: any Record.Type) -> Self {
         guard let value = metatypes.first(where: { $0.1 == type })?.0 else {
             preconditionFailure("Unsupported type \(type)")
@@ -73,9 +73,9 @@ public protocol Distribution: Sendable {
      - Returns: The first matching file, or `nil` if no file names match the
                 prefix.
      */
-    
+
     func findFile(prefix: String) throws -> String?
-    
+
     /**
      Decompresses and reads a file asynchronously from a distribution.
      
@@ -95,7 +95,7 @@ public protocol Distribution: Sendable {
     func readFile(path: String, withProgress progressHandler: @Sendable (_ progress: Progress) -> Void, returningLines linesHandler: (_ lines: UInt) -> Void) -> AsyncThrowingStream<Data, Swift.Error>
 }
 
-extension Distribution {
+public extension Distribution {
 
     /**
      Reads the data for a given record type from the distribution.
@@ -113,7 +113,7 @@ extension Distribution {
      */
 
     @FileReadActor
-    public func read(type: RecordType, withProgress progressHandler: @Sendable (_ progress: Progress) -> Void = { _ in }, returningLines linesHandler: (_ lines: UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
+    func read(type: RecordType, withProgress progressHandler: @Sendable (_ progress: Progress) -> Void = { _ in }, returningLines linesHandler: (_ lines: UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
         return readFile(path: "\(type.rawValue).txt", withProgress: progressHandler, returningLines: linesHandler)
     }
 }

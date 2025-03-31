@@ -24,15 +24,15 @@ import Foundation
  */
 
 public actor NASRData {
-    
+
     /// The cycle for the NASR distribution containing this data.
     public var cycle: Cycle?
-    
+
     /// US states and territories.
-    public var states: Array<State>? = nil
-    
+    public var states: [State]?
+
     /// Airports loaded by SwiftNASR.
-    public var airports: Array<Airport>? = nil {
+    public var airports: [Airport]? {
         didSet {
             guard airports != nil else { return }
             for airportID in 0..<airports!.count {
@@ -45,9 +45,9 @@ public actor NASRData {
             }
         }
     }
-    
+
     /// ARTCCs loaded by SwiftNASR.
-    public var ARTCCs: Array<ARTCC>? = nil {
+    public var ARTCCs: [ARTCC]? {
         didSet {
             guard ARTCCs != nil else { return }
             for ARTCCIndex in 0..<ARTCCs!.count {
@@ -59,9 +59,9 @@ public actor NASRData {
             }
         }
     }
-    
+
     /// FSSes loaded by SwiftNASR. 
-    public var FSSes: Array<FSS>? = nil {
+    public var FSSes: [FSS]? {
         didSet {
             guard FSSes != nil else { return }
             for FSSIndex in 0..<FSSes!.count {
@@ -73,9 +73,9 @@ public actor NASRData {
             }
         }
     }
-    
+
     /// Navaids loaded by SwiftNASR.
-    public var navaids: Array<Navaid>? = nil {
+    public var navaids: [Navaid]? {
         didSet {
             guard navaids != nil else { return }
             for navaidIndex in 0..<navaids!.count {
@@ -87,13 +87,13 @@ public actor NASRData {
             }
         }
     }
-    
+
     func finishParsing(cycle: Cycle? = nil,
-                       states: Array<State>? = nil,
-                       airports: Array<Airport>? = nil,
-                       ARTCCs: Array<ARTCC>? = nil,
-                       FSSes: Array<FSS>? = nil,
-                       navaids: Array<Navaid>? = nil) {
+                       states: [State]? = nil,
+                       airports: [Airport]? = nil,
+                       ARTCCs: [ARTCC]? = nil,
+                       FSSes: [FSS]? = nil,
+                       navaids: [Navaid]? = nil) {
         if let cycle { self.cycle = cycle }
         if let states { self.states = states }
         if let airports { self.airports = airports }
@@ -104,69 +104,69 @@ public actor NASRData {
 }
 
 public extension Airport {
-    
+
     /// The the state the airport is in.
     var state: State? {
         get async {
-            guard let stateCode = stateCode else { return nil }
+            guard let stateCode else { return nil }
             guard let states = await data?.states else { return nil }
 
-            return states.first(where: { $0.postOfficeCode == stateCode })
+            return states.first { $0.postOfficeCode == stateCode }
         }
     }
-    
+
     /// The state containing the associated county.
     var countyState: State? {
         get async {
             guard let states = await data?.states else { return nil }
-            return states.first(where: { $0.postOfficeCode == countyStateCode })
+            return states.first { $0.postOfficeCode == countyStateCode }
         }
     }
-    
+
     /// The ARTCC facilities belonging to the ARTCC whose boundaries contain
     /// this airport.
-    var boundaryARTCCs: Array<ARTCC>? {
+    var boundaryARTCCs: [ARTCC]? {
         get async {
             guard let ARTCCs = await data?.ARTCCs else { return nil }
             return ARTCCs.filter { $0.ID == boundaryARTCCID }
         }
     }
-    
+
     /// The ARTCC facilities belonging to the ARTCC that is responsible for
     /// traffic departing from and arriving at this airport.
-    var responsibleARTCCs: Array<ARTCC>? {
+    var responsibleARTCCs: [ARTCC]? {
         get async {
             guard let ARTCCs = await data?.ARTCCs else { return nil }
             return ARTCCs.filter { $0.ID == responsibleARTCCID }
         }
     }
-    
+
     /// The tie-in flight service station responsible for this airport.
     var tieInFSS: FSS? {
         get async {
             guard let FSSes = await data?.FSSes else { return nil }
-            return FSSes.first(where: { $0.ID == tieInFSSID })
+            return FSSes.first { $0.ID == tieInFSSID }
         }
     }
-    
+
     /// An alternate FSS responsible for this airport when the tie-in FSS is
     /// closed.
     var alternateFSS: FSS? {
         get async {
             guard let FSSes = await data?.FSSes else { return nil }
-            guard let alternateFSSID = alternateFSSID else { return nil }
+            guard let alternateFSSID else { return nil }
 
-            return FSSes.first(where: { $0.ID == alternateFSSID })
+            return FSSes.first { $0.ID == alternateFSSID }
         }
     }
-    
+
     /// The FSS responsible for issuing NOTAMs for this airport.
     var NOTAMIssuer: FSS? {
         get async {
             guard let FSSes = await data?.FSSes else { return nil }
-            guard let NOTAMIssuerID = NOTAMIssuerID else { return nil }
+            guard let NOTAMIssuerID else { return nil }
 
-            return FSSes.first(where: { $0.ID == NOTAMIssuerID })
+            return FSSes.first { $0.ID == NOTAMIssuerID }
         }
     }
 }
@@ -174,82 +174,82 @@ public extension Airport {
 extension Airport {
     func findRunwayByID() -> (@Sendable (_ runwayID: String) -> Runway?) {
         return { runwayID in
-            return self.runways.first(where: { $0.identification == runwayID })
+            return self.runways.first { $0.identification == runwayID }
         }
     }
 }
 
 public extension RunwayEnd.LAHSOPoint {
-    
+
     /// The intersecting runway defining the LAHSO point, if defined by runway.
     var intersectingRunway: Runway? {
-        guard let intersectingRunwayID = intersectingRunwayID else { return nil }
+        guard let intersectingRunwayID else { return nil }
         return findRunwayByID(intersectingRunwayID)
     }
 }
 
 extension ARTCC {
-    
+
     /// The state containing the Center facility.
     public var state: State? {
         get async {
-            guard let stateCode = stateCode else { return nil }
+            guard let stateCode else { return nil }
             guard let states = await data?.states else { return nil }
 
-            return states.first(where: { $0.postOfficeCode == stateCode })
+            return states.first { $0.postOfficeCode == stateCode }
         }
     }
-    
+
     func findAirportByID() -> (@Sendable (_ airportID: String) async -> Airport?) {
         return { airportID in
             guard let airports = await self.data?.airports else { return nil }
 
-            return airports.first(where: { $0.LID == airportID })
+            return airports.first { $0.LID == airportID }
         }
     }
 }
 
 public extension ARTCC.CommFrequency {
-    
+
     /// The associated airport, if this facility is associated with an airport.
     var associatedAirport: Airport? {
         get async {
-            guard let associatedAirportCode = associatedAirportCode else { return nil }
+            guard let associatedAirportCode else { return nil }
             return await findAirportByID(associatedAirportCode)
         }
     }
 }
 
 public extension FSS {
-    
+
     /// The nearest FSS with teletype capability.
     var nearestFSSWithTeletype: FSS? {
         get async {
-            guard let nearestFSSIDWithTeletype = nearestFSSIDWithTeletype else { return nil }
+            guard let nearestFSSIDWithTeletype else { return nil }
             guard let FSSes = await data?.FSSes else { return nil }
 
-            return FSSes.first(where: { $0.ID == nearestFSSIDWithTeletype })
+            return FSSes.first { $0.ID == nearestFSSIDWithTeletype }
         }
     }
-    
+
     /// The state associated with the FSS, when the FSS is not located on an
     /// airport.
     var state: State? {
         get async {
-            guard let stateName = stateName else { return nil }
+            guard let stateName else { return nil }
             guard let states = await data?.states else { return nil }
 
-            return states.first(where: { $0.name == stateName })
+            return states.first { $0.name == stateName }
         }
     }
-    
+
     /// The airport this FSS is associated with, if any.
     var airport: Airport? {
         get async {
-            guard let airportID = airportID else { return nil }
+            guard let airportID else { return nil }
             guard let airports = await data?.airports else { return nil }
 
-            return airports.first(where: { $0.LID == airportID })
+            return airports.first { $0.LID == airportID }
         }
     }
 }
@@ -258,17 +258,17 @@ extension FSS {
     func findStateByName() -> (@Sendable (_ name: String) async -> State?) {
         return { name in
             guard let states = await self.data?.states else { return nil }
-            return states.first(where: { $0.name == name })
+            return states.first { $0.name == name }
         }
     }
 }
 
 public extension FSS.CommFacility {
-    
+
     /// The state associated with the comm facility.
     var state: State? {
         get async {
-            guard let stateName = stateName else { return nil }
+            guard let stateName else { return nil }
             return await findStateByName(stateName)
         }
     }
@@ -279,65 +279,65 @@ extension Navaid {
         return { airportID in
             guard let airports = await self.data?.airports else { return nil }
 
-            return airports.first(where: { $0.LID == airportID })
+            return airports.first { $0.LID == airportID }
         }
     }
-    
+
     func findStateByCode() -> (@Sendable (_ code: String) async -> State?) {
         return { code in
             guard let states = await self.data?.states else { return nil }
-            return states.first(where: { $0.postOfficeCode == code })
+            return states.first { $0.postOfficeCode == code }
         }
     }
 }
 
 public extension Navaid {
-    
+
     /// The state associated with the navaid.
     var state: State? {
         get async {
-            await data?.states?.first(where: { $0.name == stateName })
+            await data?.states?.first { $0.name == stateName }
         }
     }
-    
+
     /// The high-altitude ARTCC containing this navaid.
     var highAltitudeARTCC: ARTCC? {
         get async {
-            guard let highAltitudeARTCCCode = highAltitudeARTCCCode else { return nil }
-            return await data?.ARTCCs?.first(where: { $0.ID == highAltitudeARTCCCode })
+            guard let highAltitudeARTCCCode else { return nil }
+            return await data?.ARTCCs?.first { $0.ID == highAltitudeARTCCCode }
         }
     }
-    
+
     /// The low-altitude ARTCC containing this navaid.
     var lowAltitudeARTCC: ARTCC? {
         get async {
-            guard let lowAltitudeARTCCCode = lowAltitudeARTCCCode else { return nil }
-            return await data?.ARTCCs?.first(where: { $0.ID == lowAltitudeARTCCCode })
+            guard let lowAltitudeARTCCCode else { return nil }
+            return await data?.ARTCCs?.first { $0.ID == lowAltitudeARTCCCode }
         }
     }
-    
+
     /// The FSS that controls this navaid.
     var controllingFSS: FSS? {
         get async {
-            guard let controllingFSSCode = controllingFSSCode else { return nil }
-            return await data?.FSSes?.first(where: { $0.ID == controllingFSSCode })
+            guard let controllingFSSCode else { return nil }
+            return await data?.FSSes?.first { $0.ID == controllingFSSCode }
         }
     }
 }
 
 public extension VORCheckpoint {
-    
+
     /// The state associated with the checkpoint.
     var state: State? {
         get async {
             return await findStateByCode(stateCode)
         }
     }
-    
+
     /// The associated airport, if this facility is associated with an airport.
     var airport: Airport? {
         get async {
-            guard let airportID = airportID else { return nil }
+            guard let airportID else { return nil }
             return await findAirportByID(airportID)
         }
     }
@@ -351,23 +351,19 @@ public extension VORCheckpoint {
 
 public struct NASRDataCodable: Codable {
     var cycle: Cycle?
-    var states: Array<State>?
-    var airports: Array<Airport>?
-    var ARTCCs: Array<ARTCC>?
-    var FSSes: Array<FSS>?
-    var navaids: Array<Navaid>?
-
-    enum CodingKeys: String, CodingKey {
-        case cycle, states, airports, ARTCCs, FSSes, navaids
-    }
+    var states: [State]?
+    var airports: [Airport]?
+    var ARTCCs: [ARTCC]?
+    var FSSes: [FSS]?
+    var navaids: [Navaid]?
 
     public init(data: NASRData) async {
         cycle = await data.cycle
-        states = await data.states?.sorted(by: { $0.postOfficeCode < $1.postOfficeCode })
-        airports = await data.airports?.sorted(by: { $0.id < $1.id })
-        ARTCCs = await data.ARTCCs?.sorted(by: { $0.id < $1.id })
-        FSSes = await data.FSSes?.sorted(by: { $0.id < $1.id })
-        navaids = await data.navaids?.sorted(by: { $0.id < $1.id })
+        states = await data.states?.sorted { $0.postOfficeCode < $1.postOfficeCode }
+        airports = await data.airports?.sorted { $0.id < $1.id }
+        ARTCCs = await data.ARTCCs?.sorted { $0.id < $1.id }
+        FSSes = await data.FSSes?.sorted { $0.id < $1.id }
+        navaids = await data.navaids?.sorted { $0.id < $1.id }
     }
 
     public init(from decoder: Decoder) throws {
@@ -395,5 +391,9 @@ public struct NASRDataCodable: Codable {
         let data = NASRData()
         await data.finishParsing(cycle: cycle, states: states, airports: airports, ARTCCs: ARTCCs, FSSes: FSSes)
         return data
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case cycle, states, airports, ARTCCs, FSSes, navaids
     }
 }

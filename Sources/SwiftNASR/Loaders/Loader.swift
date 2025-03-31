@@ -27,6 +27,6 @@ public protocol Loader: Sendable {
      - Returns: The distribution data wrapped in the appropriate implementation,
                 and an object you can use to track progress.
      */
-    
+
     func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws -> Distribution
 }

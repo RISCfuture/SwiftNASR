@@ -11,7 +11,7 @@ import Foundation
  
  ``` swift
  let distribution = NASR.fromInternetToFile(distributionURL)!
- try! distribution.parse(.airports, errorHandler: { error in
+ try distribution.parse(.airports, errorHandler: { error in
      // [...]
  })
  ```
@@ -38,7 +38,7 @@ import Foundation
  
  ``` swift
  let decoder = JSONZipDecoder()
- let data = try! decoder.decode(NASRData.Type, from: serializedDataURL)
+ let data = try decoder.decode(NASRData.Type, from: serializedDataURL)
  let distribution = NASR.fromData(data)
  ```
  
@@ -50,8 +50,8 @@ public final class NullLoader: Loader {
     /**
      Yields a ``NullDistribution`` that cannot be used to parse NASR data.
      */
-    
-    public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) async throws -> Distribution {
+
+    public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) throws -> Distribution {
         progressHandler(completedProgress())
         return NullDistribution()
     }

@@ -1,13 +1,13 @@
 import Foundation
-import Quick
 import Nimble
+import Quick
+import ZIPFoundation
 
 @testable import SwiftNASR
 
-class JSONZipCoderSpec: QuickSpec {
-    override class func spec() {
+final class JSONZipCoderSpec: QuickSpec {
+    override static func spec() {
         let object = ["foo": 1, "bar": 2]
-        let encodedData = "UEsDBBQAAAgIADc8ilFCH1vlEwAAABEAAAARAAAAZGlzdHJpYnV0aW9uLmpzb26rVkpKLFKyMtJRSsvPV7IyrAUAUEsBAhUDFAAACAgANzyKUUIfW+UTAAAAEQAAABEAAAAAAAAAAAAAAKSBAAAAAGRpc3RyaWJ1dGlvbi5qc29uUEsFBgAAAAABAAEAPwAAAEIAAAAAAA=="
         var encoder: JSONZipEncoder {
             let coder = JSONZipEncoder()
             coder.outputFormatting = .sortedKeys
@@ -16,14 +16,20 @@ class JSONZipCoderSpec: QuickSpec {
         let decoder = JSONZipDecoder()
 
         describe("JSONZipEncoder") {
-            pending("encodes data") {
+            it("encodes data") {
                 let data = try encoder.encode(object)
-                expect(data.base64EncodedString()).to(equal(encodedData))
+                let archive = try Archive(data: data, accessMode: .read, pathEncoding: .ascii)
+                guard let entry = archive["distribution.json"] else {
+                    fail("Expected archive to contain distribution.json")
+                    return
+                }
+                expect(entry.uncompressedSize).to(equal(17))
             }
         }
-        
+
         describe("JSONZipDecoder") {
             it("decodes data") {
+                let encodedData = "UEsDBBQAAAgAAGKhf1pCH1vlEQAAABEAAAARAAAAZGlzdHJpYnV0aW9uLmpzb257ImJhciI6MiwiZm9vIjoxfVBLAQIVAxQAAAgAAGKhf1pCH1vlEQAAABEAAAARAAAAAAAAAAAAAACkgQAAAABkaXN0cmlidXRpb24uanNvblBLBQYAAAAAAQABAD8AAABAAAAAAAA="
                 let data = Data(base64Encoded: encodedData)!
                 let outObject = try decoder.decode(Dictionary<String, Int>.self, from: data)
                 expect(outObject).to(equal(object))
@@ -31,4 +37,3 @@ class JSONZipCoderSpec: QuickSpec {
         }
     }
 }
-

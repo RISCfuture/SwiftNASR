@@ -20,27 +20,28 @@ public protocol Downloader: Loader {
      - Parameter cycle: The cycle to download NASR data for. If not specified,
                         uses the current cycle.
      */
-    
+
     init(cycle: Cycle?)
-    
+
     /**
      Downloads the NASR data asynchronously.
      
      - Returns: The downloaded distribution, and an object for tracking progress.
      - Throws: If the distribution could not be downloaded.
      */
-    
+
     func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws -> Distribution
 }
 
-@objc final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
+@objc
+final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
     let progress = Progress(totalUnitCount: 0)
 
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+    func urlSession(_: URLSession, downloadTask _: URLSessionDownloadTask, didFinishDownloadingTo _: URL) {
         // noop
     }
 
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+    func urlSession(_: URLSession, downloadTask _: URLSessionDownloadTask, didWriteData _: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         DispatchQueue.main.async { [weak self] in
             self?.progress.completedUnitCount = totalBytesWritten
             self?.progress.totalUnitCount = totalBytesExpectedToWrite
@@ -48,7 +49,7 @@ public protocol Downloader: Loader {
     }
 }
 
-fileprivate var cycleDateFormatter: DateFormatter {
+private var cycleDateFormatter: DateFormatter {
     let formatter = DateFormatter()
     formatter.locale = Locale(identifier: "en_US_POSIX")
     formatter.dateFormat = "yyyy-MM-dd"
@@ -56,14 +57,16 @@ fileprivate var cycleDateFormatter: DateFormatter {
     return formatter
 }
 
+// swiftlint:disable missing_docs
 extension Downloader {
     public var cycleURL: URL {
         let cycleString = cycleDateFormatter.string(from: cycle.date!)
         return URL(string: "https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_\(cycleString).zip")!
     }
 
-    func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) async throws -> Distribution {
+    func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) throws -> Distribution {
         progressHandler(completedProgress())
         return NullDistribution()
     }
 }
+// swiftlint:enable missing_docs

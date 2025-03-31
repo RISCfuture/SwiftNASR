@@ -1,6 +1,6 @@
 import Foundation
-import Quick
 import Nimble
+import Quick
 
 @testable import SwiftNASR
 
@@ -15,10 +15,10 @@ class FSSParserSpec: AsyncSpec {
             }
 
             it("parses FSSes") {
-                try await nasr.parse(RecordType.flightServiceStations, errorHandler: {
-                    fail($0.localizedDescription)
+                try await nasr.parse(RecordType.flightServiceStations) { error in
+                    fail(error.localizedDescription)
                     return false
-                })
+                }
 
                 guard let FSSes = await nasr.data.FSSes else { fail(); return }
                 expect(FSSes.count).to(equal(2))

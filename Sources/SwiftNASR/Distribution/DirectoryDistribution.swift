@@ -6,7 +6,7 @@ import Foundation
  */
 
 public final class DirectoryDistribution: Distribution {
-    
+
     /// The directory containing the distribution files.
     public let location: URL
 
@@ -22,13 +22,14 @@ public final class DirectoryDistribution: Distribution {
     public init(location: URL) {
         self.location = location
     }
-    
+
     public func findFile(prefix: String) throws -> String? {
         let children = try FileManager.default.contentsOfDirectory(at: location, includingPropertiesForKeys: [.nameKey])
-        return children.first(where: { $0.lastPathComponent.hasPrefix(prefix) })?.lastPathComponent
+        return children.first { $0.lastPathComponent.hasPrefix(prefix) }?.lastPathComponent
     }
-    
-    @discardableResult private func readFileWithCallback(path: String, withProgress progressHandler: (Progress) -> Void = { _ in }, eachLine: (Data) -> Void) throws -> UInt {
+
+    @discardableResult
+    private func readFileWithCallback(path: String, withProgress progressHandler: (Progress) -> Void = { _ in }, eachLine: (Data) -> Void) throws -> UInt {
         let fileURL = location.appendingPathComponent(path)
         let handle: FileHandle
         do {
@@ -36,14 +37,13 @@ public final class DirectoryDistribution: Distribution {
         } catch let error as NSError {
             if error.domain == NSCocoaErrorDomain && error.code == NSFileNoSuchFileError {
                 throw Error.noSuchFile(path: path)
-            } else {
-                throw error
             }
+            throw error
         }
         var buffer = Data(capacity: chunkSize)
         let filesize = try FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as! NSNumber
         var lines: UInt = 0
-        
+
         let progress = Progress(totalUnitCount: filesize.int64Value)
         progressHandler(progress)
 
@@ -53,20 +53,20 @@ public final class DirectoryDistribution: Distribution {
                     buffer.removeSubrange(EOL)
                     continue
                 }
-                
+
                 let subrange = buffer.startIndex..<EOL.lowerBound
                 let subdata = buffer.subdata(in: subrange)
                 Task { @MainActor in progress.completedUnitCount += Int64(subdata.count) }
 
                 eachLine(subdata)
                 lines += 1
-                
+
                 buffer.removeSubrange(subrange)
             } else {
                 let data = handle.readData(ofLength: chunkSize)
                 Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
-                guard data.count > 0 else {
-                    if buffer.count > 0 {
+                guard !data.isEmpty else {
+                    if !buffer.isEmpty {
                         eachLine(buffer)
                         lines += 1
                     }
@@ -75,7 +75,7 @@ public final class DirectoryDistribution: Distribution {
                 buffer.append(data)
             }
         }
-        
+
         return lines
     }
 
@@ -87,7 +87,7 @@ public final class DirectoryDistribution: Distribution {
                 }
                 linesHandler(lines)
                 continuation.finish()
-            } catch (let error) {
+            } catch {
                 continuation.finish(throwing: error)
             }
         }

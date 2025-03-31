@@ -11,28 +11,28 @@
 public struct Remarks<F: RemarkField>: Record {
 
     /// All remarks added to the record.
-    public var remarks = Array<Remark<F>>()
+    public var remarks = [Remark<F>]()
 
     /// Remarks applied to a record as a whole.
-    var general: Array<String> {
-        var remarks = Array<String>()
-        
+    var general: [String] {
+        var remarks = [String]()
+
         for remark in self.remarks {
             guard case let .general(content) = remark else { break }
             remarks.append(content)
         }
-        
+
         return remarks
     }
-    
+
     /**
      Gets the remarks for a specific field.
      
      - Parameter field: The field to get remarks for.
      - Returns: The remarks for that field (if any).
      */
-    public func forField(_ field: F) -> Array<Remark<F>> {
-        var remarks = Array<Remark<F>>()
+    public func forField(_ field: F) -> [Remark<F>] {
+        var remarks = [Remark<F>]()
 
         for remark in self.remarks {
             switch remark {
@@ -47,11 +47,11 @@ public struct Remarks<F: RemarkField>: Record {
                 default: break
             }
         }
-        
+
         return remarks
     }
-    
-    mutating public func append(_ remark: Remark<F>) {
+
+    public mutating func append(_ remark: Remark<F>) {
         remarks.append(remark)
     }
 }
@@ -64,7 +64,7 @@ public enum Remark<F: RemarkField>: Record {
 
     /// A remark that applies to the record in general.
     case general(_ content: String)
-    
+
     /// A remark that applies to a specific field.
     case field(field: F, content: String)
 
@@ -91,7 +91,7 @@ public enum Remark<F: RemarkField>: Record {
                 self = .fuel(field: field, fuel: fuel, content: content)
         }
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
@@ -109,11 +109,11 @@ public enum Remark<F: RemarkField>: Record {
                 try container.encode(content, forKey: .content)
         }
     }
-    
+
     private enum Kinds: String {
         case general, field, fuel
     }
-    
+
     private enum CodingKeys: CodingKey {
         case type, content, field, fuel
     }

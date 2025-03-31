@@ -8,9 +8,9 @@ public final class ArchiveLoader: Loader {
 
     /// The location of the archive file on disk.
     public let location: URL
-    
+
     private let queue = DispatchQueue(label: "codes.tim.SwiftNASR.ArchiveLoader", qos: .utility, attributes: .concurrent)
-    
+
     /**
      Creates a loader that loads from a given location on disk.
      
@@ -21,9 +21,9 @@ public final class ArchiveLoader: Loader {
         self.location = location
     }
 
-    public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) async throws -> Distribution {
+    public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) throws -> Distribution {
         progressHandler(completedProgress())
-        
+
         return try ArchiveFileDistribution(location: location)
     }
 }

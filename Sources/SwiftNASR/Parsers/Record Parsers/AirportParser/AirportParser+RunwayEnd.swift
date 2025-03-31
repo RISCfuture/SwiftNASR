@@ -1,12 +1,113 @@
 import Foundation
+@preconcurrency import RegexBuilder
 
-fileprivate let SAVASI_Rx = try! NSRegularExpression(pattern: #"^S(\d)([LR])$"#)
-fileprivate let VASI_Rx = try! NSRegularExpression(pattern: #"^V(\d)([LR])$"#)
-fileprivate let LargeVASI_Rx = try! NSRegularExpression(pattern: #"^V(\d{2})$"#)
-fileprivate let PAPI_Rx = try! NSRegularExpression(pattern: #"^P(\d)([LR])$"#)
-fileprivate let tricolorVASI_Rx = try! NSRegularExpression(pattern: #"^TRI([LR])$"#)
-fileprivate let pulsatingVASI_Rx = try! NSRegularExpression(pattern: #"^PSI([LR])$"#)
-fileprivate let panelsRx = try! NSRegularExpression(pattern: #"^PNI([LR])$"#)
+private final class VGSIParser: Sendable {
+    private let numberRef = Reference<UInt>()
+    private let sideRef = Reference<RunwayEnd.VisualGlideslopeIndicator.Side?>()
+
+    private var SAVASI_Rx: some RegexComponent {
+        Regex {
+            Anchor.startOfSubject
+            "S"
+            Capture(as: numberRef) { OneOrMore(.digit) } transform: { .init($0)! }
+            Capture(as: sideRef) { .anyOf("LR") } transform: { .init(rawValue: String($0)) }
+            Anchor.endOfSubject
+        }
+    }
+
+    private var VASI_Rx: some RegexComponent {
+        Regex {
+            Anchor.startOfSubject
+            "V"
+            Capture(as: numberRef) { OneOrMore(.digit) } transform: { UInt($0)! }
+            Capture(as: sideRef) {
+                Optionally { .anyOf("LR") }
+            } transform: { .init(rawValue: String($0)) }
+
+            Anchor.endOfSubject
+        }
+    }
+
+    private var largeVASI_Rx: some RegexComponent {
+        Regex {
+            Anchor.startOfSubject
+            "V"
+            Capture(as: sideRef) { .anyOf("LR") } transform: { .init(rawValue: String($0)) }
+            Anchor.endOfSubject
+        }
+    }
+
+    private var PAPI_Rx: some RegexComponent {
+        Regex {
+            Anchor.startOfSubject
+            "P"
+            Capture(as: numberRef) { OneOrMore(.digit) } transform: { UInt($0)! }
+            Capture(as: sideRef) { .anyOf("LR") } transform: { .init(rawValue: String($0)) }
+            Anchor.endOfSubject
+        }
+    }
+
+    private var tricolorVASI_Rx: some RegexComponent {
+        Regex {
+            Anchor.startOfSubject
+            "TRI"
+            Capture(as: sideRef) { .anyOf("LR") } transform: { .init(rawValue: String($0)) }
+            Anchor.endOfSubject
+        }
+    }
+
+    private var pulsatingVASI_Rx: some RegexComponent {
+        Regex {
+            Anchor.startOfSubject
+            "PSI"
+            Capture(as: sideRef) { .anyOf("LR") } transform: { .init(rawValue: String($0)) }
+            Anchor.endOfSubject
+        }
+    }
+
+    private var panelsRx: some RegexComponent {
+        Regex {
+            Anchor.startOfSubject
+            "PNI"
+            Capture(as: sideRef) { .anyOf("LR") } transform: { .init(rawValue: String($0)) }
+            Anchor.endOfSubject
+        }
+    }
+
+    func parseVGSI(_ value: String) throws -> RunwayEnd.VisualGlideslopeIndicator? {
+        if let match = try SAVASI_Rx.regex.firstMatch(in: value) {
+            let number = match[numberRef], side = match[sideRef]
+            return RunwayEnd.VisualGlideslopeIndicator(type: .SAVASI, number: number, side: side)
+        }
+        if let match = try VASI_Rx.regex.firstMatch(in: value) {
+            let number = match[numberRef], side = match[sideRef]
+            return RunwayEnd.VisualGlideslopeIndicator(type: .VASI, number: number, side: side)
+        }
+        if let match = try largeVASI_Rx.regex.firstMatch(in: value) {
+            let number = match[numberRef]
+            return RunwayEnd.VisualGlideslopeIndicator(type: .VASI, number: number, side: nil)
+        }
+        if let match = try PAPI_Rx.regex.firstMatch(in: value) {
+            let number = match[numberRef], side = match[sideRef]
+            return RunwayEnd.VisualGlideslopeIndicator(type: .PAPI, number: number, side: side)
+        }
+        if let match = try tricolorVASI_Rx.regex.firstMatch(in: value) {
+            let side = match[sideRef]
+            return RunwayEnd.VisualGlideslopeIndicator(type: .tricolorVASI, number: nil, side: side)
+        }
+        if let match = try pulsatingVASI_Rx.regex.firstMatch(in: value) {
+            let side = match[sideRef]
+            return RunwayEnd.VisualGlideslopeIndicator(type: .pulsatingVASI, number: nil, side: side)
+        }
+        if let match = try panelsRx.regex.firstMatch(in: value) {
+            let side = match[sideRef]
+            return RunwayEnd.VisualGlideslopeIndicator(type: .panels, number: nil, side: side)
+        }
+        return nil
+    }
+}
+
+private let vgsiParser = VGSIParser()
 
 extension AirportParser {
     private func parseVGSI(_ value: String) throws -> RunwayEnd.VisualGlideslopeIndicator {
@@ -15,142 +116,67 @@ extension AirportParser {
             case "PVT": return RunwayEnd.VisualGlideslopeIndicator(type: .private)
             case "VAS": return RunwayEnd.VisualGlideslopeIndicator(type: .nonspecificVASI)
             default:
-                if let match = SAVASI_Rx.firstMatch(in: value, options: [], range: value.nsRange) {
-                    guard let numberRange = Range(match.range(at: 1), in: value) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    guard let sideRange = Range(match.range(at: 2), in: value) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    guard let number = UInt(value[numberRange]) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    let side = try Self.raw(String(value[sideRange]), toEnum: RunwayEnd.VisualGlideslopeIndicator.Side.self)
-                    return RunwayEnd.VisualGlideslopeIndicator(type: .SAVASI, number: number, side: side)
-                }
-                else if let match = VASI_Rx.firstMatch(in: value, options: [], range: value.nsRange) {
-                    guard let numberRange = Range(match.range(at: 1), in: value) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    guard let sideRange = Range(match.range(at: 2), in: value) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    guard let number = UInt(value[numberRange]) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    let side = try Self.raw(String(value[sideRange]), toEnum: RunwayEnd.VisualGlideslopeIndicator.Side.self)
-                    return RunwayEnd.VisualGlideslopeIndicator(type: .VASI, number: number, side: side)
-                }
-                else if let match = LargeVASI_Rx.firstMatch(in: value, options: [], range: value.nsRange) {
-                    guard let numberRange = Range(match.range(at: 1), in: value) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    guard let number = UInt(value[numberRange]) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    return RunwayEnd.VisualGlideslopeIndicator(type: .VASI, number: number, side: nil)
-                }
-                else if let match = PAPI_Rx.firstMatch(in: value, options: [], range: value.nsRange) {
-                    guard let numberRange = Range(match.range(at: 1), in: value) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    guard let sideRange = Range(match.range(at: 2), in: value) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    guard let number = UInt(value[numberRange]) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    let side = try Self.raw(String(value[sideRange]), toEnum: RunwayEnd.VisualGlideslopeIndicator.Side.self)
-                    return RunwayEnd.VisualGlideslopeIndicator(type: .PAPI, number: number, side: side)
-                }
-                else if let match = tricolorVASI_Rx.firstMatch(in: value, options: [], range: value.nsRange) {
-                    guard let sideRange = Range(match.range(at: 1), in: value) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    let side = try Self.raw(String(value[sideRange]), toEnum: RunwayEnd.VisualGlideslopeIndicator.Side.self)
-                    return RunwayEnd.VisualGlideslopeIndicator(type: .tricolorVASI, number: nil, side: side)
-                }
-                else if let match = pulsatingVASI_Rx.firstMatch(in: value, options: [], range: value.nsRange) {
-                    guard let sideRange = Range(match.range(at: 1), in: value) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    let side = try Self.raw(String(value[sideRange]), toEnum: RunwayEnd.VisualGlideslopeIndicator.Side.self)
-                    return RunwayEnd.VisualGlideslopeIndicator(type: .pulsatingVASI, number: nil, side: side)
-                }
-                else if let match = panelsRx.firstMatch(in: value, options: [], range: value.nsRange) {
-                    guard let sideRange = Range(match.range(at: 1), in: value) else {
-                        throw Error.invalidVGSI(value)
-                    }
-                    let side = try Self.raw(String(value[sideRange]), toEnum: RunwayEnd.VisualGlideslopeIndicator.Side.self)
-                    return RunwayEnd.VisualGlideslopeIndicator(type: .panels, number: nil, side: side)
-                }
-                else {
-                    throw Error.invalidVGSI(value)
-                }
+                if let VGSI = try vgsiParser.parseVGSI(value) { return VGSI }
+                throw Error.invalidVGSI(value)
         }
     }
-    
-    func parseRunwayEnd(_ values: Array<Any?>, offset1: Int, offset2: Int, airport: Airport) throws -> RunwayEnd {
-        var VGSI: RunwayEnd.VisualGlideslopeIndicator? = nil
-        if values[offset1 + 20] != nil {
+
+    func parseRunwayEnd(_ values: [Any?], offset1: Int, offset2: Int, airport _: Airport) throws -> RunwayEnd {
+        let VGSI = try values[offset1 + 20].map { str in
             do {
-                VGSI = try parseVGSI(values[offset1 + 20] as! String)
+                return try parseVGSI(str as! String)
             } catch {
                 throw FixedWidthParserError.invalidValue(values[offset1 + 20] as! String, at: offset1 + 20)
             }
         }
-        
-        var threshold: Location? = nil
-        if values[offset1 + 6] != nil && values[offset1 + 8] != nil {
-            threshold = Location(latitude: values[offset1 + 6] as! Float,
-                                     longitude: values[offset1 + 8] as! Float,
-                                     elevation: values[offset1 + 10] as! Float?)
+
+        let threshold = zipOptionals(values[offset1 + 6], values[offset1 + 8]).map { lat, lon in
+            Location(latitude: lat as! Float,
+                     longitude: lon as! Float,
+                     elevation: values[offset1 + 10] as! Float?)
         }
-        var displacedThreshold: Location? = nil
-        if values[offset1 + 13] != nil && values[offset1 + 15] != nil {
-            displacedThreshold = Location(latitude: values[offset1 + 13] as! Float,
-                                              longitude: values[offset1 + 15] as! Float,
-                                              elevation: values[offset1 + 17] as! Float?)
+        let displacedThreshold = zipOptionals(values[offset1 + 13], values[offset1 + 15]).map { lat, lon in
+            Location(latitude: lat as! Float,
+                     longitude: lon as! Float,
+                     elevation: values[offset1 + 17] as! Float?)
         }
-        
-        var gradient = values[offset2] as! Float?
-        if gradient != nil {
+
+        let gradient = try values[offset2].map { grad in
+            var grad = grad as! Float
             switch values[offset2 + 1] as! String {
                 case "UP": break
-                case "DOWN": gradient! *= -1
+                case "DOWN": grad *= -1
                 default: throw FixedWidthParserError.invalidValue(values[offset2] as! String, at: offset2)
             }
+            return grad
         }
-        
-        var location: Location? = nil
-        if values[offset2 + 19] != nil && values[offset2 + 21] != nil {
-            location = Location(latitude: values[offset2 + 19] as! Float,
-                                longitude: values[offset2 + 21] as! Float,
-                                elevation: nil)
+
+        let location = zipOptionals(values[offset2 + 19], values[offset2 + 21]).map { lat, lon in
+            Location(latitude: lat as! Float,
+                     longitude: lon as! Float,
+                     elevation: nil)
         }
-        
-        var LAHSO: RunwayEnd.LAHSOPoint? = nil
-        if values[offset2 + 16] != nil {
-            LAHSO = RunwayEnd.LAHSOPoint(
-                availableDistance: values[offset2 + 16] as! UInt,
+
+        let LAHSO = values[offset2 + 16].map { dist in
+            RunwayEnd.LAHSOPoint(
+                availableDistance: dist as! UInt,
                 intersectingRunwayID: values[offset2 + 17] as! String?,
                 definingEntity: values[offset2 + 18] as! String?,
                 position: location,
                 positionSource: values[offset2 + 23] as! String?,
                 positionSourceDate: values[offset2 + 24] as! Date?)
         }
-        
-        var controllingObject: RunwayEnd.ControllingObject? = nil
-        if values[offset1 + 27] != nil {
-            controllingObject = RunwayEnd.ControllingObject(category: values[offset1 + 27] as! RunwayEnd.ControllingObject.Category,
-                                                            markings: values[offset1 + 28] as! Array<RunwayEnd.ControllingObject.Marking>,
-                                                            runwayCategory: values[offset1 + 29] as! String?,
-                                                            clearanceSlope: values[offset1 + 30] as! UInt?,
-                                                            heightAboveRunway: values[offset1 + 31] as! UInt?,
-                                                            distanceFromRunway: values[offset1 + 32] as! UInt?,
-                                                            offsetFromCenterline: values[offset1 + 33] as! Offset?)
+
+        let controllingObject = values[offset1 + 27].map { cat in
+            RunwayEnd.ControllingObject(category: cat as! RunwayEnd.ControllingObject.Category,
+                                        markings: values[offset1 + 28] as! [RunwayEnd.ControllingObject.Marking],
+                                        runwayCategory: values[offset1 + 29] as! String?,
+                                        clearanceSlope: values[offset1 + 30] as! UInt?,
+                                        heightAboveRunway: values[offset1 + 31] as! UInt?,
+                                        distanceFromRunway: values[offset1 + 32] as! UInt?,
+                                        offsetFromCenterline: values[offset1 + 33] as! Offset?)
         }
-        
+
         return RunwayEnd(
             ID: values[offset1] as! String,
             trueHeading: values[offset1 + 1] as! UInt?,
@@ -171,7 +197,7 @@ extension AirportParser {
             LDA: values[offset2 + 15] as! UInt?,
             LAHSO: LAHSO,
             visualGlideslopeIndicator: VGSI,
-            RVRSensors: values[offset1 + 21] as! Array<RunwayEnd.RVRSensor>,
+            RVRSensors: values[offset1 + 21] as! [RunwayEnd.RVRSensor],
             hasRVV: values[offset1 + 22] as! Bool?,
             approachLighting: values[offset1 + 23] as! RunwayEnd.ApproachLighting?,
             hasREIL: values[offset1 + 24] as! Bool?,

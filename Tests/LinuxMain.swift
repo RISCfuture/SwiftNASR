@@ -1,5 +1,5 @@
-import XCTest
 import Quick
+import XCTest
 
 @testable import SwiftNASRTests
 
@@ -22,5 +22,5 @@ QCKMain([
     RecordEnumSpec.self,
     StateParserSpec.self,
     StringSpec.self,
-    WriterSpec.self,
+    WriterSpec.self
 ])

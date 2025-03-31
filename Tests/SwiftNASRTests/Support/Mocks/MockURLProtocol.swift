@@ -8,15 +8,15 @@ struct MockResponse {
 
 class MockURLProtocol: URLProtocol {
     // Quick tests do not run in parallel so access should always be synchronous
-    nonisolated(unsafe) static var nextResponse: MockResponse? = nil
-    nonisolated(unsafe) static var lastURL: URL? = nil
+    nonisolated(unsafe) static var nextResponse: MockResponse?
+    nonisolated(unsafe) static var lastURL: URL?
 
     override init(request: URLRequest, cachedResponse: CachedURLResponse?, client: (any URLProtocolClient)?) {
         Self.lastURL = request.url
         super.init(request: request, cachedResponse: cachedResponse, client: client)
     }
 
-    override class func canInit(with request: URLRequest) -> Bool {
+    override class func canInit(with _: URLRequest) -> Bool {
         // Indicate that this protocol can handle all types of requests
         return true
     }
@@ -33,7 +33,7 @@ class MockURLProtocol: URLProtocol {
         if let data = response.data {
             self.client?.urlProtocol(self, didLoad: data)
         }
-        
+
         if let response = response.response {
             self.client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         }

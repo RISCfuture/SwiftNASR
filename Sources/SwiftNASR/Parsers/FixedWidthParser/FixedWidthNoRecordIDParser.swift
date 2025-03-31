@@ -1,7 +1,7 @@
 import Foundation
 
 protocol FixedWidthNoRecordIDParser: LayoutDataParser {
-    func parseValues(_ values: Array<String>) throws
+    func parseValues(_ values: [String]) throws
     func formatForData(_ data: Data) throws -> NASRTable
 }
 
@@ -14,7 +14,8 @@ extension FixedWidthNoRecordIDParser {
         try parseValues(values)
     }
 
-    func finish(data: NASRData) {
+    @available(*, unavailable)
+    func finish(data _: NASRData) {
         fatalError("must be implemented by subclasses")
     }
 }

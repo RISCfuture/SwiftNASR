@@ -1,13 +1,13 @@
 /// A schedule that an airport or other facility can be attended during.
 public enum AttendanceSchedule: Record {
-    
+
     /// An attendance schedule consisting of monthly, daily, and hourly
     /// components.
     case components(monthly: String, daily: String, hourly: String)
-    
+
     /// An attendance schedule written as freeform text.
     case custom(_ schedule: String)
-            
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         guard let type = Kinds(rawValue: try container.decode(String.self, forKey: .type)) else {
@@ -38,11 +38,11 @@ public enum AttendanceSchedule: Record {
                 try container.encode(schedule, forKey: .schedule)
         }
     }
-    
+
     private enum Kinds: String {
         case components, custom
     }
-    
+
     private enum CodingKeys: CodingKey {
         case type, monthly, daily, hourly, schedule
     }

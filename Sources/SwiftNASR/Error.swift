@@ -5,7 +5,7 @@ public enum Error: Swift.Error {
     /// Tried to call ``NASR/load(withProgress:)`` on a ``NASR`` instance with
     /// a ``NullDistribution``.
     case nullDistribution
-    
+
     /**
      Received a bad HTTP response.
      
@@ -15,45 +15,45 @@ public enum Error: Swift.Error {
 
     /// No file in distribution archive.
     case noSuchFile(path: String)
-    
+
     /// No such file by prefix in distribution archive.
     case noSuchFilePrefix(_ prefix: String)
-    
+
     /// Response did not contain any body.
     case noData
-    
+
     /// ``NASR/parse(_:withProgress:errorHandler:)`` was called before
     /// ``NASR/load(withProgress:)``.
     case notYetLoaded
-    
+
     /**
      Parsed an unknown runway surface identifier.
      
      - Parameter value: The unknown identifier.
      */
     case invalidRunwaySurface(_ value: String)
-    
+
     /**
      Parsed an unknown pavement classification identifier.
      
      - Parameter value: The unknown identifier.
      */
     case invalidPavementClassification(_ value: String)
-    
+
     /**
      Parsed an unknown VGSI identifier.
      
      - Parameter value: The unknown identifier.
      */
     case invalidVGSI(_ value: String)
-    
+
     /**
      Parsed an unknown ARTCC identifier.
      
      - Parameter ID: The unknown identifier.
      */
     case unknownARTCC(_ ID: String)
-    
+
     /**
      Parsed an ARTCC frequency record for a frequency not associated with the
      ARTCC.
@@ -62,14 +62,14 @@ public enum Error: Swift.Error {
      - Parameter ARTCC: The ARTCC record.
      */
     case unknownARTCCFrequency(_ frequency: UInt, ARTCC: ARTCC)
-    
+
     /***
      Parsed an unknown navigation aid.
      
      - Parameter ID: The unknown identifier.
      */
     case unknownNavaid(_ ID: String)
-    
+
     /**
      Parsed an unknown ARTCC data field identifier.
      
@@ -77,7 +77,7 @@ public enum Error: Swift.Error {
      - Parameter ARTCC: The ARTCC record.
      */
     case unknownFieldID(_ fieldID: String, ARTCC: ARTCC)
-    
+
     /**
      Parsed an unknown ARTCC frequency data field identifier.
      
@@ -86,14 +86,14 @@ public enum Error: Swift.Error {
      - Parameter ARTCC: The ARTCC record.
      */
     case unknownFrequencyFieldID(_ fieldID: String, frequency: ARTCC.CommFrequency, ARTCC: ARTCC)
-    
+
     /**
      Attempted to parse an invalid frequency.
      
      - Parameter string: The invalid frequency string.
      */
     case invalidFrequency(_ string: String)
-    
+
     /**
      Attempted to parse data for an unknown FSS ID.
      
@@ -118,7 +118,7 @@ extension Error: LocalizedError {
                 return String(localized: "This NASR has not been loaded yet.", comment: "error description")
         }
     }
-    
+
     public var failureReason: String? {
         switch self {
             case .nullDistribution:
@@ -155,7 +155,7 @@ extension Error: LocalizedError {
                 return String(localized: "Unknown navaid ‘\(string)’.", comment: "failure reason")
         }
     }
-    
+
     public var recoverySuggestion: String? {
         switch self {
             case .nullDistribution:

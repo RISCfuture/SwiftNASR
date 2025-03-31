@@ -1,22 +1,14 @@
+import ArgumentParser
 import Foundation
 import SwiftNASR
-import ArgumentParser
 
 actor ProgressTracker {
     var progress: Progress
     var isStarted = false
 
-    var fractionCompleted: Double {
-        get async {
-            progress.fractionCompleted
-        }
-    }
+    var fractionCompleted: Double { progress.fractionCompleted }
 
-    var isFinished: Bool {
-        get async {
-            isStarted && progress.isFinished
-        }
-    }
+    var isFinished: Bool { isStarted && progress.isFinished }
 
     init() {
         self.progress = Progress(totalUnitCount: 100)
@@ -28,31 +20,31 @@ actor ProgressTracker {
     }
 }
 
-@main struct SwiftNASR_E2E: AsyncParsableCommand {
+@main
+struct SwiftNASR_E2E: AsyncParsableCommand {
     @Option(name: .shortAndLong,
             help: "The working directory to store the distribution data.",
-            transform: { URL(filePath: $0) })
+            transform: { .init(filePath: $0) })
     var workingDirectory = URL.currentDirectory()
 
     private var distributionURL: URL { workingDirectory.appendingPathComponent("distribution.zip") }
 
     private let progress = ProgressTracker()
-    private var progressTask: Task<Void, Swift.Error>? = nil
+    private var progressTask: Task<Void, Swift.Error>?
 
     lazy var nasr: NASR = {
         if FileManager.default.fileExists(atPath: distributionURL.path) {
             return NASR.fromLocalArchive(distributionURL)
-        } else {
-            return NASR.fromInternetToFile(distributionURL)!
         }
+        return NASR.fromInternetToFile(distributionURL)!
     }()
 
     mutating func run() async throws {
         print("Loading…")
         let progress = self.progress
-        try await nasr.load(withProgress: { child in
+        try await nasr.load { child in
             Task { @MainActor in await progress.addChild(child, withPendingUnitCount: 5) }
-        })
+        }
         print("Done loading; parsing…")
 
         progressTask = trackProgress()
@@ -68,33 +60,33 @@ actor ProgressTracker {
 
         async let airports = try nasr.parse(.airports, withProgress: { child in
             Task { @MainActor in await progress.addChild(child, withPendingUnitCount: 75) }
-        }) { error in
+        }, errorHandler: { error in
             fputs("\(error)\n", stderr)
             return true
-        }
+        })
 
         async let artccs = try nasr.parse(.ARTCCFacilities, withProgress: { child in
             Task { @MainActor in await progress.addChild(child, withPendingUnitCount: 5) }
-        }) { error in
+        }, errorHandler: { error in
             fputs("\(error)\n", stderr)
             return true
-        }
+        })
 
         async let fsses = try nasr.parse(.flightServiceStations, withProgress: { child in
             Task { @MainActor in await progress.addChild(child, withPendingUnitCount: 5) }
-        }) { error in
+        }, errorHandler: { error in
             fputs("\(error)\n", stderr)
             return true
-        }
+        })
 
         async let navaids = try nasr.parse(.navaids, withProgress: { child in
             Task { @MainActor in await progress.addChild(child, withPendingUnitCount: 10) }
-        }) { error in
+        }, errorHandler: { error in
             fputs("\(error)\n", stderr)
             return true
-        }
+        })
 
-        let _ = try await [airports, artccs, fsses, navaids]
+        _ = try await [airports, artccs, fsses, navaids]
     }
 
     private mutating func saveData() async {
@@ -110,7 +102,7 @@ actor ProgressTracker {
             let outPath = workingDirectory.appendingPathComponent("distribution.json.zip")
             try data.write(to: outPath)
             print("JSON file written to \(outPath)")
-        } catch (let error) {
+        } catch {
             fatalError("\(error)")
         }
     }
@@ -119,9 +111,8 @@ actor ProgressTracker {
         Task.detached {
             repeat {
                 try await Task.sleep(for: .seconds(0.1))
-                await renderProgressBar(progress: self.progress)
-
-            } while await !self.progress.isFinished
+                await renderProgressBar(progress: progress)
+            } while await !progress.isFinished
         }
     }
 
@@ -144,9 +135,8 @@ actor ProgressTracker {
         var w = winsize()
         if ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0 {
             return Int(w.ws_col)
-        } else {
-            return 80 // Default terminal width if ioctl fails
         }
+        return 80
     }
 
     private enum CodingKeys: String, CodingKey {

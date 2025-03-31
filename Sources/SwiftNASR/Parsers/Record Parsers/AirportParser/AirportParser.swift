@@ -12,17 +12,17 @@ class AirportParser: FixedWidthParser {
     typealias RecordIdentifier = AirportRecordIdentifier
 
     static let type: RecordType = .airports
-    static let layoutFormatOrder: Array<RecordIdentifier> = [.airport, .attendanceSchedule, .runway, .runwayArrestingSystem, .remark]
-    var formats = Array<NASRTable>()
+    static let layoutFormatOrder: [RecordIdentifier] = [.airport, .attendanceSchedule, .runway, .runwayArrestingSystem, .remark]
+    var formats = [NASRTable]()
 
-    var airports = Dictionary<String, Airport>()
-    
+    var airports = [String: Airport]()
+
     // MARK: - Transformers
-    
+
     private let airportTransformer = FixedWidthTransformer([
         .recordType,                                                            //   0 record type
         .string(),                                                              //   1 site number
-        .generic({ try raw($0, toEnum: Airport.FacilityType.self) }),           //   2 facility type
+        .generic { try raw($0, toEnum: Airport.FacilityType.self) },            //   2 facility type
         .string(),                                                              //   3 LID
         .null,                                                                  //   4 effective date
 
@@ -36,7 +36,7 @@ class AirportParser: FixedWidthParser {
         .string(),                                                              //  11 city
         .string(),                                                              //  12 airport name
 
-        .generic({ try raw($0, toEnum: Airport.Ownership.self) }),              //  13 ownership type
+        .generic { try raw($0, toEnum: Airport.Ownership.self) },               //  13 ownership type
         .boolean(trueValue: "PU"),                                              //  14 facility use
         .string(nullable: .blank),                                              //  15 owner's name
         .string(nullable: .blank),                                              //  16 owner's address
@@ -51,7 +51,7 @@ class AirportParser: FixedWidthParser {
         .null,                                                                  //  24 lat - decimal
         .DDMMSS(),                                                              //  25 lon - formatted
         .null,                                                                  //  26 lon - decimal
-        .generic({ try raw($0, toEnum: Airport.LocationDeterminationMethod.self) }), // 27 ARP determination method
+        .generic { try raw($0, toEnum: Airport.LocationDeterminationMethod.self) }, // 27 ARP determination method
         .float(),                                                               //  28 elevation
         .generic({ try raw($0, toEnum: Airport.LocationDeterminationMethod.self) },
                  nullable: .blank),                                             //  29 elevation determination method
@@ -82,7 +82,7 @@ class AirportParser: FixedWidthParser {
         .boolean(nullable: .blank),                                             //  52 NOTAM D available
 
         .datetime(formatter: FixedWidthTransformer.monthYear, nullable: .blank),//  53 activation date
-        .generic({ Airport.Status(rawValue: $0) }),                             //  54 status code
+        .generic { Airport.Status(rawValue: $0) },                             //  54 status code
         .delimitedArray(delimiter: " ",
                         convert: { $0 },
                         nullable: .compact,
@@ -129,11 +129,11 @@ class AirportParser: FixedWidthParser {
         .boolean(),                                                             //  73 has control tower
         .frequency(nullable: .blank),                                           //  74 UNICOM
         .frequency(nullable: .blank),                                           //  75 CTAF
-        .generic({
-                    $0 == "NONE" ?
-                        Airport.AirportMarker.none :
-                        try raw($0, toEnum: Airport.AirportMarker.self) },
-                nullable: .blank),                                              //  76 segmented circle
+        .generic({ segCir in
+            segCir == "NONE" ?
+            Airport.AirportMarker.none :
+            try raw(segCir, toEnum: Airport.AirportMarker.self) },
+                 nullable: .blank),                                             //  76 segmented circle
         .generic({ try raw($0, toEnum: Airport.LensColor.self) },
                  nullable: .blank),                                             //  77 beacon color
         .boolean(nullable: .blank),                                             //  78 landing fee
@@ -175,10 +175,10 @@ class AirportParser: FixedWidthParser {
         .boolean(),                                                             // 103 MON
         .null                                                                   // 104 blank
     ])
-    
+
     // MARK: - Parsers
 
-    func parseValues(_ values: Array<String>, for identifier: AirportRecordIdentifier) throws {
+    func parseValues(_ values: [String], for identifier: AirportRecordIdentifier) throws {
         switch identifier {
         case .airport:
             try parseAirportRecord(values)
@@ -193,15 +193,13 @@ class AirportParser: FixedWidthParser {
         }
     }
 
-    private func parseAirportRecord(_ values: Array<String>) throws {
+    private func parseAirportRecord(_ values: [String]) throws {
         let transformedValues = try airportTransformer.applyTo(values)
-        
+
         let owner = parsePerson(values: transformedValues[15...18])
         let manager = parsePerson(values: transformedValues[19...22])
 
-        var ARFFCapability: Airport.ARFFCapability? = nil
-        let ARFFString = transformedValues[55] as! Array<String>
-        if !ARFFString.isEmpty {
+        let ARFFCapability = try (transformedValues[55] as! [String]).presence.map { ARFFString in
             guard let ARFFClass = Airport.ARFFCapability.Class(rawValue: ARFFString[0]) else {
                 throw FixedWidthParserError.invalidValue(ARFFString[0], at: 55)
             }
@@ -214,13 +212,13 @@ class AirportParser: FixedWidthParser {
             guard let ARFFDate = FixedWidthTransformer.monthYear.date(from: ARFFString[3]) else {
                 throw FixedWidthParserError.invalidValue(ARFFString[3], at: 55)
             }
-            ARFFCapability = Airport.ARFFCapability(
+            return Airport.ARFFCapability(
                 class: ARFFClass,
                 index: ARFFIndex,
                 airService: ARFFService,
                 certificationDate: ARFFDate)
         }
-        
+
         let location = Location(latitude: transformedValues[23] as! Float,
                                 longitude: transformedValues[25] as! Float,
                                 elevation: (transformedValues[28] as! Float))
@@ -260,7 +258,7 @@ class AirportParser: FixedWidthParser {
                               activationDate: transformedValues[53] as! Date?,
                               status: transformedValues[54] as! Airport.Status,
                               ARFFCapability: ARFFCapability,
-                              agreements: transformedValues[56] as! Array<Airport.FederalAgreement>,
+                              agreements: transformedValues[56] as! [Airport.FederalAgreement],
                               airspaceAnalysisDetermination: transformedValues[57] as! Airport.AirspaceAnalysisDetermination?,
                               customsEntryAirport: transformedValues[58] as! Bool?,
                               customsLandingRightsAirport: transformedValues[59] as! Bool?,
@@ -270,11 +268,11 @@ class AirportParser: FixedWidthParser {
                               inspectionAgency: transformedValues[63] as! Airport.InspectionAgency?,
                               lastPhysicalInspectionDate: transformedValues[64] as! Date?,
                               lastInformationRequestCompletedDate: transformedValues[65] as! Date?,
-                              fuelsAvailable: transformedValues[66] as! Array<Airport.FuelType>,
+                              fuelsAvailable: transformedValues[66] as! [Airport.FuelType],
                               airframeRepairAvailable: transformedValues[67] as! Airport.RepairService?,
                               powerplantRepairAvailable: transformedValues[68] as! Airport.RepairService?,
-                              bottledOxygenAvailable: transformedValues[69] as! Array<Airport.OxygenPressure>,
-                              bulkOxygenAvailable: transformedValues[70] as! Array<Airport.OxygenPressure>,
+                              bottledOxygenAvailable: transformedValues[69] as! [Airport.OxygenPressure],
+                              bulkOxygenAvailable: transformedValues[70] as! [Airport.OxygenPressure],
                               airportLightingSchedule: transformedValues[71] as! Airport.LightingSchedule?,
                               beaconLightingSchedule: transformedValues[72] as! Airport.LightingSchedule?,
                               controlTower: transformedValues[73] as! Bool,
@@ -303,18 +301,18 @@ class AirportParser: FixedWidthParser {
                               elevationSource: transformedValues[96] as! String?,
                               elevationSourceDate: transformedValues[97] as! Date?,
                               contractFuelAvailable: transformedValues[98] as! Bool?,
-                              transientStorageFacilities: transformedValues[99] as! Array<Airport.StorageFacility>?,
-                              otherServices: transformedValues[100] as! Array<Airport.Service>,
+                              transientStorageFacilities: transformedValues[99] as! [Airport.StorageFacility]?,
+                              otherServices: transformedValues[100] as! [Airport.Service],
                               windIndicator: transformedValues[101] as! Airport.AirportMarker?,
                               minimumOperationalNetwork: transformedValues[103] as! Bool)
 
         airports[airport.id] = airport
     }
-    
+
     func finish(data: NASRData) async {
         await data.finishParsing(airports: Array(airports.values))
     }
-    
+
     // MARK: - Support Methods
 
     private func parsePerson(values: ArraySlice<Any?>) -> Airport.Person? {
@@ -323,7 +321,7 @@ class AirportParser: FixedWidthParser {
         }
         let address1 = values[values.index(values.startIndex, offsetBy: 1)] as? String
         let address2 = values[values.index(values.startIndex, offsetBy: 2)] as? String
-        
+
         var phone = values[values.index(values.startIndex, offsetBy: 3)] as? String
         if phone != nil {
             if phone!.starts(with: "1-") { phone = "1-800-\(phone![phone!.index(phone!.startIndex, offsetBy: 2)...])" }
@@ -331,8 +329,8 @@ class AirportParser: FixedWidthParser {
         }
 
         return Airport.Person(name: name,
-                                  address1: address1,
-                                  address2: address2,
-                                  phone: phone)
+                              address1: address1,
+                              address2: address2,
+                              phone: phone)
     }
 }

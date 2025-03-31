@@ -21,37 +21,38 @@ public struct ARTCC: ParentRecord {
 
     /// The center name, e.g. "OAKLAND" for Oakland Center.
     public let name: String
-    
+
     /// An alternate name for the Center.
     public let alternateName: String?
 
     /// The location of the Center facility.
     public let locationName: String
-    
+
     /// The state post office code containing the Center facility.
     public let stateCode: String?
-    
+
     /// The exact location of the controlling facility.
     public let location: Location?
 
     /// General and per-field remarks.
     public var remarks = Remarks<Field>()
-    
+
     /// The frequencies this Center communicates on.
-    public var frequencies: Array<CommFrequency> = []
+    public var frequencies: [CommFrequency] = []
 
     public var id: String { "\(self.ID).\(type).\(locationName)" }
 
-    weak var data: NASRData? = nil
-
-    enum CodingKeys: String, CodingKey {
-        case ID, ICAOID, type, name, alternateName, locationName, stateCode, location, remarks, frequencies
-    }
+    weak var data: NASRData?
 
     // MARK: - Methods
 
-    init(ID: String, ICAOID: String?, type: ARTCC.FacilityType, name: String,
-         alternateName: String?, locationName: String, stateCode: String?,
+    init(ID: String,
+         ICAOID: String?,
+         type: Self.FacilityType,
+         name: String,
+         alternateName: String?,
+         locationName: String,
+         stateCode: String?,
          location: Location?) {
         self.ID = ID
         self.ICAOID = ICAOID
@@ -65,30 +66,34 @@ public struct ARTCC: ParentRecord {
 
     // MARK: - Enums
 
+    enum CodingKeys: String, CodingKey {
+        case ID, ICAOID, type, name, alternateName, locationName, stateCode, location, remarks, frequencies
+    }
+
     /// ARTCC facility types.
     public enum FacilityType: String, RecordEnum {
 
         /// Air route surveillance radar
-        case ARSR = "ARSR"
-        
+        case ARSR
+
         /// Air traffic center control center
-        case ARTCC = "ARTCC"
-        
+        case ARTCC
+
         /// Center radar approach control facility
-        case CERAP = "CERAP"
-        
+        case CERAP
+
         /// Remote communications, air-to-ground
-        case RCAG = "RCAG"
-        
+        case RCAG
+
         /// Secondary radar
-        case SECRA = "SECRA"
+        case SECRA
     }
-    
+
     /// Fields that per-field remarks can be associated with.
     public enum Field: String, RemarkField {
         case alternateName, stateCode, location
-        
-        static let fieldOrder: Array<Self?> = [
+
+        static let fieldOrder: [Self?] = [
             nil, nil, nil, nil, .alternateName, nil, nil, .stateCode,
             .stateCode, .location, .location, .location, .location, nil, nil
         ]
@@ -101,24 +106,24 @@ public struct ARTCC: ParentRecord {
 
         /// The radio frequency, in kHz.
         public let frequency: UInt
-        
+
         /// The altitude blocks that this frequency is used for.
-        public let altitude: Array<Altitude>
-        
+        public let altitude: [Altitude]
+
         /// Special usage name (e.g., "approach control", "discrete",
         /// "do not publish").
         public let specialUsageName: String?
-        
+
         /// `true` if the RCAG frequency is charted.
         public let remoteOutletFrequencyCharted: Bool?
-        
+
         /// FAA location identifier (not site number) of the associated airport,
         /// if this facility is associated with an airport.
         public var associatedAirportCode: String?
-        
+
         /// General and per-field remarks.
         public var remarks = Remarks<Field>()
-        
+
         // used to cross-reference airport from airport code
         var findAirportByID: (@Sendable (_ airportID: String) async -> Airport?)!
 
@@ -126,7 +131,7 @@ public struct ARTCC: ParentRecord {
         public enum Field: String, RemarkField {
             case altitude, specialUsageName, associatedAirportCode
 
-            static let fieldOrder: Array<Self?> = [
+            static let fieldOrder: [Self?] = [
                 nil, nil, nil, nil, nil, .altitude, .specialUsageName, nil,
                 .associatedAirportCode, .associatedAirportCode,
                 .associatedAirportCode, .associatedAirportCode,
@@ -135,13 +140,15 @@ public struct ARTCC: ParentRecord {
                 .associatedAirportCode
             ]
         }
-        
+
         enum CodingKeys: String, CodingKey {
             case frequency, altitude, specialUsageName, remoteOutletFrequencyCharted, associatedAirportCode, remarks
         }
 
-        init(frequency: UInt, altitude: Array<Altitude>,
-             specialUsageName: String?, remoteOutletFrequencyCharted: Bool?,
+        init(frequency: UInt,
+             altitude: [Altitude],
+             specialUsageName: String?,
+             remoteOutletFrequencyCharted: Bool?,
              associatedAirportCode: String?) {
             self.frequency = frequency
             self.altitude = altitude
@@ -155,10 +162,10 @@ public struct ARTCC: ParentRecord {
 
             /// Flight levels 230 and below
             case low = "LOW"
-            
+
             /// Flight levels 240 to (but not including) 330
             case high = "HIGH"
-            
+
             /// Flight levels 330 and above
             case ultraHigh = "ULTRA-HIGH"
         }

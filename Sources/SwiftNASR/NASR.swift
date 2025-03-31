@@ -19,6 +19,26 @@ let zulu = TimeZone(secondsFromGMT: 0)!
  */
 
 public actor NASR {
+    let loader: Loader
+    var distribution: Distribution?
+
+    /**
+     Aeronautical data is stored into this field once it is parsed. All members
+     of this instance are `nil` until the ``parse(_:withProgress:errorHandler:)``
+     function is called for each data type. The ``NASRData`` object can be
+     serialized to disk using an `Encoder`.
+     */
+    public var data = NASRData()
+
+    /// Creates a new distribution from a loader.
+    public init(loader: Loader) {
+        self.loader = loader
+    }
+
+    init(data: NASRData) {
+        self.data = data
+        self.loader = NullLoader()
+    }
 
     /**
      Loads NASR data from a local ZIP file. The file must have already been
@@ -106,26 +126,6 @@ public actor NASR {
         return self.init(data: data)
     }
 
-    let loader: Loader
-    var distribution: Distribution? = nil
-
-    /**
-     Aeronautical data is stored into this field once it is parsed. All members
-     of this instance are `nil` until the ``parse(_:withProgress:errorHandler:)``
-     function is called for each data type. The ``NASRData`` object can be
-     serialized to disk using an `Encoder`.
-     */
-    public var data = NASRData()
-
-    public init(loader: Loader) {
-        self.loader = loader
-    }
-
-    init(data: NASRData) {
-        self.data = data
-        self.loader = NullLoader()
-    }
-
     /**
      Asynchronously loads data, either from disk or from the Internet.
 
@@ -206,4 +206,3 @@ public actor NASR {
         return true
     }
 }
-

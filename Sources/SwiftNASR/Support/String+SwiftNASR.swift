@@ -1,6 +1,8 @@
 import Foundation
 
 extension String {
+    var nsRange: NSRange { return NSRange(location: 0, length: count) }
+
     func partitionSlices(by length: Int) -> [Substring] {
         var startIndex = self.startIndex
         var results = [Substring]()
@@ -17,14 +19,14 @@ extension String {
     func partition(by length: Int) -> [String] {
         return partitionSlices(by: length).map { String($0) }
     }
-    
-    func split(separator: CharacterSet) -> Array<Substring> {
+
+    func split(separator: CharacterSet) -> [Substring] {
         var index = startIndex
-        var substrings = Array<Substring>()
-        
+        var substrings = [Substring]()
+
         var rangeStart = startIndex
         var rangeEnd = startIndex
-        
+
         while index != endIndex {
             if separator.contains(self[index].unicodeScalars.first!) {
                 substrings.append(self[rangeStart...rangeEnd])
@@ -36,10 +38,8 @@ extension String {
                 index = self.index(after: index)
             }
         }
-        
+
         substrings.append(self[rangeStart...])
         return substrings
     }
-    
-    var nsRange: NSRange { return NSMakeRange(0, count) }
 }

@@ -1,18 +1,20 @@
 import Foundation
-import Quick
 import Nimble
+import Quick
 import ZIPFoundation
 
 @testable import SwiftNASR
 
 class ArchiveDataDownloaderSpec: AsyncSpec {
     private static var mockData: Data {
-        let data = "Hello, world!".data(using: .isoLatin1)!
-        let archive = try! Archive(accessMode: .create)
-        try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
-            return data.subdata(in: Data.Index(position)..<(Int(position)+size))
+        get throws {
+            let data = "Hello, world!".data(using: .isoLatin1)!
+            let archive = try Archive(accessMode: .create)
+            try archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
+                return data.subdata(in: Data.Index(position)..<(Int(position) + size))
+            }
+            return archive.data!
         }
-        return archive.data!
     }
 
     override class func spec() {
@@ -27,15 +29,14 @@ class ArchiveDataDownloaderSpec: AsyncSpec {
             context("2xx response") {
                 beforeEach {
                     let mockResponse = HTTPURLResponse(url: mockURL, statusCode: 200, httpVersion: "1.1", headerFields: [:])
-                    MockURLProtocol.nextResponse = .init(data: mockData, response: mockResponse)
+                    MockURLProtocol.nextResponse = try .init(data: mockData, response: mockResponse)
                 }
 
                 it("calls back with the data") {
                     let distribution = try await downloader.load() as! ArchiveDataDistribution
-                    expect(distribution.data).to(equal(mockData))
+                    try expect(distribution.data).to(equal(mockData))
                     expect(MockURLProtocol.lastURL!.absoluteString)
                         .to(equal("https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_2020-01-30.zip"))
-
                 }
             }
 
@@ -43,7 +44,7 @@ class ArchiveDataDownloaderSpec: AsyncSpec {
                 let mockResponse = HTTPURLResponse(url: mockURL, statusCode: 404, httpVersion: "1.1", headerFields: [:])
 
                 beforeEach {
-                    MockURLProtocol.nextResponse = .init(data: mockData, response: mockResponse)
+                    MockURLProtocol.nextResponse = try .init(data: mockData, response: mockResponse)
                 }
 
                 it("calls back with an error") {

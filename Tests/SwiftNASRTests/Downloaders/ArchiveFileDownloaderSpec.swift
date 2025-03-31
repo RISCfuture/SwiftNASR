@@ -1,18 +1,20 @@
 import Foundation
-import Quick
 import Nimble
+import Quick
 import ZIPFoundation
 
 @testable import SwiftNASR
 
 class ArchiveFileDownloaderSpec: AsyncSpec {
-    private class var mockData: Data {
-        let data = "Hello, world!".data(using: .isoLatin1)!
-        let archive = try! Archive(accessMode: .create)
-        try! archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
-            return data.subdata(in: Data.Index(position)..<(Int(position)+size))
+    private static var mockData: Data {
+        get throws {
+            let data = "Hello, world!".data(using: .isoLatin1)!
+            let archive = try Archive(accessMode: .create)
+            try archive.addEntry(with: "APT.TXT", type: .file, uncompressedSize: Int64(data.count)) { (position: Int64, size: Int) in
+                return data.subdata(in: Data.Index(position)..<(Int(position) + size))
+            }
+            return archive.data!
         }
-        return archive.data!
     }
 
     override class func spec() {
@@ -27,13 +29,13 @@ class ArchiveFileDownloaderSpec: AsyncSpec {
             context("2xx response") {
                 beforeEach {
                     let mockResponse = HTTPURLResponse(url: mockURL, statusCode: 200, httpVersion: "1.1", headerFields: [:])
-                    MockURLProtocol.nextResponse = .init(data: self.mockData, response: mockResponse)
+                    MockURLProtocol.nextResponse = try .init(data: self.mockData, response: mockResponse)
                 }
 
                 it("calls back with the file") {
                     let distribution = try await downloader.load() as! ArchiveFileDistribution
                     let file = distribution.location
-                    expect(try Data(contentsOf: file)).to(equal(self.mockData))
+                    try expect(try Data(contentsOf: file)).to(equal(self.mockData))
                     expect(MockURLProtocol.lastURL!.absoluteString)
                         .to(equal("https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_2020-01-30.zip"))
                 }
@@ -43,7 +45,7 @@ class ArchiveFileDownloaderSpec: AsyncSpec {
                 let mockResponse = HTTPURLResponse(url: mockURL, statusCode: 404, httpVersion: "1.1", headerFields: [:])
 
                 beforeEach {
-                    MockURLProtocol.nextResponse = .init(data: self.mockData, response: mockResponse)
+                    MockURLProtocol.nextResponse = try .init(data: self.mockData, response: mockResponse)
                 }
 
                 it("calls back with an error") {

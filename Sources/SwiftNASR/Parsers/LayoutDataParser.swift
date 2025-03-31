@@ -1,13 +1,67 @@
 import Foundation
+@preconcurrency import RegexBuilder
 
-fileprivate let fieldPattern = #"^([LR]) +(N|AN) +(\d+) +(\d+) +([A-Z0-9]+|N\/A)? +.+"#
-fileprivate let fieldRegex = try! NSRegularExpression(pattern: fieldPattern, options: [])
+private final class FieldParser: Sendable {
+    private let lengthRef = Reference<UInt>()
+    private let locationRef = Reference<UInt>()
+    private let identifierRef = Reference<NASRTableField.Identifier>()
 
-fileprivate let groupPattern = #"^\*+$"#
-fileprivate let groupRegex = try! NSRegularExpression(pattern: groupPattern, options: [])
+    private var fieldRx: some RegexComponent {
+        Regex {
+            Anchor.startOfSubject
+            CharacterClass.anyOf("LR")
+            OneOrMore(.whitespace)
+            ChoiceOf {
+                "N"
+                "AN"
+            }
+            OneOrMore(.whitespace)
+            Capture(as: lengthRef) { OneOrMore(.digit) } transform: { .init($0)! }
+            OneOrMore(.whitespace)
+            Capture(as: locationRef) { OneOrMore(.digit) } transform: { .init($0)! }
+            OneOrMore(.whitespace)
+            Capture(as: identifierRef) {
+                Optionally {
+                    ChoiceOf {
+                        OneOrMore(.word)
+                        "N/A"
+                    }
+                }
+            } transform: { .init(rawValue: String($0))! }
+            OneOrMore(.whitespace)
+        }
+    }
 
-fileprivate let lengthRange = 5...8
-fileprivate let locationRange = 10...14
+    private var groupRx: some RegexComponent {
+        Regex {
+            Anchor.startOfSubject
+            OneOrMore("*")
+            Anchor.endOfSubject
+        }
+    }
+
+    func isGroup(line: String) throws -> Bool {
+        try groupRx.regex.wholeMatch(in: line) != nil
+    }
+
+    func parseLine(_ line: String) throws -> Match? {
+        guard let match = try fieldRx.regex.firstMatch(in: line) else { return nil }
+        let length = match[lengthRef],
+            location = match[locationRef],
+            identifier = match[identifierRef]
+        return .init(length: length, location: location, identifier: identifier)
+    }
+
+    struct Match {
+        let length: UInt
+        let location: UInt
+        let identifier: NASRTableField.Identifier
+
+        var range: Range<UInt> { (location - 1)..<((location - 1) + length) }
+    }
+}
+
+private let fieldParser = FieldParser()
 
 struct NASRTableField {
     let identifier: Identifier
@@ -40,26 +94,26 @@ struct NASRTableField {
 }
 
 struct NASRTable {
-    var fields: Array<NASRTableField>
+    var fields: [NASRTableField]
 
     func field(forID number: String) -> NASRTableField? {
-        return fields.first(where: { field -> Bool in
+        return fields.first { field -> Bool in
             guard case let .number(value) = field.identifier else { return false }
             return value == number
-        })
+        }
     }
 
     func fieldOffset(forID number: String) -> Int? {
-        return fields.firstIndex(where: { field -> Bool in
+        return fields.firstIndex { field -> Bool in
             guard case let .number(value) = field.identifier else { return false }
             return value == number
-        })
+        }
     }
 }
 
 protocol LayoutDataParser: Parser {
     static var type: RecordType { get }
-    var formats: Array<NASRTable> { get set }
+    var formats: [NASRTable] { get set }
 }
 
 extension LayoutDataParser {
@@ -67,66 +121,44 @@ extension LayoutDataParser {
         self.formats = try await formatsFor(type: Self.type, distribution: distribution)
     }
 
-    func formatsFor(type: RecordType, distribution: Distribution) async throws -> Array<NASRTable> {
-        var formats = Array<NASRTable>()
-        var error: Swift.Error? = nil
+    func formatsFor(type: RecordType, distribution: Distribution) async throws -> [NASRTable] {
+        var formats = [NASRTable]()
+        var lineError: Swift.Error?
 
         let lines: AsyncThrowingStream = await distribution.readFile(path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt", withProgress: { _ in }, returningLines: { _ in })
         for try await data in lines {
             do {
                 try parseLine(data: data, formats: &formats)
-            } catch (let lineError) {
-                error = lineError
+            } catch {
+                lineError = error
+                break
             }
         }
 
-        if let error { throw error }
+        if let lineError { throw lineError }
         if formats.last?.fields.isEmpty ?? false { formats.removeLast() }
         return formats
     }
 
-    fileprivate func parseLine(data lineData: Data, formats: inout Array<NASRTable>) throws {
+    private func parseLine(data lineData: Data, formats: inout [NASRTable]) throws {
         guard let line = String(data: lineData, encoding: .isoLatin1) else {
             throw LayoutParserError.badData("Not ISO-Latin1 formatted")
         }
 
-        if groupRegex.rangeOfFirstMatch(in: line, options: .anchored, range: line.nsRange).location != NSNotFound {
+        if try fieldParser.isGroup(line: line) {
             if let lastFormat = formats.last {
                 if !lastFormat.fields.isEmpty { formats.append(NASRTable(fields: [])) }
             } else {
                 formats.append(NASRTable(fields: []))
             }
-        } else if let match = fieldRegex.firstMatch(in: line, options: [], range: line.nsRange) {
+        } else if let match = try fieldParser.parseLine(line) {
             guard !formats.isEmpty else {
                 throw LayoutParserError.badData("Field defined before group")
             }
 
-            guard let lengthRange = Range(match.range(at: 3), in: line) else {
-                throw LayoutParserError.badData("Could not find length field in string")
-            }
-            guard let locationRange = Range(match.range(at: 4), in: line) else {
-                throw LayoutParserError.badData("Could not find location field in string")
-            }
-            let lengthString = line[lengthRange]
-            let locationString = line[locationRange]
-            guard let length = UInt(lengthString) else {
-                throw LayoutParserError.badData("Length is not a number")
-            }
-            guard let location = UInt(locationString) else {
-                throw LayoutParserError.badData("Location is not a number")
-            }
-
-            var identifier = ""
-            if match.range(at: 5).location != NSNotFound {
-                guard let identifierRange = Range(match.range(at: 5), in: line) else {
-                    throw LayoutParserError.badData("Could not find identifier field in string")
-                }
-                identifier = String(line[identifierRange])
-            }
-
             let field = NASRTableField(
-                identifier: NASRTableField.Identifier(rawValue: identifier)!,
-                range: (location-1)..<((location-1) + length))
+                identifier: match.identifier,
+                range: match.range)
             formats[formats.endIndex - 1].fields.append(field)
         }
     }
@@ -135,7 +167,7 @@ extension LayoutDataParser {
 enum LayoutParserError: Swift.Error, CustomStringConvertible {
     case badData(_ reason: String)
 
-    public var description: String {
+    var description: String {
         switch self {
             case let .badData(reason):
                 return "Invalid data: \(reason)"

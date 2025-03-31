@@ -8,16 +8,16 @@ public struct State: ParentRecord {
 
     /// The state or territory name.
     public let name: String
-    
+
     /// The USPS state or territory code.
     public let postOfficeCode: String
-    
-    enum CodingKeys: String, CodingKey {
-        case name, postOfficeCode
-    }
 
     init(name: String, code: String) {
         self.name = name
         self.postOfficeCode = code
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name, postOfficeCode
     }
 }

@@ -11,14 +11,14 @@ struct ARTCCKey: Hashable {
     let ID: String
     let location: String
     let type: ARTCC.FacilityType
-    
+
     init(center: ARTCC) {
         ID = center.ID
         location = center.locationName
         type = center.type
     }
-    
-    init(values: Array<Any?>) {
+
+    init(values: [Any?]) {
         ID = values[1] as! String
         location = values[2] as! String
         type = values[3] as! ARTCC.FacilityType
@@ -29,11 +29,11 @@ class ARTCCParser: FixedWidthParser {
     typealias RecordIdentifier = ARTCCRecordIdentifier
 
     static let type: RecordType = .ARTCCFacilities
-    var recordTypeRange: Range<UInt> { 0..<4 }
-    static let layoutFormatOrder: Array<RecordIdentifier> = [.generalData, .remarks, .frequencies, .frequencyRemarks]
-    var formats = Array<NASRTable>()
+    static let layoutFormatOrder: [RecordIdentifier] = [.generalData, .remarks, .frequencies, .frequencyRemarks]
 
-    var ARTCCs = Dictionary<ARTCCKey, ARTCC>()
+    var recordTypeRange: Range<UInt> { 0..<4 }
+    var formats = [NASRTable]()
+    var ARTCCs = [ARTCCKey: ARTCC]()
 
     private let generalTransformer = FixedWidthTransformer([
         .recordType,                                                            //  0 record type
@@ -43,7 +43,7 @@ class ARTCCParser: FixedWidthParser {
         .string(),                                                              //  3 location name
         .string(nullable: .blank),                                              //  4 cross reference
 
-        .generic({ try raw($0, toEnum: ARTCC.FacilityType.self) }),             //  5 facility type
+        .generic { try raw($0, toEnum: ARTCC.FacilityType.self) },              //  5 facility type
         .null,                                                                  //  6 effective date
         .null,                                                                  //  7 state name
         .string(nullable: .blank),                                              //  8 state PO code
@@ -60,7 +60,7 @@ class ARTCCParser: FixedWidthParser {
         .recordType,                                                            // 0 record type
         .string(),                                                              // 1 ARTCC ID
         .string(),                                                              // 2 ARTCC location
-        .generic({ try raw($0, toEnum: ARTCC.FacilityType.self) }),             // 3 facility type
+        .generic { try raw($0, toEnum: ARTCC.FacilityType.self) },              // 3 facility type
         .unsignedInteger(),                                                     // 4 sequence number
         .string(),                                                              // 5 remark
         .null                                                                   // 6 blank
@@ -70,11 +70,10 @@ class ARTCCParser: FixedWidthParser {
         .recordType,                                                            //  0 record type
         .string(),                                                              //  1 ARTCC ID
         .string(),                                                              //  2 ARTCC location
-        .generic({ try raw($0, toEnum: ARTCC.FacilityType.self) }),             //  3 facility type
+        .generic { try raw($0, toEnum: ARTCC.FacilityType.self) },              //  3 facility type
 
         .frequency(),                                                           //  4 frequency
-        .delimitedArray(delimiter: "/",
-                        convert: { try raw($0, toEnum: ARTCC.CommFrequency.Altitude.self) }), //  5 altitude
+        .delimitedArray(delimiter: "/") { try raw($0, toEnum: ARTCC.CommFrequency.Altitude.self) }, //  5 altitude
         .string(nullable: .blank),                                              //  6 special usage name
         .boolean(nullable: .blank),                                             //  7 RCAG freq charted flag
 
@@ -93,14 +92,14 @@ class ARTCCParser: FixedWidthParser {
         .recordType,                                                            // 0 record type
         .string(),                                                              // 1 ARTCC ID
         .string(),                                                              // 2 ARTCC location
-        .generic({ try raw($0, toEnum: ARTCC.FacilityType.self) }),             // 3 facility type
+        .generic { try raw($0, toEnum: ARTCC.FacilityType.self) },              // 3 facility type
         .frequency(),                                                           // 4 frequency
         .unsignedInteger(),                                                     // 5 sequence number
         .string(),                                                              // 6 remark
         .null                                                                   // 7 blank
     ])
 
-    func parseValues(_ values: Array<String>, for identifier: ARTCCRecordIdentifier) throws {
+    func parseValues(_ values: [String], for identifier: ARTCCRecordIdentifier) throws {
         switch identifier {
             case .generalData: try parseGeneralRecord(values)
             case .remarks: try parseRemarks(values)
@@ -108,15 +107,15 @@ class ARTCCParser: FixedWidthParser {
             case .frequencyRemarks: try parseFrequencyRemarks(values)
         }
     }
-    
+
     func finish(data: NASRData) async {
         await data.finishParsing(ARTCCs: Array(ARTCCs.values))
     }
 
-    private func parseGeneralRecord(_ values: Array<String>) throws {
+    private func parseGeneralRecord(_ values: [String]) throws {
         let transformedValues = try generalTransformer.applyTo(values)
-        
-        var location: Location? = nil
+
+        var location: Location?
         if transformedValues[9] != nil && transformedValues[11] != nil {
             location = Location(latitude: transformedValues[9] as! Float,
                                 longitude: transformedValues[11] as! Float,
@@ -135,19 +134,19 @@ class ARTCCParser: FixedWidthParser {
         ARTCCs[ARTCCKey(center: center)] = center
     }
 
-    private func parseRemarks(_ values: Array<String>) throws {
+    private func parseRemarks(_ values: [String]) throws {
         let transformedValues = try remarksTransformer.applyTo(values)
         try updateARTCC(transformedValues) { center in
             center.remarks.append(.general(transformedValues[5] as! String))
         }
     }
 
-    private func parseFrequency(_ values: Array<String>) throws {
+    private func parseFrequency(_ values: [String]) throws {
         let transformedValues = try frequencyTransformer.applyTo(values)
 
         try updateARTCC(transformedValues) { center in
             let frequency = ARTCC.CommFrequency(frequency: transformedValues[4] as! UInt,
-                                                altitude: transformedValues[5] as! Array<ARTCC.CommFrequency.Altitude>,
+                                                altitude: transformedValues[5] as! [ARTCC.CommFrequency.Altitude],
                                                 specialUsageName: transformedValues[6] as! String?,
                                                 remoteOutletFrequencyCharted: transformedValues[7] as! Bool?,
                                                 associatedAirportCode: transformedValues[8] as! String?)
@@ -155,7 +154,7 @@ class ARTCCParser: FixedWidthParser {
         }
     }
 
-    private func parseFrequencyRemarks(_ values: Array<String>) throws {
+    private func parseFrequencyRemarks(_ values: [String]) throws {
         let transformedValues = try frequencyRemarksTransformer.applyTo(values)
 
         try updateARTCC(transformedValues) { center in
@@ -166,7 +165,7 @@ class ARTCCParser: FixedWidthParser {
         }
     }
 
-    private func updateARTCC(_ values: Array<Any?>, process: (inout ARTCC) throws -> Void) throws {
+    private func updateARTCC(_ values: [Any?], process: (inout ARTCC) throws -> Void) throws {
         guard var center = ARTCCs[ARTCCKey(values: values)] else {
             throw Error.unknownARTCC(values[1] as! String)
         }

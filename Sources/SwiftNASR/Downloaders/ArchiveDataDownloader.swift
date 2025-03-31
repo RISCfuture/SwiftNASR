@@ -24,12 +24,12 @@ public final class ArchiveDataDownloader: Downloader {
     public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) async throws -> Distribution {
         let delegate = DownloadDelegate()
         progressHandler(delegate.progress)
-        
+
         let (data, response) = try await session.data(from: cycleURL, delegate: delegate)
-        
+
         let HTTPResponse = response as! HTTPURLResponse
-        if HTTPResponse.statusCode/100 != 2 { throw Error.badResponse(HTTPResponse) }
-        
+        if HTTPResponse.statusCode / 100 != 2 { throw Error.badResponse(HTTPResponse) }
+
         return try ArchiveDataDistribution(data: data)
     }
 }

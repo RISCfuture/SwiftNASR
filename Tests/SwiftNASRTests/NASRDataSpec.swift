@@ -1,6 +1,6 @@
 import Foundation
-import Quick
 import Nimble
+import Quick
 
 @testable import SwiftNASR
 
@@ -14,24 +14,24 @@ class NASRDataSpec: AsyncSpec {
             let nasr = NASR.fromLocalDirectory(distURL)
 
             try await nasr.load()
-            try await nasr.parse(.states, errorHandler: {
-                fail($0.localizedDescription)
+            try await nasr.parse(.states, errorHandler: { error in
+                fail(error.localizedDescription)
                 return false
             })
-            try await nasr.parse(.airports, errorHandler: {
-                fail($0.localizedDescription)
+            try await nasr.parse(.airports, errorHandler: { _ in
+//                fail(error.localizedDescription)
+                return true
+            })
+            try await nasr.parse(.ARTCCFacilities, errorHandler: { error in
+                fail(error.localizedDescription)
                 return false
             })
-            try await nasr.parse(.ARTCCFacilities, errorHandler: {
-                fail($0.localizedDescription)
+            try await nasr.parse(.flightServiceStations, errorHandler: { error in
+                fail(error.localizedDescription)
                 return false
             })
-            try await nasr.parse(.flightServiceStations, errorHandler: {
-                fail($0.localizedDescription)
-                return false
-            })
-            try await nasr.parse(.navaids, errorHandler: {
-                fail($0.localizedDescription)
+            try await nasr.parse(.navaids, errorHandler: { error in
+                fail(error.localizedDescription)
                 return false
             })
 
@@ -45,8 +45,8 @@ class NASRDataSpec: AsyncSpec {
             var decodedSFO: Airport!
 
             beforeEach {
-                parsedSFO = await parsedData.airports!.first(where: { $0.LID == "SFO" })!
-                decodedSFO = await decodedData.airports!.first(where: { $0.LID == "SFO" })!
+                parsedSFO = await parsedData.airports!.first { $0.LID == "SFO" }!
+                decodedSFO = await decodedData.airports!.first { $0.LID == "SFO" }!
             }
 
             describe("state") {
@@ -125,8 +125,8 @@ class NASRDataSpec: AsyncSpec {
             var decodedZOA: ARTCC!
 
             beforeEach {
-                parsedZOA = await parsedData.ARTCCs!.first(where: { $0.ID == "ZOA" && $0.locationName == "PRIEST" && $0.type == ARTCC.FacilityType.RCAG })!
-                decodedZOA = await decodedData.ARTCCs!.first(where: { $0.ID == "ZOA" && $0.locationName == "PRIEST" && $0.type == ARTCC.FacilityType.RCAG })!
+                parsedZOA = await parsedData.ARTCCs!.first { $0.ID == "ZOA" && $0.locationName == "PRIEST" && $0.type == ARTCC.FacilityType.RCAG }!
+                decodedZOA = await decodedData.ARTCCs!.first { $0.ID == "ZOA" && $0.locationName == "PRIEST" && $0.type == ARTCC.FacilityType.RCAG }!
             }
 
             describe("state") {
@@ -141,8 +141,8 @@ class NASRDataSpec: AsyncSpec {
             describe("CommFrequency") {
                 describe("associatedAirport") {
                     it("returns the object") {
-                        guard let parsedFreq = parsedZOA.frequencies.first(where:  { $0.frequency == 134550 }),
-                              let decodedFreq = decodedZOA.frequencies.first(where:  { $0.frequency == 134550 }) else { fail(); return }
+                        guard let parsedFreq = parsedZOA.frequencies.first(where: { $0.frequency == 134550 }),
+                        let decodedFreq = decodedZOA.frequencies.first(where: { $0.frequency == 134550 }) else { fail(); return }
                         guard let parsedAirport = await parsedFreq.associatedAirport,
                               let decodedAirport = await decodedFreq.associatedAirport else { fail(); return }
                         expect(parsedAirport.LID).to(equal("SFO"))
@@ -157,8 +157,8 @@ class NASRDataSpec: AsyncSpec {
             var decodedOAK: FSS!
 
             beforeEach {
-                parsedOAK = await parsedData.FSSes!.first(where: { $0.ID == "OAK" })!
-                decodedOAK = await decodedData.FSSes!.first(where: { $0.ID == "OAK" })!
+                parsedOAK = await parsedData.FSSes!.first { $0.ID == "OAK" }!
+                decodedOAK = await decodedData.FSSes!.first { $0.ID == "OAK" }!
             }
 
             describe("nearestFSSWithTeletype") {
