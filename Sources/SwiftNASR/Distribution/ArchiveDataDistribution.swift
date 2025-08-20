@@ -69,12 +69,13 @@ public final class ArchiveDataDistribution: Distribution {
         return lines
     }
 
-    public func readFile(path: String, withProgress progressHandler: (Progress) -> Void = { _ in }, returningLines _: (UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
+    public func readFile(path: String, withProgress progressHandler: (Progress) -> Void = { _ in }, returningLines linesHandler: (UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
         return AsyncThrowingStream { continuation in
             do {
-                try readFileWithCallback(path: path, withProgress: progressHandler) { data in
+                let lines = try readFileWithCallback(path: path, withProgress: progressHandler) { data in
                     continuation.yield(data)
                 }
+                linesHandler(lines)
                 continuation.finish()
             } catch {
                 continuation.finish(throwing: error)
