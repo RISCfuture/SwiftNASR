@@ -12,7 +12,7 @@ class DirectoryLoaderSpec: AsyncSpec {
       let loader = DirectoryLoader(location: location)
 
       it("calls back with the directory") {
-        let distribution = try loader.load() as! DirectoryDistribution
+        let distribution = try await loader.load() as! DirectoryDistribution
         expect(distribution.location).to(equal(location))
       }
     }

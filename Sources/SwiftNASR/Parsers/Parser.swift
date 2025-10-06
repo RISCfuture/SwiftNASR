@@ -1,7 +1,7 @@
 import Foundation
 @preconcurrency import RegexBuilder
 
-protocol Parser: AnyObject {
+public protocol Parser: AnyObject {
   func prepare(distribution: Distribution) async throws
 
   func parse(data: Data) async throws
@@ -74,27 +74,30 @@ enum ParserError: Swift.Error, CustomStringConvertible {
   }
 }
 
-func parserFor(recordType: RecordType) -> Parser {
-  switch recordType {
-    case .airports: return AirportParser()
-    case .states: return StateParser()
-    case .ARTCCFacilities: return ARTCCParser()
-    case .flightServiceStations: return FSSParser()
-    case .navaids: return NavaidParser()
-    default:
-      preconditionFailure("No parser for \(recordType)")
+func parserFor(recordType: RecordType, format: DataFormat = .txt) -> Parser {
+  switch format {
+    case .txt:
+      switch recordType {
+        case .airports:
+          return FixedWidthAirportParser()
+        case .states: return StateParser()
+        case .ARTCCFacilities:
+          return FixedWidthARTCCParser()
+        case .flightServiceStations: return FixedWidthFSSParser()
+        case .navaids: return FixedWidthNavaidParser()
+        default:
+          preconditionFailure("No TXT parser for \(recordType)")
+      }
+    case .csv:
+      switch recordType {
+        case .airports:
+          return CSVAirportParser()
+        case .ARTCCFacilities:
+          return CSVARTCCParser()
+        case .flightServiceStations: return CSVFSSParser()
+        case .navaids: return CSVNavaidParser()
+        default:
+          preconditionFailure("No CSV parser for \(recordType)")
+      }
   }
-}
-
-func parseMagVar(_ string: String, fieldIndex: Int) throws -> Int {
-  guard let magvarNum = Int(string[string.startIndex..<string.index(before: string.endIndex)])
-  else {
-    throw FixedWidthParserError.invalidValue(string, at: fieldIndex)
-  }
-  var magvar = magvarNum
-  if string[string.index(string.endIndex, offsetBy: -1)] == Character("W") {
-    magvar = -magvar
-  }
-
-  return magvar
 }

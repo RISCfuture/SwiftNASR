@@ -613,6 +613,12 @@ public struct RunwayEnd: Record {
     case good = "G"
     case fair = "F"
     case poor = "P"
+
+    static let synonyms: [RawValue: Self] = [
+      "GOOD": .good,
+      "FAIR": .fair,
+      "POOR": .poor
+    ]
   }
 
   /// Location of runway visual range sensors.

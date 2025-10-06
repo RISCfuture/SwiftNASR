@@ -7,7 +7,7 @@ data.
 
 The ``NASR`` class is used to load NASR distributions. If you have not already
 downloaded a NASR distribution, you can do so using the
-``NASR/fromInternetToFile(_:activeAt:)`` method, which will download the
+``NASR/fromInternetToFile(_:activeAt:format:)`` method, which will download the
 distribution to a file, so you can avoid having to re-download it later:
 
 ```swift
@@ -24,6 +24,22 @@ If you have already downloaded the distribution, you can load it using
 ```swift
 let distribution = NASR.fromLocalArchive(distributionURL)
 ```
+
+### Choosing a Data Format
+
+The FAA provides NASR data in two formats: fixed-width text (TXT) and
+comma-separated values (CSV). By default, SwiftNASR uses the TXT format. To use
+CSV format instead, specify the `format` parameter:
+
+```swift
+// Download CSV format
+let distribution = NASR.fromInternetToFile(distributionURL, format: .csv)
+
+// Load from a local CSV directory
+let distribution = NASR.fromLocalDirectory(csvDirectoryURL, format: .csv)
+```
+
+See ``DataFormat`` for more information about the differences between formats.
 
 Once you have your distribution, use the ``NASR`` class to asynchronously load
 the data and parse it:

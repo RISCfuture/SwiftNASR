@@ -7,7 +7,7 @@ enum ARTCCRecordIdentifier: String {
   case frequencyRemarks = "AFF4"
 }
 
-struct ARTCCKey: Hashable {
+public struct ARTCCKey: Hashable {
   let ID: String
   let location: String
   let type: ARTCC.FacilityType
@@ -25,7 +25,7 @@ struct ARTCCKey: Hashable {
   }
 }
 
-class ARTCCParser: FixedWidthParser {
+class FixedWidthARTCCParser: FixedWidthParser {
   typealias RecordIdentifier = ARTCCRecordIdentifier
 
   static let type: RecordType = .ARTCCFacilities

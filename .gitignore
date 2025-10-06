@@ -1,3 +1,10 @@
 .swiftpm
-.swift-format
+
+
+# SwiftLint Remote Config Cache
 .swiftlint/RemoteConfigCache
+
+# SwiftNASR Test Data Working Directory
+.SwiftNASR_TestData/
+comparison_report.json
+.swift-format

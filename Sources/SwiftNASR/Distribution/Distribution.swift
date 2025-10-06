@@ -67,6 +67,13 @@ public enum RecordType: String, Codable, Sendable {
 
 public protocol Distribution: Sendable {
 
+  /// The data format (TXT or CSV) for this distribution.
+  ///
+  /// This property determines which parsers are used when calling
+  /// ``NASR/parse(_:withProgress:errorHandler:)``. TXT format uses fixed-width
+  /// parsers, while CSV format uses comma-separated value parsers.
+  var format: DataFormat { get }
+
   /**
    Locates a file in the distribution by its prefix.
   
@@ -98,6 +105,13 @@ public protocol Distribution: Sendable {
     withProgress progressHandler: @Sendable (_ progress: Progress) -> Void,
     returningLines linesHandler: (_ lines: UInt) -> Void
   ) -> AsyncThrowingStream<Data, Swift.Error>
+
+  /**
+   Reads the cycle from the distribution.
+  
+   - Returns: The parsed cycle, or `nil` if the cycle could not be parsed.
+   */
+  func readCycle() async throws -> Cycle?
 }
 
 extension Distribution {
@@ -123,10 +137,45 @@ extension Distribution {
     withProgress progressHandler: @Sendable (_ progress: Progress) -> Void = { _ in },
     returningLines linesHandler: (_ lines: UInt) -> Void = { _ in }
   ) -> AsyncThrowingStream<Data, Swift.Error> {
-    return readFile(
-      path: "\(type.rawValue).txt",
-      withProgress: progressHandler,
-      returningLines: linesHandler
-    )
+    switch format {
+      case .txt:
+        return readFile(
+          path: "\(type.rawValue).txt",
+          withProgress: progressHandler,
+          returningLines: linesHandler
+        )
+      case .csv:
+        // For CSV format, we need to handle multiple files per record type
+        return readCSVFiles(for: type, withProgress: progressHandler, returningLines: linesHandler)
+    }
+  }
+
+  /// Reads CSV files for a given record type
+  @FileReadActor
+  public func readCSVFiles(
+    for type: RecordType,
+    withProgress _: @Sendable (_ progress: Progress) -> Void = { _ in },
+    returningLines linesHandler: (_ lines: UInt) -> Void = { _ in }
+  ) -> AsyncThrowingStream<Data, Swift.Error> {
+    // For CSV format, the actual parsing happens in the CSV parsers which read files directly
+    // We just need to check if the record type is supported
+    switch type {
+      case .airports, .navaids, .flightServiceStations, .ARTCCFacilities:
+        break  // These types are supported for CSV
+      default:
+        // For unsupported types, return empty stream
+        return AsyncThrowingStream { continuation in
+          continuation.finish()
+        }
+    }
+
+    // For CSV, we'll just return a marker indicating CSV format
+    // The actual parsing happens in the CSV parsers which read files directly
+    // Call the lines handler with 1 to ensure parseProgress is initialized
+    linesHandler(1)
+    return AsyncThrowingStream { continuation in
+      continuation.yield(Data("CSV".utf8))
+      continuation.finish()
+    }
   }
 }

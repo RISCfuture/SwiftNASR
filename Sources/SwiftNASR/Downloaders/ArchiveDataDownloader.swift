@@ -7,17 +7,20 @@ import Foundation
 
 public final class ArchiveDataDownloader: Downloader {
   public let cycle: Cycle
+  public let format: DataFormat
 
   /// The `URLSession` to use for downloading.
   public let session: URLSession
 
-  public init(cycle: Cycle? = nil) {
+  public init(cycle: Cycle? = nil, format: DataFormat = .txt) {
     self.cycle = cycle ?? .current
+    self.format = format
     session = .shared
   }
 
-  public init(cycle: Cycle? = nil, session: URLSession = .shared) {
+  public init(cycle: Cycle? = nil, format: DataFormat = .txt, session: URLSession = .shared) {
     self.cycle = cycle ?? .current
+    self.format = format
     self.session = session
   }
 
@@ -29,9 +32,20 @@ public final class ArchiveDataDownloader: Downloader {
 
     let (data, response) = try await session.data(from: cycleURL, delegate: delegate)
 
-    let HTTPResponse = response as! HTTPURLResponse
-    if HTTPResponse.statusCode / 100 != 2 { throw Error.badResponse(HTTPResponse) }
+    guard let HTTPResponse = response as? HTTPURLResponse else {
+      throw Error.badResponse(response as! HTTPURLResponse)
+    }
 
-    return try ArchiveDataDistribution(data: data)
+    // Check for non-success status codes
+    if HTTPResponse.statusCode / 100 != 2 {
+      throw Error.badResponse(HTTPResponse)
+    }
+
+    // Verify we got data
+    guard !data.isEmpty else {
+      throw Error.noData
+    }
+
+    return try ArchiveDataDistribution(data: data, format: format)
   }
 }

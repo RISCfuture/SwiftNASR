@@ -13,6 +13,13 @@ public enum Error: Swift.Error {
    */
   case badResponse(_ response: URLResponse)
 
+  /**
+   Download failed for a specific reason.
+  
+   - Parameter reason: The reason for the failure.
+   */
+  case downloadFailed(reason: String)
+
   /// No file in distribution archive.
   case noSuchFile(path: String)
 
@@ -106,9 +113,9 @@ extension Error: LocalizedError {
   public var errorDescription: String? {
     switch self {
       case .nullDistribution, .noSuchFilePrefix, .noSuchFile:
-        return String(localized: "Couldn’t load distribution.", comment: "error description")
-      case .badResponse, .noData:
-        return String(localized: "Couldn’t download distribution.", comment: "error description")
+        return String(localized: "Couldn't load distribution.", comment: "error description")
+      case .badResponse, .noData, .downloadFailed:
+        return String(localized: "Couldn't download distribution.", comment: "error description")
       case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldID,
         .unknownFrequencyFieldID, .invalidFrequency, .unknownFSS,
         .invalidRunwaySurface, .invalidPavementClassification,
@@ -131,9 +138,11 @@ extension Error: LocalizedError {
           localized: "Bad response: \(response.description).",
           comment: "failure reason"
         )
+      case .downloadFailed(let reason):
+        return String(localized: "Download failed: \(reason)", comment: "failure reason")
       case .noSuchFilePrefix(let prefix):
         return String(
-          localized: "Couldn’t find file in archive with prefix “\(prefix).”",
+          localized: "Couldn't find file in archive with prefix '\(prefix).'",
           comment: "failure reason"
         )
       case .noData:
@@ -145,12 +154,12 @@ extension Error: LocalizedError {
         )
       case let .unknownARTCCFrequency(frequency, ARTCC):
         return String(
-          localized: "Referenced undefined frequency '\(frequency)' for ARTCC \(ARTCC.ID).",
+          localized: "Referenced undefined frequency ‘\(frequency)’ for ARTCC \(ARTCC.ID).",
           comment: "failure reason"
         )
       case let .unknownFieldID(fieldID, ARTCC):
         return String(
-          localized: "Unknown field ID '\(fieldID)' at '\(ARTCC.ID) \(ARTCC.locationName)'.",
+          localized: "Unknown field ID ‘\(fieldID)’ at ‘\(ARTCC.ID) \(ARTCC.locationName)’.",
           comment: "failure reason"
         )
       case let .unknownFrequencyFieldID(fieldID, frequency, ARTCC):
@@ -198,7 +207,7 @@ extension Error: LocalizedError {
             "Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk.",
           comment: "recovery suggestion"
         )
-      case .badResponse, .noData:
+      case .badResponse, .noData, .downloadFailed:
         return String(
           localized: "Verify that the URL to the distribution is correct and accessible.",
           comment: "recovery suggestion"

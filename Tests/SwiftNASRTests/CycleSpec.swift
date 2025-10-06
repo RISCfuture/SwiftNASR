@@ -10,7 +10,7 @@ final class CycleSpec: QuickSpec {
 
     describe("effectiveCycle") {
       it("returns the effective cycle for a date") {
-        var dateComponents = DateComponents(year: 2021, month: 2, day: 21)
+        let dateComponents = DateComponents(year: 2021, month: 2, day: 21)
         let cycle = Cycle.effectiveCycle(for: calendar.date(from: dateComponents)!)!
 
         expect(cycle.year).to(equal(2021))
@@ -19,7 +19,7 @@ final class CycleSpec: QuickSpec {
       }
 
       it("returns nil if the date comes before the first cycle") {
-        var dateComponents = DateComponents(year: 1903, month: 12, day: 17)
+        let dateComponents = DateComponents(year: 1903, month: 12, day: 17)
         let cycle = Cycle.effectiveCycle(for: calendar.date(from: dateComponents)!)
 
         expect(cycle).to(beNil())

@@ -125,7 +125,8 @@ public struct Airport: ParentRecord {
   // MARK: FAA Services
 
   /// The identifier for the ARTCC overlying this airport.
-  public let boundaryARTCCID: String
+  /// This field is only available in TXT format; CSV format does not include it.
+  public let boundaryARTCCID: String?
 
   /// The identifier for the ARTCC responsible for traffic to and from this
   /// airport.
@@ -351,7 +352,7 @@ public struct Airport: ParentRecord {
     distanceCityToAirport: UInt?,
     directionCityToAirport: Direction?,
     landArea: Float?,
-    boundaryARTCCID: String,
+    boundaryARTCCID: String?,
     responsibleARTCCID: String,
     tieInFSSOnStation: Bool?,
     tieInFSSID: String,

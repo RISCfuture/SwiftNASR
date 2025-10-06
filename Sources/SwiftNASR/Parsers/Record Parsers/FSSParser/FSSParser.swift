@@ -16,7 +16,7 @@ private var lastUpdatedDateFormatter: DateFormatter {
   return df
 }
 
-class FSSParser: FixedWidthNoRecordIDParser {
+class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
   static let type: RecordType = .flightServiceStations
   var formats = [NASRTable]()
 

@@ -29,7 +29,6 @@ public final class ArchiveLoader: Loader {
     -> Distribution
   {
     progressHandler(completedProgress())
-
     return try ArchiveFileDistribution(location: location)
   }
 }

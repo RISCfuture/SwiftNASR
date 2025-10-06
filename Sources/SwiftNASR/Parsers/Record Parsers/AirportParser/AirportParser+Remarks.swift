@@ -1,7 +1,7 @@
 private let arrestingSystemDLIDOffsetRange = 3...4
 // these should be labeled "DLID" but they're not
 
-extension AirportParser {
+extension FixedWidthAirportParser {
   private var remarkTransformer: FixedWidthTransformer {
     .init([
       .recordType,  // 0 record type
