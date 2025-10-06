@@ -150,7 +150,7 @@ private final class VGSIParser: Sendable {
 
 private let vgsiParser = VGSIParser()
 
-extension AirportParser {
+extension FixedWidthAirportParser {
   private func parseVGSI(_ value: String) throws -> RunwayEnd.VisualGlideslopeIndicator {
     switch value {
       case "NSTD": return RunwayEnd.VisualGlideslopeIndicator(type: .nonstandard)

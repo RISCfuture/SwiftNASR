@@ -332,6 +332,14 @@ public struct Runway: Record {
     /// pavement cracks. Slabs are extensively cracked and shattered with
     /// severe spalling and faulting over one half inch.
     case failed = "L"
+
+    static let synonyms: [RawValue: Self] = [
+      "EXCELLENT": .excellent,
+      "GOOD": .good,
+      "FAIR": .fair,
+      "POOR": .poor,
+      "FAILED": .failed
+    ]
   }
 
   /// Treatment applied to a runway surface.

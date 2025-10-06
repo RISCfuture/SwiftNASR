@@ -8,7 +8,7 @@ enum AirportRecordIdentifier: String {
   case remark = "RMK"
 }
 
-class AirportParser: FixedWidthParser {
+class FixedWidthAirportParser: FixedWidthParser {
   typealias RecordIdentifier = AirportRecordIdentifier
 
   static let type: RecordType = .airports
@@ -305,7 +305,7 @@ class AirportParser: FixedWidthParser {
       distanceCityToAirport: transformedValues[34] as! UInt?,
       directionCityToAirport: transformedValues[35] as! Direction?,
       landArea: transformedValues[36] as! Float?,
-      boundaryARTCCID: transformedValues[37] as! String,
+      boundaryARTCCID: transformedValues[37] as? String,
       responsibleARTCCID: transformedValues[40] as! String,
       tieInFSSOnStation: transformedValues[43] as! Bool?,
       tieInFSSID: transformedValues[44] as! String,

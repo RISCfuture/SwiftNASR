@@ -31,10 +31,10 @@ loader.
 Normally you do not need to instantiate your own ``Loader`` or ``Distribution``
 objects. This is done automatically by the following methods on ``NASR``:
 
-* ``NASR/fromInternetToMemory(activeAt:)``,
-* ``NASR/fromInternetToFile(_:activeAt:)``,
+* ``NASR/fromInternetToMemory(activeAt:format:)``,
+* ``NASR/fromInternetToFile(_:activeAt:format:)``,
 * ``NASR/fromLocalArchive(_:)``, and
-* ``NASR/fromLocalDirectory(_:)``.
+* ``NASR/fromLocalDirectory(_:format:)``.
 
 You can, however, provide your own ``Loader`` subclass to ``NASR`` if you
 need to customize distribution downloading behavior, using
@@ -50,16 +50,16 @@ docuemntation for more information.
 
 ### Downloading Distributions
 
-- ``NASR/fromInternetToMemory(activeAt:)``
+- ``NASR/fromInternetToMemory(activeAt:format:)``
 - ``ArchiveDataDistribution``
-- ``NASR/fromInternetToFile(_:activeAt:)``
+- ``NASR/fromInternetToFile(_:activeAt:format:)``
 - ``ArchiveFileDistribution``
 
 ### Loading Distributions from Disk
 
 - ``NASR/fromLocalArchive(_:)``
 - ``ArchiveFileDistribution``
-- ``NASR/fromLocalDirectory(_:)``
+- ``NASR/fromLocalDirectory(_:format:)``
 - ``DirectoryDistribution``
 
 ### Subclassing

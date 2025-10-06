@@ -9,7 +9,7 @@ automatically instantiated for you by ``NASR``'s loading methods.
 
 ## Subclassing Downloader
 
-A `Downloader` is instantiated with a ``Cycle`` (``init(cycle:)``) to download.
+A `Downloader` is instantiated with a ``Cycle`` (``init(cycle:format:)``) to download.
 From that cycle, the `Downloader` can generate a ``cycleURL``. When one of the
 `load` methods is called, the data is downloaded to the appropriate destination,
 and a subclass of ``Distribution`` is generated to process that data.
@@ -23,7 +23,7 @@ and a subclass of ``Distribution`` is generated to process that data.
 
 ### Creating Downloaders
 
-- ``init(cycle:)``
+- ``init(cycle:format:)``
 
 ### Cycles
 

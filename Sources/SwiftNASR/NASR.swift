@@ -59,8 +59,8 @@ public actor NASR {
    - Returns: The instance for loading, parsing, and accessing that data.
    */
 
-  public static func fromLocalDirectory(_ location: URL) -> NASR {
-    let loader = DirectoryLoader(location: location)
+  public static func fromLocalDirectory(_ location: URL, format: DataFormat = .txt) -> NASR {
+    let loader = DirectoryLoader(location: location, format: format)
     return self.init(loader: loader)
   }
 
@@ -75,13 +75,15 @@ public actor NASR {
    nil if no cycle is/was effective for `date`.
    */
 
-  public static func fromInternetToMemory(activeAt date: Date? = nil) -> NASR? {
+  public static func fromInternetToMemory(activeAt date: Date? = nil, format: DataFormat = .txt)
+    -> NASR?
+  {
     let loader: Loader
     if let date {
       guard let cycle = Cycle.effectiveCycle(for: date) else { return nil }
-      loader = ArchiveDataDownloader(cycle: cycle)
+      loader = ArchiveDataDownloader(cycle: cycle, format: format)
     } else {
-      loader = ArchiveDataDownloader()
+      loader = ArchiveDataDownloader(cycle: nil, format: format)
     }
 
     return self.init(loader: loader)
@@ -100,14 +102,17 @@ public actor NASR {
    nil if no cycle is/was effective for `date`.
    */
 
-  public static func fromInternetToFile(_ location: URL? = nil, activeAt date: Date? = nil) -> NASR?
-  {
+  public static func fromInternetToFile(
+    _ location: URL? = nil,
+    activeAt date: Date? = nil,
+    format: DataFormat = .txt
+  ) -> NASR? {
     let loader: Loader
     if let date {
       guard let cycle = Cycle.effectiveCycle(for: date) else { return nil }
-      loader = ArchiveFileDownloader(cycle: cycle, location: location)
+      loader = ArchiveFileDownloader(cycle: cycle, format: format, location: location)
     } else {
-      loader = ArchiveFileDownloader(location: location)
+      loader = ArchiveFileDownloader(cycle: nil, format: format, location: location)
     }
 
     return self.init(loader: loader)
@@ -123,6 +128,13 @@ public actor NASR {
 
   public static func fromData(_ data: NASRData) -> NASR {
     return self.init(data: data)
+  }
+
+  /// Sets the distribution directly, useful for testing or when using a custom distribution.
+  ///
+  /// - Parameter distribution: The distribution to use for parsing.
+  public func setDistribution(_ distribution: Distribution) {
+    self.distribution = distribution
   }
 
   /**
@@ -170,7 +182,7 @@ public actor NASR {
     errorHandler: @Sendable (_ error: Swift.Error) -> Bool
   ) async throws -> Bool {
     guard let distribution = self.distribution else { throw Error.notYetLoaded }
-    let parser = parserFor(recordType: type)
+    let parser = parserFor(recordType: type, format: distribution.format)
     try await parser.prepare(distribution: distribution)
 
     let progress = Progress(totalUnitCount: 10)

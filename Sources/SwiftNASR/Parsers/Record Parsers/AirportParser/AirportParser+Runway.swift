@@ -2,7 +2,7 @@ import Foundation
 
 private let offsetParser = OffsetParser()
 
-extension AirportParser {
+extension FixedWidthAirportParser {
   private var runwayTransformer: FixedWidthTransformer {
     .init([
       .recordType,  //   0 record type
@@ -14,28 +14,28 @@ extension AirportParser {
       .unsignedInteger(nullable: .blank),  //   5 width
       .string(nullable: .blank),  //   6 surface type and condition
       .generic(
-        { try AirportParser.raw($0, toEnum: Runway.Treatment.self) },
+        { try SwiftNASR.raw($0, toEnum: Runway.Treatment.self) },
         nullable: .sentinel(["", "NONE"])
       ),  //   7 surface treament
       .string(nullable: .blank),  //   8 pavement classification
       .generic(
-        { try AirportParser.raw($0, toEnum: Runway.EdgeLightIntensity.self) },
+        { try SwiftNASR.raw($0, toEnum: Runway.EdgeLightIntensity.self) },
         nullable: .sentinel(["", "NONE"])
       ),  //   9 edge light intensity
 
       .string(),  //  10 base end: identifier
       .unsignedInteger(nullable: .blank),  //  11 base end: true heading
       .generic(
-        { try AirportParser.raw($0, toEnum: RunwayEnd.InstrumentLandingSystem.self) },
+        { try SwiftNASR.raw($0, toEnum: RunwayEnd.InstrumentLandingSystem.self) },
         nullable: .blank
       ),  //  12 base end: ILS
       .boolean(nullable: .blank),  //  13 base end: right pattern
       .generic(
-        { try AirportParser.raw($0, toEnum: RunwayEnd.Marking.self) },
+        { try SwiftNASR.raw($0, toEnum: RunwayEnd.Marking.self) },
         nullable: .sentinel(["", "NONE"])
       ),  //  14 base end: markings
       .generic(
-        { try AirportParser.raw($0, toEnum: RunwayEnd.MarkingCondition.self) },
+        { try SwiftNASR.raw($0, toEnum: RunwayEnd.MarkingCondition.self) },
         nullable: .blank
       ),  //  15 base end: marking condition
       .DDMMSS(nullable: .blank),  //  16 base end: latitude
@@ -56,13 +56,13 @@ extension AirportParser {
       .string(nullable: .sentinel(["", "NONE", "N"])),  //  30 base end: VGSI
       .fixedWidthArray(
         width: 1,
-        convert: { try AirportParser.raw($0, toEnum: RunwayEnd.RVRSensor.self) },
+        convert: { try SwiftNASR.raw($0, toEnum: RunwayEnd.RVRSensor.self) },
         nullable: .compact,
         emptyPlaceholders: ["N"]
       ),  //  31 base end: RVR
       .boolean(nullable: .blank),  //  32 base end: has RVV
       .generic(
-        { try AirportParser.raw($0, toEnum: RunwayEnd.ApproachLighting.self) },
+        { try SwiftNASR.raw($0, toEnum: RunwayEnd.ApproachLighting.self) },
         nullable: .sentinel(["", "NONE"])
       ),  //  33 base end: approach lighting
       .boolean(nullable: .blank),  //  34 base end: REILs
@@ -70,12 +70,12 @@ extension AirportParser {
       .boolean(nullable: .blank),  //  36 base end: TDZL
 
       .generic(
-        { try AirportParser.raw($0, toEnum: RunwayEnd.ControllingObject.Category.self) },
+        { try SwiftNASR.raw($0, toEnum: RunwayEnd.ControllingObject.Category.self) },
         nullable: .blank
       ),  //  37 base end: controlling object
       .fixedWidthArray(
         width: 1,
-        convert: { try AirportParser.raw($0, toEnum: RunwayEnd.ControllingObject.Marking.self) },
+        convert: { try SwiftNASR.raw($0, toEnum: RunwayEnd.ControllingObject.Marking.self) },
         nullable: .compact,
         emptyPlaceholders: ["", "NONE", "NL"]
       ),  //  38 base end: controlling object marking
@@ -88,16 +88,16 @@ extension AirportParser {
       .string(nullable: .blank),  //  44 reciprocal end: identifier
       .unsignedInteger(nullable: .blank),  //  45 reciprocal end: true heading
       .generic(
-        { try AirportParser.raw($0, toEnum: RunwayEnd.InstrumentLandingSystem.self) },
+        { try SwiftNASR.raw($0, toEnum: RunwayEnd.InstrumentLandingSystem.self) },
         nullable: .blank
       ),  //  46 reciprocal end: ILS
       .boolean(nullable: .blank),  //  47 reciprocal end: right pattern
       .generic(
-        { try AirportParser.raw($0, toEnum: RunwayEnd.Marking.self) },
+        { try SwiftNASR.raw($0, toEnum: RunwayEnd.Marking.self) },
         nullable: .sentinel(["", "NONE"])
       ),  //  48 reciprocal end: markings
       .generic(
-        { try AirportParser.raw($0, toEnum: RunwayEnd.MarkingCondition.self) },
+        { try SwiftNASR.raw($0, toEnum: RunwayEnd.MarkingCondition.self) },
         nullable: .blank
       ),  //  49 reciprocal end: marking condition
       .DDMMSS(nullable: .blank),  //  50 reciprocal end: latitude
@@ -118,13 +118,13 @@ extension AirportParser {
       .string(nullable: .sentinel(["", "NONE", "N"])),  //  64 reciprocal end: VGSI
       .fixedWidthArray(
         width: 1,
-        convert: { try AirportParser.raw($0, toEnum: RunwayEnd.RVRSensor.self) },
+        convert: { try SwiftNASR.raw($0, toEnum: RunwayEnd.RVRSensor.self) },
         nullable: .compact,
         emptyPlaceholders: ["N"]
       ),  //  65 reciprocal end: RVR
       .boolean(nullable: .blank),  //  66 reciprocal end: has RVV
       .generic(
-        { try AirportParser.raw($0, toEnum: RunwayEnd.ApproachLighting.self) },
+        { try SwiftNASR.raw($0, toEnum: RunwayEnd.ApproachLighting.self) },
         nullable: .sentinel(["", "NONE"])
       ),  //  67 reciprocal end: approach lighting
       .boolean(nullable: .blank),  //  68 reciprocal end: REILs
@@ -132,12 +132,12 @@ extension AirportParser {
       .boolean(nullable: .blank),  //  70 reciprocal end: TDZL
 
       .generic(
-        { try AirportParser.raw($0, toEnum: RunwayEnd.ControllingObject.Category.self) },
+        { try SwiftNASR.raw($0, toEnum: RunwayEnd.ControllingObject.Category.self) },
         nullable: .blank
       ),  //  71 reciprocal end: controlling object
       .fixedWidthArray(
         width: 1,
-        convert: { try AirportParser.raw($0, toEnum: RunwayEnd.ControllingObject.Marking.self) },
+        convert: { try SwiftNASR.raw($0, toEnum: RunwayEnd.ControllingObject.Marking.self) },
         nullable: .compact,
         emptyPlaceholders: ["", "NONE", "NL"]
       ),  //  72 reciprocal end: controlling object marking
@@ -335,19 +335,19 @@ extension AirportParser {
     let components = value.split(separator: "/")
     let numberStr = String(components[0]).trimmingCharacters(in: .whitespaces)
     guard let number = UInt(numberStr) else { throw Error.invalidPavementClassification(value) }
-    let type = try AirportParser.raw(
+    let type = try SwiftNASR.raw(
       String(components[1]),
       toEnum: Runway.PavementClassification.Classification.self
     )
-    let strength = try AirportParser.raw(
+    let strength = try SwiftNASR.raw(
       String(components[2]),
       toEnum: Runway.PavementClassification.SubgradeStrengthCategory.self
     )
-    let tirePressure = try AirportParser.raw(
+    let tirePressure = try SwiftNASR.raw(
       String(components[3]),
       toEnum: Runway.PavementClassification.TirePressureLimit.self
     )
-    let determination = try AirportParser.raw(
+    let determination = try SwiftNASR.raw(
       String(components[4]),
       toEnum: Runway.PavementClassification.DeterminationMethod.self
     )

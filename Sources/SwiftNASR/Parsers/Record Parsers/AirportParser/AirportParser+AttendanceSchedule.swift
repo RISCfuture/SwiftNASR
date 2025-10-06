@@ -1,4 +1,4 @@
-extension AirportParser {
+extension FixedWidthAirportParser {
   private var attendanceTransformer: FixedWidthTransformer {
     .init([
       .recordType,  // 0 record type

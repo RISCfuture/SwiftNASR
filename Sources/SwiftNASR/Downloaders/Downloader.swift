@@ -11,6 +11,9 @@ public protocol Downloader: Loader {
   /// The distribution cycle.
   var cycle: Cycle { get }
 
+  /// The data format to download (TXT or CSV).
+  var format: DataFormat { get }
+
   /// The URL to download the NASR data from, given ``cycle``.
   var cycleURL: URL { get }
 
@@ -19,9 +22,10 @@ public protocol Downloader: Loader {
   
    - Parameter cycle: The cycle to download NASR data for. If not specified,
                       uses the current cycle.
+   - Parameter format: The data format to download (defaults to .txt).
    */
 
-  init(cycle: Cycle?)
+  init(cycle: Cycle?, format: DataFormat)
 
   /**
    Downloads the NASR data asynchronously.
@@ -70,11 +74,24 @@ private var cycleDateFormatter: DateFormatter {
 // swiftlint:disable missing_docs
 extension Downloader {
   public var cycleURL: URL {
-    let cycleString = cycleDateFormatter.string(from: cycle.date!)
-    return URL(
-      string:
-        "https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_\(cycleString).zip"
-    )!
+    switch format {
+      case .txt:
+        let cycleString = cycleDateFormatter.string(from: cycle.date!)
+        return URL(
+          string:
+            "https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_\(cycleString).zip"
+        )!
+      case .csv:
+        // CSV format uses DD_Mmm_YYYY format (e.g., 04_Sep_2025_CSV.zip)
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.dateFormat = "dd_MMM_yyyy"
+        let csvDateString = formatter.string(from: cycle.date!)
+        return URL(
+          string: "https://nfdc.faa.gov/webContent/28DaySub/extra/\(csvDateString)_CSV.zip"
+        )!
+    }
   }
 
   func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) throws

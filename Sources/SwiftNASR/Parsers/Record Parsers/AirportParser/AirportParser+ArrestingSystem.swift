@@ -1,4 +1,4 @@
-extension AirportParser {
+extension FixedWidthAirportParser {
   private var arrestingSystemTransformer: FixedWidthTransformer {
     .init([
       .recordType,  // 0 record type

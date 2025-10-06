@@ -60,7 +60,7 @@ enum FixedWidthParserError: Swift.Error, CustomStringConvertible {
 
   var description: String {
     switch self {
-      case .required(let field):
+      case let .required(field):
         return "Field #\(field) is required"
       case let .invalidNumber(value, field):
         return "Field #\(field) contains invalid number '\(value)'"

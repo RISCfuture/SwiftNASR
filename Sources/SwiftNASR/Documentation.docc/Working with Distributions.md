@@ -23,10 +23,33 @@ Normally you do not need to instantiate your own ``Downloader`` or
 ``Distribution`` objects. This is done automatically by the following methods on
 ``NASR``:
 
-* ``NASR/fromInternetToMemory(activeAt:)``,
-* ``NASR/fromInternetToFile(_:activeAt:)``,
+* ``NASR/fromInternetToMemory(activeAt:format:)``,
+* ``NASR/fromInternetToFile(_:activeAt:format:)``,
 * ``NASR/fromLocalArchive(_:)``, and
-* ``NASR/fromLocalDirectory(_:)``.
+* ``NASR/fromLocalDirectory(_:format:)``.
+
+## Data Formats
+
+The FAA distributes NASR data in two formats, represented by ``DataFormat``:
+
+* **TXT (Fixed-Width)**: The traditional format where each field occupies a
+  fixed number of characters. This format has been available for many years and
+  is fully supported.
+* **CSV (Comma-Separated Values)**: A newer format where fields are separated
+  by commas. This format is more compact but may have slightly different field
+  availability.
+
+Specify the format when loading a distribution:
+
+```swift
+// Load CSV format from the internet
+let nasr = NASR.fromInternetToMemory(format: .csv)
+
+// Load TXT format from a local directory (default)
+let nasr = NASR.fromLocalDirectory(myURL, format: .txt)
+```
+
+CSV format currently supports parsing airports, ARTCCs, FSSs, and navaids.
 
 You can, however, provide your own ``Distribution`` subclass to ``NASR`` if you
 need to customize distribution parsing behavior.
@@ -47,16 +70,16 @@ for more information.
 
 ### Downloading Distributions
 
-- ``NASR/fromInternetToMemory(activeAt:)``
+- ``NASR/fromInternetToMemory(activeAt:format:)``
 - ``ArchiveDataDistribution``
-- ``NASR/fromInternetToFile(_:activeAt:)``
+- ``NASR/fromInternetToFile(_:activeAt:format:)``
 - ``ArchiveFileDistribution``
 
 ### Loading Distributions from Disk
 
 - ``NASR/fromLocalArchive(_:)``
 - ``ArchiveFileDistribution``
-- ``NASR/fromLocalDirectory(_:)``
+- ``NASR/fromLocalDirectory(_:format:)``
 - ``DirectoryDistribution``
 
 ### Loading Parsed Data

@@ -46,6 +46,7 @@ itself (type safety, compile-time checks, etc.).
 
 - <doc:Working-with-Distributions>
 - ``Distribution``
+- ``DataFormat``
 
 ### Loaders
 

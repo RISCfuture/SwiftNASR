@@ -8,6 +8,8 @@ import Foundation
  */
 
 public final class NullDistribution: Distribution {
+  public let format: DataFormat = .txt
+
   public func findFile(prefix _: String) throws -> String? {
     throw Error.nullDistribution
   }
