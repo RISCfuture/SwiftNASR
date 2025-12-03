@@ -1,9 +1,9 @@
 import Foundation
 
 func completedProgress() -> Progress {
-    let progress = Progress(totalUnitCount: 1)
-    progress.completedUnitCount = 1
-    return progress
+  let progress = Progress(totalUnitCount: 1)
+  progress.completedUnitCount = 1
+  return progress
 }
 
 /**
@@ -16,17 +16,17 @@ func completedProgress() -> Progress {
 
 public protocol Loader: Sendable {
 
-    /**
-     Asynchronously wraps downloaded data (or data loaded from disk or memory)
-     in an appropriate ``Distribution`` implementation.
-     
-     - Parameter progressHandler: This block is called before processing begins
-                                  with a Progress object you can use to track
-                                  loading progress. You would add this object to
-                                  your parent Progress object.
-     - Returns: The distribution data wrapped in the appropriate implementation,
-                and an object you can use to track progress.
-     */
+  /**
+   Asynchronously wraps downloaded data (or data loaded from disk or memory)
+   in an appropriate ``Distribution`` implementation.
+  
+   - Parameter progressHandler: This block is called before processing begins
+                                with a Progress object you can use to track
+                                loading progress. You would add this object to
+                                your parent Progress object.
+   - Returns: The distribution data wrapped in the appropriate implementation,
+              and an object you can use to track progress.
+   */
 
-    func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws -> Distribution
+  func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws -> Distribution
 }

@@ -1,5 +1,3 @@
 .swiftpm
-
-
-# SwiftLint Remote Config Cache
+.swift-format
 .swiftlint/RemoteConfigCache

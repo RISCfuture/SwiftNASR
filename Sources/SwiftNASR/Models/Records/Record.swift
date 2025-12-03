@@ -5,29 +5,29 @@ public protocol Record: Sendable, Codable {}
 public protocol ParentRecord: Record, Identifiable, Equatable, Hashable {}
 
 // swiftlint:disable missing_docs
-public extension ParentRecord {
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.id == rhs.id
-    }
+extension ParentRecord {
+  public static func == (lhs: Self, rhs: Self) -> Bool {
+    lhs.id == rhs.id
+  }
 
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(id)
+  }
 }
 // swiftlint:enable missing_docs
 
 protocol RecordEnum: Record, RawRepresentable where RawValue: Hashable & Sendable {
-    static var synonyms: [RawValue: Self] { get }
+  static var synonyms: [RawValue: Self] { get }
 
-    static func `for`(_ raw: RawValue) -> Self?
+  static func `for`(_ raw: RawValue) -> Self?
 }
 
 extension RecordEnum {
-    static var synonyms: [RawValue: Self] { [:] }
+  static var synonyms: [RawValue: Self] { [:] }
 
-    static func `for`(_ raw: RawValue) -> Self? {
-        return Self(rawValue: raw) ?? synonyms[raw]
-    }
+  static func `for`(_ raw: RawValue) -> Self? {
+    return Self(rawValue: raw) ?? synonyms[raw]
+  }
 }
 
 /// Protocol representing fields that remarks can be applied to.

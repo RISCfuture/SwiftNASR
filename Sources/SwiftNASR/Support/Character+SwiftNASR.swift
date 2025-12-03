@@ -1,13 +1,13 @@
 import Foundation
 
 extension Character: @retroactive Encodable, @retroactive Decodable {
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        self = try container.decode(String.self).first!
-    }
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    self = try container.decode(String.self).first!
+  }
 
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(String(self))
-    }
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+    try container.encode(String(self))
+  }
 }

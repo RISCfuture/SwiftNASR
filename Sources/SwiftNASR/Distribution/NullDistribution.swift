@@ -8,15 +8,19 @@ import Foundation
  */
 
 public final class NullDistribution: Distribution {
-    public func findFile(prefix _: String) throws -> String? {
-        throw Error.nullDistribution
-    }
+  public func findFile(prefix _: String) throws -> String? {
+    throw Error.nullDistribution
+  }
 
-    public func readFile(path _: String, withProgress _: @Sendable (Progress) -> Void = { _ in }, returningLines _: (UInt) -> Void = { _ in }) -> AsyncThrowingStream<Data, Swift.Error> {
-        return AsyncThrowingStream { $0.finish(throwing: Error.nullDistribution) }
-    }
+  public func readFile(
+    path _: String,
+    withProgress _: @Sendable (Progress) -> Void = { _ in },
+    returningLines _: (UInt) -> Void = { _ in }
+  ) -> AsyncThrowingStream<Data, Swift.Error> {
+    return AsyncThrowingStream { $0.finish(throwing: Error.nullDistribution) }
+  }
 
-    public func readCycle() throws -> Cycle? {
-        return nil
-    }
+  public func readCycle() throws -> Cycle? {
+    return nil
+  }
 }

@@ -4,20 +4,20 @@
  */
 
 public struct State: ParentRecord {
-    public var id: String { postOfficeCode }
+  public var id: String { postOfficeCode }
 
-    /// The state or territory name.
-    public let name: String
+  /// The state or territory name.
+  public let name: String
 
-    /// The USPS state or territory code.
-    public let postOfficeCode: String
+  /// The USPS state or territory code.
+  public let postOfficeCode: String
 
-    init(name: String, code: String) {
-        self.name = name
-        self.postOfficeCode = code
-    }
+  init(name: String, code: String) {
+    self.name = name
+    self.postOfficeCode = code
+  }
 
-    enum CodingKeys: String, CodingKey {
-        case name, postOfficeCode
-    }
+  enum CodingKeys: String, CodingKey {
+    case name, postOfficeCode
+  }
 }
