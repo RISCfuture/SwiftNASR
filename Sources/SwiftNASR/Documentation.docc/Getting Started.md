@@ -19,7 +19,7 @@ let distribution = NASR.fromInternetToFile(distributionURL)!
 ```
 
 If you have already downloaded the distribution, you can load it using
-``NASR/fromLocalArchive(_:)``:
+``NASR/fromLocalArchive(_:format:)``:
 
 ```swift
 let distribution = NASR.fromLocalArchive(distributionURL)

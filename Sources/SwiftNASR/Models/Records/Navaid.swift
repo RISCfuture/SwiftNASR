@@ -12,7 +12,7 @@ import Foundation
 public struct Navaid: ParentRecord {
 
   /// The FAA identifier for this navaid (e.g., "OAK").
-  public var ID: String
+  public let id: String
 
   /// The navaid facility name (e.g., "OAKLAND VORTAC").
   public let name: String
@@ -68,16 +68,16 @@ public struct Navaid: ParentRecord {
   public let magneticVariation: Int?
 
   /// The epoch date of the magnetic variation data.
-  public let magneticVariationEpoch: Date?
+  public let magneticVariationEpoch: DateComponents?
 
   /// True if this navaid supports simultaneous voice transmission.
   public let simultaneousVoice: Bool?
 
-  /// The power output of the navaid transmitter, in watts.
-  public let powerOutput: UInt?  // watts
+  /// The power output of the navaid transmitter (watts).
+  public let powerOutput: UInt?
 
   /// True if this navaid supports automatic voice identification.
-  public let automaticVoiceID: Bool?
+  public let automaticVoiceId: Bool?
 
   /// The type and status of navaid monitoring.
   public let monitoringCategory: MonitoringCategory?
@@ -86,10 +86,10 @@ public struct Navaid: ParentRecord {
   public let radioVoiceCall: String?
 
   /// The channel and band for the TACAN transmitter, if applicable.
-  public let TACANChannel: TACANChannel?
+  public let tacanChannel: TACANChannel?
 
-  /// The frequency that this navaid transmits on, if applicable.
-  public let frequency: UInt?  // kHz
+  /// The frequency that this navaid transmits on, if applicable (kHz).
+  public let frequency: UInt?
 
   /// The beacon identifier for a fan marker or marine radio beacon, described
   /// in human-readable Morse code (e.g., "DOT DASH DOT").
@@ -100,7 +100,7 @@ public struct Navaid: ParentRecord {
 
   /// The major bearing of the fan marker, if applicable. The fan marker
   /// reception cone is longest along this bearing.
-  public let fanMarkerMajorBearing: UInt?
+  public let fanMarkerMajorBearing: Bearing<UInt>?
 
   /// The service volume of a VOR.
   public let VORServiceVolume: ServiceVolume?
@@ -133,47 +133,49 @@ public struct Navaid: ParentRecord {
   public let LFRLegs: [LFRLeg]?
 
   /// The operational status of the navaid.
-  public let status: Status
+  public let status: OperationalStatus
 
   /// True if this navaid is used as a pitch point for the High Altitude
   /// Redesign.
-  public let pitchFlag: Bool
+  public let isPitchPoint: Bool?
 
   /// True if this navaid is used as a catch point for the High Altitude
   /// Redesign.
-  public let catchFlag: Bool
+  public let isCatchPoint: Bool?
 
   /// True if this navaid is associated with special-use airspace (SUA) or
   /// air traffic control-assigned airspace (ATCAA).
-  public let SUAFlag: Bool
+  public let isAssociatedWithSUA: Bool?
 
-  public let restrictionFlag: Bool?
+  /// True if this navaid has restrictions on its use.
+  public let hasRestriction: Bool?
 
   /// True if this navaid broadcasts hazardous in-flight weather advisories.
-  public let HIWASFlag: Bool?
+  public let broadcastsHIWAS: Bool?
 
-  public let TWEBRestrictionFlag: Bool?
+  /// True if the transcribed weather broadcast has restrictions.
+  public let hasTWEBRestriction: Bool?
 
   /// The freeform remarks associated with this navaid.
-  public var remarks = [String]()
+  public internal(set) var remarks = [String]()
 
   /// Fixes defined by this navaid.
-  public var associatedFixNames = Set<String>()
+  public internal(set) var associatedFixNames = Set<String>()
 
   /// Holding patterns defined by this navaid.
-  public var associatedHoldingPatterns = Set<HoldingPatternID>()
+  public internal(set) var associatedHoldingPatterns = Set<HoldingPatternId>()
 
   /// Fan markers associated with this naviad.
-  public var fanMarkers = Set<String>()
+  public internal(set) var fanMarkers = Set<String>()
 
   /// VOR test checkpoints (airborne or ground) defined by this navaid.
-  public var checkpoints = [VORCheckpoint]()
+  public internal(set) var checkpoints = [VORCheckpoint]()
 
   weak var data: NASRData?
 
   /// True if this navaid is available for use (IFR or VFR).
   public var isOperational: Bool {
-    status == .operationalIFR || status == .operationalVFR || status == .operationalRestricted
+    status == .operationalIFR || status == .operationalVFROnly || status == .operationalRestricted
   }
 
   /// True if this navaid is a VOR, VOR/DME, or VORTAC.
@@ -190,8 +192,6 @@ public struct Navaid: ParentRecord {
   public var isNDB: Bool {
     type == .NDB || type == .NDBDME
   }
-
-  public var id: String { return self.ID }
 
   init(
     id: String,
@@ -213,17 +213,17 @@ public struct Navaid: ParentRecord {
     TACANPosition: Location?,
     surveyAccuracy: Self.SurveyAccuracy?,
     magneticVariation: Int?,
-    magneticVariationEpoch: Date?,
+    magneticVariationEpoch: DateComponents?,
     simultaneousVoice: Bool?,
     powerOutput: UInt?,
-    automaticVoiceID: Bool?,
+    automaticVoiceId: Bool?,
     monitoringCategory: Self.MonitoringCategory?,
     radioVoiceCall: String?,
-    TACANChannel: Self.TACANChannel?,
+    tacanChannel: Self.TACANChannel?,
     frequency: UInt?,
     beaconIdentifier: String?,
     fanMarkerType: Self.FanMarkerType?,
-    fanMarkerMajorBearing: UInt?,
+    fanMarkerMajorBearing: Bearing<UInt>?,
     VORServiceVolume: Self.ServiceVolume?,
     DMEServiceVolume: Self.ServiceVolume?,
     lowAltitudeInHighStructure: Bool?,
@@ -233,20 +233,20 @@ public struct Navaid: ParentRecord {
     controllingFSSCode: String?,
     NOTAMAccountabilityCode: String?,
     LFRLegs: [LFRLeg]?,
-    status: Self.Status,
-    pitchFlag: Bool,
-    catchFlag: Bool,
-    SUAFlag: Bool,
-    restrictionFlag: Bool?,
-    HIWASFlag: Bool?,
-    TWEBRestrictionFlag: Bool?,
+    status: OperationalStatus,
+    isPitchPoint: Bool?,
+    isCatchPoint: Bool?,
+    isAssociatedWithSUA: Bool?,
+    hasRestriction: Bool?,
+    broadcastsHIWAS: Bool?,
+    hasTWEBRestriction: Bool?,
     remarks: [String] = [String](),
     associatedFixes: Set<String> = Set<String>(),
-    associatedHoldingPatterns: Set<HoldingPatternID> = Set<HoldingPatternID>(),
+    associatedHoldingPatterns: Set<HoldingPatternId> = Set<HoldingPatternId>(),
     fanMarkers: Set<String> = Set<String>(),
     checkpoints: [VORCheckpoint] = [VORCheckpoint]()
   ) {
-    self.ID = id
+    self.id = id
     self.name = name
     self.type = type
     self.city = city
@@ -268,10 +268,10 @@ public struct Navaid: ParentRecord {
     self.magneticVariationEpoch = magneticVariationEpoch
     self.simultaneousVoice = simultaneousVoice
     self.powerOutput = powerOutput
-    self.automaticVoiceID = automaticVoiceID
+    self.automaticVoiceId = automaticVoiceId
     self.monitoringCategory = monitoringCategory
     self.radioVoiceCall = radioVoiceCall
-    self.TACANChannel = TACANChannel
+    self.tacanChannel = tacanChannel
     self.frequency = frequency
     self.beaconIdentifier = beaconIdentifier
     self.fanMarkerType = fanMarkerType
@@ -286,12 +286,12 @@ public struct Navaid: ParentRecord {
     self.NOTAMAccountabilityCode = NOTAMAccountabilityCode
     self.LFRLegs = LFRLegs
     self.status = status
-    self.pitchFlag = pitchFlag
-    self.catchFlag = catchFlag
-    self.SUAFlag = SUAFlag
-    self.restrictionFlag = restrictionFlag
-    self.HIWASFlag = HIWASFlag
-    self.TWEBRestrictionFlag = TWEBRestrictionFlag
+    self.isPitchPoint = isPitchPoint
+    self.isCatchPoint = isCatchPoint
+    self.isAssociatedWithSUA = isAssociatedWithSUA
+    self.hasRestriction = hasRestriction
+    self.broadcastsHIWAS = broadcastsHIWAS
+    self.hasTWEBRestriction = hasTWEBRestriction
     self.remarks = remarks
     self.associatedFixNames = associatedFixes
     self.associatedHoldingPatterns = associatedHoldingPatterns
@@ -300,14 +300,15 @@ public struct Navaid: ParentRecord {
   }
 
   public enum CodingKeys: String, CodingKey {
-    case ID, name, type, city, stateName, FAARegion, country, ownerName, operatorName,
+    case id, name, type, city, stateName, FAARegion, country, ownerName, operatorName,
       commonSystemUsage, publicUse, navaidClass, hoursOfOperation, highAltitudeARTCCCode,
       lowAltitudeARTCCCode, position, TACANPosition, surveyAccuracy, magneticVariation,
-      magneticVariationEpoch, simultaneousVoice, powerOutput, automaticVoiceID, monitoringCategory,
-      radioVoiceCall, TACANChannel, frequency, beaconIdentifier, fanMarkerType,
+      magneticVariationEpoch, simultaneousVoice, powerOutput, automaticVoiceId, monitoringCategory,
+      radioVoiceCall, tacanChannel, frequency, beaconIdentifier, fanMarkerType,
       fanMarkerMajorBearing, VORServiceVolume, DMEServiceVolume, lowAltitudeInHighStructure,
       ZMarkerAvailable, TWEBHours, TWEBPhone, controllingFSSCode, NOTAMAccountabilityCode, LFRLegs,
-      status, pitchFlag, catchFlag, SUAFlag, restrictionFlag, HIWASFlag, TWEBRestrictionFlag,
+      status, isPitchPoint, isCatchPoint, isAssociatedWithSUA, hasRestriction, broadcastsHIWAS,
+      hasTWEBRestriction,
       remarks, associatedFixNames, associatedHoldingPatterns, fanMarkers, checkpoints
   }
 
@@ -358,16 +359,37 @@ public struct Navaid: ParentRecord {
     /// interrogate and use signal round-trip time to determine distance
     /// from the facility.
     case DME = "DME"
+
+    /// A low-frequency radio range.
+    case LFR = "LFR"
+
+    // Single-character codes used in some NASR files (HPF, FSS, FIX, etc.)
+    public static let synonyms: [String: Self] = [
+      "C": .VORTAC,
+      "D": .VORDME,
+      "F": .fanMarker,
+      "K": .consolan,
+      "L": .LFR,
+      "M": .marineNDB,
+      "MD": .marineNDBDME,
+      "O": .VOT,
+      "OD": .DME,
+      "R": .NDB,
+      "RD": .NDBDME,
+      "T": .TACAN,
+      "U": .UHFNDB,
+      "V": .VOR
+    ]
   }
 
   /// A description of the capabilities of a navaid.
   public struct NavaidClass: Record {
 
     /// The altitude class.
-    public var altitude: AltitudeCode?
+    public internal(set) var altitude: AltitudeCode?
 
     /// The navaid class codes.
-    public var codes = Set<ClassCode>()
+    public internal(set) var codes = Set<ClassCode>()
 
     public enum ClassCode: String, RecordEnum, CaseIterable {
 
@@ -558,25 +580,6 @@ public struct Navaid: ParentRecord {
     /// narrower the further from the center the receiver is.
     case elliptical = "ELLIPTICAL"
   }
-
-  /// The operational status of a navaid.
-  public enum Status: String, RecordEnum {
-
-    /// Operational and usable for IFR flight.
-    case operationalIFR = "OPERATIONAL IFR"
-
-    /// Decomissioned but still transmitting.
-    case decommissioned = "DECOMMISSIONED"
-
-    /// Operational but restricted for certain uses only.
-    case operationalRestricted = "OPERATIONAL RESTRICTED"
-
-    /// Decomissioned and no longer transmitting.
-    case shutdown = "SHUTDOWN"
-
-    /// Operational but not usable for IFR flight.
-    case operationalVFR = "OPERATIONAL VFR ONLY"
-  }
 }
 
 /// A checkpoint is an identifiable location with known bearings from two or
@@ -586,13 +589,15 @@ public struct VORCheckpoint: Record {
 
   public let type: CheckpointType
 
-  /// The bearing that the checkpoint (for VOTs).
-  public let bearing: UInt
+  /// The bearing from the navaid to the checkpoint (for VOTs, this is the
+  /// radial that should be received at the checkpoint).
+  public let bearing: Bearing<UInt>
 
-  /// The altitude of the checkpoint, when the checkpoint is airborne.
+  /// The altitude of the checkpoint, when the checkpoint is airborne
+  /// (feet MSL).
   public let altitude: Int?
 
-  let airportID: String?
+  let airportId: String?
   let stateCode: String
 
   /// Narrative description of the airborne checkpoint.
@@ -605,14 +610,14 @@ public struct VORCheckpoint: Record {
   var findStateByCode: (@Sendable (_ code: String) async -> State?)!
 
   // for loading states from the parent FSS object
-  var findAirportByID: (@Sendable (_ id: String) async -> Airport?)!
+  var findAirportById: (@Sendable (_ id: String) async -> Airport?)!
 
   public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(type, forKey: .type)
     try container.encode(bearing, forKey: .bearing)
     try container.encode(altitude, forKey: .altitude)
-    try container.encode(airportID, forKey: .airportID)
+    try container.encode(airportId, forKey: .airportId)
     try container.encode(stateCode, forKey: .stateCode)
     try container.encode(airDescription, forKey: .airDescription)
     try container.encode(groundDescription, forKey: .groundDescription)
@@ -620,11 +625,11 @@ public struct VORCheckpoint: Record {
 
   /// The airport associated with the checkpoint.
   public func airport(data: NASRData) async -> Airport? {
-    await data.airports?.first { $0.id == airportID }
+    await data.airports?.first { $0.id == airportId }
   }
 
   public enum CodingKeys: String, CodingKey {
-    case type, bearing, altitude, airportID, stateCode, airDescription, groundDescription
+    case type, bearing, altitude, airportId, stateCode, airDescription, groundDescription
   }
 
   public enum CheckpointType: String, RecordEnum {
@@ -640,7 +645,7 @@ public struct VORCheckpoint: Record {
 }
 
 /// A unique identifier of a holding pattern.
-public struct HoldingPatternID: ParentRecord {
+public struct HoldingPatternId: ParentRecord {
 
   /// The name of the facility or fix that anchors this holding pattern.
   public let name: String
@@ -666,7 +671,7 @@ public struct LFRLeg: Record {
   public let quadrant: Quadrant
 
   /// The bearing of this leg from the facility.
-  public let bearing: UInt
+  public let bearing: Bearing<UInt>
 
   /**
    A quadrant is defined by its Morse code identifier. When an aircraft is

@@ -55,14 +55,14 @@ class FixedWidthAirportParser: FixedWidthParser {
     .null,  //  24 lat - decimal
     .DDMMSS(),  //  25 lon - formatted
     .null,  //  26 lon - decimal
-    .generic { try raw($0, toEnum: Airport.LocationDeterminationMethod.self) },  // 27 ARP determination method
+    .generic { try raw($0, toEnum: SurveyMethod.self) },  // 27 ARP determination method
     .float(),  //  28 elevation
     .generic(
-      { try raw($0, toEnum: Airport.LocationDeterminationMethod.self) },
+      { try raw($0, toEnum: SurveyMethod.self) },
       nullable: .blank
     ),  //  29 elevation determination method
     .generic({ try parseMagVar($0, fieldIndex: 30) }, nullable: .blank),  //  30 magvar
-    .datetime(formatter: FixedWidthTransformer.yearOnly, nullable: .blank),  //  31 magvar epoch
+    .dateComponents(format: .yearOnly, nullable: .blank),  //  31 magvar epoch
     .integer(nullable: .blank),  //  32 TPA
     .string(nullable: .blank),  //  33 sectional
     .unsignedInteger(nullable: .blank),  //  34 distance to city
@@ -89,7 +89,7 @@ class FixedWidthAirportParser: FixedWidthParser {
     .string(nullable: .blank),  //  51 NOTAM faclity ID
     .boolean(nullable: .blank),  //  52 NOTAM D available
 
-    .datetime(formatter: FixedWidthTransformer.monthYear, nullable: .blank),  //  53 activation date
+    .dateComponents(format: .monthYear, nullable: .blank),  //  53 activation date
     .generic { Airport.Status(rawValue: $0) },  //  54 status code
     .delimitedArray(
       delimiter: " ",
@@ -119,12 +119,12 @@ class FixedWidthAirportParser: FixedWidthParser {
       { try raw($0, toEnum: Airport.InspectionAgency.self) },
       nullable: .blank
     ),  //  63 inspection agency
-    .datetime(
-      formatter: FixedWidthTransformer.monthDayYear,
+    .dateComponents(
+      format: .monthDayYear,
       nullable: .blank
     ),  //  64 last inspection date
-    .datetime(
-      formatter: FixedWidthTransformer.monthDayYear,
+    .dateComponents(
+      format: .monthDayYear,
       nullable: .blank
     ),  //  65 last information request completed date
 
@@ -154,14 +154,8 @@ class FixedWidthAirportParser: FixedWidthParser {
       emptyPlaceholders: ["NONE"]
     ),  //  70 bulk oxygen available
 
-    .generic(
-      { try raw($0, toEnum: Airport.LightingSchedule.self) },
-      nullable: .blank
-    ),  //  71 airport lighting schedule
-    .generic(
-      { try raw($0, toEnum: Airport.LightingSchedule.self) },
-      nullable: .blank
-    ),  //  72 beacon lighting schedule
+    .string(nullable: .blank),  //  71 airport lighting schedule
+    .string(nullable: .blank),  //  72 beacon lighting schedule
     .boolean(),  //  73 has control tower
     .frequency(nullable: .blank),  //  74 UNICOM
     .frequency(nullable: .blank),  //  75 CTAF
@@ -193,19 +187,19 @@ class FixedWidthAirportParser: FixedWidthParser {
     .unsignedInteger(nullable: .blank),  //  90 GA local ops
     .unsignedInteger(nullable: .blank),  //  91 GA transient ops
     .unsignedInteger(nullable: .blank),  //  92 military ops
-    .datetime(
-      formatter: FixedWidthTransformer.monthDayYearSlash,
+    .dateComponents(
+      format: .monthDayYearSlash,
       nullable: .blank
     ),  //  93 ops 12-month period end date
 
     .string(nullable: .blank),  //  94 position source
-    .datetime(
-      formatter: FixedWidthTransformer.monthDayYearSlash,
+    .dateComponents(
+      format: .monthDayYearSlash,
       nullable: .blank
     ),  //  95 position source date
     .string(nullable: .blank),  //  96 elevation source
-    .datetime(
-      formatter: FixedWidthTransformer.monthDayYearSlash,
+    .dateComponents(
+      format: .monthDayYearSlash,
       nullable: .blank
     ),  //  97 elevation source date
     .boolean(nullable: .blank),  //  98 contract fuel available
@@ -261,14 +255,14 @@ class FixedWidthAirportParser: FixedWidthParser {
       guard let ARFFService = Airport.ARFFCapability.AirService(rawValue: ARFFString[2]) else {
         throw FixedWidthParserError.invalidValue(ARFFString[2], at: 55)
       }
-      guard let ARFFDate = FixedWidthTransformer.monthYear.date(from: ARFFString[3]) else {
+      guard let ARFFDateComponents = DateFormat.monthYear.parse(ARFFString[3]) else {
         throw FixedWidthParserError.invalidValue(ARFFString[3], at: 55)
       }
       return Airport.ARFFCapability(
         class: ARFFClass,
         index: ARFFIndex,
         airService: ARFFService,
-        certificationDate: ARFFDate
+        certificationDate: ARFFDateComponents
       )
     }
 
@@ -284,7 +278,7 @@ class FixedWidthAirportParser: FixedWidthParser {
       LID: transformedValues[3] as! String,
       ICAOIdentifier: transformedValues[102] as! String?,
       facilityType: transformedValues[2] as! Airport.FacilityType,
-      FAARegion: transformedValues[5] as! Airport.FAARegion?,
+      faaRegion: transformedValues[5] as! Airport.FAARegion?,
       FAAFieldOfficeCode: transformedValues[6] as! String?,
       stateCode: transformedValues[7] as! String?,
       county: transformedValues[9] as! String,
@@ -296,25 +290,25 @@ class FixedWidthAirportParser: FixedWidthParser {
       manager: manager,
       referencePoint: location,
       referencePointDeterminationMethod: transformedValues[27]
-        as! Airport.LocationDeterminationMethod,
-      elevationDeterminationMethod: transformedValues[29] as! Airport.LocationDeterminationMethod?,
+        as! SurveyMethod,
+      elevationDeterminationMethod: transformedValues[29] as? SurveyMethod,
       magneticVariation: transformedValues[30] as! Int?,
-      magneticVariationEpoch: transformedValues[31] as! Date?,
+      magneticVariationEpoch: transformedValues[31] as! DateComponents?,
       trafficPatternAltitude: transformedValues[32] as! Int?,
       sectionalChart: transformedValues[33] as! String?,
       distanceCityToAirport: transformedValues[34] as! UInt?,
       directionCityToAirport: transformedValues[35] as! Direction?,
       landArea: transformedValues[36] as! Float?,
-      boundaryARTCCID: transformedValues[37] as? String,
-      responsibleARTCCID: transformedValues[40] as! String,
+      boundaryARTCCId: transformedValues[37] as? String,
+      responsibleARTCCId: transformedValues[40] as! String,
       tieInFSSOnStation: transformedValues[43] as! Bool?,
-      tieInFSSID: transformedValues[44] as! String,
-      alternateFSSID: transformedValues[48] as! String?,
-      NOTAMIssuerID: transformedValues[51] as! String?,
+      tieInFSSId: transformedValues[44] as! String,
+      alternateFSSId: transformedValues[48] as! String?,
+      NOTAMIssuerId: transformedValues[51] as! String?,
       NOTAMDAvailable: transformedValues[52] as! Bool?,
-      activationDate: transformedValues[53] as! Date?,
+      activationDate: transformedValues[53] as! DateComponents?,
       status: transformedValues[54] as! Airport.Status,
-      ARFFCapability: ARFFCapability,
+      arffCapability: ARFFCapability,
       agreements: transformedValues[56] as! [Airport.FederalAgreement],
       airspaceAnalysisDetermination: transformedValues[57]
         as! Airport.AirspaceAnalysisDetermination?,
@@ -324,21 +318,21 @@ class FixedWidthAirportParser: FixedWidthParser {
       militaryLandingRights: transformedValues[61] as! Bool?,
       inspectionMethod: transformedValues[62] as! Airport.InspectionMethod?,
       inspectionAgency: transformedValues[63] as! Airport.InspectionAgency?,
-      lastPhysicalInspectionDate: transformedValues[64] as! Date?,
-      lastInformationRequestCompletedDate: transformedValues[65] as! Date?,
+      lastPhysicalInspectionDate: transformedValues[64] as! DateComponents?,
+      lastInformationRequestCompletedDate: transformedValues[65] as! DateComponents?,
       fuelsAvailable: transformedValues[66] as! [Airport.FuelType],
       airframeRepairAvailable: transformedValues[67] as! Airport.RepairService?,
       powerplantRepairAvailable: transformedValues[68] as! Airport.RepairService?,
       bottledOxygenAvailable: transformedValues[69] as! [Airport.OxygenPressure],
       bulkOxygenAvailable: transformedValues[70] as! [Airport.OxygenPressure],
-      airportLightingSchedule: transformedValues[71] as! Airport.LightingSchedule?,
-      beaconLightingSchedule: transformedValues[72] as! Airport.LightingSchedule?,
+      airportLightingSchedule: transformedValues[71] as? String,
+      beaconLightingSchedule: transformedValues[72] as? String,
       controlTower: transformedValues[73] as! Bool,
       UNICOMFrequency: transformedValues[74] as! UInt?,
       CTAF: transformedValues[75] as! UInt?,
       segmentedCircle: transformedValues[76] as! Airport.AirportMarker?,
       beaconColor: transformedValues[77] as! Airport.LensColor?,
-      landingFee: transformedValues[78] as! Bool?,
+      hasLandingFee: transformedValues[78] as! Bool?,
       medicalUse: transformedValues[79] as! Bool?,
       basedSingleEngineGA: transformedValues[80] as! UInt?,
       basedMultiEngineGA: transformedValues[81] as! UInt?,
@@ -353,11 +347,11 @@ class FixedWidthAirportParser: FixedWidthParser {
       annualLocalGAOps: transformedValues[90] as! UInt?,
       annualTransientGAOps: transformedValues[91] as! UInt?,
       annualMilitaryOps: transformedValues[92] as! UInt?,
-      annualPeriodEndDate: transformedValues[93] as! Date?,
+      annualPeriodEndDate: transformedValues[93] as! DateComponents?,
       positionSource: transformedValues[94] as! String?,
-      positionSourceDate: transformedValues[95] as! Date?,
+      positionSourceDate: transformedValues[95] as! DateComponents?,
       elevationSource: transformedValues[96] as! String?,
-      elevationSourceDate: transformedValues[97] as! Date?,
+      elevationSourceDate: transformedValues[97] as! DateComponents?,
       contractFuelAvailable: transformedValues[98] as! Bool?,
       transientStorageFacilities: transformedValues[99] as! [Airport.StorageFacility]?,
       otherServices: transformedValues[100] as! [Airport.Service],

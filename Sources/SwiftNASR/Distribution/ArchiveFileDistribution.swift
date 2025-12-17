@@ -19,7 +19,8 @@ public final class ArchiveFileDistribution: Distribution {
 
   // Use smaller chunk size for large archives to reduce memory pressure
   private let chunkSize: Int = 16 * 1024  // 16KB chunks
-  private let delimiter = "\r\n".data(using: .isoLatin1)!
+  private let crlfDelimiter = "\r\n".data(using: .isoLatin1)!
+  private let lfDelimiter = "\n".data(using: .isoLatin1)!
 
   /**
    Creates a new instance from the given file.
@@ -59,7 +60,10 @@ public final class ArchiveFileDistribution: Distribution {
     withProgress progressHandler: (Progress) -> Void = { _ in },
     eachLine: (Data) -> Void
   ) throws -> UInt {
-    guard let entry = archive[path] else { throw Error.noSuchFile(path: path) }
+    // Try exact match first, then case-insensitive match
+    let entry =
+      archive[path] ?? archive.first { $0.path.caseInsensitiveCompare(path) == .orderedSame }
+    guard let entry else { throw Error.noSuchFile(path: path) }
     var buffer = Data(capacity: chunkSize)
     var lines: UInt = 0
     var totalBytesProcessed: UInt64 = 0
@@ -73,8 +77,21 @@ public final class ArchiveFileDistribution: Distribution {
 
       Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
 
-      // Process lines from buffer
-      while let EOL = buffer.range(of: delimiter) {
+      // Process lines from buffer - handle both \r\n and \n line endings
+      while true {
+        // Find whichever delimiter appears first
+        let crlfRange = buffer.range(of: crlfDelimiter)
+        let lfRange = buffer.range(of: lfDelimiter)
+
+        let EOL: Range<Data.Index>?
+        if let crlf = crlfRange, let lf = lfRange {
+          EOL = crlf.lowerBound < lf.lowerBound ? crlf : lf
+        } else {
+          EOL = crlfRange ?? lfRange
+        }
+
+        guard let EOL else { break }
+
         if EOL.startIndex == 0 {
           // Empty line - just remove delimiter
           buffer.removeSubrange(EOL)

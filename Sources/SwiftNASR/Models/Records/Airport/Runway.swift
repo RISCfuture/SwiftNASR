@@ -29,7 +29,7 @@ public struct Runway: Record {
   public let lengthSource: String?
 
   /// The date the runway length was determined.
-  public let lengthSourceDate: Date?
+  public let lengthSourceDate: DateComponents?
 
   /// The materials that the runway is made from. Having multiple materials in
   /// this set indicates that the runway consists of multiple segments of
@@ -57,23 +57,23 @@ public struct Runway: Record {
   public package(set) var reciprocalEnd: RunwayEnd?
 
   /// The maximum weight of an aircraft with single-wheel type landing gear
-  /// (e.g., Douglas DC-3, F-15 Eagle).
+  /// (thousands of pounds; e.g., Douglas DC-3, F-15 Eagle).
   public let singleWheelWeightBearingCapacity: UInt?
 
   /// The maximum weight of an aircraft with dual-wheel type landing gear
-  /// (e.g., Beech 1900, Boeing 737, Airbus A319).
+  /// (thousands of pounds; e.g., Beech 1900, Boeing 737, Airbus A319).
   public let dualWheelWeightBearingCapacity: UInt?
 
   /// The maximum weight of an aircraft with two dual wheels in tandem type
-  /// landing gear (e.g., Boeing 707).
+  /// landing gear (thousands of pounds; e.g., Boeing 707).
   public let tandemDualWheelWeightBearingCapacity: UInt?
 
-  /// The maximum weight of an aircraft with two  dual wheels in double tandem
-  /// body gear (e.g., Boeing 747).
+  /// The maximum weight of an aircraft with two dual wheels in double tandem
+  /// body gear (thousands of pounds; e.g., Boeing 747).
   public let doubleTandemDualWheelWeightBearingCapacity: UInt?
 
   /// The remarks for this runway record and its fields.
-  public var remarks = Remarks<Field>()
+  public internal(set) var remarks = Remarks<Field>()
 
   /// `true` if the runway consists entirely of paved materials (no dirt,
   /// turf, sand, water, etc.).
@@ -113,7 +113,7 @@ public struct Runway: Record {
     length: UInt?,
     width: UInt?,
     lengthSource: String?,
-    lengthSourceDate: Date?,
+    lengthSourceDate: DateComponents?,
     materials: Set<Material>,
     condition: Condition?,
     treatment: Treatment?,

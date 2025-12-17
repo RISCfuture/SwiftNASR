@@ -284,8 +284,8 @@ extension FixedWidthAirportParser {
     Int, RunwayEndType
   )? {
     for (index, runway) in airport.runways.enumerated() {
-      if runway.baseEnd.ID == identifier { return (index, .base) }
-      if runway.reciprocalEnd?.ID == identifier { return (index, .reciprocal) }
+      if runway.baseEnd.id == identifier { return (index, .base) }
+      if runway.reciprocalEnd?.id == identifier { return (index, .reciprocal) }
     }
     return nil
   }

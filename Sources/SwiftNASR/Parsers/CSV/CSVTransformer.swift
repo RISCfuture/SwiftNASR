@@ -39,6 +39,13 @@ struct CSVTransformer {
     df.timeZone = zulu
     return df
   }
+  static var dayMonthYear: DateFormatter {
+    let df = DateFormatter()
+    df.dateFormat = "dd MMM yyyy"
+    df.locale = Locale(identifier: "en_US_POSIX")
+    df.timeZone = zulu
+    return df
+  }
 
   private static let ddmmssParser = DDMMSSParser()
 
@@ -150,6 +157,13 @@ struct CSVTransformer {
             }
             return transformed
           }
+        case let .dateComponents(format, nullable):
+          return try transform(value, nullable: nullable, index: csvIndex, trim: true) { str in
+            guard let components = format.parse(str) else {
+              throw CSVParserError.invalidDate(str, at: csvIndex)
+            }
+            return components
+          }
         case let .fixedWidthArray(width, convert, nullable, trim, emptyPlaceholders):
           return try transform(value, nullable: nullable, index: csvIndex, trim: trim) { str in
             return try parseFixedWidthArray(
@@ -192,6 +206,7 @@ struct CSVTransformer {
       case .frequency(let nullable): return nullable
       case .boolean(_, let nullable): return nullable
       case .datetime(_, let nullable): return nullable
+      case .dateComponents(_, let nullable): return nullable
       case .fixedWidthArray(_, _, let nullable, _, _): return nullable
       case .delimitedArray(_, _, let nullable, _, _): return nullable
       case .generic(_, let nullable, _): return nullable

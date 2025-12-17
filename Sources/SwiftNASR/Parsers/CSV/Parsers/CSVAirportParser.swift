@@ -8,6 +8,14 @@ class CSVAirportParser: CSVParser {
 
   var airports = [String: Airport]()
 
+  /// Temporary storage for UNICOM frequencies from FRQ.csv
+  /// Key is the SERVICED_FACILITY (airport ID)
+  private var unicomFrequencies = [String: UInt]()
+
+  /// Temporary storage for CTAF frequencies from FRQ.csv
+  /// Key is the SERVICED_FACILITY (airport ID)
+  private var ctafFrequencies = [String: UInt]()
+
   // MARK: - Transformers (matching FixedWidthAirportParser field types exactly)
 
   private let airportTransformer = CSVTransformer([
@@ -44,15 +52,15 @@ class CSVAirportParser: CSVParser {
     .float(),  //  24 lat - decimal
     .null,  //  25 lon - formatted (use decimal instead)
     .float(),  //  26 lon - decimal
-    .generic { try raw($0, toEnum: Airport.LocationDeterminationMethod.self) },  // 27 ARP determination method
+    .generic { try raw($0, toEnum: SurveyMethod.self) },  // 27 ARP determination method
     .float(),  //  28 elevation
     .generic(
-      { try raw($0, toEnum: Airport.LocationDeterminationMethod.self) },
+      { try raw($0, toEnum: SurveyMethod.self) },
       nullable: .blank
     ),  //  29 elevation determination method
     .integer(nullable: .blank),  //  30 magvar (unsigned, sign from hemisphere)
     .string(nullable: .blank),  //  31 magvar hemisphere (W = negative, E = positive)
-    .datetime(formatter: CSVTransformer.yearOnly, nullable: .blank),  //  32 magvar epoch
+    .dateComponents(format: .yearOnly, nullable: .blank),  //  32 magvar epoch
     .integer(nullable: .blank),  //  33 TPA
     .string(nullable: .blank),  //  34 sectional
     .unsignedInteger(nullable: .blank),  //  35 distance to city
@@ -76,7 +84,7 @@ class CSVAirportParser: CSVParser {
     .string(nullable: .blank),  //  49 NOTAM facility ID
     .boolean(nullable: .blank),  //  50 NOTAM D available
 
-    .datetime(formatter: CSVTransformer.yearMonthSlash, nullable: .blank),  //  51 activation date
+    .dateComponents(format: .yearMonthSlash, nullable: .blank),  //  51 activation date
     .generic { Airport.Status(rawValue: $0) },  //  52 status code
     .null,  //  53 FAR 139 type (skip for now)
     .null,  //  54 FAR 139 carrier service (skip for now)
@@ -108,12 +116,12 @@ class CSVAirportParser: CSVParser {
       { try raw($0, toEnum: Airport.InspectionAgency.self) },
       nullable: .blank
     ),  //  63 inspection agency
-    .datetime(
-      formatter: CSVTransformer.yearMonthDaySlash,
+    .dateComponents(
+      format: .yearMonthDaySlash,
       nullable: .blank
     ),  //  64 last inspection date
-    .datetime(
-      formatter: CSVTransformer.yearMonthDaySlash,
+    .dateComponents(
+      format: .yearMonthDaySlash,
       nullable: .blank
     ),  //  65 last information request completed date
 
@@ -143,14 +151,8 @@ class CSVAirportParser: CSVParser {
       emptyPlaceholders: ["NONE"]
     ),  //  70 bulk oxygen available
 
-    .generic(
-      { try raw($0, toEnum: Airport.LightingSchedule.self) },
-      nullable: .blank
-    ),  //  71 airport lighting schedule
-    .generic(
-      { try raw($0, toEnum: Airport.LightingSchedule.self) },
-      nullable: .blank
-    ),  //  72 beacon lighting schedule
+    .string(nullable: .blank),  //  71 airport lighting schedule
+    .string(nullable: .blank),  //  72 beacon lighting schedule
     .null,  //  73 control tower (derived from TWR_TYPE_CODE)
     .generic(
       { try raw($0, toEnum: Airport.AirportMarker.self) },
@@ -164,13 +166,13 @@ class CSVAirportParser: CSVParser {
     .boolean(nullable: .blank),  //  77 medical use
 
     .string(nullable: .blank),  //  78 position source
-    .datetime(
-      formatter: CSVTransformer.yearMonthDaySlash,
+    .dateComponents(
+      format: .yearMonthDaySlash,
       nullable: .blank
     ),  //  79 position source date
     .string(nullable: .blank),  //  80 elevation source
-    .datetime(
-      formatter: CSVTransformer.yearMonthDaySlash,
+    .dateComponents(
+      format: .yearMonthDaySlash,
       nullable: .blank
     ),  //  81 elevation source date
     .boolean(nullable: .blank),  //  82 contract fuel available
@@ -187,7 +189,7 @@ class CSVAirportParser: CSVParser {
       nullable: .blank
     ),  //  87 wind indicator
     .string(nullable: .blank),  //  88 ICAO code
-    .boolean(nullable: .blank)  //  89 MON (USER_FEE_FLAG in CSV, but treated as boolean for MON)
+    .boolean(nullable: .blank)  //  89 MON (MIN_OP_NETWORK in CSV)
   ])
 
   // CSV field indices for APT_BASE.csv
@@ -275,7 +277,7 @@ class CSVAirportParser: CSVParser {
     APTBaseField.OTHER_SERVICES.rawValue,  // 86
     APTBaseField.WIND_INDCR_FLAG.rawValue,  // 87
     APTBaseField.ICAO_ID.rawValue,  // 88
-    APTBaseField.USER_FEE_FLAG.rawValue  // 89 (USER_FEE_FLAG used for MON boolean)
+    APTBaseField.MIN_OP_NETWORK.rawValue  // 89 (MIN_OP_NETWORK field)
   ]
 
   // MARK: - Protocol Methods
@@ -298,6 +300,11 @@ class CSVAirportParser: CSVParser {
   }
 
   func parse(data _: Data) async throws {
+    // 0. Parse frequencies first (need UNICOM/CTAF before creating airports)
+    try await parseCSVFile(filename: "FRQ.csv", expectedFieldCount: 21) { fields in
+      self.parseFrequencyRecord(fields)
+    }
+
     // 1. Parse base airport records
     try await parseCSVFile(filename: "APT_BASE.csv", expectedFieldCount: 90) { fields in
       try self.parseAirportRecord(fields)
@@ -344,22 +351,36 @@ class CSVAirportParser: CSVParser {
     // Skip non-airport site types if needed
     let validSiteTypes = ["A", "H", "C", "B", "G", "U"]
     guard values.count > APTBaseField.SITE_TYPE_CODE.rawValue else {
-      return
+      throw ParserError.truncatedRecord(
+        recordType: "APT_BASE",
+        expectedMinLength: APTBaseField.SITE_TYPE_CODE.rawValue + 1,
+        actualLength: values.count
+      )
     }
 
     let siteType = values[APTBaseField.SITE_TYPE_CODE.rawValue]
     guard validSiteTypes.contains(siteType) else {
-      return
+      return  // Skip non-airport record types (intentional filter)
     }
 
     let transformedValues = try airportTransformer.applyTo(values, indices: airportFieldIndices)
+    let siteNumber = transformedValues[1] as! String
 
     // Handle special cases
-    let location = Location(
-      latitude: Float(values.doubleAt(APTBaseField.LAT_DECIMAL.rawValue) ?? 0) * 3600,  // Convert decimal degrees to arc-seconds
-      longitude: Float(values.doubleAt(APTBaseField.LONG_DECIMAL.rawValue) ?? 0) * 3600,
-      elevation: transformedValues[28] as? Float
-    )
+    let latDecimal = values.doubleAt(APTBaseField.LAT_DECIMAL.rawValue).map { Float($0) }
+    let lonDecimal = values.doubleAt(APTBaseField.LONG_DECIMAL.rawValue).map { Float($0) }
+    let elevation = transformedValues[28] as? Float
+
+    guard
+      let location = try makeLocation(
+        latitude: latDecimal,
+        longitude: lonDecimal,
+        elevation: elevation,
+        context: "airport \(siteNumber)"
+      )
+    else {
+      throw ParserError.missingRequiredField(field: "position", recordType: "APT_BASE")
+    }
 
     // Parse ARFF if present
     let ARFFCapability = try parseARFFCapability(transformedValues[55] as? [String])
@@ -398,7 +419,7 @@ class CSVAirportParser: CSVParser {
       LID: transformedValues[3] as! String,
       ICAOIdentifier: transformedValues[88] as? String,
       facilityType: transformedValues[2] as! Airport.FacilityType,
-      FAARegion: transformedValues[5] as? Airport.FAARegion,
+      faaRegion: transformedValues[5] as? Airport.FAARegion,
       FAAFieldOfficeCode: transformedValues[6] as? String,
       stateCode: transformedValues[7] as? String,
       county: transformedValues[9] as! String,
@@ -406,29 +427,29 @@ class CSVAirportParser: CSVParser {
       city: transformedValues[11] as! String,
       ownership: transformedValues[13] as! Airport.Ownership,
       publicUse: transformedValues[14] as! Bool,
-      owner: nil,  // TODO: Parse owner info
-      manager: nil,  // TODO: Parse manager info
+      owner: nil,  // Parsed from APT_CON.csv after base record creation
+      manager: nil,  // Parsed from APT_CON.csv after base record creation
       referencePoint: location,
       referencePointDeterminationMethod: transformedValues[27]
-        as! Airport.LocationDeterminationMethod,
-      elevationDeterminationMethod: transformedValues[29] as? Airport.LocationDeterminationMethod,
+        as! SurveyMethod,
+      elevationDeterminationMethod: transformedValues[29] as? SurveyMethod,
       magneticVariation: magneticVariation,
-      magneticVariationEpoch: transformedValues[32] as? Date,
+      magneticVariationEpoch: transformedValues[32] as? DateComponents,
       trafficPatternAltitude: transformedValues[33] as? Int,
       sectionalChart: transformedValues[34] as? String,
       distanceCityToAirport: transformedValues[35] as? UInt,
       directionCityToAirport: transformedValues[36] as? Direction,
       landArea: transformedValues[37] as? Float,
-      boundaryARTCCID: nil,  // Not available in CSV format
-      responsibleARTCCID: transformedValues[38] as! String,
+      boundaryARTCCId: nil,  // Not available in CSV format
+      responsibleARTCCId: transformedValues[38] as! String,
       tieInFSSOnStation: transformedValues[41] as? Bool,
-      tieInFSSID: transformedValues[42] as! String,
-      alternateFSSID: transformedValues[46] as? String,
-      NOTAMIssuerID: transformedValues[49] as? String,
+      tieInFSSId: transformedValues[42] as! String,
+      alternateFSSId: transformedValues[46] as? String,
+      NOTAMIssuerId: transformedValues[49] as? String,
       NOTAMDAvailable: transformedValues[50] as? Bool,
-      activationDate: transformedValues[51] as? Date,
+      activationDate: transformedValues[51] as? DateComponents,
       status: transformedValues[52] as! Airport.Status,
-      ARFFCapability: ARFFCapability,
+      arffCapability: ARFFCapability,
       agreements: (transformedValues[56] as? [Airport.FederalAgreement]) ?? [],
       airspaceAnalysisDetermination: transformedValues[57]
         as? Airport.AirspaceAnalysisDetermination,
@@ -438,40 +459,40 @@ class CSVAirportParser: CSVParser {
       militaryLandingRights: transformedValues[61] as? Bool,
       inspectionMethod: transformedValues[62] as? Airport.InspectionMethod,
       inspectionAgency: transformedValues[63] as? Airport.InspectionAgency,
-      lastPhysicalInspectionDate: transformedValues[64] as? Date,
-      lastInformationRequestCompletedDate: transformedValues[65] as? Date,
+      lastPhysicalInspectionDate: transformedValues[64] as? DateComponents,
+      lastInformationRequestCompletedDate: transformedValues[65] as? DateComponents,
       fuelsAvailable: (transformedValues[66] as? [Airport.FuelType]) ?? [],
       airframeRepairAvailable: transformedValues[67] as? Airport.RepairService,
       powerplantRepairAvailable: transformedValues[68] as? Airport.RepairService,
       bottledOxygenAvailable: (transformedValues[69] as? [Airport.OxygenPressure]) ?? [],
       bulkOxygenAvailable: (transformedValues[70] as? [Airport.OxygenPressure]) ?? [],
-      airportLightingSchedule: transformedValues[71] as? Airport.LightingSchedule,
-      beaconLightingSchedule: transformedValues[72] as? Airport.LightingSchedule,
+      airportLightingSchedule: transformedValues[71] as? String,
+      beaconLightingSchedule: transformedValues[72] as? String,
       controlTower: controlTower,
-      UNICOMFrequency: nil,  // TODO: Parse from separate file
-      CTAF: nil,  // TODO: Parse from separate file
+      UNICOMFrequency: unicomFrequencies[transformedValues[3] as! String],
+      CTAF: ctafFrequencies[transformedValues[3] as! String],
       segmentedCircle: transformedValues[74] as? Airport.AirportMarker,
       beaconColor: transformedValues[75] as? Airport.LensColor,
-      landingFee: transformedValues[76] as? Bool,
+      hasLandingFee: transformedValues[76] as? Bool,
       medicalUse: transformedValues[77] as? Bool,
-      basedSingleEngineGA: nil,  // TODO: Parse from separate file
-      basedMultiEngineGA: nil,  // TODO: Parse from separate file
-      basedJetGA: nil,  // TODO: Parse from separate file
-      basedHelicopterGA: nil,  // TODO: Parse from separate file
-      basedOperationalGliders: nil,  // TODO: Parse from separate file
-      basedOperationalMilitary: nil,  // TODO: Parse from separate file
-      basedUltralights: nil,  // TODO: Parse from separate file
-      annualCommercialOps: nil,  // TODO: Parse from separate file
-      annualCommuterOps: nil,  // TODO: Parse from separate file
-      annualAirTaxiOps: nil,  // TODO: Parse from separate file
-      annualLocalGAOps: nil,  // TODO: Parse from separate file
-      annualTransientGAOps: nil,  // TODO: Parse from separate file
-      annualMilitaryOps: nil,  // TODO: Parse from separate file
-      annualPeriodEndDate: nil,  // TODO: Parse from separate file
+      basedSingleEngineGA: nil,  // Not in CSV distribution (TXT-only)
+      basedMultiEngineGA: nil,  // Not in CSV distribution (TXT-only)
+      basedJetGA: nil,  // Not in CSV distribution (TXT-only)
+      basedHelicopterGA: nil,  // Not in CSV distribution (TXT-only)
+      basedOperationalGliders: nil,  // Not in CSV distribution (TXT-only)
+      basedOperationalMilitary: nil,  // Not in CSV distribution (TXT-only)
+      basedUltralights: nil,  // Not in CSV distribution (TXT-only)
+      annualCommercialOps: nil,  // Not in CSV distribution (TXT-only)
+      annualCommuterOps: nil,  // Not in CSV distribution (TXT-only)
+      annualAirTaxiOps: nil,  // Not in CSV distribution (TXT-only)
+      annualLocalGAOps: nil,  // Not in CSV distribution (TXT-only)
+      annualTransientGAOps: nil,  // Not in CSV distribution (TXT-only)
+      annualMilitaryOps: nil,  // Not in CSV distribution (TXT-only)
+      annualPeriodEndDate: nil,  // Not in CSV distribution (TXT-only)
       positionSource: transformedValues[78] as? String,
-      positionSourceDate: transformedValues[79] as? Date,
+      positionSourceDate: transformedValues[79] as? DateComponents,
       elevationSource: transformedValues[80] as? String,
-      elevationSourceDate: transformedValues[81] as? Date,
+      elevationSourceDate: transformedValues[81] as? DateComponents,
       contractFuelAvailable: transformedValues[82] as? Bool,
       transientStorageFacilities: transientStorageFacilities.presence,
       otherServices: (transformedValues[86] as? [Airport.Service]) ?? [],
@@ -486,6 +507,33 @@ class CSVAirportParser: CSVParser {
     airports[compositeId] = airport
   }
 
+  /// Parse FRQ.csv to extract UNICOM and CTAF frequencies
+  /// FRQ.csv fields (0-based):
+  /// 7: SERVICED_FACILITY (airport ID)
+  /// 17: FREQ (frequency string like "122.9")
+  /// 19: FREQ_USE ("CTAF" or "UNICOM")
+  private func parseFrequencyRecord(_ values: [String]) {
+    guard values.count > 19 else { return }
+
+    let airportId = values[7].trimmingCharacters(in: .whitespaces)
+    guard !airportId.isEmpty else { return }
+
+    let freqString = values[17].trimmingCharacters(in: .whitespaces)
+    let freqUse = values[19].trimmingCharacters(in: .whitespaces).uppercased()
+
+    // Parse frequency using the same method as TXT parser
+    guard let frequency = FixedWidthTransformer.parseFrequency(freqString) else { return }
+
+    switch freqUse {
+      case "UNICOM":
+        unicomFrequencies[airportId] = frequency
+      case "CTAF":
+        ctafFrequencies[airportId] = frequency
+      default:
+        break
+    }
+  }
+
   private func parseARFFCapability(_ ARFFString: [String]?) throws -> Airport.ARFFCapability? {
     guard let ARFFString, ARFFString.count >= 4 else { return nil }
 
@@ -498,7 +546,7 @@ class CSVAirportParser: CSVParser {
     guard let ARFFService = Airport.ARFFCapability.AirService(rawValue: ARFFString[2]) else {
       throw CSVParserError.invalidValue(ARFFString[2], at: 55)
     }
-    guard let ARFFDate = CSVTransformer.monthYear.date(from: ARFFString[3]) else {
+    guard let ARFFDateComponents = DateFormat.monthYear.parse(ARFFString[3]) else {
       throw CSVParserError.invalidValue(ARFFString[3], at: 55)
     }
 
@@ -506,7 +554,7 @@ class CSVAirportParser: CSVParser {
       class: ARFFClass,
       index: ARFFIndex,
       airService: ARFFService,
-      certificationDate: ARFFDate
+      certificationDate: ARFFDateComponents
     )
   }
 
@@ -551,9 +599,10 @@ class CSVAirportParser: CSVParser {
 
     // Parse length source info
     let lengthSource = values.stringAt(APTRunwayField.RWY_LEN_SOURCE.rawValue)
-    let lengthSourceDate = values.stringAt(APTRunwayField.LENGTH_SOURCE_DATE.rawValue).flatMap {
-      CSVTransformer.yearMonthDaySlash.date(from: $0)
-    }
+    let lengthSourceDate: DateComponents? =
+      values
+      .stringAt(APTRunwayField.LENGTH_SOURCE_DATE.rawValue)
+      .flatMap { DateFormat.yearMonthDaySlash.parse($0) }
 
     // Parse weight bearing capacities (values are in thousands of lbs, may be decimal like 12.5)
     let singleWheelWeight = values.doubleAt(APTRunwayField.GROSS_WT_SW.rawValue).map {
@@ -569,8 +618,8 @@ class CSVAirportParser: CSVParser {
 
     // Create a placeholder RunwayEnd - will be populated later from APT_RWY_END.csv
     let placeholderEnd = RunwayEnd(
-      ID: runwayId.split(separator: "/").first.map(String.init) ?? runwayId,
-      trueHeading: nil,
+      id: runwayId.split(separator: "/").first.map(String.init) ?? runwayId,
+      heading: nil,
       instrumentLandingSystem: nil,
       rightTraffic: nil,
       marking: nil,
@@ -593,7 +642,7 @@ class CSVAirportParser: CSVParser {
       approachLighting: nil,
       hasREIL: nil,
       hasCenterlineLighting: nil,
-      endTouchdownLighting: nil,
+      hasEndTouchdownLighting: nil,
       controllingObject: nil,
       positionSource: nil,
       positionSourceDate: nil,
@@ -695,7 +744,7 @@ class CSVAirportParser: CSVParser {
     let siteTypeCode = values[APTRunwayEndField.SITE_TYPE_CODE.rawValue]
     let compositeId = "\(siteNo)*\(siteTypeCode)"
 
-    guard airports[compositeId] != nil else { return }
+    guard let airport = airports[compositeId] else { return }
 
     let runwayId = values[APTRunwayEndField.RWY_ID.rawValue]
     let runwayEndId = values[APTRunwayEndField.RWY_END_ID.rawValue]
@@ -707,7 +756,7 @@ class CSVAirportParser: CSVParser {
       })
     else { return }
 
-    let runwayEnd = try buildRunwayEnd(from: values)
+    let runwayEnd = try buildRunwayEnd(from: values, magneticVariation: airport.magneticVariation)
 
     // Determine if this is base or reciprocal end
     let runwayComponents = runwayId.split(separator: "/")
@@ -721,14 +770,18 @@ class CSVAirportParser: CSVParser {
     }
   }
 
-  private func buildRunwayEnd(from values: [String]) throws -> RunwayEnd {
+  private func buildRunwayEnd(from values: [String], magneticVariation: Int?) throws -> RunwayEnd {
     let endId = values[APTRunwayEndField.RWY_END_ID.rawValue]
-    let trueHeading = values.intAt(APTRunwayEndField.TRUE_ALIGNMENT.rawValue).map { UInt($0) }
+
+    // Convert true heading to Bearing<UInt>
+    let heading = values.intAt(APTRunwayEndField.TRUE_ALIGNMENT.rawValue).map { value in
+      Bearing(UInt(value), reference: .true, magneticVariation: magneticVariation ?? 0)
+    }
 
     // Parse ILS type
-    let ilsCode = values.stringAt(APTRunwayEndField.ILS_TYPE.rawValue)
+    let ILSCode = values.stringAt(APTRunwayEndField.ILS_TYPE.rawValue)
     let instrumentLandingSystem: RunwayEnd.InstrumentLandingSystem? =
-      if let code = ilsCode {
+      if let code = ILSCode {
         RunwayEnd.InstrumentLandingSystem.for(code)
       } else {
         nil
@@ -786,7 +839,7 @@ class CSVAirportParser: CSVParser {
     let vgsiCode = values.stringAt(APTRunwayEndField.VGSI_CODE.rawValue)
     let visualGlideslopeIndicator: RunwayEnd.VisualGlideslopeIndicator? =
       if let code = vgsiCode {
-        try? parseVGSI(code)
+        try parseVGSI(code)
       } else {
         nil
       }
@@ -833,7 +886,7 @@ class CSVAirportParser: CSVParser {
 
     // Parse TDZ lighting
     let hasTDZFlag = values.stringAt(APTRunwayEndField.TDZ_LGT_AVBL_FLAG.rawValue)
-    let endTouchdownLighting: Bool? =
+    let hasEndTouchdownLighting: Bool? =
       if let flag = hasTDZFlag {
         flag == "Y"
       } else {
@@ -857,41 +910,41 @@ class CSVAirportParser: CSVParser {
 
     // Parse source info
     let positionSource = values.stringAt(APTRunwayEndField.RWY_END_PSN_SOURCE.rawValue)
-    let positionSourceDate =
+    let positionSourceDate: DateComponents? =
       values.stringAt(APTRunwayEndField.RWY_END_PSN_DATE.rawValue).flatMap {
-        CSVTransformer.yearMonthDaySlash.date(from: $0)
+        DateFormat.yearMonthDaySlash.parse($0)
       }
 
     let elevationSource = values.stringAt(APTRunwayEndField.RWY_END_ELEV_SOURCE.rawValue)
-    let elevationSourceDate =
+    let elevationSourceDate: DateComponents? =
       values.stringAt(APTRunwayEndField.RWY_END_ELEV_DATE.rawValue).flatMap {
-        CSVTransformer.yearMonthDaySlash.date(from: $0)
+        DateFormat.yearMonthDaySlash.parse($0)
       }
 
     let displacedThresholdPositionSource =
       values.stringAt(APTRunwayEndField.DSPL_THR_PSN_SOURCE.rawValue)
-    let displacedThresholdPositionSourceDate =
+    let displacedThresholdPositionSourceDate: DateComponents? =
       values.stringAt(APTRunwayEndField.RWY_END_DSPL_THR_PSN_DATE.rawValue).flatMap {
-        CSVTransformer.yearMonthDaySlash.date(from: $0)
+        DateFormat.yearMonthDaySlash.parse($0)
       }
 
     let displacedThresholdElevationSource =
       values.stringAt(APTRunwayEndField.DSPL_THR_ELEV_SOURCE.rawValue)
-    let displacedThresholdElevationSourceDate =
+    let displacedThresholdElevationSourceDate: DateComponents? =
       values.stringAt(APTRunwayEndField.RWY_END_DSPL_THR_ELEV_DATE.rawValue).flatMap {
-        CSVTransformer.yearMonthDaySlash.date(from: $0)
+        DateFormat.yearMonthDaySlash.parse($0)
       }
 
     let touchdownZoneElevationSource =
       values.stringAt(APTRunwayEndField.TDZ_ELEV_SOURCE.rawValue)
-    let touchdownZoneElevationSourceDate =
+    let touchdownZoneElevationSourceDate: DateComponents? =
       values.stringAt(APTRunwayEndField.RWY_END_TDZ_ELEV_DATE.rawValue).flatMap {
-        CSVTransformer.yearMonthDaySlash.date(from: $0)
+        DateFormat.yearMonthDaySlash.parse($0)
       }
 
     return RunwayEnd(
-      ID: endId,
-      trueHeading: trueHeading,
+      id: endId,
+      heading: heading,
       instrumentLandingSystem: instrumentLandingSystem,
       rightTraffic: rightTraffic,
       marking: marking,
@@ -914,7 +967,7 @@ class CSVAirportParser: CSVParser {
       approachLighting: approachLighting,
       hasREIL: hasREIL,
       hasCenterlineLighting: hasCenterlineLighting,
-      endTouchdownLighting: endTouchdownLighting,
+      hasEndTouchdownLighting: hasEndTouchdownLighting,
       controllingObject: controllingObject,
       positionSource: positionSource,
       positionSourceDate: positionSourceDate,
@@ -1096,7 +1149,7 @@ class CSVAirportParser: CSVParser {
       return nil
     }
 
-    let intersectingRunwayID =
+    let intersectingRunwayId =
       values.stringAt(APTRunwayEndField.RWY_END_INTERSECT_LAHSO.rawValue)
     let definingEntity = values.stringAt(APTRunwayEndField.LAHSO_DESC.rawValue)
 
@@ -1113,12 +1166,12 @@ class CSVAirportParser: CSVParser {
     let positionSource = values.stringAt(APTRunwayEndField.LAHSO_PSN_SOURCE.rawValue)
     let positionSourceDate =
       values.stringAt(APTRunwayEndField.RWY_END_LAHSO_PSN_DATE.rawValue).flatMap {
-        CSVTransformer.yearMonthDaySlash.date(from: $0)
+        DateFormat.yearMonthDaySlash.parse($0)
       }
 
     return RunwayEnd.LAHSOPoint(
       availableDistance: UInt(availableDistance),
-      intersectingRunwayID: intersectingRunwayID,
+      intersectingRunwayId: intersectingRunwayId,
       definingEntity: definingEntity,
       position: position,
       positionSource: positionSource,
@@ -1139,11 +1192,11 @@ class CSVAirportParser: CSVParser {
     let day = values.stringAt(APTAttendanceField.DAY.rawValue) ?? ""
     let hour = values.stringAt(APTAttendanceField.HOUR.rawValue) ?? ""
 
-    // Skip unattended entries
-    if month == "UNATNDD" || month == "UNATTND" { return }
-
+    // Handle unattended entries as custom schedules (like TXT parser does)
     let schedule: AttendanceSchedule
-    if !month.isEmpty && !day.isEmpty && !hour.isEmpty {
+    if month == "UNATNDD" || month == "UNATTND" {
+      schedule = .custom(month)
+    } else if !month.isEmpty && !day.isEmpty && !hour.isEmpty {
       schedule = .components(monthly: month, daily: day, hourly: hour)
     } else {
       // Concatenate non-empty parts as custom schedule
@@ -1218,13 +1271,13 @@ class CSVAirportParser: CSVParser {
     process: (inout RunwayEnd) -> Void
   ) -> Bool {
     for (index, runway) in airport.runways.enumerated() {
-      if runway.baseEnd.ID == identifier {
+      if runway.baseEnd.id == identifier {
         var end = runway.baseEnd
         process(&end)
         airport.runways[index].baseEnd = end
         return true
       }
-      if let reciprocal = runway.reciprocalEnd, reciprocal.ID == identifier {
+      if let reciprocal = runway.reciprocalEnd, reciprocal.id == identifier {
         var end = reciprocal
         process(&end)
         airport.runways[index].reciprocalEnd = end
@@ -1259,9 +1312,9 @@ class CSVAirportParser: CSVParser {
     let runway = airports[compositeId]!.runways[runwayIndex]
 
     // Determine which end this arresting system belongs to
-    if runway.baseEnd.ID == runwayEndId {
+    if runway.baseEnd.id == runwayEndId {
       airports[compositeId]!.runways[runwayIndex].baseEnd.arrestingSystems.append(deviceCode)
-    } else if runway.reciprocalEnd?.ID == runwayEndId {
+    } else if runway.reciprocalEnd?.id == runwayEndId {
       airports[compositeId]!.runways[runwayIndex].reciprocalEnd!.arrestingSystems.append(deviceCode)
     }
   }
@@ -1320,6 +1373,29 @@ class CSVAirportParser: CSVParser {
       airports[compositeId]!.owner = person
     } else if title == "MANAGER" {
       airports[compositeId]!.manager = person
+    }
+  }
+
+  /// Creates a Location from optional lat/lon (decimal degrees), throwing if only one is present.
+  /// Converts decimal degrees to arc-seconds for Location storage.
+  private func makeLocation(
+    latitude: Float?,
+    longitude: Float?,
+    elevation: Float?,
+    context: String
+  ) throws -> Location? {
+    switch (latitude, longitude) {
+      case let (.some(lat), .some(lon)):
+        // Convert decimal degrees to arc-seconds (multiply by 3600)
+        return Location(latitude: lat * 3600, longitude: lon * 3600, elevation: elevation)
+      case (.none, .none):
+        return nil
+      default:
+        throw ParserError.invalidLocation(
+          latitude: latitude,
+          longitude: longitude,
+          context: context
+        )
     }
   }
 }

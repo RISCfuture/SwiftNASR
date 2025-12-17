@@ -7,9 +7,9 @@ import Quick
 class CSVFSSParserSpec: AsyncSpec {
   override class func spec() {
     describe("CSVFSSParser") {
-      let csvDirectory = URL(
-        fileURLWithPath:
-          "\(FileManager.default.currentDirectoryPath)/Tests/SwiftNASRTests/Resources/MockCSVDistribution"
+      let csvDirectory = Bundle.module.resourceURL!.appendingPathComponent(
+        "MockCSVDistribution",
+        isDirectory: true
       )
 
       context("when parsing CSV files") {
@@ -22,7 +22,7 @@ class CSVFSSParserSpec: AsyncSpec {
           expect(parser.FSSes.count).to(beGreaterThan(0))
 
           if let firstFSS = parser.FSSes.values.first {
-            expect(firstFSS.ID).notTo(beEmpty())
+            expect(firstFSS.id).notTo(beEmpty())
             expect(firstFSS.name).notTo(beEmpty())
             expect(firstFSS.hoursOfOperation).notTo(beEmpty())
             expect(firstFSS.location?.latitude).notTo(beNil())

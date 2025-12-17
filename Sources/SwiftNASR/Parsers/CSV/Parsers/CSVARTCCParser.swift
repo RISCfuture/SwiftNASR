@@ -70,7 +70,7 @@ class CSVARTCCParser: CSVParser {
       let facilityType = self.parseFacilityType(fields[3])
 
       let center = ARTCC(
-        ID: transformedValues[1] as! String,
+        code: transformedValues[1] as! String,
         ICAOID: transformedValues[13] as? String,
         type: facilityType,
         name: transformedValues[2] as! String,
@@ -84,9 +84,56 @@ class CSVARTCCParser: CSVParser {
       self.ARTCCs[key] = center
     }
 
-    // TODO: Parse ATC_RMK.csv for remarks
-    // TODO: Parse ATC_SVC.csv for services
-    // TODO: Parse ATC_ATIS.csv for ATIS info
+    // Parse ATC_RMK.csv for remarks
+    try await parseCSVFile(filename: "ATC_RMK.csv", expectedFieldCount: 13) { fields in
+      guard fields.count >= 13 else { return }
+
+      // Only process remarks for ARTCC facility types
+      let facilityType = self.parseFacilityType(fields[3])
+      guard
+        facilityType == .ARTCC || facilityType == .CERAP || facilityType == .RCAG
+          || facilityType == .SECRA || facilityType == .ARSR
+      else { return }
+
+      let facilityID = fields[5].trimmingCharacters(in: .whitespaces)
+      let city = fields[6].trimmingCharacters(in: .whitespaces)
+      let remark = fields[12].trimmingCharacters(in: .whitespaces)
+
+      guard !facilityID.isEmpty, !remark.isEmpty else { return }
+
+      let key = ARTCCKey(values: [nil, facilityID, city, facilityType])
+      if var center = self.ARTCCs[key] {
+        center.remarks.append(.general(remark))
+        self.ARTCCs[key] = center
+      }
+    }
+
+    // Parse ATC_SVC.csv for services
+    try await parseCSVFile(filename: "ATC_SVC.csv", expectedFieldCount: 9) { fields in
+      guard fields.count >= 9 else { return }
+
+      // Only process services for ARTCC facility types
+      let facilityType = self.parseFacilityType(fields[3])
+      guard
+        facilityType == .ARTCC || facilityType == .CERAP || facilityType == .RCAG
+          || facilityType == .SECRA || facilityType == .ARSR
+      else { return }
+
+      let facilityID = fields[5].trimmingCharacters(in: .whitespaces)
+      let city = fields[6].trimmingCharacters(in: .whitespaces)
+      let service = fields[8].trimmingCharacters(in: .whitespaces)
+
+      guard !facilityID.isEmpty, !service.isEmpty else { return }
+
+      let key = ARTCCKey(values: [nil, facilityID, city, facilityType])
+      if var center = self.ARTCCs[key] {
+        center.services.append(service)
+        self.ARTCCs[key] = center
+      }
+    }
+
+    // Note: ATC_ATIS.csv does not contain ARTCC facility types.
+    // ATIS (Automatic Terminal Information Service) is an airport service.
   }
 
   func finish(data: NASRData) async {

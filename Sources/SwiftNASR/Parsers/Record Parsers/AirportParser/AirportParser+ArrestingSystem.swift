@@ -26,9 +26,9 @@ extension FixedWidthAirportParser {
 
     let runwayEndIdentifier = transformedValues[4] as! String
     let runwayEnd: RunwayEndType =
-      if runway.baseEnd.ID == runwayEndIdentifier {
+      if runway.baseEnd.id == runwayEndIdentifier {
         .base
-      } else if runway.reciprocalEnd?.ID == runwayEndIdentifier { .reciprocal } else {
+      } else if runway.reciprocalEnd?.id == runwayEndIdentifier { .reciprocal } else {
         throw FixedWidthParserError.invalidValue(runwayEndIdentifier, at: 4)
       }
 

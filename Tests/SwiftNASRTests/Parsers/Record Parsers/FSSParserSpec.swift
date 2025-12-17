@@ -29,7 +29,7 @@ class FSSParserSpec: AsyncSpec {
         }
         expect(FSSes.count).to(equal(2))
 
-        guard let FTW = FSSes.first(where: { $0.ID == "FTW" }) else {
+        guard let FTW = FSSes.first(where: { $0.id == "FTW" }) else {
           fail()
           return
         }

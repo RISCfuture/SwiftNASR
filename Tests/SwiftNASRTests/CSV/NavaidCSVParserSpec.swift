@@ -7,9 +7,9 @@ import Quick
 class CSVNavaidParserSpec: AsyncSpec {
   override class func spec() {
     describe("CSVNavaidParser") {
-      let csvDirectory = URL(
-        fileURLWithPath:
-          "\(FileManager.default.currentDirectoryPath)/Tests/SwiftNASRTests/Resources/MockCSVDistribution"
+      let csvDirectory = Bundle.module.resourceURL!.appendingPathComponent(
+        "MockCSVDistribution",
+        isDirectory: true
       )
 
       context("when parsing CSV files") {
@@ -22,7 +22,7 @@ class CSVNavaidParserSpec: AsyncSpec {
           expect(parser.navaids.count).to(beGreaterThan(0))
 
           if let firstNavaid = parser.navaids.values.first {
-            expect(firstNavaid.ID).notTo(beEmpty())
+            expect(firstNavaid.id).notTo(beEmpty())
             expect(firstNavaid.name).notTo(beEmpty())
             expect(firstNavaid.city).notTo(beEmpty())
             expect(firstNavaid.position.latitude).notTo(beNil())
@@ -43,7 +43,8 @@ class CSVNavaidParserSpec: AsyncSpec {
             expect(navaid.checkpoints.count).to(beGreaterThan(0))
 
             if let checkpoint = navaid.checkpoints.first {
-              expect(checkpoint.bearing).to(beGreaterThan(0))
+              expect(checkpoint.bearing.value).to(beGreaterThan(0))
+              expect(checkpoint.bearing.reference).to(equal(.magnetic))
               // Check appropriate description based on checkpoint type
               if checkpoint.airDescription != nil {
                 expect(checkpoint.airDescription).notTo(beEmpty())

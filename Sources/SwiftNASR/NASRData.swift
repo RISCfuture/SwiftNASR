@@ -37,11 +37,11 @@ public actor NASRData {
       guard airports != nil else { return }
       for airportID in 0..<airports!.count {
         airports![airportID].data = self
-        let findRunwayByID = airports![airportID].findRunwayByID()
+        let findRunwayById = airports![airportID].findRunwayById()
         for runwayIndex in 0..<airports![airportID].runways.count {
-          airports![airportID].runways[runwayIndex].baseEnd.LAHSO?.findRunwayByID = findRunwayByID
-          airports![airportID].runways[runwayIndex].reciprocalEnd?.LAHSO?.findRunwayByID =
-            findRunwayByID
+          airports![airportID].runways[runwayIndex].baseEnd.LAHSO?.findRunwayById = findRunwayById
+          airports![airportID].runways[runwayIndex].reciprocalEnd?.LAHSO?.findRunwayById =
+            findRunwayById
         }
       }
     }
@@ -53,9 +53,9 @@ public actor NASRData {
       guard ARTCCs != nil else { return }
       for ARTCCIndex in 0..<ARTCCs!.count {
         ARTCCs![ARTCCIndex].data = self
-        let findRunwayByID = ARTCCs![ARTCCIndex].findAirportByID()
+        let findRunwayById = ARTCCs![ARTCCIndex].findAirportById()
         for freqIndex in 0..<ARTCCs![ARTCCIndex].frequencies.count {
-          ARTCCs![ARTCCIndex].frequencies[freqIndex].findAirportByID = findRunwayByID
+          ARTCCs![ARTCCIndex].frequencies[freqIndex].findAirportById = findRunwayById
         }
       }
     }
@@ -89,13 +89,202 @@ public actor NASRData {
     }
   }
 
+  /// Fixes (reporting points) loaded by SwiftNASR.
+  public var fixes: [Fix]? {
+    didSet {
+      guard fixes != nil else { return }
+      for fixIndex in 0..<fixes!.count {
+        fixes![fixIndex].data = self
+      }
+    }
+  }
+
+  /// Weather stations (AWOS/ASOS) loaded by SwiftNASR.
+  public var weatherStations: [WeatherStation]? {
+    didSet {
+      guard weatherStations != nil else { return }
+      for stationIndex in 0..<weatherStations!.count {
+        weatherStations![stationIndex].data = self
+      }
+    }
+  }
+
+  /// Airways loaded by SwiftNASR.
+  public var airways: [Airway]? {
+    didSet {
+      guard airways != nil else { return }
+      for airwayIndex in 0..<airways!.count {
+        airways![airwayIndex].data = self
+      }
+    }
+  }
+
+  /// ILS facilities loaded by SwiftNASR.
+  public var ILSFacilities: [ILS]? {
+    didSet {
+      guard ILSFacilities != nil else { return }
+      for ilsIndex in 0..<ILSFacilities!.count {
+        ILSFacilities![ilsIndex].data = self
+      }
+    }
+  }
+
+  /// Terminal communications facilities loaded by SwiftNASR.
+  public var terminalCommFacilities: [TerminalCommFacility]? {
+    didSet {
+      guard terminalCommFacilities != nil else { return }
+      for facilityIndex in 0..<terminalCommFacilities!.count {
+        terminalCommFacilities![facilityIndex].data = self
+      }
+    }
+  }
+
+  /// Departure/Arrival procedures complete (STARs and DPs) loaded by SwiftNASR.
+  /// This contains the complete comprehensive set including multiple main body
+  /// procedures and procedures without computer IDs.
+  public var departureArrivalProceduresComplete: [DepartureArrivalProcedure]? {
+    didSet {
+      guard departureArrivalProceduresComplete != nil else { return }
+      for index in 0..<departureArrivalProceduresComplete!.count {
+        departureArrivalProceduresComplete![index].data = self
+      }
+    }
+  }
+
+  /// Preferred IFR routes loaded by SwiftNASR.
+  public var preferredRoutes: [PreferredRoute]? {
+    didSet {
+      guard preferredRoutes != nil else { return }
+      for index in 0..<preferredRoutes!.count {
+        preferredRoutes![index].data = self
+      }
+    }
+  }
+
+  /// Published holding patterns loaded by SwiftNASR.
+  public var holds: [Hold]? {
+    didSet {
+      guard holds != nil else { return }
+      for index in 0..<holds!.count {
+        holds![index].data = self
+      }
+    }
+  }
+
+  /// Weather reporting locations loaded by SwiftNASR.
+  public var weatherReportingLocations: [WeatherReportingLocation]? {
+    didSet {
+      guard weatherReportingLocations != nil else { return }
+      for index in 0..<weatherReportingLocations!.count {
+        weatherReportingLocations![index].data = self
+      }
+    }
+  }
+
+  /// Parachute jump areas loaded by SwiftNASR.
+  public var parachuteJumpAreas: [ParachuteJumpArea]? {
+    didSet {
+      guard parachuteJumpAreas != nil else { return }
+      for pjaIndex in 0..<parachuteJumpAreas!.count {
+        parachuteJumpAreas![pjaIndex].data = self
+      }
+    }
+  }
+
+  /// Military training routes loaded by SwiftNASR.
+  public var militaryTrainingRoutes: [MilitaryTrainingRoute]? {
+    didSet {
+      guard militaryTrainingRoutes != nil else { return }
+      for mtrIndex in 0..<militaryTrainingRoutes!.count {
+        militaryTrainingRoutes![mtrIndex].data = self
+      }
+    }
+  }
+
+  /// Coded departure routes loaded by SwiftNASR.
+  public var codedDepartureRoutes: [CodedDepartureRoute]? {
+    didSet {
+      guard codedDepartureRoutes != nil else { return }
+      for cdrIndex in 0..<codedDepartureRoutes!.count {
+        codedDepartureRoutes![cdrIndex].data = self
+      }
+    }
+  }
+
+  /// Miscellaneous activity areas loaded by SwiftNASR.
+  public var miscActivityAreas: [MiscActivityArea]? {
+    didSet {
+      guard miscActivityAreas != nil else { return }
+      for maaIndex in 0..<miscActivityAreas!.count {
+        miscActivityAreas![maaIndex].data = self
+      }
+    }
+  }
+
+  /// ARTCC boundary segments loaded by SwiftNASR.
+  public var ARTCCBoundarySegments: [ARTCCBoundarySegment]? {
+    didSet {
+      guard ARTCCBoundarySegments != nil else { return }
+      for arbIndex in 0..<ARTCCBoundarySegments!.count {
+        ARTCCBoundarySegments![arbIndex].data = self
+      }
+    }
+  }
+
+  /// FSS communication facilities loaded by SwiftNASR.
+  public var FSSCommFacilities: [FSSCommFacility]? {
+    didSet {
+      guard FSSCommFacilities != nil else { return }
+      for comIndex in 0..<FSSCommFacilities!.count {
+        FSSCommFacilities![comIndex].data = self
+      }
+    }
+  }
+
+  /// ATS (Air Traffic Service) airways loaded by SwiftNASR.
+  public var atsAirways: [ATSAirway]? {
+    didSet {
+      guard atsAirways != nil else { return }
+      for atsIndex in 0..<atsAirways!.count {
+        atsAirways![atsIndex].data = self
+      }
+    }
+  }
+
+  /// Location identifiers loaded by SwiftNASR.
+  public var locationIdentifiers: [LocationIdentifier]? {
+    didSet {
+      guard locationIdentifiers != nil else { return }
+      for lidIndex in 0..<locationIdentifiers!.count {
+        locationIdentifiers![lidIndex].data = self
+      }
+    }
+  }
+
   func finishParsing(
     cycle: Cycle? = nil,
     states: [State]? = nil,
     airports: [Airport]? = nil,
     ARTCCs: [ARTCC]? = nil,
     FSSes: [FSS]? = nil,
-    navaids: [Navaid]? = nil
+    navaids: [Navaid]? = nil,
+    fixes: [Fix]? = nil,
+    weatherStations: [WeatherStation]? = nil,
+    airways: [Airway]? = nil,
+    ILSFacilities: [ILS]? = nil,
+    terminalCommFacilities: [TerminalCommFacility]? = nil,
+    departureArrivalProceduresComplete: [DepartureArrivalProcedure]? = nil,
+    preferredRoutes: [PreferredRoute]? = nil,
+    holds: [Hold]? = nil,
+    weatherReportingLocations: [WeatherReportingLocation]? = nil,
+    parachuteJumpAreas: [ParachuteJumpArea]? = nil,
+    militaryTrainingRoutes: [MilitaryTrainingRoute]? = nil,
+    codedDepartureRoutes: [CodedDepartureRoute]? = nil,
+    miscActivityAreas: [MiscActivityArea]? = nil,
+    ARTCCBoundarySegments: [ARTCCBoundarySegment]? = nil,
+    FSSCommFacilities: [FSSCommFacility]? = nil,
+    atsAirways: [ATSAirway]? = nil,
+    locationIdentifiers: [LocationIdentifier]? = nil
   ) {
     if let cycle { self.cycle = cycle }
     if let states { self.states = states }
@@ -103,6 +292,25 @@ public actor NASRData {
     if let ARTCCs { self.ARTCCs = ARTCCs }
     if let FSSes { self.FSSes = FSSes }
     if let navaids { self.navaids = navaids }
+    if let fixes { self.fixes = fixes }
+    if let weatherStations { self.weatherStations = weatherStations }
+    if let airways { self.airways = airways }
+    if let ILSFacilities { self.ILSFacilities = ILSFacilities }
+    if let terminalCommFacilities { self.terminalCommFacilities = terminalCommFacilities }
+    if let departureArrivalProceduresComplete {
+      self.departureArrivalProceduresComplete = departureArrivalProceduresComplete
+    }
+    if let preferredRoutes { self.preferredRoutes = preferredRoutes }
+    if let holds { self.holds = holds }
+    if let weatherReportingLocations { self.weatherReportingLocations = weatherReportingLocations }
+    if let parachuteJumpAreas { self.parachuteJumpAreas = parachuteJumpAreas }
+    if let militaryTrainingRoutes { self.militaryTrainingRoutes = militaryTrainingRoutes }
+    if let codedDepartureRoutes { self.codedDepartureRoutes = codedDepartureRoutes }
+    if let miscActivityAreas { self.miscActivityAreas = miscActivityAreas }
+    if let ARTCCBoundarySegments { self.ARTCCBoundarySegments = ARTCCBoundarySegments }
+    if let FSSCommFacilities { self.FSSCommFacilities = FSSCommFacilities }
+    if let atsAirways { self.atsAirways = atsAirways }
+    if let locationIdentifiers { self.locationIdentifiers = locationIdentifiers }
   }
 }
 
@@ -131,7 +339,7 @@ extension Airport {
   public var boundaryARTCCs: [ARTCC]? {
     get async {
       guard let ARTCCs = await data?.ARTCCs else { return nil }
-      return ARTCCs.filter { $0.ID == boundaryARTCCID }
+      return ARTCCs.filter { $0.code == boundaryARTCCId }
     }
   }
 
@@ -140,7 +348,7 @@ extension Airport {
   public var responsibleARTCCs: [ARTCC]? {
     get async {
       guard let ARTCCs = await data?.ARTCCs else { return nil }
-      return ARTCCs.filter { $0.ID == responsibleARTCCID }
+      return ARTCCs.filter { $0.code == responsibleARTCCId }
     }
   }
 
@@ -148,7 +356,7 @@ extension Airport {
   public var tieInFSS: FSS? {
     get async {
       guard let FSSes = await data?.FSSes else { return nil }
-      return FSSes.first { $0.ID == tieInFSSID }
+      return FSSes.first { $0.id == tieInFSSId }
     }
   }
 
@@ -157,9 +365,9 @@ extension Airport {
   public var alternateFSS: FSS? {
     get async {
       guard let FSSes = await data?.FSSes else { return nil }
-      guard let alternateFSSID else { return nil }
+      guard let alternateFSSId else { return nil }
 
-      return FSSes.first { $0.ID == alternateFSSID }
+      return FSSes.first { $0.id == alternateFSSId }
     }
   }
 
@@ -167,15 +375,15 @@ extension Airport {
   public var NOTAMIssuer: FSS? {
     get async {
       guard let FSSes = await data?.FSSes else { return nil }
-      guard let NOTAMIssuerID else { return nil }
+      guard let NOTAMIssuerId else { return nil }
 
-      return FSSes.first { $0.ID == NOTAMIssuerID }
+      return FSSes.first { $0.id == NOTAMIssuerId }
     }
   }
 }
 
 extension Airport {
-  func findRunwayByID() -> (@Sendable (_ runwayID: String) -> Runway?) {
+  func findRunwayById() -> (@Sendable (_ runwayID: String) -> Runway?) {
     return { runwayID in
       return self.runways.first { $0.identification == runwayID }
     }
@@ -186,8 +394,8 @@ extension RunwayEnd.LAHSOPoint {
 
   /// The intersecting runway defining the LAHSO point, if defined by runway.
   public var intersectingRunway: Runway? {
-    guard let intersectingRunwayID else { return nil }
-    return findRunwayByID(intersectingRunwayID)
+    guard let intersectingRunwayId else { return nil }
+    return findRunwayById(intersectingRunwayId)
   }
 }
 
@@ -203,11 +411,11 @@ extension ARTCC {
     }
   }
 
-  func findAirportByID() -> (@Sendable (_ airportID: String) async -> Airport?) {
-    return { airportID in
+  func findAirportById() -> (@Sendable (_ airportId: String) async -> Airport?) {
+    return { airportId in
       guard let airports = await self.data?.airports else { return nil }
 
-      return airports.first { $0.LID == airportID }
+      return airports.first { $0.LID == airportId }
     }
   }
 }
@@ -218,7 +426,7 @@ extension ARTCC.CommFrequency {
   public var associatedAirport: Airport? {
     get async {
       guard let associatedAirportCode else { return nil }
-      return await findAirportByID(associatedAirportCode)
+      return await findAirportById(associatedAirportCode)
     }
   }
 }
@@ -228,10 +436,10 @@ extension FSS {
   /// The nearest FSS with teletype capability.
   public var nearestFSSWithTeletype: FSS? {
     get async {
-      guard let nearestFSSIDWithTeletype else { return nil }
+      guard let nearestFSSIdWithTeletype else { return nil }
       guard let FSSes = await data?.FSSes else { return nil }
 
-      return FSSes.first { $0.ID == nearestFSSIDWithTeletype }
+      return FSSes.first { $0.id == nearestFSSIdWithTeletype }
     }
   }
 
@@ -249,10 +457,10 @@ extension FSS {
   /// The airport this FSS is associated with, if any.
   public var airport: Airport? {
     get async {
-      guard let airportID else { return nil }
+      guard let airportId else { return nil }
       guard let airports = await data?.airports else { return nil }
 
-      return airports.first { $0.LID == airportID }
+      return airports.first { $0.id == airportId }
     }
   }
 }
@@ -278,11 +486,11 @@ extension FSS.CommFacility {
 }
 
 extension Navaid {
-  func findAirportByID() -> (@Sendable (_ airportID: String) async -> Airport?) {
-    return { airportID in
+  func findAirportById() -> (@Sendable (_ airportId: String) async -> Airport?) {
+    return { airportId in
       guard let airports = await self.data?.airports else { return nil }
 
-      return airports.first { $0.LID == airportID }
+      return airports.first { $0.LID == airportId }
     }
   }
 
@@ -307,7 +515,7 @@ extension Navaid {
   public var highAltitudeARTCC: ARTCC? {
     get async {
       guard let highAltitudeARTCCCode else { return nil }
-      return await data?.ARTCCs?.first { $0.ID == highAltitudeARTCCCode }
+      return await data?.ARTCCs?.first { $0.code == highAltitudeARTCCCode }
     }
   }
 
@@ -315,7 +523,7 @@ extension Navaid {
   public var lowAltitudeARTCC: ARTCC? {
     get async {
       guard let lowAltitudeARTCCCode else { return nil }
-      return await data?.ARTCCs?.first { $0.ID == lowAltitudeARTCCCode }
+      return await data?.ARTCCs?.first { $0.code == lowAltitudeARTCCCode }
     }
   }
 
@@ -323,7 +531,7 @@ extension Navaid {
   public var controllingFSS: FSS? {
     get async {
       guard let controllingFSSCode else { return nil }
-      return await data?.FSSes?.first { $0.ID == controllingFSSCode }
+      return await data?.FSSes?.first { $0.id == controllingFSSCode }
     }
   }
 }
@@ -340,9 +548,349 @@ extension VORCheckpoint {
   /// The associated airport, if this facility is associated with an airport.
   public var airport: Airport? {
     get async {
-      guard let airportID else { return nil }
-      return await findAirportByID(airportID)
+      guard let airportId else { return nil }
+      return await findAirportById(airportId)
     }
+  }
+}
+
+extension Fix {
+
+  /// The high-altitude ARTCC with jurisdiction over this fix.
+  public var highARTCC: ARTCC? {
+    get async {
+      guard let highARTCCCode else { return nil }
+      return await data?.ARTCCs?.first { $0.code == highARTCCCode }
+    }
+  }
+
+  /// The low-altitude ARTCC with jurisdiction over this fix.
+  public var lowARTCC: ARTCC? {
+    get async {
+      guard let lowARTCCCode else { return nil }
+      return await data?.ARTCCs?.first { $0.code == lowARTCCCode }
+    }
+  }
+}
+
+extension WeatherStation {
+
+  /// The airport where this weather station is located, if any.
+  public var airport: Airport? {
+    get async {
+      guard let airportSiteNumber else { return nil }
+      return await data?.airports?.first { $0.id == airportSiteNumber }
+    }
+  }
+}
+
+extension Airway {
+
+  /// Resolves the ARTCC for a segment by its ID.
+  func resolveARTCC(_ artccID: String?) async -> ARTCC? {
+    guard let artccID else { return nil }
+    return await data?.ARTCCs?.first { $0.code == artccID }
+  }
+}
+
+extension ILS {
+
+  /// The airport where this ILS is located.
+  public var airport: Airport? {
+    get async {
+      return await data?.airports?.first { $0.id == airportSiteNumber }
+    }
+  }
+}
+
+extension TerminalCommFacility {
+
+  /// The airport where this terminal comm facility is located, if any.
+  public var airport: Airport? {
+    get async {
+      guard let airportSiteNumber else { return nil }
+      return await data?.airports?.first { $0.id == airportSiteNumber }
+    }
+  }
+
+  /// The tie-in Flight Service Station, if any.
+  public var tieInFSS: FSS? {
+    get async {
+      guard let tieInFSSId else { return nil }
+      return await data?.FSSes?.first { $0.id == tieInFSSId }
+    }
+  }
+}
+
+extension ParachuteJumpArea {
+
+  /// The airport associated with this parachute jump area, if any.
+  public var airport: Airport? {
+    get async {
+      guard let airportSiteNumber else { return nil }
+      return await data?.airports?.first { $0.id == airportSiteNumber }
+    }
+  }
+
+  /// The navaid associated with this parachute jump area, if any.
+  public var navaid: Navaid? {
+    get async {
+      guard let navaidIdentifier else { return nil }
+      return await data?.navaids?.first { $0.id == navaidIdentifier }
+    }
+  }
+
+  /// The FSS associated with this parachute jump area, if any.
+  public var fss: FSS? {
+    get async {
+      guard let FSSIdentifier else { return nil }
+      return await data?.FSSes?.first { $0.id == FSSIdentifier }
+    }
+  }
+}
+
+extension MilitaryTrainingRoute {
+
+  /// The ARTCCs associated with this military training route.
+  public var artccs: [ARTCC] {
+    get async {
+      guard let allARTCCs = await data?.ARTCCs else { return [] }
+      return allARTCCs.filter { ARTCCIdentifiers.contains($0.code) }
+    }
+  }
+
+  /// The FSSes within 150 NM of this military training route.
+  public var fsses: [FSS] {
+    get async {
+      guard let allFSSes = await data?.FSSes else { return [] }
+      return allFSSes.filter { FSSIdentifiers.contains($0.id) }
+    }
+  }
+}
+
+extension CodedDepartureRoute {
+
+  /// The ARTCC associated with this coded departure route.
+  public var artcc: ARTCC? {
+    get async {
+      await data?.ARTCCs?.first { $0.code == ARTCCIdentifier }
+    }
+  }
+}
+
+extension MiscActivityArea {
+
+  /// The navaid associated with this miscellaneous activity area.
+  public var navaid: Navaid? {
+    get async {
+      guard let navaidIdentifier else { return nil }
+      return await data?.navaids?.first { $0.id == navaidIdentifier }
+    }
+  }
+
+  /// The associated airport for this miscellaneous activity area.
+  public var associatedAirport: Airport? {
+    get async {
+      guard let associatedAirportSiteNumber else { return nil }
+      return await data?.airports?.first { $0.id == associatedAirportSiteNumber }
+    }
+  }
+}
+
+extension ARTCCBoundarySegment {
+
+  /// The ARTCC associated with this boundary segment.
+  public var artcc: ARTCC? {
+    get async {
+      return await data?.ARTCCs?.first { $0.code == ARTCCIdentifier }
+    }
+  }
+}
+
+extension FSSCommFacility {
+
+  /// The FSS associated with this communication facility.
+  public var fss: FSS? {
+    get async {
+      guard let FSSIdentifier else { return nil }
+      return await data?.FSSes?.first { $0.id == FSSIdentifier }
+    }
+  }
+
+  /// The alternate FSS associated with this communication facility.
+  public var alternateFSS: FSS? {
+    get async {
+      guard let alternateFSSIdentifier else { return nil }
+      return await data?.FSSes?.first { $0.id == alternateFSSIdentifier }
+    }
+  }
+
+  /// The navaid associated with this communication facility.
+  public var navaid: Navaid? {
+    get async {
+      guard let navaidIdentifier else { return nil }
+      return await data?.navaids?.first { $0.id == navaidIdentifier }
+    }
+  }
+}
+
+extension Hold {
+
+  /// The navaid associated with this holding pattern.
+  public var navaid: Navaid? {
+    get async {
+      guard let navaidIdentifier else { return nil }
+      guard let navaids = await data?.navaids else { return nil }
+
+      // Match by both identifier and type when type is available
+      if let navaidType = navaidFacilityType {
+        return navaids.first { $0.id == navaidIdentifier && $0.type == navaidType }
+      }
+      // Fall back to identifier-only match
+      return navaids.first { $0.id == navaidIdentifier }
+    }
+  }
+
+  /// The ILS facility associated with this holding pattern.
+  public var ILSFacility: ILS? {
+    get async {
+      guard let ILSFacilityIdentifier else { return nil }
+      return await data?.ILSFacilities?.first { $0.id == ILSFacilityIdentifier }
+    }
+  }
+
+  /// The fix associated with this holding pattern.
+  public var fix: Fix? {
+    get async {
+      guard let fixIdentifier else { return nil }
+      return await data?.fixes?.first { $0.id == fixIdentifier }
+    }
+  }
+
+  /// The ARTCC associated with the fix.
+  public var fixARTCCReference: ARTCC? {
+    get async {
+      guard let fixARTCC else { return nil }
+      return await data?.ARTCCs?.first { $0.code == fixARTCC }
+    }
+  }
+
+  /// The high-route ARTCC associated with the navaid.
+  public var highRouteARTCC: ARTCC? {
+    get async {
+      guard let navaidHighRouteARTCC else { return nil }
+      return await data?.ARTCCs?.first { $0.code == navaidHighRouteARTCC }
+    }
+  }
+
+  /// The low-route ARTCC associated with the navaid.
+  public var lowRouteARTCC: ARTCC? {
+    get async {
+      guard let navaidLowRouteARTCC else { return nil }
+      return await data?.ARTCCs?.first { $0.code == navaidLowRouteARTCC }
+    }
+  }
+
+  /// The state associated with the fix.
+  public var fixState: State? {
+    get async {
+      guard let fixStateCode else { return nil }
+      return await data?.states?.first { $0.postOfficeCode == fixStateCode }
+    }
+  }
+}
+
+extension PreferredRoute {
+
+  /// The origin location identifier.
+  public var originLocation: LocationIdentifier? {
+    get async {
+      return await data?.locationIdentifiers?.first { $0.id == originIdentifier }
+    }
+  }
+
+  /// The destination location identifier.
+  public var destinationLocation: LocationIdentifier? {
+    get async {
+      return await data?.locationIdentifiers?.first { $0.id == destinationIdentifier }
+    }
+  }
+}
+
+extension LocationIdentifier {
+
+  /// The controlling ARTCC for this location.
+  public var artcc: ARTCC? {
+    get async {
+      guard let controllingARTCC else { return nil }
+      return await data?.ARTCCs?.first { $0.code == controllingARTCC }
+    }
+  }
+
+  /// The tie-in FSS for the landing facility.
+  public var landingFacilityFSSReference: FSS? {
+    get async {
+      guard let landingFacilityFSS else { return nil }
+      return await data?.FSSes?.first { $0.id == landingFacilityFSS }
+    }
+  }
+
+  /// The tie-in FSS for navaids.
+  public var navaidFSSReference: FSS? {
+    get async {
+      guard let navaidFSS else { return nil }
+      return await data?.FSSes?.first { $0.id == navaidFSS }
+    }
+  }
+
+  /// The airport associated with the ILS.
+  public var ILSAirport: Airport? {
+    get async {
+      guard let ILSAirportIdentifier else { return nil }
+      return await data?.airports?.first { $0.LID == ILSAirportIdentifier }
+    }
+  }
+
+  /// The tie-in FSS for the ILS.
+  public var ILSFSSReference: FSS? {
+    get async {
+      guard let ILSFSS else { return nil }
+      return await data?.FSSes?.first { $0.id == ILSFSS }
+    }
+  }
+}
+
+extension WeatherReportingLocation {
+
+  /// The state associated with this weather reporting location.
+  public var state: State? {
+    get async {
+      guard let stateCode else { return nil }
+      return await data?.states?.first { $0.postOfficeCode == stateCode }
+    }
+  }
+}
+
+extension ATSAirway {
+
+  /// Returns the ARTCC for the given route point.
+  public func artcc(for routePoint: RoutePoint) async -> ARTCC? {
+    guard let ARTCCIdentifier = routePoint.ARTCCIdentifier else { return nil }
+    return await data?.ARTCCs?.first { $0.code == ARTCCIdentifier }
+  }
+
+  /// Returns the navaid for the given route point.
+  public func navaid(for routePoint: RoutePoint) async -> Navaid? {
+    guard let navaidIdentifier = routePoint.navaidIdentifier else { return nil }
+    return await data?.navaids?.first { $0.id == navaidIdentifier }
+  }
+}
+
+extension DepartureArrivalProcedure {
+
+  /// Returns the airport for the given adapted airport entry.
+  public func airport(for adaptedAirport: AdaptedAirport) async -> Airport? {
+    await data?.airports?.first { $0.LID == adaptedAirport.identifier }
   }
 }
 
@@ -359,6 +907,10 @@ public struct NASRDataCodable: Codable {
   var ARTCCs: [ARTCC]?
   var FSSes: [FSS]?
   var navaids: [Navaid]?
+  var fixes: [Fix]?
+  var weatherStations: [WeatherStation]?
+  var airways: [Airway]?
+  var ILSFacilities: [ILS]?
 
   public init(data: NASRData) async {
     cycle = await data.cycle
@@ -367,6 +919,10 @@ public struct NASRDataCodable: Codable {
     ARTCCs = await data.ARTCCs?.sorted { $0.id < $1.id }
     FSSes = await data.FSSes?.sorted { $0.id < $1.id }
     navaids = await data.navaids?.sorted { $0.id < $1.id }
+    fixes = await data.fixes?.sorted { $0.id < $1.id }
+    weatherStations = await data.weatherStations?.sorted { $0.id < $1.id }
+    airways = await data.airways?.sorted { $0.id < $1.id }
+    ILSFacilities = await data.ILSFacilities?.sorted { $0.id < $1.id }
   }
 
   public init(from decoder: Decoder) throws {
@@ -378,6 +934,16 @@ public struct NASRDataCodable: Codable {
     let decodedARTCCs = try container.decodeIfPresent(Array<ARTCC>.self, forKey: .ARTCCs)
     let decodedFSSes = try container.decodeIfPresent(Array<FSS>.self, forKey: .FSSes)
     let decodedNavaids = try container.decodeIfPresent(Array<Navaid>.self, forKey: .navaids)
+    let decodedFixes = try container.decodeIfPresent(Array<Fix>.self, forKey: .fixes)
+    let decodedWeatherStations = try container.decodeIfPresent(
+      Array<WeatherStation>.self,
+      forKey: .weatherStations
+    )
+    let decodedAirways = try container.decodeIfPresent(Array<Airway>.self, forKey: .airways)
+    let decodedILSFacilities = try container.decodeIfPresent(
+      Array<ILS>.self,
+      forKey: .ILSFacilities
+    )
 
     // stick these setters in a defer block so that the didSet hooks get called
     defer {
@@ -387,6 +953,10 @@ public struct NASRDataCodable: Codable {
       ARTCCs = decodedARTCCs
       FSSes = decodedFSSes
       navaids = decodedNavaids
+      fixes = decodedFixes
+      weatherStations = decodedWeatherStations
+      airways = decodedAirways
+      ILSFacilities = decodedILSFacilities
     }
   }
 
@@ -397,12 +967,18 @@ public struct NASRDataCodable: Codable {
       states: states,
       airports: airports,
       ARTCCs: ARTCCs,
-      FSSes: FSSes
+      FSSes: FSSes,
+      navaids: navaids,
+      fixes: fixes,
+      weatherStations: weatherStations,
+      airways: airways,
+      ILSFacilities: ILSFacilities
     )
     return data
   }
 
   enum CodingKeys: String, CodingKey {
-    case cycle, states, airports, ARTCCs, FSSes, navaids
+    case cycle, states, airports, ARTCCs, FSSes, navaids, fixes, weatherStations, airways
+    case ILSFacilities
   }
 }

@@ -19,7 +19,7 @@ public struct Airport: ParentRecord {
   /// A unique identifier for this airport. This field should be used to
   /// uniquely identify an airport, as the ``LID`` for an airport
   /// can sometimes change.
-  public var id: String
+  public let id: String
 
   /// The airport name.
   public let name: String
@@ -38,7 +38,7 @@ public struct Airport: ParentRecord {
   // MARK: Demographics
 
   /// The FAA region the airport is located in.
-  public let FAARegion: FAARegion?
+  public let faaRegion: FAARegion?
 
   /// The code for the associated FAA district or field office.
   public let FAAFieldOfficeCode: String?
@@ -65,10 +65,10 @@ public struct Airport: ParentRecord {
   public let publicUse: Bool
 
   /// The person or organization that owns the airport.
-  public var owner: Person?
+  public internal(set) var owner: Person?
 
   /// The person or organization that manages the airport.
-  public var manager: Person?
+  public internal(set) var manager: Person?
 
   // MARK: Geographics
 
@@ -79,73 +79,73 @@ public struct Airport: ParentRecord {
   public let referencePoint: Location
 
   /// How the ARP was determined.
-  public let referencePointDeterminationMethod: LocationDeterminationMethod
+  public let referencePointDeterminationMethod: SurveyMethod
 
   /// How the airport elevation was determined.
-  public let elevationDeterminationMethod: LocationDeterminationMethod?
+  public let elevationDeterminationMethod: SurveyMethod?
 
-  /// The variation between magnetic and true north.
+  /// The variation between magnetic and true north (degrees; positive is east).
   public let magneticVariation: Int?
 
   /// The epoch date of the World Magnetic Model that was used to determine
   /// the magnetic variation.
-  public let magneticVariationEpoch: Date?
+  public let magneticVariationEpoch: DateComponents?
 
-  /// The altitude at which aircraft should fly the traffic pattern. (If there
-  /// separate TPAs for separate classes of aircraft, this will be indicated
-  /// in the remarks for this field.
+  /// The altitude at which aircraft should fly the traffic pattern (feet AGL).
+  /// If there are separate TPAs for separate classes of aircraft, this will be
+  /// indicated in the remarks for this field.
   public let trafficPatternAltitude: Int?
 
   /// The identifier for the sectional chart this airport appears in.
   public let sectionalChart: String?
 
   /// The distance from the airport to the central business district of the
-  /// associated city.
+  /// associated city (nautical miles).
   public let distanceCityToAirport: UInt?
 
   /// The direction from the airport to the central business district of the
   /// associated city.
   public let directionCityToAirport: Direction?
 
-  /// The area of land occupied by this airport.
+  /// The area of land occupied by this airport (acres).
   public let landArea: Float?
 
   /// The source of ARP information.
   public let positionSource: String?
 
   /// The date at which the ARP was determined.
-  public let positionSourceDate: Date?
+  public let positionSourceDate: DateComponents?
 
   /// The source of airport elevation information.
   public let elevationSource: String?
 
   /// The date at which the airport elevation was determined.
-  public let elevationSourceDate: Date?
+  public let elevationSourceDate: DateComponents?
 
   // MARK: FAA Services
 
   /// The identifier for the ARTCC overlying this airport.
   /// This field is only available in TXT format; CSV format does not include it.
-  public let boundaryARTCCID: String?
+  public let boundaryARTCCId: String?
 
   /// The identifier for the ARTCC responsible for traffic to and from this
   /// airport.
-  public let responsibleARTCCID: String
+  public let responsibleARTCCId: String
 
   /// The identifier for the tie-in flight service station responsible for
   /// this airport.
-  public let tieInFSSID: String
+  public let tieInFSSId: String
 
   /// `true` if the tie-in FSS is located on the airport.
   public let tieInFSSOnStation: Bool?
 
   /// The identifier for an alternate FSS responsible for this airport when
   /// the tie-in FSS is closed.
-  public let alternateFSSID: String?
+  public let alternateFSSId: String?
 
   /// The identifier of the FSS responsible for issuing NOTAMs for this
   /// airport.
-  public let NOTAMIssuerID: String?
+  public let NOTAMIssuerId: String?
 
   /// `true` if NOTAM Ds (distant NOTAMs) are available for this airport.
   public let NOTAMDAvailable: Bool?
@@ -153,13 +153,13 @@ public struct Airport: ParentRecord {
   // MARK: Federal Status
 
   /// The date that the airport was first activated.
-  public let activationDate: Date?
+  public let activationDate: DateComponents?
 
   /// The airport's current activation status.
   public let status: Status
 
   /// The on-airport firefighting capability.
-  public let ARFFCapability: ARFFCapability?
+  public let arffCapability: ARFFCapability?
 
   /// The federal land-use agreements covering this airport.
   public let agreements: [FederalAgreement]
@@ -196,11 +196,11 @@ public struct Airport: ParentRecord {
   public let inspectionAgency: InspectionAgency?
 
   /// The date the last physical inspection was made.
-  public let lastPhysicalInspectionDate: Date?
+  public let lastPhysicalInspectionDate: DateComponents?
 
   /// The date the last request for information for this airport was
   /// completed.
-  public let lastInformationRequestCompletedDate: Date?
+  public let lastInformationRequestCompletedDate: DateComponents?
 
   // MARK: Airport Services
 
@@ -231,10 +231,10 @@ public struct Airport: ParentRecord {
   // MARK: Airport Facilities
 
   /// The schedule for when the airport surface lighting is active.
-  public let airportLightingSchedule: LightingSchedule?
+  public let airportLightingSchedule: String?
 
   /// The schedule for when the rotating beacon is active.
-  public let beaconLightingSchedule: LightingSchedule?
+  public let beaconLightingSchedule: String?
 
   /// `true` if this airport has an air traffic control tower.
   public let controlTower: Bool
@@ -253,7 +253,7 @@ public struct Airport: ParentRecord {
   public let beaconColor: LensColor?
 
   /// `true` if this airport has a fee for landing.
-  public let landingFee: Bool?
+  public let hasLandingFee: Bool?
 
   /// `true` if this airport is used by MEDEVAC operators.
   public let medicalUse: Bool?
@@ -309,18 +309,18 @@ public struct Airport: ParentRecord {
 
   /// The ending date of the one-year period that the operation statistics
   /// are counted from.
-  public let annualPeriodEndDate: Date?
+  public let annualPeriodEndDate: DateComponents?
 
   // MARK: Associations
 
   /// The times during which the airport is attended.
-  public var attendanceSchedule = [AttendanceSchedule]()
+  public internal(set) var attendanceSchedule = [AttendanceSchedule]()
 
   /// The runways this airport has.
-  public var runways = [Runway]()
+  public internal(set) var runways = [Runway]()
 
   /// General remarks and per-field remarks.
-  public var remarks = Remarks<Field>()
+  public internal(set) var remarks = Remarks<Field>()
 
   weak var data: NASRData?
 
@@ -332,7 +332,7 @@ public struct Airport: ParentRecord {
     LID: String,
     ICAOIdentifier: String?,
     facilityType: Self.FacilityType,
-    FAARegion: Self.FAARegion?,
+    faaRegion: Self.FAARegion?,
     FAAFieldOfficeCode: String?,
     stateCode: String?,
     county: String,
@@ -343,25 +343,25 @@ public struct Airport: ParentRecord {
     owner: Self.Person?,
     manager: Self.Person?,
     referencePoint: Location,
-    referencePointDeterminationMethod: Self.LocationDeterminationMethod,
-    elevationDeterminationMethod: Self.LocationDeterminationMethod?,
+    referencePointDeterminationMethod: SurveyMethod,
+    elevationDeterminationMethod: SurveyMethod?,
     magneticVariation: Int?,
-    magneticVariationEpoch: Date?,
+    magneticVariationEpoch: DateComponents?,
     trafficPatternAltitude: Int?,
     sectionalChart: String?,
     distanceCityToAirport: UInt?,
     directionCityToAirport: Direction?,
     landArea: Float?,
-    boundaryARTCCID: String?,
-    responsibleARTCCID: String,
+    boundaryARTCCId: String?,
+    responsibleARTCCId: String,
     tieInFSSOnStation: Bool?,
-    tieInFSSID: String,
-    alternateFSSID: String?,
-    NOTAMIssuerID: String?,
+    tieInFSSId: String,
+    alternateFSSId: String?,
+    NOTAMIssuerId: String?,
     NOTAMDAvailable: Bool?,
-    activationDate: Date?,
+    activationDate: DateComponents?,
     status: Self.Status,
-    ARFFCapability: Self.ARFFCapability?,
+    arffCapability: Self.ARFFCapability?,
     agreements: [Self.FederalAgreement],
     airspaceAnalysisDetermination: Self.AirspaceAnalysisDetermination?,
     customsEntryAirport: Bool?,
@@ -370,21 +370,21 @@ public struct Airport: ParentRecord {
     militaryLandingRights: Bool?,
     inspectionMethod: Self.InspectionMethod?,
     inspectionAgency: Self.InspectionAgency?,
-    lastPhysicalInspectionDate: Date?,
-    lastInformationRequestCompletedDate: Date?,
+    lastPhysicalInspectionDate: DateComponents?,
+    lastInformationRequestCompletedDate: DateComponents?,
     fuelsAvailable: [Self.FuelType],
     airframeRepairAvailable: Self.RepairService?,
     powerplantRepairAvailable: Self.RepairService?,
     bottledOxygenAvailable: [Self.OxygenPressure],
     bulkOxygenAvailable: [Self.OxygenPressure],
-    airportLightingSchedule: Self.LightingSchedule?,
-    beaconLightingSchedule: Self.LightingSchedule?,
+    airportLightingSchedule: String?,
+    beaconLightingSchedule: String?,
     controlTower: Bool,
     UNICOMFrequency: UInt?,
     CTAF: UInt?,
     segmentedCircle: Self.AirportMarker?,
     beaconColor: Self.LensColor?,
-    landingFee: Bool?,
+    hasLandingFee: Bool?,
     medicalUse: Bool?,
     basedSingleEngineGA: UInt?,
     basedMultiEngineGA: UInt?,
@@ -399,11 +399,11 @@ public struct Airport: ParentRecord {
     annualLocalGAOps: UInt?,
     annualTransientGAOps: UInt?,
     annualMilitaryOps: UInt?,
-    annualPeriodEndDate: Date?,
+    annualPeriodEndDate: DateComponents?,
     positionSource: String?,
-    positionSourceDate: Date?,
+    positionSourceDate: DateComponents?,
     elevationSource: String?,
-    elevationSourceDate: Date?,
+    elevationSourceDate: DateComponents?,
     contractFuelAvailable: Bool?,
     transientStorageFacilities: [Self.StorageFacility]?,
     otherServices: [Self.Service],
@@ -415,7 +415,7 @@ public struct Airport: ParentRecord {
     self.LID = LID
     self.ICAOIdentifier = ICAOIdentifier
     self.facilityType = facilityType
-    self.FAARegion = FAARegion
+    self.faaRegion = faaRegion
     self.FAAFieldOfficeCode = FAAFieldOfficeCode
     self.stateCode = stateCode
     self.county = county
@@ -435,16 +435,16 @@ public struct Airport: ParentRecord {
     self.distanceCityToAirport = distanceCityToAirport
     self.directionCityToAirport = directionCityToAirport
     self.landArea = landArea
-    self.boundaryARTCCID = boundaryARTCCID
-    self.responsibleARTCCID = responsibleARTCCID
+    self.boundaryARTCCId = boundaryARTCCId
+    self.responsibleARTCCId = responsibleARTCCId
     self.tieInFSSOnStation = tieInFSSOnStation
-    self.tieInFSSID = tieInFSSID
-    self.alternateFSSID = alternateFSSID
-    self.NOTAMIssuerID = NOTAMIssuerID
+    self.tieInFSSId = tieInFSSId
+    self.alternateFSSId = alternateFSSId
+    self.NOTAMIssuerId = NOTAMIssuerId
     self.NOTAMDAvailable = NOTAMDAvailable
     self.activationDate = activationDate
     self.status = status
-    self.ARFFCapability = ARFFCapability
+    self.arffCapability = arffCapability
     self.agreements = agreements
     self.airspaceAnalysisDetermination = airspaceAnalysisDetermination
     self.customsEntryAirport = customsEntryAirport
@@ -467,7 +467,7 @@ public struct Airport: ParentRecord {
     self.CTAF = CTAF
     self.segmentedCircle = segmentedCircle
     self.beaconColor = beaconColor
-    self.landingFee = landingFee
+    self.hasLandingFee = hasLandingFee
     self.medicalUse = medicalUse
     self.basedSingleEngineGA = basedSingleEngineGA
     self.basedMultiEngineGA = basedMultiEngineGA
@@ -514,7 +514,7 @@ public struct Airport: ParentRecord {
     public let phone: String?
 
     /// General or per-field remarks on the person or organization.
-    public var remarks = Remarks<Field>()
+    public internal(set) var remarks = Remarks<Field>()
 
     /// Fields that per-field remarks can be associated with.
     public enum Field: String, RemarkField {
@@ -585,15 +585,6 @@ public struct Airport: ParentRecord {
 
     /// Owned by the US Coast Guard.
     case USCG = "CG"
-  }
-
-  /// Methods for determining an ARP.
-  public enum LocationDeterminationMethod: String, RecordEnum {
-    /// ARP was estimated.
-    case estimated = "E"
-
-    /// ARP was surveyed.
-    case surveyed = "S"
   }
 
   /// Airport availability status.
@@ -713,6 +704,9 @@ public struct Airport: ParentRecord {
     case contractPersonnel = "C"
 
     case owner = "N"
+
+    /// No inspection performed
+    case none = "NONE"
   }
 
   /// Types of aviation gasoline.
@@ -720,6 +714,9 @@ public struct Airport: ParentRecord {
 
     /// Grade 80 avgas (red) (ASTM D910)
     case avgas80 = "80"
+
+    /// Grade 83 avgas (obsolete)
+    case avgas83 = "83"
 
     /// Grade 100 avgas (green) (ASTM D910)
     case avgas100 = "100"
@@ -837,19 +834,6 @@ public struct Airport: ParentRecord {
     case gliderTowing = "TOW"
   }
 
-  /// Airport surface or beacon lighting schedules.
-  public enum LightingSchedule: String, RecordEnum {
-
-    /// From sunset to sunrise=
-    case sunsetSunrise = "SS-SR"
-
-    /// See remarks for lighting schedule
-    case seeRemarks = "SEE RMK"
-
-    /// Airport is unlighted
-    case unlighted = ""
-  }
-
   /// Types of airport indicators (segmented circle, windsock).
   public enum AirportMarker: String, RecordEnum {
 
@@ -904,7 +888,7 @@ public struct Airport: ParentRecord {
     public let airService: AirService
 
     /// ARFF certification date
-    public let certificationDate: Date
+    public let certificationDate: DateComponents
 
     enum CodingKeys: String, CodingKey {
       case `class`, index, airService, certificationDate
@@ -976,7 +960,7 @@ public struct Airport: ParentRecord {
   public enum Field: String, RemarkField {
     case id, name, LID, ICAOIdentifier, facilityType
 
-    case FAARegion, FAAFieldOfficeCode, stateCode, county, countyStateCode, city
+    case faaRegion, FAAFieldOfficeCode, stateCode, county, countyStateCode, city
 
     case ownership, publicUse, owner, manager
 
@@ -984,10 +968,10 @@ public struct Airport: ParentRecord {
       magneticVariation, magneticVariationEpoch, trafficPatternAltitude, sectionalChart,
       distanceCityToAirport, directionCityToAirport, landArea
 
-    case boundaryARTCCID, responsibleARTCCID, tieInFSSOnStation, tieInFSSID, alternateFSSID,
-      NOTAMIssuerID, NOTAMDAvailable
+    case boundaryARTCCId, responsibleARTCCId, tieInFSSOnStation, tieInFSSId, alternateFSSId,
+      NOTAMIssuerId, NOTAMDAvailable
 
-    case activationDate, status, ARFFCapability, agreements, airspaceAnalysisDetermination,
+    case activationDate, status, arffCapability, agreements, airspaceAnalysisDetermination,
       customsEntryAirport, customsLandingRightsAirport, jointUseAgreement, militaryLandingRights
 
     case inspectionMethod, inspectionAgency, lastPhysicalInspectionDate,
@@ -997,7 +981,7 @@ public struct Airport: ParentRecord {
       bulkOxygenAvailable
 
     case airportLightingSchedule, beaconLightingSchedule, controlTower, UNICOMFrequency, CTAF,
-      segmentedCircle, beaconColor, landingFee, medicalUse
+      segmentedCircle, beaconColor, hasLandingFee, medicalUse
 
     case basedSingleEngineGA, basedMultiEngineGA, basedJetGA, basedHelicopterGA,
       basedOperationalGliders, basedOperationalMilitary, basedUltralights
@@ -1013,7 +997,7 @@ public struct Airport: ParentRecord {
 
     static let fieldOrder: [Self?] = [
       nil, .id, .facilityType, .LID, nil,
-      .FAARegion, .FAAFieldOfficeCode, .stateCode, .stateCode, .county, .countyStateCode, .city,
+      .faaRegion, .FAAFieldOfficeCode, .stateCode, .stateCode, .county, .countyStateCode, .city,
       .name,
       .ownership, .publicUse, .owner, .owner, .owner, .owner, .manager, .manager, .manager,
       .manager,
@@ -1021,11 +1005,11 @@ public struct Airport: ParentRecord {
       .referencePointDeterminationMethod, .referencePoint, .elevationDeterminationMethod,
       .magneticVariation, .magneticVariationEpoch, .trafficPatternAltitude, .sectionalChart,
       .distanceCityToAirport, .directionCityToAirport, .landArea,
-      .boundaryARTCCID, .boundaryARTCCID, .boundaryARTCCID, .responsibleARTCCID,
-      .responsibleARTCCID, .responsibleARTCCID, .tieInFSSOnStation, .tieInFSSID, .tieInFSSID,
-      .tieInFSSID, .tieInFSSID, .alternateFSSID, .alternateFSSID, .alternateFSSID, .NOTAMIssuerID,
+      .boundaryARTCCId, .boundaryARTCCId, .boundaryARTCCId, .responsibleARTCCId,
+      .responsibleARTCCId, .responsibleARTCCId, .tieInFSSOnStation, .tieInFSSId, .tieInFSSId,
+      .tieInFSSId, .tieInFSSId, .alternateFSSId, .alternateFSSId, .alternateFSSId, .NOTAMIssuerId,
       .NOTAMDAvailable,
-      activationDate, .status, .ARFFCapability, .agreements, .airspaceAnalysisDetermination,
+      activationDate, .status, .arffCapability, .agreements, .airspaceAnalysisDetermination,
       .customsEntryAirport, .customsLandingRightsAirport, .jointUseAgreement,
       .militaryLandingRights,
       .inspectionMethod, .inspectionAgency, .lastPhysicalInspectionDate,
@@ -1033,7 +1017,7 @@ public struct Airport: ParentRecord {
       .fuelsAvailable, .airframeRepairAvailable, .powerplantRepairAvailable,
       .bottledOxygenAvailable, .bulkOxygenAvailable,
       .airportLightingSchedule, .beaconLightingSchedule, .controlTower, .UNICOMFrequency, .CTAF,
-      .segmentedCircle, .beaconColor, .landingFee, .medicalUse,
+      .segmentedCircle, .beaconColor, .hasLandingFee, .medicalUse,
       .basedSingleEngineGA, .basedMultiEngineGA, .basedJetGA, .basedHelicopterGA,
       .basedOperationalGliders, .basedOperationalMilitary, .basedUltralights,
       .annualCommercialOps, .annualCommuterOps, .annualAirTaxiOps, .annualLocalGAOps,
@@ -1047,18 +1031,18 @@ public struct Airport: ParentRecord {
   // MARK: - Coding
 
   public enum CodingKeys: String, CodingKey {
-    case id, name, LID, ICAOIdentifier, facilityType, FAARegion, FAAFieldOfficeCode, stateCode,
+    case id, name, LID, ICAOIdentifier, facilityType, faaRegion, FAAFieldOfficeCode, stateCode,
       county, countyStateCode, city, ownership, publicUse, owner, manager, referencePoint,
       referencePointDeterminationMethod, elevationDeterminationMethod, magneticVariation,
       magneticVariationEpoch, trafficPatternAltitude, sectionalChart, distanceCityToAirport,
-      directionCityToAirport, landArea, boundaryARTCCID, responsibleARTCCID, tieInFSSOnStation,
-      tieInFSSID, alternateFSSID, NOTAMIssuerID, NOTAMDAvailable, activationDate, status,
-      ARFFCapability, agreements, airspaceAnalysisDetermination, customsEntryAirport,
+      directionCityToAirport, landArea, boundaryARTCCId, responsibleARTCCId, tieInFSSOnStation,
+      tieInFSSId, alternateFSSId, NOTAMIssuerId, NOTAMDAvailable, activationDate, status,
+      arffCapability, agreements, airspaceAnalysisDetermination, customsEntryAirport,
       customsLandingRightsAirport, jointUseAgreement, militaryLandingRights, inspectionMethod,
       inspectionAgency, lastPhysicalInspectionDate, lastInformationRequestCompletedDate,
       fuelsAvailable, airframeRepairAvailable, powerplantRepairAvailable, bottledOxygenAvailable,
       bulkOxygenAvailable, airportLightingSchedule, beaconLightingSchedule, controlTower,
-      UNICOMFrequency, CTAF, segmentedCircle, beaconColor, landingFee, medicalUse,
+      UNICOMFrequency, CTAF, segmentedCircle, beaconColor, hasLandingFee, medicalUse,
       basedSingleEngineGA, basedMultiEngineGA, basedJetGA, basedHelicopterGA,
       basedOperationalGliders, basedOperationalMilitary, basedUltralights, annualCommercialOps,
       annualCommuterOps, annualAirTaxiOps, annualLocalGAOps, annualTransientGAOps,

@@ -4,7 +4,7 @@
 
 ### Properties
 
-- ``ID``
+- ``id``
 - ``ICAOID``
 - ``type``
 - ``name``

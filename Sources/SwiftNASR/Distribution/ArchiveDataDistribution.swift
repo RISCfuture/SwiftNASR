@@ -18,7 +18,8 @@ public final class ArchiveDataDistribution: Distribution {
   private let archive: Archive
 
   private let chunkSize = defaultReadChunkSize
-  private let delimiter = "\r\n".data(using: .isoLatin1)!
+  private let crlfDelimiter = "\r\n".data(using: .isoLatin1)!
+  private let lfDelimiter = "\n".data(using: .isoLatin1)!
 
   /**
    Creates a new instance from the given data.
@@ -46,7 +47,10 @@ public final class ArchiveDataDistribution: Distribution {
     withProgress progressHandler: (Progress) -> Void = { _ in },
     eachLine: (Data) -> Void
   ) throws -> UInt {
-    guard let entry = archive[path] else { throw Error.noSuchFile(path: path) }
+    // Try exact match first, then case-insensitive match
+    let entry =
+      archive[path] ?? archive.first { $0.path.caseInsensitiveCompare(path) == .orderedSame }
+    guard let entry else { throw Error.noSuchFile(path: path) }
     var buffer = Data(capacity: Int(chunkSize))
     var lines: UInt = 0
 
@@ -56,7 +60,20 @@ public final class ArchiveDataDistribution: Distribution {
     _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: false, progress: nil) { data in
       buffer.append(data)
       Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
-      while let EOL = buffer.range(of: delimiter) {
+      // Handle both \r\n and \n line endings
+      while true {
+        let crlfRange = buffer.range(of: crlfDelimiter)
+        let lfRange = buffer.range(of: lfDelimiter)
+
+        let EOL: Range<Data.Index>?
+        if let crlf = crlfRange, let lf = lfRange {
+          EOL = crlf.lowerBound < lf.lowerBound ? crlf : lf
+        } else {
+          EOL = crlfRange ?? lfRange
+        }
+
+        guard let EOL else { break }
+
         if EOL.startIndex == 0 {
           buffer.removeSubrange(EOL)
           continue
@@ -68,7 +85,7 @@ public final class ArchiveDataDistribution: Distribution {
         eachLine(subdata)
         lines += 1
 
-        buffer.removeSubrange(subrange)
+        buffer.removeSubrange(buffer.startIndex..<EOL.upperBound)
       }
     }
     if !buffer.isEmpty {

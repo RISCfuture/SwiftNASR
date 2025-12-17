@@ -12,10 +12,11 @@ private final class FieldParser: Sendable {
       CharacterClass.anyOf("LR")
       OneOrMore(.whitespace)
       ChoiceOf {
-        "N"
-        "AN"
+        "AN"  // Alphanumeric - must check before "A" and "N"
+        "A"  // Alpha only
+        "N"  // Numeric only
       }
-      OneOrMore(.whitespace)
+      ZeroOrMore(.whitespace)  // Some layout files have no space here
       Capture(as: lengthRef) {
         OneOrMore(.digit)
       } transform: {
@@ -46,6 +47,7 @@ private final class FieldParser: Sendable {
     Regex {
       Anchor.startOfSubject
       OneOrMore("*")
+      ZeroOrMore(.whitespace)
       Anchor.endOfSubject
     }
   }
@@ -135,8 +137,9 @@ extension LayoutDataParser {
     var formats = [NASRTable]()
     var lineError: Swift.Error?
 
+    let layoutPath = "Layout_Data/\(type.rawValue.lowercased())_rf.txt"
     let lines: AsyncThrowingStream = await distribution.readFile(
-      path: "Layout_Data/\(type.rawValue.lowercased())_rf.txt",
+      path: layoutPath,
       withProgress: { _ in },
       returningLines: { _ in }
     )
@@ -159,7 +162,8 @@ extension LayoutDataParser {
       throw LayoutParserError.badData("Not ISO-Latin1 formatted")
     }
 
-    if try fieldParser.isGroup(line: line) {
+    let isGroupLine = try fieldParser.isGroup(line: line)
+    if isGroupLine {
       if let lastFormat = formats.last {
         if !lastFormat.fields.isEmpty { formats.append(NASRTable(fields: [])) }
       } else {

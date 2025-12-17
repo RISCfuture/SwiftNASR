@@ -8,6 +8,83 @@ enum Nullable {
   case sentinel(_ sentinels: [String])
 }
 
+/// Date formats for parsing date strings directly into DateComponents.
+enum DateFormat {
+  /// "yyyy" - year only (e.g., "2023")
+  case yearOnly
+  /// "MM/yyyy" - month/year (e.g., "01/2023")
+  case monthYear
+  /// "MMddyyyy" - month day year without delimiters (e.g., "01152023")
+  case monthDayYear
+  /// "MM/dd/yyyy" - month/day/year with slashes (e.g., "01/15/2023")
+  case monthDayYearSlash
+  /// "yyyy/MM/dd" - year/month/day with slashes (e.g., "2023/01/15")
+  case yearMonthDaySlash
+  /// "yyyy/MM" - year/month with slash (e.g., "2023/01")
+  case yearMonthSlash
+  /// "dd MMM yyyy" - day month year with spaces (e.g., "15 Jan 2023")
+  case dayMonthYear
+
+  private static let monthAbbreviations: [String: Int] = [
+    "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6,
+    "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12
+  ]
+
+  /// Parse a string into DateComponents using this format.
+  func parse(_ string: String) -> DateComponents? {
+    switch self {
+      case .yearOnly:
+        guard let year = Int(string) else { return nil }
+        return DateComponents(year: year)
+      case .monthYear:
+        let parts = string.split(separator: "/")
+        guard parts.count == 2,
+          let month = Int(parts[0]),
+          let year = Int(parts[1])
+        else { return nil }
+        return DateComponents(year: year, month: month)
+      case .monthDayYear:
+        guard string.count == 8,
+          let month = Int(string.prefix(2)),
+          let day = Int(string.dropFirst(2).prefix(2)),
+          let year = Int(string.suffix(4))
+        else { return nil }
+        return DateComponents(year: year, month: month, day: day)
+      case .monthDayYearSlash:
+        let parts = string.split(separator: "/")
+        guard parts.count == 3,
+          let month = Int(parts[0]),
+          let day = Int(parts[1]),
+          let year = Int(parts[2])
+        else { return nil }
+        return DateComponents(year: year, month: month, day: day)
+      case .yearMonthDaySlash:
+        let parts = string.split(separator: "/")
+        guard parts.count == 3,
+          let year = Int(parts[0]),
+          let month = Int(parts[1]),
+          let day = Int(parts[2])
+        else { return nil }
+        return DateComponents(year: year, month: month, day: day)
+      case .yearMonthSlash:
+        let parts = string.split(separator: "/")
+        guard parts.count == 2,
+          let year = Int(parts[0]),
+          let month = Int(parts[1])
+        else { return nil }
+        return DateComponents(year: year, month: month)
+      case .dayMonthYear:
+        let parts = string.split(separator: " ")
+        guard parts.count == 3,
+          let day = Int(parts[0]),
+          let month = Self.monthAbbreviations[parts[1].uppercased()],
+          let year = Int(parts[2])
+        else { return nil }
+        return DateComponents(year: year, month: month, day: day)
+    }
+  }
+}
+
 enum FixedWidthField {
   case recordType
   case null
@@ -19,6 +96,7 @@ enum FixedWidthField {
   case frequency(nullable: Nullable = .notNull)
   case boolean(trueValue: String = "Y", nullable: Nullable = .notNull)
   case datetime(formatter: DateFormatter, nullable: Nullable = .notNull)
+  case dateComponents(format: DateFormat, nullable: Nullable = .notNull)
   case fixedWidthArray(
     width: Int = 1,
     convert: ((String) throws -> Any?)? = nil,
@@ -58,6 +136,13 @@ struct FixedWidthTransformer {
   static var monthDayYearSlash: DateFormatter {
     let df = DateFormatter()
     df.dateFormat = "MM/dd/yyyy"
+    df.timeZone = zulu
+    return df
+  }
+  static var dayMonthYear: DateFormatter {
+    let df = DateFormatter()
+    df.dateFormat = "dd MMM yyyy"
+    df.locale = Locale(identifier: "en_US_POSIX")
     df.timeZone = zulu
     return df
   }
@@ -145,6 +230,13 @@ struct FixedWidthTransformer {
               throw FixedWidthParserError.invalidDate(str, at: index)
             }
             return transformed
+          }
+        case let .dateComponents(format, nullable):
+          return try transform(value, nullable: nullable, index: index, trim: true) { str in
+            guard let components = format.parse(str) else {
+              throw FixedWidthParserError.invalidDate(str, at: index)
+            }
+            return components
           }
         case let .fixedWidthArray(width, convert, nullable, trim, emptyPlaceholders):
           if emptyPlaceholders?.contains(value) ?? false { return [Any?]() }

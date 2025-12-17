@@ -4,12 +4,12 @@
 
 ### Properties
 
-- ``ID``
+- ``id``
 - ``remarks``
 
 ### Dimensions and Geographics
 
-- ``trueHeading``
+- ``heading``
 - ``visualGlidepath``
 - ``gradient``
 - ``LAHSO``
@@ -59,7 +59,7 @@
 - ``approachLighting-swift.property``
 - ``hasREIL``
 - ``hasCenterlineLighting``
-- ``endTouchdownLighting``
+- ``hasEndTouchdownLighting``
 
 ### Traffic Pattern
 

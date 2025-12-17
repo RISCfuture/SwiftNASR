@@ -38,13 +38,12 @@ final class DDMMSSParser: Sendable {
     let degrees = match[degreesRef]
     let minutes = match[minutesRef]
     let quadrant = match[quadrantRef]
-    var seconds = match[secondsRef]
+    let seconds = match[secondsRef]
 
-    let sign = (quadrant == "S" || quadrant == "W") ? -1 : 1
-    seconds += Double(minutes * 60)
-    seconds += Double(degrees * 3600)
-    seconds *= Double(sign)
+    let sign: Double = (quadrant == "S" || quadrant == "W") ? -1 : 1
+    // Convert DMS to arc-seconds: degrees*3600 + minutes*60 + seconds
+    let arcSeconds = Double(degrees) * 3600.0 + Double(minutes) * 60.0 + seconds
 
-    return Float(seconds)
+    return Float(arcSeconds * sign)
   }
 }

@@ -33,7 +33,7 @@ objects. This is done automatically by the following methods on ``NASR``:
 
 * ``NASR/fromInternetToMemory(activeAt:format:)``,
 * ``NASR/fromInternetToFile(_:activeAt:format:)``,
-* ``NASR/fromLocalArchive(_:)``, and
+* ``NASR/fromLocalArchive(_:format:)``, and
 * ``NASR/fromLocalDirectory(_:format:)``.
 
 You can, however, provide your own ``Loader`` subclass to ``NASR`` if you
@@ -57,7 +57,7 @@ docuemntation for more information.
 
 ### Loading Distributions from Disk
 
-- ``NASR/fromLocalArchive(_:)``
+- ``NASR/fromLocalArchive(_:format:)``
 - ``ArchiveFileDistribution``
 - ``NASR/fromLocalDirectory(_:format:)``
 - ``DirectoryDistribution``

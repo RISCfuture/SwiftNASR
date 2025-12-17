@@ -12,10 +12,10 @@ public struct RunwayEnd: Record {
 
   /// The name of the runway direction, for example "29" for the northwest
   /// direction of runway "11/29".
-  public let ID: String
+  public let id: String
 
-  /// The runway direction, in degrees from true north.
-  public let trueHeading: UInt?
+  /// The runway heading.
+  public let heading: Bearing<UInt>?
 
   /// The type of instrument landing equipment available.
   public let instrumentLandingSystem: InstrumentLandingSystem?
@@ -32,26 +32,25 @@ public struct RunwayEnd: Record {
   /// The location and elevation of the physical runway end.
   public let threshold: Location?
 
-  /// The height of the visual glidepath above the runway threshold, in feet.
+  /// The height of the visual glidepath above the runway threshold (feet AGL).
   public let thresholdCrossingHeight: UInt?
 
-  /// The glidepath angle for a visual approach, in degrees.
+  /// The glidepath angle for a visual approach (hundredths of degrees).
   public let visualGlidepath: Float?
 
   /// The location and elevation of the displaced threshold, which is the
   /// start of the landing portion of the runway.
   public let displacedThreshold: Location?
 
-  /// The distance between the runway end and displaced threshold, in feet.
+  /// The distance between the runway end and displaced threshold (feet).
   public let thresholdDisplacement: UInt?
 
-  /// The highest elevation within the touchdown zone, in feet.
+  /// The highest elevation within the touchdown zone (feet MSL).
   public let touchdownZoneElevation: Float?
 
-  /// The height angle between the approach and departure ends of the runway,
-  /// in percent. The gradient is the slope expressed as a percentage. A
-  /// positive value indicates a runway that slopes up towards the reciprocal
-  /// end.
+  /// The slope between the approach and departure ends of the runway
+  /// (percent). A positive value indicates a runway that slopes up towards
+  /// the reciprocal end.
   public let gradient: Float?
 
   /// The takeoff run available; the portion of the runway available for a
@@ -68,10 +67,10 @@ public struct RunwayEnd: Record {
 
   /// Landing distance available; the portion of the runway available for
   /// landing and rollout (feet).
-  public let LDA: UInt?  // feet
+  public let LDA: UInt?
 
   /// A location used for land-and-hold-short operations.
-  public var LAHSO: LAHSOPoint?
+  public internal(set) var LAHSO: LAHSOPoint?
 
   /// Visual glideslope indicating equipment available.
   public let visualGlideslopeIndicator: VisualGlideslopeIndicator?
@@ -92,53 +91,53 @@ public struct RunwayEnd: Record {
   public let hasCenterlineLighting: Bool?
 
   /// `true` if the runway has runway end touchdown lights.
-  public let endTouchdownLighting: Bool?
+  public let hasEndTouchdownLighting: Bool?
 
   /// The obstacle that contributes most to raising the runway's approach
   /// slope.
-  public var controllingObject: ControllingObject?
+  public internal(set) var controllingObject: ControllingObject?
 
   /// The source for the threshold position information.
   public let positionSource: String?
 
   /// The date the threshold position was determined.
-  public let positionSourceDate: Date?
+  public let positionSourceDate: DateComponents?
 
   /// The source for the threshold elevation information.
   public let elevationSource: String?
 
   /// The date the threshold elevation was determined.
-  public let elevationSourceDate: Date?
+  public let elevationSourceDate: DateComponents?
 
   /// The source for the displaced threshold position information.
   public let displacedThresholdPositionSource: String?
 
   /// The date the displaced threshold position was determined.
-  public let displacedThresholdPositionSourceDate: Date?
+  public let displacedThresholdPositionSourceDate: DateComponents?
 
   /// The source for the displaced threshold elevation information.
   public let displacedThresholdElevationSource: String?
 
   /// The date the displaced threshold elevation was determined.
-  public let displacedThresholdElevationSourceDate: Date?
+  public let displacedThresholdElevationSourceDate: DateComponents?
 
   /// The source for the TDZE information.
   public let touchdownZoneElevationSource: String?
 
   /// The date the TDZE was determined.
-  public let touchdownZoneElevationSourceDate: Date?
+  public let touchdownZoneElevationSourceDate: DateComponents?
 
   /// The arresting equipment available on this runway.
-  public var arrestingSystems = [String]()
+  public internal(set) var arrestingSystems = [String]()
 
   /// General and per-field remarks.
-  public var remarks = Remarks<Field>()
+  public internal(set) var remarks = Remarks<Field>()
 
   // MARK: - Methods
 
   init(
-    ID: String,
-    trueHeading: UInt?,
+    id: String,
+    heading: Bearing<UInt>?,
     instrumentLandingSystem: Self.InstrumentLandingSystem?,
     rightTraffic: Bool?,
     marking: Self.Marking?,
@@ -161,21 +160,21 @@ public struct RunwayEnd: Record {
     approachLighting: Self.ApproachLighting?,
     hasREIL: Bool?,
     hasCenterlineLighting: Bool?,
-    endTouchdownLighting: Bool?,
+    hasEndTouchdownLighting: Bool?,
     controllingObject: Self.ControllingObject?,
     positionSource: String?,
-    positionSourceDate: Date?,
+    positionSourceDate: DateComponents?,
     elevationSource: String?,
-    elevationSourceDate: Date?,
+    elevationSourceDate: DateComponents?,
     displacedThresholdPositionSource: String?,
-    displacedThresholdPositionSourceDate: Date?,
+    displacedThresholdPositionSourceDate: DateComponents?,
     displacedThresholdElevationSource: String?,
-    displacedThresholdElevationSourceDate: Date?,
+    displacedThresholdElevationSourceDate: DateComponents?,
     touchdownZoneElevationSource: String?,
-    touchdownZoneElevationSourceDate: Date?
+    touchdownZoneElevationSourceDate: DateComponents?
   ) {
-    self.ID = ID
-    self.trueHeading = trueHeading
+    self.id = id
+    self.heading = heading
     self.instrumentLandingSystem = instrumentLandingSystem
     self.rightTraffic = rightTraffic
     self.marking = marking
@@ -198,7 +197,7 @@ public struct RunwayEnd: Record {
     self.approachLighting = approachLighting
     self.hasREIL = hasREIL
     self.hasCenterlineLighting = hasCenterlineLighting
-    self.endTouchdownLighting = endTouchdownLighting
+    self.hasEndTouchdownLighting = hasEndTouchdownLighting
     self.controllingObject = controllingObject
     self.positionSource = positionSource
     self.positionSourceDate = positionSourceDate
@@ -297,17 +296,17 @@ public struct RunwayEnd: Record {
     /// Clearance slope, as _x_:1. Slopes greater than 50:1 are coded as 50.
     public let clearanceSlope: UInt?
 
-    /// Obstacle height above runway surface, in feet.
+    /// Obstacle height above runway surface (feet AGL).
     public let heightAboveRunway: UInt?
 
-    /// Obstacle distance from runway threshold, in feet.
+    /// Obstacle distance from runway threshold (feet).
     public let distanceFromRunway: UInt?
 
     /// Obstacle offset from extended runway centerline.
     public let offsetFromCenterline: Offset?
 
     /// General and per-field remarks.
-    public var remarks = Remarks<Field>()
+    public internal(set) var remarks = Remarks<Field>()
 
     /// Obstacle categories.
     public enum Category: RecordEnum {
@@ -485,12 +484,12 @@ public struct RunwayEnd: Record {
   /// land-and-hold-short operations are in effect.
   public struct LAHSOPoint: Record {
 
-    /// The distance from the landing threshold to the LAHSO point, in feet.
+    /// The distance from the landing threshold to the LAHSO point (feet).
     public let availableDistance: UInt
 
     /// The identifier of the intersecting runway defining the LAHSO point,
     /// if defined by runway.
-    public let intersectingRunwayID: String?
+    public let intersectingRunwayId: String?
 
     /// A description of the intersecting entity defining the LAHSO point,
     /// if not a runway (e.g., a taxiway).
@@ -503,28 +502,28 @@ public struct RunwayEnd: Record {
     public let positionSource: String?
 
     /// The date the position was determined.
-    public let positionSourceDate: Date?
+    public let positionSourceDate: DateComponents?
 
     /// General and per-field remarks.
-    public var remarks = Remarks<Field>()
+    public internal(set) var remarks = Remarks<Field>()
 
     // for accessing other runways in the parent Airport
-    var findRunwayByID: (@Sendable (_ runwayID: String) -> Runway?)!
+    var findRunwayById: (@Sendable (_ runwayId: String) -> Runway?)!
 
     /// Fields that per-field remarks can be associated with.
     public enum Field: String, RemarkField {
-      case availableDistance, intersectingRunwayID, definingEntity, position, positionSource,
+      case availableDistance, intersectingRunwayId, definingEntity, position, positionSource,
         positionSourceDate
 
       static var fieldOrder: [Self?] {
         var order = [Self?](repeating: nil, count: 100)
         order.append(contentsOf: [
-          .availableDistance, .intersectingRunwayID, .position, .position, .position, .position,
+          .availableDistance, .intersectingRunwayId, .position, .position, .position, .position,
           .positionSource, .positionSourceDate
         ])
         order.append(contentsOf: Array(repeating: nil, count: 16))
         order.append(contentsOf: [
-          .availableDistance, .intersectingRunwayID, .position, .position, .position, .position,
+          .availableDistance, .intersectingRunwayId, .position, .position, .position, .position,
           .positionSource, .positionSourceDate, nil
         ])
         return order
@@ -532,7 +531,7 @@ public struct RunwayEnd: Record {
     }
 
     private enum CodingKeys: String, CodingKey {
-      case availableDistance, intersectingRunwayID, definingEntity, position, positionSource,
+      case availableDistance, intersectingRunwayId, definingEntity, position, positionSource,
         positionSourceDate
     }
   }
@@ -699,11 +698,11 @@ public struct RunwayEnd: Record {
 
   /// Fields that per-field remarks can be associated with.
   public enum Field: String, RemarkField {
-    case ID, trueHeading, instrumentLandingSystem, rightTraffic, marking, markingCondition,
+    case id, heading, instrumentLandingSystem, rightTraffic, marking, markingCondition,
       threshold, thresholdCrossingHeight, visualGlidepath, displacedThreshold,
       thresholdDisplacement, touchdownZoneElevation, gradient, TORA, TODA, ASDA, LDA, LAHSO,
       visualGlideslopeIndicator, RVRSensors, hasRVV, approachLighting, hasREIL,
-      hasCenterlineLighting, endTouchdownLighting, controllingObject, positionSource,
+      hasCenterlineLighting, hasEndTouchdownLighting, controllingObject, positionSource,
       positionSourceDate, elevationSource, elevationSourceDate, displacedThresholdPositionSource,
       displacedThresholdPositionSourceDate, displacedThresholdElevationSource,
       displacedThresholdElevationSourceDate, touchdownZoneElevationSource,
@@ -715,12 +714,12 @@ public struct RunwayEnd: Record {
       var order = [Self?](repeating: nil, count: 10)
       for _ in 1...2 {
         order.append(contentsOf: [
-          .ID, .trueHeading, .instrumentLandingSystem, .rightTraffic, .marking, .markingCondition,
+          .id, .heading, .instrumentLandingSystem, .rightTraffic, .marking, .markingCondition,
           .threshold, .threshold, .threshold, .threshold, .threshold, .thresholdCrossingHeight,
           .visualGlidepath, .displacedThreshold, .displacedThreshold, .displacedThreshold,
           .displacedThreshold, .displacedThreshold, .thresholdDisplacement, .touchdownZoneElevation,
           visualGlideslopeIndicator, .RVRSensors, .hasRVV, approachLighting, .hasREIL,
-          .hasCenterlineLighting, .endTouchdownLighting,
+          .hasCenterlineLighting, .hasEndTouchdownLighting,
           .controllingObject, .controllingObject, .controllingObject, .controllingObject,
           .controllingObject, .controllingObject, .controllingObject
         ])
@@ -742,10 +741,10 @@ public struct RunwayEnd: Record {
   }
 
   private enum CodingKeys: String, CodingKey {
-    case ID, trueHeading, instrumentLandingSystem, rightTraffic, marking, markingCondition,
+    case id, heading, instrumentLandingSystem, rightTraffic, marking, markingCondition,
       threshold, thresholdCrossingHeight, visualGlidepath, displacedThreshold,
       thresholdDisplacement, touchdownZoneElevation, visualGlideslopeIndicator, RVRSensors, hasRVV,
-      approachLighting, hasREIL, hasCenterlineLighting, endTouchdownLighting, controllingObject,
+      approachLighting, hasREIL, hasCenterlineLighting, hasEndTouchdownLighting, controllingObject,
       gradient, positionSource, positionSourceDate, elevationSource, elevationSourceDate,
       displacedThresholdPositionSource, displacedThresholdPositionSourceDate,
       displacedThresholdElevationSource, displacedThresholdElevationSourceDate,

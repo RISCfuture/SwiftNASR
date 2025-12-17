@@ -7,9 +7,9 @@ import Quick
 class CSVAirportParserSpec: AsyncSpec {
   override class func spec() {
     describe("CSVAirportParser") {
-      let csvDirectory = URL(
-        fileURLWithPath:
-          "\(FileManager.default.currentDirectoryPath)/Tests/SwiftNASRTests/Resources/MockCSVDistribution"
+      let csvDirectory = Bundle.module.resourceURL!.appendingPathComponent(
+        "MockCSVDistribution",
+        isDirectory: true
       )
 
       context("when parsing CSV files") {

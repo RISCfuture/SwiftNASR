@@ -12,10 +12,7 @@ let package = Package(
       name: "SwiftNASR",
       targets: ["SwiftNASR"]
     ),
-    .executable(name: "SwiftNASR_E2E", targets: ["SwiftNASR_E2E"]),
-    .executable(name: "SwiftNASR_Compare", targets: ["SwiftNASR_Compare"]),
-    .executable(name: "SwiftNASR_Profile", targets: ["SwiftNASR_Profile"]),
-    .executable(name: "TestMemory", targets: ["TestMemory"])
+    .executable(name: "SwiftNASR_E2E", targets: ["SwiftNASR_E2E"])
   ],
   dependencies: [
     .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
@@ -50,35 +47,6 @@ let package = Package(
       ],
       path: "Tests/SwiftNASR_E2E",
       linkerSettings: [.linkedLibrary("swift_Concurrency")]
-    ),
-    .executableTarget(
-      name: "SwiftNASR_Compare",
-      dependencies: [
-        "SwiftNASR",
-        .product(name: "ArgumentParser", package: "swift-argument-parser")
-      ],
-      path: "Tests/SwiftNASR_Compare",
-      linkerSettings: [.linkedLibrary("swift_Concurrency")]
-    ),
-    .executableTarget(
-      name: "SwiftNASR_Profile",
-      dependencies: [
-        "SwiftNASR",
-        .product(name: "ArgumentParser", package: "swift-argument-parser")
-      ],
-      path: "Tests/SwiftNASR_Profile",
-      linkerSettings: [.linkedLibrary("swift_Concurrency")]
-    ),
-    .executableTarget(
-      name: "TestMemory",
-      dependencies: ["SwiftNASR", "ZIPFoundation"],
-      path: "Tests/TestMemory",
-      linkerSettings: [.linkedLibrary("swift_Concurrency")]
-    ),
-    .executableTarget(
-      name: "TestMinimal",
-      dependencies: ["SwiftNASR"],
-      path: "Tests/TestMinimal"
     )
   ],
   swiftLanguageModes: [.v5, .v6]

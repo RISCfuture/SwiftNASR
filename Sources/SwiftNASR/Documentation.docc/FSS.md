@@ -4,7 +4,7 @@
 
 ### Properties
 
-- ``ID``
+- ``id``
 - ``name``
 - ``radioIdentifier``
 
@@ -39,12 +39,12 @@
 - ``flightWatchAvailability``
 - ``DFEquipment``
 - ``nearestFSSWithTeletype``
-- ``nearestFSSIDWithTeletype``
+- ``nearestFSSIdWithTeletype``
 
 ### Location
 
 - ``airport``
-- ``airportID``
+- ``airportId``
 - ``city``
 - ``stateName``
 - ``state``

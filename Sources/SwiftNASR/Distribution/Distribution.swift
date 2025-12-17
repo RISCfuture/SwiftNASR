@@ -4,7 +4,24 @@ private let metatypes =
   [
     (RecordType.states, State.self),
     (RecordType.airports, Airport.self),
-    (RecordType.ARTCCFacilities, ARTCC.self)
+    (RecordType.ARTCCFacilities, ARTCC.self),
+    (RecordType.reportingPoints, Fix.self),
+    (RecordType.weatherReportingStations, WeatherStation.self),
+    (RecordType.airways, Airway.self),
+    (RecordType.ILSes, ILS.self),
+    (RecordType.terminalCommFacilities, TerminalCommFacility.self),
+    (RecordType.departureArrivalProceduresComplete, DepartureArrivalProcedure.self),
+    (RecordType.preferredRoutes, PreferredRoute.self),
+    (RecordType.holds, Hold.self),
+    (RecordType.weatherReportingLocations, WeatherReportingLocation.self),
+    (RecordType.parachuteJumpAreas, ParachuteJumpArea.self),
+    (RecordType.militaryTrainingRoutes, MilitaryTrainingRoute.self),
+    (RecordType.codedDepartureRoutes, CodedDepartureRoute.self),
+    (RecordType.miscActivityAreas, MiscActivityArea.self),
+    (RecordType.ARTCCBoundarySegments, ARTCCBoundarySegment.self),
+    (RecordType.FSSCommFacilities, FSSCommFacility.self),
+    (RecordType.ATSAirways, ATSAirway.self),
+    (RecordType.locationIdentifiers, LocationIdentifier.self)
   ] as [(RecordType, any Record.Type)]
 
 /// Record types available to load from a distribution.
@@ -19,17 +36,14 @@ public enum RecordType: String, Codable, Sendable {
   case FSSCommFacilities = "COM"
   case reportingPoints = "FIX"
   case flightServiceStations = "FSS"
-  case HARFixes = "HARFIX"
   case holds = "HPF"
   case ILSes = "ILS"
   case locationIdentifiers = "LID"
   case miscActivityAreas = "MAA"
   case militaryTrainingRoutes = "MTR"
-  case enrouteFixes = "NATFIX"
   case navaids = "NAV"
   case preferredRoutes = "PFR"
   case parachuteJumpAreas = "PJA"
-  case departureArrivalProcedures = "SSD"
   case departureArrivalProceduresComplete = "STARDP"
   case terminalCommFacilities = "TWR"
   case weatherReportingLocations = "WXL"
@@ -89,12 +103,10 @@ public protocol Distribution: Sendable {
   
    - Parameter path: The path to the file.
    - Parameter progressHandler: A block that receives the Progress object when
-                                the task begins.
-   - Parameter progress: A child Progress object you can add to your parent
-                         Progress.
+                                the task begins. You can add it to your parent
+                                Progress.
    - Parameter linesHandler: Called when the number of lines in the file is
                              known.
-   - Parameter lines: The number of lines in the file.
    - Returns: An `AsyncStream` that contains each line, in order, from the
    file.
    */
@@ -121,12 +133,9 @@ extension Distribution {
   
    - Parameter type: The record type to read data for.
    - Parameter progressHandler: A block that receives the Progress object when
-   the task begins.
-   - Parameter progress: A child Progress object you can add to your parent
-   Progress.
+   the task begins. You can add it to your parent Progress.
    - Parameter linesHandler: Called when the number of lines in the file is
    known.
-   - Parameter lines: The number of lines in the file.
    - Returns: An async stream of data from the record file, and the progress
    through that file.
    */
@@ -160,7 +169,8 @@ extension Distribution {
     // For CSV format, the actual parsing happens in the CSV parsers which read files directly
     // We just need to check if the record type is supported
     switch type {
-      case .airports, .navaids, .flightServiceStations, .ARTCCFacilities:
+      case .airports, .navaids, .flightServiceStations, .ARTCCFacilities, .reportingPoints,
+        .weatherReportingStations, .airways, .ILSes, .terminalCommFacilities, .codedDepartureRoutes:
         break  // These types are supported for CSV
       default:
         // For unsupported types, return empty stream

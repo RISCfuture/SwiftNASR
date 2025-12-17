@@ -128,8 +128,8 @@ class NASRDataSpec: AsyncSpec {
             fail()
             return
           }
-          expect(parsedFSS.ID).to(equal("OAK"))
-          expect(decodedFSS.ID).to(equal("OAK"))
+          expect(parsedFSS.id).to(equal("OAK"))
+          expect(decodedFSS.id).to(equal("OAK"))
         }
       }
 
@@ -165,10 +165,10 @@ class NASRDataSpec: AsyncSpec {
 
       beforeEach {
         parsedZOA = await parsedData.ARTCCs!.first {
-          $0.ID == "ZOA" && $0.locationName == "PRIEST" && $0.type == ARTCC.FacilityType.RCAG
+          $0.code == "ZOA" && $0.locationName == "PRIEST" && $0.type == ARTCC.FacilityType.RCAG
         }!
         decodedZOA = await decodedData.ARTCCs!.first {
-          $0.ID == "ZOA" && $0.locationName == "PRIEST" && $0.type == ARTCC.FacilityType.RCAG
+          $0.code == "ZOA" && $0.locationName == "PRIEST" && $0.type == ARTCC.FacilityType.RCAG
         }!
       }
 
@@ -212,8 +212,8 @@ class NASRDataSpec: AsyncSpec {
       var decodedOAK: FSS!
 
       beforeEach {
-        parsedOAK = await parsedData.FSSes!.first { $0.ID == "OAK" }!
-        decodedOAK = await decodedData.FSSes!.first { $0.ID == "OAK" }!
+        parsedOAK = await parsedData.FSSes!.first { $0.id == "OAK" }!
+        decodedOAK = await decodedData.FSSes!.first { $0.id == "OAK" }!
       }
 
       describe("nearestFSSWithTeletype") {
@@ -224,8 +224,8 @@ class NASRDataSpec: AsyncSpec {
             fail()
             return
           }
-          expect(parsedFSS.ID).to(equal("OAK"))
-          expect(decodedFSS.ID).to(equal("OAK"))
+          expect(parsedFSS.id).to(equal("OAK"))
+          expect(decodedFSS.id).to(equal("OAK"))
         }
       }
 
@@ -286,7 +286,7 @@ class NASRDataSpec: AsyncSpec {
             fail()
             return
           }
-          expect(parsedARTCC.ID).to(equal("ZAN"))
+          expect(parsedARTCC.code).to(equal("ZAN"))
         }
       }
 
@@ -296,7 +296,7 @@ class NASRDataSpec: AsyncSpec {
             fail()
             return
           }
-          expect(parsedARTCC.ID).to(equal("ZAN"))
+          expect(parsedARTCC.code).to(equal("ZAN"))
         }
       }
 
@@ -306,7 +306,7 @@ class NASRDataSpec: AsyncSpec {
             fail()
             return
           }
-          expect(parsedFSS.ID).to(equal("FTW"))
+          expect(parsedFSS.id).to(equal("FTW"))
         }
       }
     }

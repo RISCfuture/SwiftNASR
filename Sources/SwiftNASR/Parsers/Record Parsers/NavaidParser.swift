@@ -15,7 +15,7 @@ struct NavaidKey: Hashable {
   let city: String
 
   init(navaid: Navaid) {
-    ID = navaid.ID
+    ID = navaid.id
     type = navaid.type
     city = navaid.city
   }
@@ -79,7 +79,7 @@ class FixedWidthNavaidParser: FixedWidthParser {
     .null,  // 30 TACAN lon (sec)
     .float(nullable: .blank),  // 31 elevation
     .generic({ try parseMagVar($0, fieldIndex: 32) }, nullable: .blank),  // 32 magvar
-    .datetime(formatter: FixedWidthTransformer.yearOnly, nullable: .blank),  // 33 magvar epoch
+    .dateComponents(format: .yearOnly, nullable: .blank),  // 33 magvar epoch
 
     .boolean(nullable: .blank),  // 34 simul voice output
     .unsignedInteger(nullable: .blank),  // 35 power output
@@ -104,7 +104,7 @@ class FixedWidthNavaidParser: FixedWidthParser {
 
     .generic({ try parseLFRLegs($0, fieldIndex: 54) }, nullable: .blank),  // 54 quadrant identification and range leg bearing
 
-    .generic { try raw($0, toEnum: Navaid.Status.self) },  // 55 status
+    .generic { try raw($0, toEnum: OperationalStatus.self) },  // 55 status
 
     .boolean(),  // 56 pitch flag
     .boolean(),  // 57 catch flag
@@ -200,6 +200,22 @@ class FixedWidthNavaidParser: FixedWidthParser {
       Location(latitude: lat as! Float, longitude: lon as! Float, elevation: nil)
     }
 
+    let magneticVariation = transformedValues[32] as! Int?
+
+    // Convert fan marker bearing to Bearing<UInt>
+    let fanMarkerMajorBearing = (transformedValues[43] as! UInt?).map { value in
+      Bearing(value, reference: .magnetic, magneticVariation: magneticVariation ?? 0)
+    }
+
+    // Convert LFR leg bearings to Bearing<UInt>
+    let rawLFRLegs = transformedValues[54] as! [(LFRLeg.Quadrant, UInt)]?
+    let LFRLegs = rawLFRLegs?.map { quadrant, bearing in
+      LFRLeg(
+        quadrant: quadrant,
+        bearing: Bearing(bearing, reference: .magnetic, magneticVariation: magneticVariation ?? 0)
+      )
+    }
+
     let navaid = Navaid(
       id: transformedValues[1] as! String,
       name: transformedValues[5] as! String,
@@ -219,18 +235,18 @@ class FixedWidthNavaidParser: FixedWidthParser {
       position: position,
       TACANPosition: TACANPosition,
       surveyAccuracy: transformedValues[26] as! Navaid.SurveyAccuracy?,
-      magneticVariation: transformedValues[32] as! Int?,
-      magneticVariationEpoch: transformedValues[33] as! Date?,
+      magneticVariation: magneticVariation,
+      magneticVariationEpoch: transformedValues[33] as! DateComponents?,
       simultaneousVoice: transformedValues[34] as! Bool?,
       powerOutput: transformedValues[35] as! UInt?,
-      automaticVoiceID: transformedValues[36] as! Bool?,
+      automaticVoiceId: transformedValues[36] as! Bool?,
       monitoringCategory: transformedValues[37] as! Navaid.MonitoringCategory?,
       radioVoiceCall: transformedValues[38] as! String?,
-      TACANChannel: transformedValues[39] as! Navaid.TACANChannel?,
+      tacanChannel: transformedValues[39] as! Navaid.TACANChannel?,
       frequency: transformedValues[40] as! UInt?,
       beaconIdentifier: transformedValues[41] as! String?,
       fanMarkerType: transformedValues[42] as! Navaid.FanMarkerType?,
-      fanMarkerMajorBearing: transformedValues[43] as! UInt?,
+      fanMarkerMajorBearing: fanMarkerMajorBearing,
       VORServiceVolume: transformedValues[44] as! Navaid.ServiceVolume?,
       DMEServiceVolume: transformedValues[45] as! Navaid.ServiceVolume?,
       lowAltitudeInHighStructure: transformedValues[46] as! Bool?,
@@ -239,14 +255,14 @@ class FixedWidthNavaidParser: FixedWidthParser {
       TWEBPhone: transformedValues[49] as! String?,
       controllingFSSCode: transformedValues[50] as! String?,
       NOTAMAccountabilityCode: transformedValues[53] as! String?,
-      LFRLegs: transformedValues[54] as! [LFRLeg]?,
-      status: transformedValues[55] as! Navaid.Status,
-      pitchFlag: transformedValues[56] as! Bool,
-      catchFlag: transformedValues[57] as! Bool,
-      SUAFlag: transformedValues[58] as! Bool,
-      restrictionFlag: transformedValues[59] as! Bool?,
-      HIWASFlag: transformedValues[60] as! Bool?,
-      TWEBRestrictionFlag: transformedValues[61] as! Bool?
+      LFRLegs: LFRLegs,
+      status: transformedValues[55] as! OperationalStatus,
+      isPitchPoint: transformedValues[56] as? Bool,
+      isCatchPoint: transformedValues[57] as? Bool,
+      isAssociatedWithSUA: transformedValues[58] as? Bool,
+      hasRestriction: transformedValues[59] as! Bool?,
+      broadcastsHIWAS: transformedValues[60] as! Bool?,
+      hasTWEBRestriction: transformedValues[61] as! Bool?
     )
     navaids[NavaidKey(navaid: navaid)] = navaid
   }
@@ -273,13 +289,13 @@ class FixedWidthNavaidParser: FixedWidthParser {
   private func parseHoldingPatterns(_ values: [String]) throws {
     let transformedValues = try holdingPatternTransformer.applyTo(values)
     try updateNavaid(transformedValues) { navaid in
-      let pattern = HoldingPatternID(
+      let pattern = HoldingPatternId(
         name: transformedValues[3] as! String,
         number: transformedValues[4] as! UInt
       )
       navaid.associatedHoldingPatterns.insert(pattern)
 
-      if let otherPatterns = transformedValues[5] as? [HoldingPatternID] {
+      if let otherPatterns = transformedValues[5] as? [HoldingPatternId] {
         for pattern in otherPatterns {
           navaid.associatedHoldingPatterns.insert(pattern)
         }
@@ -302,11 +318,16 @@ class FixedWidthNavaidParser: FixedWidthParser {
   private func parseCheckpoint(_ values: [String]) throws {
     let transformedValues = try checkpointTransformer.applyTo(values)
     try updateNavaid(transformedValues) { navaid in
+      let bearing = Bearing(
+        transformedValues[4] as! UInt,
+        reference: .magnetic,
+        magneticVariation: navaid.magneticVariation ?? 0
+      )
       let checkpoint = VORCheckpoint(
         type: transformedValues[3] as! VORCheckpoint.CheckpointType,
-        bearing: transformedValues[4] as! UInt,
+        bearing: bearing,
         altitude: transformedValues[5] as! Int?,
-        airportID: transformedValues[6] as! String?,
+        airportId: transformedValues[6] as! String?,
         stateCode: transformedValues[7] as! String,
         airDescription: transformedValues[8] as! String?,
         groundDescription: transformedValues[9] as! String?
@@ -342,9 +363,9 @@ class FixedWidthNavaidParser: FixedWidthParser {
 
 private let classDesignatorDelimiters = CharacterSet(charactersIn: "-/")
 
-private func parseLFRLegs(_ string: String, fieldIndex: Int) throws -> [LFRLeg] {
+private func parseLFRLegs(_ string: String, fieldIndex: Int) throws -> [(LFRLeg.Quadrant, UInt)] {
   let scanner = Scanner(string: string)
-  var legs = [LFRLeg]()
+  var legs = [(LFRLeg.Quadrant, UInt)]()
 
   while !scanner.isAtEnd {
     guard let bearing = scanner.scanInt(),
@@ -355,7 +376,7 @@ private func parseLFRLegs(_ string: String, fieldIndex: Int) throws -> [LFRLeg] 
     guard let quadrant = LFRLeg.Quadrant.for(String(quadrantChar)) else {
       throw FixedWidthParserError.invalidValue(string, at: fieldIndex)
     }
-    legs.append(.init(quadrant: quadrant, bearing: UInt(bearing)))
+    legs.append((quadrant, UInt(bearing)))
   }
 
   return legs

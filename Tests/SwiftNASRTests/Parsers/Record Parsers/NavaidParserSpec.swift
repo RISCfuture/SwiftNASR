@@ -29,7 +29,7 @@ class NavaidParserSpec: AsyncSpec {
         }
         expect(navaids.count).to(equal(2))
 
-        guard let AST = navaids.first(where: { $0.ID == "AST" && $0.isVOR }) else {
+        guard let AST = navaids.first(where: { $0.id == "AST" && $0.isVOR }) else {
           fail()
           return
         }

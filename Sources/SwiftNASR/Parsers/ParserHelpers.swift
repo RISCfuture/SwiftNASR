@@ -84,12 +84,12 @@ enum ParserHelpers {
     }
   }
 
-  static func parseHoldingPattern(_ string: String, fieldIndex: Int) throws -> HoldingPatternID {
+  static func parseHoldingPattern(_ string: String, fieldIndex: Int) throws -> HoldingPatternId {
     let name = string.prefix(80).trimmingCharacters(in: .whitespaces)
     guard let number = UInt(string.suffix(3).trimmingCharacters(in: .whitespaces)) else {
       throw FixedWidthParserError.invalidValue(string, at: fieldIndex)
     }
-    return HoldingPatternID(name: name, number: number)
+    return HoldingPatternId(name: name, number: number)
   }
 
   // MARK: - Common parsers
@@ -144,10 +144,103 @@ func parseServiceVolume(_ string: String) throws -> Navaid.ServiceVolume {
   return try ParserHelpers.parseServiceVolume(string)
 }
 
-func parseHoldingPattern(_ string: String, fieldIndex: Int) throws -> HoldingPatternID {
+func parseHoldingPattern(_ string: String, fieldIndex: Int) throws -> HoldingPatternId {
   return try ParserHelpers.parseHoldingPattern(string, fieldIndex: fieldIndex)
 }
 
 func parseMagVar(_ string: String, fieldIndex: Int) throws -> Int {
   return try ParserHelpers.parseMagVar(string, fieldIndex: fieldIndex)
+}
+
+/// Strips owner type prefix (like "F-", "O-", "N-", "R-", "A-") from CSV owner/operator names
+/// CSV format combines owner type code with name (e.g., "F-FEDERAL AVIATION ADMIN")
+/// TXT format has owner type and name in separate fields
+func stripOwnerTypePrefix(_ string: String) -> String {
+  // Owner type prefixes are single uppercase letter followed by hyphen
+  // F=Federal, O=Other, N=Navy, R=Army, A=Air Force
+  if string.count >= 2,
+    string[string.index(string.startIndex, offsetBy: 1)] == "-",
+    let firstChar = string.first, firstChar.isUppercase
+  {
+    return String(string.dropFirst(2))
+  }
+  return string
+}
+
+// MARK: - Decimal Degrees Coordinate Parsing
+
+/// Parse latitude string (DD-MM-SS.SSSSH format) to decimal degrees
+func parseDecimalDegreesLatitude(_ str: String) throws -> Double? {
+  guard !str.isEmpty else { return nil }
+
+  let isNorth = str.hasSuffix("N")
+  let isSouth = str.hasSuffix("S")
+  var working = str
+  if isNorth || isSouth {
+    working = String(str.dropLast())
+  }
+
+  // Try DD-MM-SS.SSSSH format first
+  if working.contains("-") {
+    let parts = working.split(separator: "-")
+    guard parts.count >= 3 else { return nil }
+
+    guard let degrees = Double(parts[0]),
+      let minutes = Double(parts[1]),
+      let seconds = Double(parts[2])
+    else { return nil }
+
+    var lat = degrees + (minutes / 60.0) + (seconds / 3600.0)
+    if isSouth { lat = -lat }
+    return lat
+  }
+
+  // Try packed format DDMMSS.SSSS
+  guard working.count >= 6 else { return nil }
+  guard let degrees = Double(working.prefix(2)),
+    let minutes = Double(working.dropFirst(2).prefix(2)),
+    let seconds = Double(working.dropFirst(4))
+  else { return nil }
+
+  var lat = degrees + (minutes / 60.0) + (seconds / 3600.0)
+  if isSouth { lat = -lat }
+  return lat
+}
+
+/// Parse longitude string (DDD-MM-SS.SSSSH format) to decimal degrees
+func parseDecimalDegreesLongitude(_ str: String) throws -> Double? {
+  guard !str.isEmpty else { return nil }
+
+  let isWest = str.hasSuffix("W")
+  let isEast = str.hasSuffix("E")
+  var working = str
+  if isWest || isEast {
+    working = String(str.dropLast())
+  }
+
+  // Try DDD-MM-SS.SSSSH format first
+  if working.contains("-") {
+    let parts = working.split(separator: "-")
+    guard parts.count >= 3 else { return nil }
+
+    guard let degrees = Double(parts[0]),
+      let minutes = Double(parts[1]),
+      let seconds = Double(parts[2])
+    else { return nil }
+
+    var lon = degrees + (minutes / 60.0) + (seconds / 3600.0)
+    if isWest { lon = -lon }
+    return lon
+  }
+
+  // Try packed format DDDMMSS.SSSS
+  guard working.count >= 7 else { return nil }
+  guard let degrees = Double(working.prefix(3)),
+    let minutes = Double(working.dropFirst(3).prefix(2)),
+    let seconds = Double(working.dropFirst(5))
+  else { return nil }
+
+  var lon = degrees + (minutes / 60.0) + (seconds / 3600.0)
+  if isWest { lon = -lon }
+  return lon
 }

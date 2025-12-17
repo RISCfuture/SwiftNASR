@@ -17,7 +17,7 @@ public struct FSS: ParentRecord {
   // MARK: Identifiers
 
   /// The unique identifying code for the FSS.
-  public let ID: String
+  public let id: String
 
   /// The FSS name.
   public let name: String
@@ -50,14 +50,14 @@ public struct FSS: ParentRecord {
   public let frequencies: [Frequency]
 
   /// The frequencies that the FSS communicates with aircraft on.
-  public var commFacilities: [CommFacility]
+  public internal(set) var commFacilities: [CommFacility]
 
   /// The remote communications outlets that the FSS uses to communicate with
   /// aircraft.
-  public var outlets: [Outlet]
+  public internal(set) var outlets: [Outlet]
 
   /// The navigational aids that the FSS monitors.
-  public var navaids: [Navaid]
+  public internal(set) var navaids: [Navaid]
 
   /// The airport advisory frequencies that the FSS monitors.
   public let airportAdvisoryFrequencies: [Frequency]
@@ -85,7 +85,7 @@ public struct FSS: ParentRecord {
   public let hasWeatherRadar: Bool?
 
   /// `true` if this FSS is an enroute flight advisory service.
-  public let hasEFAS: Bool
+  public let hasEFAS: Bool?
 
   /// `true` if this FSS monitors Flight Watch frequencies (decomissioned).
   public let flightWatchAvailability: String?
@@ -95,13 +95,13 @@ public struct FSS: ParentRecord {
   public let DFEquipment: DirectionFindingEquipment?
 
   /// The ID of the nearest FSS with teletype capability.
-  public let nearestFSSIDWithTeletype: String?
+  public let nearestFSSIdWithTeletype: String?
 
   // MARK: Location
 
   /// The FAA location identifier (not site number) of the airport this FSS
   /// is associated with, if any.
-  public let airportID: String?
+  public let airportId: String?
 
   /// The city associated with the FSS, when the FSS is not located on an
   /// airport.
@@ -122,20 +122,18 @@ public struct FSS: ParentRecord {
   // MARK: Remarks
 
   /// Remarks for the flight service station.
-  public var remarks: [String]
+  public internal(set) var remarks: [String]
 
   /// Communications remarks for the FSS.
-  public var commRemarks: [String]
+  public internal(set) var commRemarks: [String]
 
   weak var data: NASRData?
-
-  public var id: String { return self.ID }
 
   // MARK: - Methods
 
   init(
-    ID: String,
-    airportID: String?,
+    id: String,
+    airportId: String?,
     name: String,
     radioIdentifier: String?,
     type: FSSType,
@@ -153,9 +151,9 @@ public struct FSS: ParentRecord {
     operator: Operator,
     operatorName: String?,
     hasWeatherRadar: Bool?,
-    hasEFAS: Bool,
+    hasEFAS: Bool?,
     flightWatchAvailability: String?,
-    nearestFSSIDWithTeletype: String?,
+    nearestFSSIdWithTeletype: String?,
     city: String?,
     stateName: String?,
     region: String?,
@@ -165,8 +163,8 @@ public struct FSS: ParentRecord {
     remarks: [String],
     commRemarks: [String]
   ) {
-    self.ID = ID
-    self.airportID = airportID
+    self.id = id
+    self.airportId = airportId
     self.name = name
     self.radioIdentifier = radioIdentifier
     self.type = type
@@ -186,7 +184,7 @@ public struct FSS: ParentRecord {
     self.hasWeatherRadar = hasWeatherRadar
     self.hasEFAS = hasEFAS
     self.flightWatchAvailability = flightWatchAvailability
-    self.nearestFSSIDWithTeletype = nearestFSSIDWithTeletype
+    self.nearestFSSIdWithTeletype = nearestFSSIdWithTeletype
     self.city = city
     self.stateName = stateName
     self.region = region
@@ -198,10 +196,10 @@ public struct FSS: ParentRecord {
   }
 
   private enum CodingKeys: String, CodingKey {
-    case ID, name, radioIdentifier, type, hoursOfOperation, status, lowAltEnrouteChartNumber,
+    case id, name, radioIdentifier, type, hoursOfOperation, status, lowAltEnrouteChartNumber,
       phoneNumber, frequencies, commFacilities, outlets, navaids, airportAdvisoryFrequencies,
       VOLMETs, owner, ownerName, `operator`, operatorName, hasWeatherRadar, hasEFAS,
-      flightWatchAvailability, DFEquipment, nearestFSSIDWithTeletype, airportID, city, region,
+      flightWatchAvailability, DFEquipment, nearestFSSIdWithTeletype, airportId, city, region,
       location, remarks, commRemarks, stateName
   }
 
@@ -289,7 +287,7 @@ public struct FSS: ParentRecord {
     public let identification: String
 
     /// The navaid type.
-    public let type: NavaidFacilityType
+    public let type: SwiftNASR.Navaid.FacilityType
   }
 
   /// A frequency that automatically transmits meteorological information to
@@ -325,7 +323,7 @@ public struct FSS: ParentRecord {
     public let lowAltEnrouteChart: String?
 
     /// The timezone containing the comm facility.
-    public let timezone: String?  // TODO enum?
+    public let timezone: StandardTimeZone?
 
     /// The type of owner of this facility.
     public let owner: Operator?
@@ -343,13 +341,13 @@ public struct FSS: ParentRecord {
     public let status: Status?
 
     /// The date that the current status was last updated.
-    public let statusDate: Date?
+    public let statusDate: DateComponents?
 
     /// The navaid ID associated with this comm facility.
     public let navaid: String?
 
     /// The navaid type associated with this comm facility.
-    public let navaidType: NavaidFacilityType?
+    public let navaidType: SwiftNASR.Navaid.FacilityType?
 
     // for loading states from the parent FSS object
     var findStateByName: (@Sendable (_ name: String) async -> State?)!

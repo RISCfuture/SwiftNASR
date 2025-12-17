@@ -4,7 +4,11 @@ import ZIPFoundation
 
 /// CSV Navaid Parser using declarative transformers like FixedWidthNavaidParser
 class CSVNavaidParser: CSVParser {
-  var csvDirectory = URL(fileURLWithPath: "/")
+  var CSVDirectory = URL(fileURLWithPath: "/")
+  var progress: Progress?
+  var bytesRead: Int64 = 0
+  let CSVFiles = ["NAV_BASE.csv", "NAV_RMK.csv", "NAV_CKPT.csv"]
+
   var navaids = [NavaidKey: Navaid]()
 
   // CSV field mapping based on NAV_BASE.csv headers (0-based indices)
@@ -52,13 +56,15 @@ class CSVNavaidParser: CSVParser {
     58,  // 39: ALT_CODE -> service volume VOR (field 58)
     59,  // 40: DME_SSV -> service volume DME (field 59)
     6,  // 41: NAV_STATUS -> operational status
-    // The following fields aren't in CSV but are in fixed-width
-    -1,  // 42: pitch flag
-    -1,  // 43: catch flag
-    -1,  // 44: sua flag
-    -1,  // 45: navaid restriction flag
-    -1,  // 46: hiwas flag
-    -1  // 47: tweb restriction flag
+    60,  // 42: LOW_NAV_ON_HIGH_CHART_FLAG -> low altitude in high structure
+    61,  // 43: Z_MKR_FLAG -> Z marker available
+    62,  // 44: FSS_ID -> controlling FSS code
+    65,  // 45: NOTAM_ID -> NOTAM accountability code
+    67,  // 46: pitch flag
+    68,  // 47: catch flag
+    69,  // 48: sua flag
+    70,  // 49: navaid restriction flag
+    71  // 50: hiwas flag
   ]
 
   // Transformer matching FixedWidthNavaidParser field types
@@ -73,8 +79,8 @@ class CSVNavaidParser: CSVParser {
     .string(nullable: .blank),  //  7 FAA region
     .string(nullable: .blank),  //  8 country
     .string(nullable: .blank),  //  9 country PO code
-    .string(nullable: .blank),  // 10 owner name
-    .string(nullable: .blank),  // 11 operator name
+    .generic({ stripOwnerTypePrefix($0) }, nullable: .blank),  // 10 owner name (strip X- prefix)
+    .generic({ stripOwnerTypePrefix($0) }, nullable: .blank),  // 11 operator name (strip X- prefix)
     .boolean(),  // 12 common use
     .boolean(),  // 13 public use
     .generic({ try parseClassDesignator($0) }, nullable: .blank),  // 14 navaid class
@@ -91,10 +97,10 @@ class CSVNavaidParser: CSVParser {
     .float(nullable: .blank),  // 25 elevation
     .float(nullable: .blank),  // 26 mag var value (can have decimals)
     .string(nullable: .blank),  // 27 mag var hemisphere
-    .datetime(formatter: CSVTransformer.yearOnly, nullable: .blank),  // 28 mag var epoch
-    .boolean(nullable: .sentinel(["N"])),  // 29 simultaneous voice ("N" means false)
-    .unsignedInteger(nullable: .sentinel(["N"])),  // 30 power output ("N" means not applicable)
-    .boolean(nullable: .sentinel(["N"])),  // 31 automatic voice ID ("N" means false)
+    .dateComponents(format: .yearOnly, nullable: .blank),  // 28 mag var epoch
+    .boolean(nullable: .blank),  // 29 simultaneous voice (Y/N flag)
+    .unsignedInteger(nullable: .sentinel(["N", ""])),  // 30 power output ("N" or blank means not applicable)
+    .boolean(nullable: .blank),  // 31 automatic voice ID (Y/N flag)
     .generic({ try raw($0, toEnum: Navaid.MonitoringCategory.self) }, nullable: .blank),  // 32 monitoring category
     .string(nullable: .sentinel(["", "NONE"])),  // 33 radio voice call
     .generic({ try parseTACAN($0, fieldIndex: 34) }, nullable: .blank),  // 34 channel/TACAN
@@ -115,13 +121,16 @@ class CSVNavaidParser: CSVParser {
     .unsignedInteger(nullable: .blank),  // 38 fan marker major bearing (MKR_BRG)
     .generic({ try parseServiceVolume($0) }, nullable: .blank),  // 39 VOR service volume
     .generic({ try parseServiceVolume($0) }, nullable: .blank),  // 40 DME service volume
-    .generic({ try raw($0, toEnum: Navaid.Status.self) }, nullable: .blank),  // 41 operational status
-    .boolean(nullable: .blank),  // 42 pitch flag (not in CSV)
-    .boolean(nullable: .blank),  // 43 catch flag (not in CSV)
-    .boolean(nullable: .blank),  // 44 sua flag (not in CSV)
-    .boolean(nullable: .blank),  // 45 navaid restriction flag (not in CSV)
-    .boolean(nullable: .blank),  // 46 hiwas flag (not in CSV)
-    .boolean(nullable: .blank)  // 47 tweb restriction flag (not in CSV)
+    .generic({ try raw($0, toEnum: OperationalStatus.self) }, nullable: .blank),  // 41 operational status
+    .boolean(nullable: .blank),  // 42 low altitude in high structure
+    .boolean(nullable: .blank),  // 43 Z marker available
+    .string(nullable: .blank),  // 44 FSS ID (controlling FSS code)
+    .string(nullable: .blank),  // 45 NOTAM ID (NOTAM accountability code)
+    .boolean(nullable: .blank),  // 46 pitch flag
+    .boolean(nullable: .blank),  // 47 catch flag
+    .boolean(nullable: .blank),  // 48 sua flag
+    .boolean(nullable: .blank),  // 49 navaid restriction flag
+    .boolean(nullable: .blank)  // 50 hiwas flag
   ])
 
   func prepare(distribution: Distribution) throws {
@@ -144,21 +153,17 @@ class CSVNavaidParser: CSVParser {
       guard fields.count >= 60 else { return }
 
       // Map CSV fields to transformer indices
-      var mappedFields = [String](repeating: "", count: 48)
+      var mappedFields = [String](repeating: "", count: 51)
 
       for (transformerIndex, csvIndex) in csvFieldMapping.enumerated() {
         if csvIndex >= 0 && csvIndex < fields.count {
           mappedFields[transformerIndex] = fields[csvIndex]
-        } else if csvIndex == -1 {
-          // Default values for fields not in CSV
-          // All default to empty string which will be handled by transformers
-          mappedFields[transformerIndex] = ""
         }
       }
 
       let transformedValues = try self.basicTransformer.applyTo(
         mappedFields,
-        indices: Array(0..<48)
+        indices: Array(0..<51)
       )
 
       // Parse location - convert from decimal degrees to arc-seconds
@@ -170,11 +175,11 @@ class CSVNavaidParser: CSVParser {
 
       // Parse TACAN position if available - convert from decimal degrees to arc-seconds
       let TACANPosition: Location? = {
-        if let tacanLat = transformedValues[23] as? Float,
-          let tacanLon = transformedValues[24] as? Float,
-          tacanLat != 0 || tacanLon != 0
+        if let TACANLat = transformedValues[23] as? Float,
+          let TACANLon = transformedValues[24] as? Float,
+          TACANLat != 0 || TACANLon != 0
         {
-          return Location(latitude: tacanLat * 3600, longitude: tacanLon * 3600, elevation: nil)
+          return Location(latitude: TACANLat * 3600, longitude: TACANLon * 3600, elevation: nil)
         }
         return nil
       }()
@@ -191,6 +196,11 @@ class CSVNavaidParser: CSVParser {
         }
         return nil
       }()
+
+      // Convert fan marker bearing to Bearing<UInt>
+      let fanMarkerMajorBearing = (transformedValues[38] as? UInt).map { value in
+        Bearing(value, reference: .magnetic, magneticVariation: magneticVariation ?? 0)
+      }
 
       let navaid = Navaid(
         id: transformedValues[1] as! String,
@@ -212,42 +222,148 @@ class CSVNavaidParser: CSVParser {
         TACANPosition: TACANPosition,
         surveyAccuracy: transformedValues[22] as? Navaid.SurveyAccuracy,
         magneticVariation: magneticVariation,
-        magneticVariationEpoch: transformedValues[28] as? Date,
+        magneticVariationEpoch: transformedValues[28] as? DateComponents,
         simultaneousVoice: transformedValues[29] as? Bool,
         powerOutput: transformedValues[30] as? UInt,
-        automaticVoiceID: transformedValues[31] as? Bool,
+        automaticVoiceId: transformedValues[31] as? Bool,
         monitoringCategory: transformedValues[32] as? Navaid.MonitoringCategory,
         radioVoiceCall: transformedValues[33] as? String,
-        TACANChannel: transformedValues[34] as? Navaid.TACANChannel,
+        tacanChannel: transformedValues[34] as? Navaid.TACANChannel,
         frequency: transformedValues[35] as? UInt,
         beaconIdentifier: transformedValues[36] as? String,
         fanMarkerType: transformedValues[37] as? Navaid.FanMarkerType,
-        fanMarkerMajorBearing: transformedValues[38] as? UInt,
+        fanMarkerMajorBearing: fanMarkerMajorBearing,
         VORServiceVolume: transformedValues[39] as? Navaid.ServiceVolume,
         DMEServiceVolume: transformedValues[40] as? Navaid.ServiceVolume,
-        lowAltitudeInHighStructure: nil,  // Not in CSV
-        ZMarkerAvailable: nil,  // Not in CSV
+        lowAltitudeInHighStructure: transformedValues[42] as? Bool,
+        ZMarkerAvailable: transformedValues[43] as? Bool,
         TWEBHours: nil,  // Not in CSV
         TWEBPhone: nil,  // Not in CSV
-        controllingFSSCode: nil,  // Not in CSV
-        NOTAMAccountabilityCode: nil,  // Not in CSV
+        controllingFSSCode: transformedValues[44] as? String,
+        NOTAMAccountabilityCode: transformedValues[45] as? String,
         LFRLegs: nil,  // Not in CSV
-        status: transformedValues[41] as? Navaid.Status ?? .operationalIFR,
-        pitchFlag: transformedValues[42] as? Bool ?? false,
-        catchFlag: transformedValues[43] as? Bool ?? false,
-        SUAFlag: transformedValues[44] as? Bool ?? false,
-        restrictionFlag: transformedValues[45] as? Bool,
-        HIWASFlag: transformedValues[46] as? Bool,
-        TWEBRestrictionFlag: transformedValues[47] as? Bool
+        status: transformedValues[41] as? OperationalStatus ?? .operationalIFR,
+        isPitchPoint: transformedValues[46] as? Bool,
+        isCatchPoint: transformedValues[47] as? Bool,
+        isAssociatedWithSUA: transformedValues[48] as? Bool,
+        hasRestriction: transformedValues[49] as? Bool,
+        broadcastsHIWAS: transformedValues[50] as? Bool,
+        hasTWEBRestriction: nil  // Not in CSV
       )
 
       let key = NavaidKey(navaid: navaid)
       self.navaids[key] = navaid
     }
 
-    // TODO: Parse NAV_RMK.csv for remarks
-    // TODO: Parse NAV_FIX.csv for fixes
-    // TODO: Parse NAV_HP.csv for holding patterns
+    // Parse NAV_RMK.csv for remarks
+    try await parseCSVFile(filename: "NAV_RMK.csv", expectedFieldCount: 10) { fields in
+      guard fields.count >= 10 else { return }
+
+      let navID = fields[1].trimmingCharacters(in: .whitespaces)
+      let navTypeStr = fields[2].trimmingCharacters(in: .whitespaces)
+      let city = fields[4].trimmingCharacters(in: .whitespaces)
+      let remark = fields[9].trimmingCharacters(in: .whitespaces)
+
+      guard !navID.isEmpty, !remark.isEmpty else { return }
+
+      // Parse navaid type
+      guard let navType = try? ParserHelpers.raw(navTypeStr, toEnum: Navaid.FacilityType.self)
+      else {
+        return
+      }
+
+      // Find the navaid by iterating through keys (since city might not match exactly)
+      let matchingKey = self.navaids.keys.first { key in
+        key.ID == navID && key.type == navType && (key.city == city || key.city.isEmpty)
+      }
+
+      if let key = matchingKey, var navaid = self.navaids[key] {
+        navaid.remarks.append(remark)
+        self.navaids[key] = navaid
+      }
+    }
+
+    // Parse NAV_CKPT.csv for VOR checkpoints
+    // CSV columns: EFF_DATE, NAV_ID, NAV_TYPE, STATE_CODE, CITY, COUNTRY_CODE,
+    //              ALTITUDE, BRG, AIR_GND_CODE, CHK_DESC, ARPT_ID, STATE_CHK_CODE
+    try await parseCSVFile(filename: "NAV_CKPT.csv", expectedFieldCount: 12) { fields in
+      guard fields.count >= 12 else { return }
+
+      let navID = fields[1].trimmingCharacters(in: .whitespaces)
+      let navTypeStr = fields[2].trimmingCharacters(in: .whitespaces)
+      let city = fields[4].trimmingCharacters(in: .whitespaces)
+
+      guard !navID.isEmpty else { return }
+
+      // Parse navaid type
+      guard let navType = try? ParserHelpers.raw(navTypeStr, toEnum: Navaid.FacilityType.self)
+      else {
+        return
+      }
+
+      // Find the navaid
+      let matchingKey = self.navaids.keys.first { key in
+        key.ID == navID && key.type == navType && (key.city == city || key.city.isEmpty)
+      }
+
+      guard let key = matchingKey else { return }
+
+      // Parse checkpoint fields
+      let altitudeStr = fields[6].trimmingCharacters(in: .whitespaces)
+      let bearingStr = fields[7].trimmingCharacters(in: .whitespaces)
+      let airGndCode = fields[8].trimmingCharacters(in: .whitespaces)
+      let description = fields[9].trimmingCharacters(in: .whitespaces)
+      let airportId = fields[10].trimmingCharacters(in: .whitespaces)
+      let stateCode = fields[11].trimmingCharacters(in: .whitespaces)
+
+      // Parse checkpoint type
+      guard
+        let checkpointType = try? ParserHelpers.raw(
+          airGndCode,
+          toEnum: VORCheckpoint.CheckpointType.self
+        )
+      else {
+        return
+      }
+
+      // Parse bearing
+      guard let bearingValue = UInt(bearingStr) else { return }
+
+      // Get magnetic variation from the navaid for bearing conversion
+      let navaid = self.navaids[key]!
+      let bearing = Bearing(
+        bearingValue,
+        reference: .magnetic,
+        magneticVariationDeg: navaid.magneticVariationDeg ?? 0
+      )
+
+      // Parse altitude (only for airborne checkpoints)
+      let altitude: Int? =
+        if !altitudeStr.isEmpty, let alt = Int(altitudeStr) {
+          alt
+        } else {
+          nil
+        }
+
+      // Determine air/ground description based on checkpoint type
+      let airDescription: String? = checkpointType == .air ? description : nil
+      let groundDescription: String? = checkpointType != .air ? description : nil
+
+      let checkpoint = VORCheckpoint(
+        type: checkpointType,
+        bearing: bearing,
+        altitudeFtMSL: altitude,
+        airportId: airportId.isEmpty ? nil : airportId,
+        stateCode: stateCode,
+        airDescription: airDescription,
+        groundDescription: groundDescription
+      )
+
+      self.navaids[key]!.checkpoints.append(checkpoint)
+    }
+
+    // Note: NAV_FIX.csv and NAV_HP.csv relate to fixes and holding patterns,
+    // which are separate record types (not part of the Navaid model).
   }
 
   func finish(data: NASRData) async {

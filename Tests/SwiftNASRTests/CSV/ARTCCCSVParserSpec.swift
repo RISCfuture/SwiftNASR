@@ -7,9 +7,9 @@ import Quick
 class CSVARTCCParserSpec: AsyncSpec {
   override class func spec() {
     describe("CSVARTCCParser") {
-      let csvDirectory = URL(
-        fileURLWithPath:
-          "\(FileManager.default.currentDirectoryPath)/Tests/SwiftNASRTests/Resources/MockCSVDistribution"
+      let csvDirectory = Bundle.module.resourceURL!.appendingPathComponent(
+        "MockCSVDistribution",
+        isDirectory: true
       )
 
       context("when parsing CSV files") {
@@ -22,7 +22,7 @@ class CSVARTCCParserSpec: AsyncSpec {
           expect(parser.ARTCCs.count).to(beGreaterThan(0))
 
           if let firstARTCC = parser.ARTCCs.values.first {
-            expect(firstARTCC.ID).notTo(beEmpty())
+            expect(firstARTCC.code).notTo(beEmpty())
             expect(firstARTCC.name).notTo(beEmpty())
             expect(firstARTCC.locationName).notTo(beEmpty())
           }
@@ -81,7 +81,7 @@ class CSVARTCCParserSpec: AsyncSpec {
           try await parser.parse(data: Data())
 
           // All ARTCCs should have unique keys
-          let uniqueIDs = Set(parser.ARTCCs.values.map(\.ID))
+          let uniqueIDs = Set(parser.ARTCCs.values.map(\.code))
           expect(uniqueIDs.count).to(beGreaterThan(0))
 
           // Each ARTCC should have a unique combination of ID, location, and type

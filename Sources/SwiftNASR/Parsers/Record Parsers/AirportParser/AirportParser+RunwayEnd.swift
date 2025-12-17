@@ -162,7 +162,7 @@ extension FixedWidthAirportParser {
     }
   }
 
-  func parseRunwayEnd(_ values: [Any?], offset1: Int, offset2: Int, airport _: Airport) throws
+  func parseRunwayEnd(_ values: [Any?], offset1: Int, offset2: Int, airport: Airport) throws
     -> RunwayEnd
   {
     let VGSI = try values[offset1 + 20].map { str in
@@ -211,11 +211,11 @@ extension FixedWidthAirportParser {
     let LAHSO = values[offset2 + 16].map { dist in
       RunwayEnd.LAHSOPoint(
         availableDistance: dist as! UInt,
-        intersectingRunwayID: values[offset2 + 17] as! String?,
+        intersectingRunwayId: values[offset2 + 17] as! String?,
         definingEntity: values[offset2 + 18] as! String?,
         position: location,
         positionSource: values[offset2 + 23] as! String?,
-        positionSourceDate: values[offset2 + 24] as! Date?
+        positionSourceDate: values[offset2 + 24] as! DateComponents?
       )
     }
 
@@ -231,9 +231,14 @@ extension FixedWidthAirportParser {
       )
     }
 
+    // Convert true heading to Bearing<UInt>
+    let heading = (values[offset1 + 1] as! UInt?).map { value in
+      Bearing(value, reference: .true, magneticVariation: airport.magneticVariation ?? 0)
+    }
+
     return RunwayEnd(
-      ID: values[offset1] as! String,
-      trueHeading: values[offset1 + 1] as! UInt?,
+      id: values[offset1] as! String,
+      heading: heading,
       instrumentLandingSystem: values[offset1 + 2] as! RunwayEnd.InstrumentLandingSystem?,
       rightTraffic: values[offset1 + 3] as! Bool?,
       marking: values[offset1 + 4] as! RunwayEnd.Marking?,
@@ -256,18 +261,18 @@ extension FixedWidthAirportParser {
       approachLighting: values[offset1 + 23] as! RunwayEnd.ApproachLighting?,
       hasREIL: values[offset1 + 24] as! Bool?,
       hasCenterlineLighting: values[offset1 + 25] as! Bool?,
-      endTouchdownLighting: values[offset1 + 26] as! Bool?,
+      hasEndTouchdownLighting: values[offset1 + 26] as! Bool?,
       controllingObject: controllingObject,
       positionSource: values[offset2 + 2] as! String?,
-      positionSourceDate: values[offset2 + 3] as! Date?,
+      positionSourceDate: values[offset2 + 3] as! DateComponents?,
       elevationSource: values[offset2 + 4] as! String?,
-      elevationSourceDate: values[offset2 + 5] as! Date?,
+      elevationSourceDate: values[offset2 + 5] as! DateComponents?,
       displacedThresholdPositionSource: values[offset2 + 6] as! String?,
-      displacedThresholdPositionSourceDate: values[offset2 + 7] as! Date?,
+      displacedThresholdPositionSourceDate: values[offset2 + 7] as! DateComponents?,
       displacedThresholdElevationSource: values[offset2 + 8] as! String?,
-      displacedThresholdElevationSourceDate: values[offset2 + 9] as! Date?,
+      displacedThresholdElevationSourceDate: values[offset2 + 9] as! DateComponents?,
       touchdownZoneElevationSource: values[offset2 + 10] as! String?,
-      touchdownZoneElevationSourceDate: values[offset2 + 11] as! Date?
+      touchdownZoneElevationSourceDate: values[offset2 + 11] as! DateComponents?
     )
   }
 }

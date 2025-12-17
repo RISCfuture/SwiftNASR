@@ -34,7 +34,8 @@ class ARTCCParserSpec: AsyncSpec {
 
         guard
           let anchorage = ARTCCs.first(where: {
-            $0.ID == "ZAN" && $0.locationName == "ANCHORAGE" && $0.type == ARTCC.FacilityType.ARTCC
+            $0.code == "ZAN" && $0.locationName == "ANCHORAGE"
+              && $0.type == ARTCC.FacilityType.ARTCC
           })
         else {
           fail()
@@ -45,7 +46,8 @@ class ARTCCParserSpec: AsyncSpec {
 
         guard
           let dillingham = ARTCCs.first(where: {
-            $0.ID == "ZAN" && $0.locationName == "DILLINGHAM" && $0.type == ARTCC.FacilityType.RCAG
+            $0.code == "ZAN" && $0.locationName == "DILLINGHAM"
+              && $0.type == ARTCC.FacilityType.RCAG
           })
         else {
           fail()

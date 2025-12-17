@@ -35,11 +35,29 @@ data.airports[0].tieInFSSID // returns a String identifier
 ### Records
 
 - ``Airport``
+- ``Airway``
 - ``ARTCC``
+- ``ARTCCBoundarySegment``
+- ``ATSAirway``
+- ``CodedDepartureRoute``
+- ``DepartureArrivalProcedure``
+- ``Fix``
 - ``FSS``
+- ``FSSCommFacility``
+- ``Hold``
+- ``HoldingAltitudes``
+- ``ILS``
+- ``LocationIdentifier``
+- ``MilitaryTrainingRoute``
+- ``MiscActivityArea``
 - ``Navaid``
+- ``ParachuteJumpArea``
+- ``PreferredRoute``
 - ``Record``
 - ``State``
+- ``TerminalCommFacility``
+- ``WeatherReportingLocation``
+- ``WeatherStation``
 
 ### Parsing
 

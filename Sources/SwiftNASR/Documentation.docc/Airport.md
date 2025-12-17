@@ -17,7 +17,7 @@
 
 ### Demographics
 
-- ``FAARegion-swift.property``
+- ``faaRegion``
 - ``FAAFieldOfficeCode``
 - ``stateCode``
 - ``state``
@@ -52,16 +52,16 @@
 
 ### FAA Services
 
-- ``boundaryARTCCID``
+- ``boundaryARTCCId``
 - ``boundaryARTCCs``
-- ``responsibleARTCCID``
+- ``responsibleARTCCId``
 - ``responsibleARTCCs``
-- ``tieInFSSID``
+- ``tieInFSSId``
 - ``tieInFSS``
 - ``tieInFSSOnStation``
-- ``alternateFSSID``
+- ``alternateFSSId``
 - ``alternateFSS``
-- ``NOTAMIssuerID``
+- ``NOTAMIssuerId``
 - ``NOTAMIssuer``
 - ``NOTAMDAvailable``
 
@@ -69,7 +69,7 @@
 
 - ``activationDate``
 - ``status-swift.property``
-- ``ARFFCapability-swift.property``
+- ``ARFFCapability-swift.struct``
 - ``agreements``
 - ``airspaceAnalysisDetermination-swift.property``
 - ``customsEntryAirport``
@@ -105,7 +105,7 @@
 - ``CTAF``
 - ``segmentedCircle``
 - ``beaconColor``
-- ``landingFee``
+- ``hasLandingFee``
 - ``medicalUse``
 - ``windIndicator``
 
@@ -141,7 +141,7 @@
 - ``FacilityType-swift.enum``
 - ``FAARegion-swift.enum``
 - ``Ownership-swift.enum``
-- ``LocationDeterminationMethod``
+- ``SurveyMethod``
 - ``Status-swift.enum``
 - ``FederalAgreement``
 - ``AirspaceAnalysisDetermination-swift.enum``

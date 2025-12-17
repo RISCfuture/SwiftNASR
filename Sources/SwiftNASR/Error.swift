@@ -80,19 +80,19 @@ public enum Error: Swift.Error {
   /**
    Parsed an unknown ARTCC data field identifier.
   
-   - Parameter fieldID: The unknown identifier.
+   - Parameter fieldId: The unknown identifier.
    - Parameter ARTCC: The ARTCC record.
    */
-  case unknownFieldID(_ fieldID: String, ARTCC: ARTCC)
+  case unknownFieldId(_ fieldId: String, ARTCC: ARTCC)
 
   /**
    Parsed an unknown ARTCC frequency data field identifier.
   
-   - Parameter fieldID: The unknown identifier.
+   - Parameter fieldId: The unknown identifier.
    - Parameter frequency: The associated frequency.
    - Parameter ARTCC: The ARTCC record.
    */
-  case unknownFrequencyFieldID(_ fieldID: String, frequency: ARTCC.CommFrequency, ARTCC: ARTCC)
+  case unknownFrequencyFieldId(_ fieldId: String, frequency: ARTCC.CommFrequency, ARTCC: ARTCC)
 
   /**
    Attempted to parse an invalid frequency.
@@ -107,19 +107,26 @@ public enum Error: Swift.Error {
    - Parameter string: The unknown FSS ID.
    */
   case unknownFSS(_ ID: String)
+
+  /**
+   Attempted to parse an invalid altitude format.
+  
+   - Parameter string: The invalid altitude string.
+   */
+  case invalidAltitudeFormat(_ string: String)
 }
 
 extension Error: LocalizedError {
   public var errorDescription: String? {
     switch self {
       case .nullDistribution, .noSuchFilePrefix, .noSuchFile:
-        return String(localized: "Couldn't load distribution.", comment: "error description")
+        return String(localized: "Couldn’t load distribution.", comment: "error description")
       case .badResponse, .noData, .downloadFailed:
-        return String(localized: "Couldn't download distribution.", comment: "error description")
-      case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldID,
-        .unknownFrequencyFieldID, .invalidFrequency, .unknownFSS,
+        return String(localized: "Couldn’t download distribution.", comment: "error description")
+      case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldId,
+        .unknownFrequencyFieldId, .invalidFrequency, .unknownFSS,
         .invalidRunwaySurface, .invalidPavementClassification,
-        .invalidVGSI, .unknownNavaid:
+        .invalidVGSI, .unknownNavaid, .invalidAltitudeFormat:
         return String(localized: "Couldn’t parse distribution data.", comment: "error description")
       case .notYetLoaded:
         return String(localized: "This NASR has not been loaded yet.", comment: "error description")
@@ -142,7 +149,7 @@ extension Error: LocalizedError {
         return String(localized: "Download failed: \(reason)", comment: "failure reason")
       case .noSuchFilePrefix(let prefix):
         return String(
-          localized: "Couldn't find file in archive with prefix '\(prefix).'",
+          localized: "Couldn’t find file in archive with prefix ‘\(prefix).’",
           comment: "failure reason"
         )
       case .noData:
@@ -154,18 +161,18 @@ extension Error: LocalizedError {
         )
       case let .unknownARTCCFrequency(frequency, ARTCC):
         return String(
-          localized: "Referenced undefined frequency ‘\(frequency)’ for ARTCC \(ARTCC.ID).",
+          localized: "Referenced undefined frequency ‘\(frequency)’ for ARTCC \(ARTCC.code).",
           comment: "failure reason"
         )
-      case let .unknownFieldID(fieldID, ARTCC):
+      case let .unknownFieldId(fieldId, ARTCC):
         return String(
-          localized: "Unknown field ID ‘\(fieldID)’ at ‘\(ARTCC.ID) \(ARTCC.locationName)’.",
+          localized: "Unknown field ID ‘\(fieldId)’ at ‘\(ARTCC.code) \(ARTCC.locationName)’.",
           comment: "failure reason"
         )
-      case let .unknownFrequencyFieldID(fieldID, frequency, ARTCC):
+      case let .unknownFrequencyFieldId(fieldId, frequency, ARTCC):
         return String(
           localized:
-            "Unknown field ID ‘\(fieldID)’ for \(frequency.frequency) kHz at ‘\(ARTCC.ID) \(ARTCC.locationName)’.",
+            "Unknown field ID ‘\(fieldId)’ for \(frequency.frequency) kHz at ‘\(ARTCC.code) \(ARTCC.locationName)’.",
           comment: "failure reason"
         )
       case .invalidFrequency(let string):
@@ -177,7 +184,7 @@ extension Error: LocalizedError {
         )
       case .notYetLoaded:
         return String(
-          localized: "Attempted to access NASR data before .load() weas called.",
+          localized: "Attempted to access NASR data before .load() was called.",
           comment: "failure reason"
         )
       case .noSuchFile(let path):
@@ -196,6 +203,8 @@ extension Error: LocalizedError {
         return String(localized: "Unknown VGSI identifier ‘\(string)’.", comment: "failure reason")
       case .unknownNavaid(let string):
         return String(localized: "Unknown navaid ‘\(string)’.", comment: "failure reason")
+      case .invalidAltitudeFormat(let string):
+        return String(localized: "Invalid altitude format ‘\(string)’.", comment: "failure reason")
     }
   }
 
@@ -212,10 +221,11 @@ extension Error: LocalizedError {
           localized: "Verify that the URL to the distribution is correct and accessible.",
           comment: "recovery suggestion"
         )
-      case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldID,
-        .unknownFrequencyFieldID, .invalidFrequency, .unknownFSS,
+      case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldId,
+        .unknownFrequencyFieldId, .invalidFrequency, .unknownFSS,
         .invalidRunwaySurface, .invalidPavementClassification,
-        .invalidVGSI, .unknownNavaid, .noSuchFilePrefix, .noSuchFile:
+        .invalidVGSI, .unknownNavaid, .noSuchFilePrefix, .noSuchFile,
+        .invalidAltitudeFormat:
         return String(
           localized: "The NASR FADDS format may have changed, requiring an update to SwiftNASR.",
           comment: "recovery suggestion"

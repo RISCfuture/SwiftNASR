@@ -29,7 +29,7 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
     .init([
       .string(),  //  0 identifier
       .string(),  //  1 name
-      .datetime(formatter: lastUpdatedDateFormatter),  //  2 last updated
+      .dateComponents(format: .dayMonthYear),  //  2 last updated
       .string(nullable: .blank),  //  3 associated airport site #
       .null,  //  4 airport name
       .null,  //  5 airport city
@@ -133,7 +133,7 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       ),  // 52 comm facility status
       .fixedWidthArray(
         width: 11,
-        convert: { lastUpdatedDateFormatter.date(from: $0) },
+        convert: { DateFormat.dayMonthYear.parse($0) },
         nullable: .blank
       ),  // 53 comm facility status date
       .fixedWidthArray(
@@ -144,7 +144,7 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       .fixedWidthArray(width: 2, nullable: .blank),  // 55 comm facility low-alt enroute chart
       .fixedWidthArray(width: 2, nullable: .blank),  // 56 comm facility timezone
       .delimitedArray(delimiter: "5F", convert: { $0 }, nullable: .compact),  // 57 comm remarks
-      .datetime(formatter: FixedWidthTransformer.monthDayYearSlash)  // 58 info extraction date
+      .dateComponents(format: .monthDayYearSlash)  // 58 info extraction date
     ])
   }
 
@@ -220,10 +220,12 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       let operatorName = (transformedValues[48] as! [String?])[i]
       let hours = (transformedValues[51] as! [String?])[i]
       let status = (transformedValues[52] as! [FSS.Status?])[i]
-      let statusDate = (transformedValues[53] as! [Date?])[i]
+      let statusDate = (transformedValues[53] as! [DateComponents?])[i]
       let navaidAndType = (transformedValues[54] as! [[Substring]?])[i]
       let chart = (transformedValues[55] as! [String?])[i]
-      let timezone = (transformedValues[56] as! [String?])[i]
+      let timezone = (transformedValues[56] as! [String?])[i].flatMap {
+        StandardTimeZone(rawValue: $0)
+      }
 
       let location = zipOptionals(lat, lon).map { lat, lon in
         Location(latitude: lat, longitude: lon, elevation: nil)
@@ -233,12 +235,12 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
         try navaidAndType.map { navaidAndType in
           let navaid = String(navaidAndType[0])
           let typeString = String(navaidAndType[1])
-          let navaidType = NavaidFacilityType(rawValue: typeString)
+          let navaidType = Navaid.FacilityType.for(typeString)
           guard navaidType != nil else {
             throw FixedWidthParserError.invalidValue(typeString, at: 54)
           }
           return (navaid, navaidType)
-        } ?? (nil, nil) as (String?, NavaidFacilityType?)
+        } ?? (nil, nil) as (String?, Navaid.FacilityType?)
 
       let facility = FSS.CommFacility(
         frequency: frequency,
@@ -271,7 +273,7 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
     let navaids = (transformedValues[20] as! [[Substring]]).map { IDAndType -> FSS.Navaid in
       return FSS.Navaid(
         identification: String(IDAndType[0]),
-        type: NavaidFacilityType(rawValue: String(IDAndType[1]))!
+        type: Navaid.FacilityType.for(String(IDAndType[1]))!
       )
     }
 
@@ -307,8 +309,8 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       .map { String($0[$0.index($0.startIndex, offsetBy: 4)...]) }
 
     let fss = FSS(
-      ID: ID,
-      airportID: transformedValues[3] as! String?,
+      id: ID,
+      airportId: transformedValues[3] as! String?,
       name: transformedValues[1] as! String,
       radioIdentifier: transformedValues[10] as! String?,
       type: transformedValues[9] as! FSS.FSSType,
@@ -326,9 +328,9 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       operator: transformedValues[13] as! FSS.Operator,
       operatorName: transformedValues[14] as! String?,
       hasWeatherRadar: transformedValues[22] as! Bool?,
-      hasEFAS: transformedValues[23] as! Bool,
+      hasEFAS: transformedValues[23] as? Bool,
       flightWatchAvailability: transformedValues[24] as! String?,
-      nearestFSSIDWithTeletype: transformedValues[18] as! String?,
+      nearestFSSIdWithTeletype: transformedValues[18] as! String?,
       city: transformedValues[25] as! String?,
       stateName: transformedValues[26] as! String?,
       region: transformedValues[29] as! String?,
@@ -356,7 +358,7 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       for IDAndType in transformedValues[2] as! [[Substring]] {
         let navaid = String(IDAndType[0])
         let typeString = String(IDAndType[1])
-        guard let navaidType = NavaidFacilityType(rawValue: typeString) else {
+        guard let navaidType = Navaid.FacilityType.for(typeString) else {
           throw FixedWidthParserError.invalidValue(typeString, at: 54)
         }
         fss.navaids.append(

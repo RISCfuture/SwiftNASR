@@ -19,6 +19,11 @@ extension FixedWidthParser {
     guard let index = Self.layoutFormatOrder.firstIndex(of: identifier) else {
       preconditionFailure("No configured layout format for '\(identifier.rawValue)'")
     }
+    guard index < formats.count else {
+      preconditionFailure(
+        "Index \(index) out of range for formats array with \(formats.count) elements"
+      )
+    }
     return formats[index]
   }
 

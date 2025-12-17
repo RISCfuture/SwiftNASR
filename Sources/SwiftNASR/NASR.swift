@@ -43,11 +43,12 @@ public actor NASR {
    downloaded from the FAA's NASR website.
   
    - Parameter location: The URL for the ZIP file on disk.
+   - Parameter format: The data format (.txt or .csv). Defaults to .txt.
    - Returns: The instance for loading, parsing, and accessing that data.
    */
 
-  public static func fromLocalArchive(_ location: URL) -> NASR {
-    let loader = ArchiveLoader(location: location)
+  public static func fromLocalArchive(_ location: URL, format: DataFormat = .txt) -> NASR {
+    let loader = ArchiveLoader(location: location, format: format)
     return self.init(loader: loader)
   }
 
@@ -56,6 +57,7 @@ public actor NASR {
    been downloaded from the FAA's NASR website.
   
    - Parameter location: The URL for the unzipped directory on disk.
+   - Parameter format: The data format (.txt or .csv). Defaults to .txt.
    - Returns: The instance for loading, parsing, and accessing that data.
    */
 
@@ -71,6 +73,7 @@ public actor NASR {
    - Parameter date: The date to use for determining the data cycle. The data
    downloaded will be the data active during `date`. If not
    given, the current data is used.
+   - Parameter format: The data format (.txt or .csv). Defaults to .txt.
    - Returns: The instance for loading, parsing, and accessing that data, or
    nil if no cycle is/was effective for `date`.
    */
@@ -98,6 +101,7 @@ public actor NASR {
    - Parameter date: The date to use for determining the data cycle. The data
    downloaded will be the data active during `date`. If not
    given, the current data is used.
+   - Parameter format: The data format (.txt or .csv). Defaults to .txt.
    - Returns: The instance for loading, parsing, and accessing that data, or
    nil if no cycle is/was effective for `date`.
    */
@@ -144,8 +148,6 @@ public actor NASR {
    with a Progress object that you can use to
    track loading progress. You would add this
    object to your parent Progress object.
-   - Parameter result: If successful, contains `Void`. If not, contains the
-   error.
    */
 
   public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in })
@@ -169,8 +171,8 @@ public actor NASR {
    block returns `true`, parsing will continue even
    if a specific record has an error. If not given,
    any error will be swallowed but parsing will
-   continue.
-   - Parameter error: The parsing error that occurred.
+   continue. The block receives the parsing error
+   that occurred.
    - Returns: `true` if the parsing completed, or `false` if it was aborted by
    `errorHandler`.
    */

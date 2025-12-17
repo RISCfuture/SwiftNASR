@@ -25,7 +25,7 @@ Normally you do not need to instantiate your own ``Downloader`` or
 
 * ``NASR/fromInternetToMemory(activeAt:format:)``,
 * ``NASR/fromInternetToFile(_:activeAt:format:)``,
-* ``NASR/fromLocalArchive(_:)``, and
+* ``NASR/fromLocalArchive(_:format:)``, and
 * ``NASR/fromLocalDirectory(_:format:)``.
 
 ## Data Formats
@@ -77,7 +77,7 @@ for more information.
 
 ### Loading Distributions from Disk
 
-- ``NASR/fromLocalArchive(_:)``
+- ``NASR/fromLocalArchive(_:format:)``
 - ``ArchiveFileDistribution``
 - ``NASR/fromLocalDirectory(_:format:)``
 - ``DirectoryDistribution``

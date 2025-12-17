@@ -11,7 +11,7 @@ public struct ARTCC: ParentRecord {
   // MARK: - Properties
 
   /// The computer ID for the FIR, e.g. "ZOA" for Oakland Center.
-  public let ID: String
+  public let code: String
 
   /// The ICAO ID for the FIR, e.g. "KZOA" for Oakland Center.
   public let ICAOID: String?
@@ -35,19 +35,22 @@ public struct ARTCC: ParentRecord {
   public let location: Location?
 
   /// General and per-field remarks.
-  public var remarks = Remarks<Field>()
+  public internal(set) var remarks = Remarks<Field>()
+
+  /// Services available at this facility (e.g., "CPDLC (LOGON KUSA)").
+  public internal(set) var services: [String] = []
 
   /// The frequencies this Center communicates on.
-  public var frequencies: [CommFrequency] = []
+  public internal(set) var frequencies: [CommFrequency] = []
 
-  public var id: String { "\(self.ID).\(type).\(locationName)" }
+  public var id: String { "\(self.code).\(type).\(locationName)" }
 
   weak var data: NASRData?
 
   // MARK: - Methods
 
   init(
-    ID: String,
+    code: String,
     ICAOID: String?,
     type: Self.FacilityType,
     name: String,
@@ -56,7 +59,7 @@ public struct ARTCC: ParentRecord {
     stateCode: String?,
     location: Location?
   ) {
-    self.ID = ID
+    self.code = code
     self.ICAOID = ICAOID
     self.type = type
     self.name = name
@@ -69,8 +72,8 @@ public struct ARTCC: ParentRecord {
   // MARK: - Enums
 
   enum CodingKeys: String, CodingKey {
-    case ID, ICAOID, type, name, alternateName, locationName, stateCode, location, remarks,
-      frequencies
+    case code, ICAOID, type, name, alternateName, locationName, stateCode, location, remarks,
+      services, frequencies
   }
 
   /// ARTCC facility types.
@@ -122,13 +125,13 @@ public struct ARTCC: ParentRecord {
 
     /// FAA location identifier (not site number) of the associated airport,
     /// if this facility is associated with an airport.
-    public var associatedAirportCode: String?
+    public internal(set) var associatedAirportCode: String?
 
     /// General and per-field remarks.
-    public var remarks = Remarks<Field>()
+    public internal(set) var remarks = Remarks<Field>()
 
     // used to cross-reference airport from airport code
-    var findAirportByID: (@Sendable (_ airportID: String) async -> Airport?)!
+    var findAirportById: (@Sendable (_ airportId: String) async -> Airport?)!
 
     init(
       frequency: UInt,

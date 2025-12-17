@@ -59,6 +59,11 @@ enum ParserError: Swift.Error, CustomStringConvertible {
   case unknownRecordIdentifier(_ recordIdentifier: String)
   case unknownRecordEnumValue(_ value: Sendable)
   case invalidValue(_ value: Sendable)
+  case truncatedRecord(recordType: String, expectedMinLength: Int, actualLength: Int)
+  case missingRequiredField(field: String, recordType: String)
+  case invalidLocation(latitude: Float?, longitude: Float?, context: String)
+  case unknownParentRecord(parentType: String, parentID: String, childType: String)
+  case invalidSequenceNumber(_ value: String, recordType: String)
 
   var description: String {
     switch self {
@@ -70,6 +75,18 @@ enum ParserError: Swift.Error, CustomStringConvertible {
         return "Unknown record value '\(value)'"
       case .invalidValue(let value):
         return "Invalid value '\(value)'"
+      case let .truncatedRecord(recordType, expected, actual):
+        return
+          "Truncated \(recordType) record: expected at least \(expected) characters, got \(actual)"
+      case let .missingRequiredField(field, recordType):
+        return "Missing required field '\(field)' in \(recordType) record"
+      case let .invalidLocation(latitude, longitude, context):
+        return
+          "Invalid location (lat: \(latitude.map { String($0) } ?? "nil"), lon: \(longitude.map { String($0) } ?? "nil")) in \(context)"
+      case let .unknownParentRecord(parentType, parentID, childType):
+        return "\(childType) record references unknown \(parentType) '\(parentID)'"
+      case let .invalidSequenceNumber(value, recordType):
+        return "Invalid sequence number '\(value)' in \(recordType) record"
     }
   }
 }
@@ -85,6 +102,23 @@ func parserFor(recordType: RecordType, format: DataFormat = .txt) -> Parser {
           return FixedWidthARTCCParser()
         case .flightServiceStations: return FixedWidthFSSParser()
         case .navaids: return FixedWidthNavaidParser()
+        case .reportingPoints: return FixedWidthFixParser()
+        case .weatherReportingStations: return FixedWidthWeatherStationParser()
+        case .airways: return FixedWidthAirwayParser()
+        case .ILSes: return FixedWidthILSParser()
+        case .terminalCommFacilities: return FixedWidthTerminalCommFacilityParser()
+        case .departureArrivalProceduresComplete:
+          return FixedWidthDepartureArrivalProcedureCompleteParser()
+        case .preferredRoutes: return FixedWidthPreferredRouteParser()
+        case .holds: return FixedWidthHoldParser()
+        case .weatherReportingLocations: return FixedWidthWeatherReportingLocationParser()
+        case .parachuteJumpAreas: return FixedWidthParachuteJumpAreaParser()
+        case .militaryTrainingRoutes: return FixedWidthMilitaryTrainingRouteParser()
+        case .miscActivityAreas: return FixedWidthMiscActivityAreaParser()
+        case .ARTCCBoundarySegments: return FixedWidthARTCCBoundarySegmentParser()
+        case .FSSCommFacilities: return FixedWidthFSSCommFacilityParser()
+        case .ATSAirways: return FixedWidthATSAirwayParser()
+        case .locationIdentifiers: return FixedWidthLocationIdentifierParser()
         default:
           preconditionFailure("No TXT parser for \(recordType)")
       }
@@ -96,6 +130,12 @@ func parserFor(recordType: RecordType, format: DataFormat = .txt) -> Parser {
           return CSVARTCCParser()
         case .flightServiceStations: return CSVFSSParser()
         case .navaids: return CSVNavaidParser()
+        case .reportingPoints: return CSVFixParser()
+        case .weatherReportingStations: return CSVWeatherStationParser()
+        case .airways: return CSVAirwayParser()
+        case .ILSes: return CSVILSParser()
+        case .terminalCommFacilities: return CSVTerminalCommFacilityParser()
+        case .codedDepartureRoutes: return CSVCodedDepartureRouteParser()
         default:
           preconditionFailure("No CSV parser for \(recordType)")
       }

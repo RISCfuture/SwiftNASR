@@ -139,8 +139,8 @@ class CSVFSSParser: CSVParser {
       }
 
       let fss = FSS(
-        ID: transformedValues[0] as! String,
-        airportID: transformedValues[18] as? String,
+        id: transformedValues[0] as! String,
+        airportId: transformedValues[18] as? String,
         name: transformedValues[1] as! String,
         radioIdentifier: transformedValues[2] as? String,
         type: fssType,
@@ -158,9 +158,9 @@ class CSVFSSParser: CSVParser {
         operator: `operator`,
         operatorName: transformedValues[22] as? String,
         hasWeatherRadar: transformedValues[8] as? Bool,
-        hasEFAS: transformedValues[9] as? Bool ?? false,
+        hasEFAS: transformedValues[9] as? Bool,
         flightWatchAvailability: transformedValues[10] as? String,
-        nearestFSSIDWithTeletype: transformedValues[11] as? String,
+        nearestFSSIdWithTeletype: transformedValues[11] as? String,
         city: transformedValues[12] as? String,
         stateName: transformedValues[13] as? String,
         region: transformedValues[14] as? String,
@@ -171,11 +171,26 @@ class CSVFSSParser: CSVParser {
         commRemarks: []
       )
 
-      self.FSSes[fss.ID] = fss
+      self.FSSes[fss.id] = fss
     }
 
-    // TODO: Parse FSS_RMK.csv for additional remarks
-    // TODO: Parse FSS comm facilities, outlets, etc. from other CSV files
+    // Parse FSS_RMK.csv for additional remarks
+    try await parseCSVFile(filename: "FSS_RMK.csv", expectedFieldCount: 9) { fields in
+      guard fields.count >= 9 else { return }
+
+      let fssID = fields[1].trimmingCharacters(in: .whitespaces)
+      let remark = fields[8].trimmingCharacters(in: .whitespaces)
+
+      guard !fssID.isEmpty, !remark.isEmpty else { return }
+
+      if var fss = self.FSSes[fssID] {
+        fss.remarks.append(remark)
+        self.FSSes[fssID] = fss
+      }
+    }
+
+    // Note: FSS comm facilities, outlets, etc. are not available in CSV format.
+    // These would require additional CSV files that don't exist in the distribution.
   }
 
   func finish(data: NASRData) async {

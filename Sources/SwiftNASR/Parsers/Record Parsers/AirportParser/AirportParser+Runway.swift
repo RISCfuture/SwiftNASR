@@ -148,8 +148,8 @@ extension FixedWidthAirportParser {
       .generic({ try offsetParser.parse($0) }, nullable: .blank),  //  77 reciprocal end: controlling object offset
 
       .string(nullable: .blank),  //  78 runway length source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  //  79 runway length source date
       .float(nullable: .blank),  //  80 single wheel weight bearing capacity
@@ -160,28 +160,28 @@ extension FixedWidthAirportParser {
       .float(nullable: .blank),  //  84 base end: gradient
       .string(nullable: .blank),  //  85 base end: gradient up/down
       .string(nullable: .blank),  //  86 base end: position source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  //  87 base end: position source date
       .string(nullable: .blank),  //  88 base end: elevation source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  //  89 base end: elevation source date
       .string(nullable: .blank),  //  90 base end: displaced threshold position source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  //  91 base end: displaced threshold position source date
       .string(nullable: .blank),  //  92 base end: displaced threshold elevation source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  //  93 base end: displaced threshold elevation source date
       .string(nullable: .blank),  //  94 base end: TDZE source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  //  95 base end: TDZE source date
       .unsignedInteger(nullable: .blank),  //  96 base end: TORA
@@ -196,36 +196,36 @@ extension FixedWidthAirportParser {
       .DDMMSS(nullable: .blank),  // 105 base end: LAHSO longitude
       .null,  // 106 base end: LAHSO longitude
       .string(nullable: .blank),  // 107 base end: LAHSO position source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  // 108 base end: LAHSO position source date
 
       .float(nullable: .blank),  // 109 reciprocal end: gradient
       .string(nullable: .blank),  // 110 reciprocal end: gradient up/down
       .string(nullable: .blank),  // 111 reciprocal end: position source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  // 112 reciprocal end: position source date
       .string(nullable: .blank),  // 113 reciprocal end: elevation source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  // 114 reciprocal end: elevation source date
       .string(nullable: .blank),  // 115 reciprocal end: displaced threshold position source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  // 116 reciprocal end: displaced threshold position source date
       .string(nullable: .blank),  // 117 reciprocal end: displaced threshold elevation source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  // 118 reciprocal end: displaced threshold elevation source date
       .string(nullable: .blank),  // 119 reciprocal end: TDZE source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  // 120 reciprocal end: TDZE source date
       .unsignedInteger(nullable: .blank),  // 121 reciprocal end: TORA
@@ -240,8 +240,8 @@ extension FixedWidthAirportParser {
       .DDMMSS(nullable: .blank),  // 130 reciprocal end: LAHSO longitude
       .null,  // 131 reciprocal end: LAHSO longitude
       .string(nullable: .blank),  // 132 reciprocal end: LAHSO position source
-      .datetime(
-        formatter: FixedWidthTransformer.monthDayYearSlash,
+      .dateComponents(
+        format: .monthDayYearSlash,
         nullable: .blank
       ),  // 133 base end: LAHSO position source date
 
@@ -295,7 +295,7 @@ extension FixedWidthAirportParser {
       length: transformedValues[4] as! UInt?,
       width: transformedValues[5] as! UInt?,
       lengthSource: transformedValues[78] as! String?,
-      lengthSourceDate: transformedValues[79] as! Date?,
+      lengthSourceDate: transformedValues[79] as! DateComponents?,
       materials: materials,
       condition: condition,
       treatment: transformedValues[7] as! Runway.Treatment?,

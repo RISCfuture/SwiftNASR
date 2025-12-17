@@ -13,7 +13,7 @@ public struct ARTCCKey: Hashable {
   let type: ARTCC.FacilityType
 
   init(center: ARTCC) {
-    ID = center.ID
+    ID = center.code
     location = center.locationName
     type = center.type
   }
@@ -127,7 +127,7 @@ class FixedWidthARTCCParser: FixedWidthParser {
     }
 
     let center = ARTCC(
-      ID: transformedValues[1] as! String,
+      code: transformedValues[1] as! String,
       ICAOID: transformedValues[13] as! String?,
       type: transformedValues[5] as! ARTCC.FacilityType,
       name: transformedValues[2] as! String,

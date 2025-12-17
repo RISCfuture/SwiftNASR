@@ -4,7 +4,7 @@
 
 ### Identification
 
-- ``ID``
+- ``id``
 - ``name``
 - ``type``
 
@@ -42,11 +42,11 @@
 
 - ``simultaneousVoice``
 - ``powerOutput``
-- ``automaticVoiceID``
+- ``automaticVoiceId``
 - ``radioVoiceCall``
 - ``frequency``
 - ``beaconIdentifier``
-- ``HIWASFlag``
+- ``broadcastsHIWAS``
 
 ### VOR/DME
 
@@ -57,7 +57,7 @@
 
 ### TACAN
 
-- ``TACANChannel-swift.property``
+- ``tacanChannel``
 - ``TACANPosition``
 
 ### Marker Beacon
@@ -71,7 +71,7 @@
 
 - ``TWEBHours``
 - ``TWEBPhone``
-- ``TWEBRestrictionFlag``
+- ``hasTWEBRestriction``
 
 ### NDB
 
@@ -84,10 +84,10 @@
 ### Airspace Usage
 
 - ``navaidClass-swift.property``
-- ``pitchFlag``
-- ``catchFlag``
-- ``SUAFlag``
-- ``restrictionFlag``
+- ``isPitchPoint``
+- ``isCatchPoint``
+- ``isAssociatedWithSUA``
+- ``hasRestriction``
 - ``lowAltitudeARTCC``
 - ``highAltitudeARTCC``
 - ``lowAltitudeInHighStructure``
@@ -102,8 +102,8 @@
 - ``MonitoringCategory-swift.enum``
 - ``TACANChannel-swift.struct``
 - ``FanMarkerType-swift.enum``
-- ``Status-swift.enum``
+- ``OperationalStatus``
 - ``VORCheckpoint``
-- ``HoldingPatternID``
+- ``HoldingPatternId``
 - ``LFRLeg``
 - ``NavaidFacilityType``

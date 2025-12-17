@@ -6,7 +6,11 @@ import Quick
 
 final class CycleSpec: QuickSpec {
   override static func spec() {
-    let calendar = Calendar(identifier: .iso8601)
+    let calendar: Calendar = {
+      var cal = Calendar(identifier: .iso8601)
+      cal.timeZone = TimeZone(secondsFromGMT: 0)!
+      return cal
+    }()
 
     describe("effectiveCycle") {
       it("returns the effective cycle for a date") {
