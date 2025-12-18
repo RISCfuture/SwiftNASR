@@ -1,7 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Attempted to access NASR data before .load() weas called." : {
+    "Attempted to access NASR data before .load() was called." : {
       "comment" : "failure reason"
     },
     "Bad response: %@." : {
@@ -19,7 +19,7 @@
     "Couldn’t download distribution." : {
       "comment" : "error description"
     },
-    "Couldn’t find file in archive with prefix “%@.”" : {
+    "Couldn’t find file in archive with prefix ‘%@.’" : {
       "comment" : "failure reason"
     },
     "Couldn’t load distribution." : {
@@ -30,6 +30,12 @@
     },
     "Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk." : {
       "comment" : "recovery suggestion"
+    },
+    "Download failed: %@" : {
+      "comment" : "failure reason"
+    },
+    "Invalid altitude format ‘%@’." : {
+      "comment" : "failure reason"
     },
     "Invalid frequency ‘%@’." : {
       "comment" : "failure reason"
@@ -71,13 +77,13 @@
         }
       }
     },
-    "Unknown field ID ‘%@’ for %llu kHz at ‘%@ %@’." : {
+    "Unknown field ID '%@' for %llu kHz at '%@ %@'." : {
       "comment" : "failure reason",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Unknown field ID ‘%1$@’ for %2$llu kHz at ‘%3$@ %4$@’."
+            "value" : "Unknown field ID '%1$@' for %2$llu kHz at '%3$@ %4$@'."
           }
         }
       }
