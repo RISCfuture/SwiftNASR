@@ -149,7 +149,7 @@ class FixedWidthATSAirwayParser: Parser {
         airwayIdentifier: airwayId,
         isRNAV: rnavIndicator == "R",
         airwayType: airwayTypeEnum,
-        effectiveDate: effectiveDateValue,
+        effectiveDateComponents: effectiveDateValue,
         routePoints: [],
         routeRemarks: []
       )

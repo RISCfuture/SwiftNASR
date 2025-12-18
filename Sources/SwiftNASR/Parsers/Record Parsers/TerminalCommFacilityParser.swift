@@ -282,7 +282,7 @@ class FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     let facility = TerminalCommFacility(
       facilityId: facilityID,
       airportSiteNumber: transformedValues[3] as? String,
-      effectiveDate: transformedValues[2] as? DateComponents,
+      effectiveDateComponents: transformedValues[2] as? DateComponents,
       regionCode: transformedValues[4] as? String,
       stateName: transformedValues[5] as? String,
       stateCode: transformedValues[6] as? String,

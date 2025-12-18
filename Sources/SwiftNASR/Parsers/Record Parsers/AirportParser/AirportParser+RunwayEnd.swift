@@ -214,7 +214,7 @@ extension FixedWidthAirportParser {
         definingEntity: values[offset2 + 18] as! String?,
         position: location,
         positionSource: values[offset2 + 23] as! String?,
-        positionSourceDate: values[offset2 + 24] as! DateComponents?
+        positionSourceDateComponents: values[offset2 + 24] as! DateComponents?
       )
     }
 
@@ -263,15 +263,15 @@ extension FixedWidthAirportParser {
       hasEndTouchdownLighting: values[offset1 + 26] as! Bool?,
       controllingObject: controllingObject,
       positionSource: values[offset2 + 2] as! String?,
-      positionSourceDate: values[offset2 + 3] as! DateComponents?,
+      positionSourceDateComponents: values[offset2 + 3] as! DateComponents?,
       elevationSource: values[offset2 + 4] as! String?,
-      elevationSourceDate: values[offset2 + 5] as! DateComponents?,
+      elevationSourceDateComponents: values[offset2 + 5] as! DateComponents?,
       displacedThresholdPositionSource: values[offset2 + 6] as! String?,
-      displacedThresholdPositionSourceDate: values[offset2 + 7] as! DateComponents?,
+      displacedThresholdPositionSourceDateComponents: values[offset2 + 7] as! DateComponents?,
       displacedThresholdElevationSource: values[offset2 + 8] as! String?,
-      displacedThresholdElevationSourceDate: values[offset2 + 9] as! DateComponents?,
+      displacedThresholdElevationSourceDateComponents: values[offset2 + 9] as! DateComponents?,
       touchdownZoneElevationSource: values[offset2 + 10] as! String?,
-      touchdownZoneElevationSourceDate: values[offset2 + 11] as! DateComponents?
+      touchdownZoneElevationSourceDateComponents: values[offset2 + 11] as! DateComponents?
     )
   }
 }

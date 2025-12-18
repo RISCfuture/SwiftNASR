@@ -68,7 +68,7 @@ public struct Navaid: ParentRecord {
   public let magneticVariationDeg: Int?
 
   /// The epoch date of the magnetic variation data.
-  public let magneticVariationEpoch: DateComponents?
+  public let magneticVariationEpochComponents: DateComponents?
 
   /// True if this navaid supports simultaneous voice transmission.
   public let simultaneousVoice: Bool?
@@ -213,7 +213,7 @@ public struct Navaid: ParentRecord {
     TACANPosition: Location?,
     surveyAccuracy: Self.SurveyAccuracy?,
     magneticVariationDeg: Int?,
-    magneticVariationEpoch: DateComponents?,
+    magneticVariationEpochComponents: DateComponents?,
     simultaneousVoice: Bool?,
     powerOutputW: UInt?,
     automaticVoiceId: Bool?,
@@ -265,7 +265,7 @@ public struct Navaid: ParentRecord {
     self.TACANPosition = TACANPosition
     self.surveyAccuracy = surveyAccuracy
     self.magneticVariationDeg = magneticVariationDeg
-    self.magneticVariationEpoch = magneticVariationEpoch
+    self.magneticVariationEpochComponents = magneticVariationEpochComponents
     self.simultaneousVoice = simultaneousVoice
     self.powerOutputW = powerOutputW
     self.automaticVoiceId = automaticVoiceId
@@ -303,13 +303,14 @@ public struct Navaid: ParentRecord {
     case id, name, type, city, stateName, FAARegion, country, ownerName, operatorName,
       commonSystemUsage, publicUse, navaidClass, hoursOfOperation, highAltitudeARTCCCode,
       lowAltitudeARTCCCode, position, TACANPosition, surveyAccuracy, magneticVariationDeg,
-      magneticVariationEpoch, simultaneousVoice, powerOutputW, automaticVoiceId, monitoringCategory,
+      simultaneousVoice, powerOutputW, automaticVoiceId, monitoringCategory,
       radioVoiceCall, tacanChannel, frequencyKHz, beaconIdentifier, fanMarkerType,
       fanMarkerMajorBearing, VORServiceVolume, DMEServiceVolume, lowAltitudeInHighStructure,
       ZMarkerAvailable, TWEBHours, TWEBPhone, controllingFSSCode, NOTAMAccountabilityCode, LFRLegs,
       status, isPitchPoint, isCatchPoint, isAssociatedWithSUA, hasRestriction, broadcastsHIWAS,
       hasTWEBRestriction,
       remarks, associatedFixNames, associatedHoldingPatterns, fanMarkers, checkpoints
+    case magneticVariationEpochComponents = "magneticVariationEpoch"
   }
 
   /// The types of navaid facilities provided by this class.

@@ -16,7 +16,7 @@ public struct TerminalCommFacility: ParentRecord {
   public let airportSiteNumber: String?
 
   /// Information effective date.
-  public let effectiveDate: DateComponents?
+  public let effectiveDateComponents: DateComponents?
 
   // MARK: - Location Information
 
@@ -445,7 +445,8 @@ public struct TerminalCommFacility: ParentRecord {
   }
 
   public enum CodingKeys: String, CodingKey {
-    case facilityId, airportSiteNumber, effectiveDate
+    case facilityId, airportSiteNumber
+    case effectiveDateComponents = "effectiveDate"
     case regionCode, stateName, stateCode, city, airportName
     case position, tieInFSSId, tieInFSSName
     case facilityType, hoursOfOperation, operationRegularity

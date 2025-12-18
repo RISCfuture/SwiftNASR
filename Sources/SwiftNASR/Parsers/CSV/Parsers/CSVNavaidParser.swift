@@ -226,7 +226,7 @@ class CSVNavaidParser: CSVParser {
         TACANPosition: TACANPosition,
         surveyAccuracy: transformedValues[22] as? Navaid.SurveyAccuracy,
         magneticVariationDeg: magneticVariationDeg,
-        magneticVariationEpoch: transformedValues[28] as? DateComponents,
+        magneticVariationEpochComponents: transformedValues[28] as? DateComponents,
         simultaneousVoice: transformedValues[29] as? Bool,
         powerOutputW: transformedValues[30] as? UInt,
         automaticVoiceId: transformedValues[31] as? Bool,

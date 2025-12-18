@@ -116,7 +116,7 @@ class FixedWidthLocationIdentifierParser: FixedWidthParser {
       isFlightWatchStation: transformedValues[28] as? Bool,
       otherFacilityName: transformedValues[29] as? String,
       otherFacilityType: LocationIdentifier.OtherFacilityType(rawValue: otherTypeStr),
-      effectiveDate: transformedValues[31] as? DateComponents
+      effectiveDateComponents: transformedValues[31] as? DateComponents
     )
 
     identifiers.append(record)

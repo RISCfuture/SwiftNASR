@@ -26,7 +26,7 @@ public struct WeatherStation: ParentRecord {
   public let isCommissioned: Bool
 
   /// The date the station was commissioned or decommissioned.
-  public let commissionDate: DateComponents?
+  public let commissionDateComponents: DateComponents?
 
   /// Whether the station is associated with a navaid.
   public let isNavaidAssociated: Bool?
@@ -115,9 +115,11 @@ public struct WeatherStation: ParentRecord {
 
   public enum CodingKeys: String, CodingKey {
     case stationId, type, stateCode, city, country
-    case isCommissioned, commissionDate, isNavaidAssociated
+    case isCommissioned, isNavaidAssociated
     case position, surveyMethod
     case frequencyKHz, secondaryFrequencyKHz, phoneNumber, secondaryPhoneNumber
     case airportSiteNumber, remarks
+
+    case commissionDateComponents = "commissionDate"
   }
 }

@@ -98,7 +98,7 @@ public struct LocationIdentifier: Record, Identifiable {
   // MARK: - Effective Date
 
   /// The effective date of this information.
-  public let effectiveDate: DateComponents?
+  public let effectiveDateComponents: DateComponents?
 
   /// Reference to parent NASRData for cross-referencing.
   weak var data: NASRData?
@@ -253,6 +253,6 @@ public struct LocationIdentifier: Record, Identifiable {
     case ILSRunwayEnd, ilsFacilityType, ILSAirportIdentifier, ILSAirportName, ILSFSS
     case FSSName, ARTCCName, artccFacilityType
     case isFlightWatchStation, otherFacilityName, otherFacilityType
-    case effectiveDate
+    case effectiveDateComponents = "effectiveDate"
   }
 }

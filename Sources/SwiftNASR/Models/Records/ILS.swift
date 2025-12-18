@@ -67,7 +67,7 @@ public struct ILS: ParentRecord {
   public let magneticVariationDeg: Int?
 
   /// Information effective date.
-  public let effectiveDate: DateComponents?
+  public let effectiveDateComponents: DateComponents?
 
   // MARK: - Components
 
@@ -251,7 +251,7 @@ public struct ILS: ParentRecord {
     public let status: OperationalStatus?
 
     /// Effective date of operational status.
-    public let statusDate: DateComponents?
+    public let statusDateComponents: DateComponents?
 
     /// Position of localizer antenna.
     public let position: Location?
@@ -290,11 +290,12 @@ public struct ILS: ParentRecord {
     public let serviceCode: LocalizerServiceCode?
 
     public enum CodingKeys: String, CodingKey {
-      case status, statusDate, position, positionSource
+      case status, position, positionSource
       case distanceFromApproachEndFt, distanceFromCenterlineFt
       case distanceSource, frequencyKHz, backCourseStatus
       case courseWidthDeg, courseWidthAtThresholdDeg, distanceFromStopEndFt
       case directionFromStopEnd, serviceCode
+      case statusDateComponents = "statusDate"
     }
   }
 
@@ -304,7 +305,7 @@ public struct ILS: ParentRecord {
     public let status: OperationalStatus?
 
     /// Effective date of operational status.
-    public let statusDate: DateComponents?
+    public let statusDateComponents: DateComponents?
 
     /// Position of glide slope antenna.
     public let position: Location?
@@ -347,10 +348,11 @@ public struct ILS: ParentRecord {
     }
 
     public enum CodingKeys: String, CodingKey {
-      case status, statusDate, position, positionSource
+      case status, position, positionSource
       case distanceFromApproachEndFt, distanceFromCenterlineFt
       case distanceSource, glideSlopeType, angleDeg, frequencyKHz
       case adjacentRunwayElevationFtMSL
+      case statusDateComponents = "statusDate"
     }
   }
 
@@ -360,7 +362,7 @@ public struct ILS: ParentRecord {
     public let status: OperationalStatus?
 
     /// Effective date of operational status.
-    public let statusDate: DateComponents?
+    public let statusDateComponents: DateComponents?
 
     /// Position of DME antenna.
     public let position: Location?
@@ -384,9 +386,10 @@ public struct ILS: ParentRecord {
     public let distanceFromStopEndFt: Int?
 
     public enum CodingKeys: String, CodingKey {
-      case status, statusDate, position, positionSource
+      case status, position, positionSource
       case distanceFromApproachEndFt, distanceFromCenterlineFt
       case distanceSource, channel, distanceFromStopEndFt
+      case statusDateComponents = "statusDate"
     }
   }
 
@@ -399,7 +402,7 @@ public struct ILS: ParentRecord {
     public let status: OperationalStatus?
 
     /// Effective date of operational status.
-    public let statusDate: DateComponents?
+    public let statusDateComponents: DateComponents?
 
     /// Position of marker beacon.
     public let position: Location?
@@ -475,10 +478,11 @@ public struct ILS: ParentRecord {
     }
 
     public enum CodingKeys: String, CodingKey {
-      case markerType, status, statusDate, position, positionSource
+      case markerType, status, position, positionSource
       case distanceFromApproachEndFt, distanceFromCenterlineFt
       case distanceSource, facilityType, locationId, name
       case frequencyKHz, collocatedNavaid, lowPoweredNDBStatus, service
+      case statusDateComponents = "statusDate"
     }
   }
 
@@ -486,7 +490,8 @@ public struct ILS: ParentRecord {
     case airportSiteNumber, runwayEndId, systemType, ILSId, airportId
     case airportName, city, stateCode, stateName, regionCode
     case runwayLengthFt, runwayWidthFt, category, owner, `operator`
-    case approachBearing, magneticVariationDeg, effectiveDate
+    case approachBearing, magneticVariationDeg
     case localizer, glideSlope, dme, markers, remarks
+    case effectiveDateComponents = "effectiveDate"
   }
 }

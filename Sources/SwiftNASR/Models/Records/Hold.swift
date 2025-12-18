@@ -16,7 +16,7 @@ public struct Hold: Record, Identifiable {
   public let patternNumber: UInt
 
   /// Effective date of the holding pattern.
-  public let effectiveDate: DateComponents?
+  public let effectiveDateComponents: DateComponents?
 
   /// Direction of holding on the navaid or fix.
   public let holdingDirection: CardinalDirection?
@@ -108,7 +108,7 @@ public struct Hold: Record, Identifiable {
   }
 
   public enum CodingKeys: String, CodingKey {
-    case name, patternNumber, effectiveDate, holdingDirection, magneticBearingDeg
+    case name, patternNumber, holdingDirection, magneticBearingDeg
     case azimuthType, ILSFacilityIdentifier, ilsFacilityType
     case navaidIdentifier, navaidFacilityType, additionalFacility
     case inboundCourseDeg, turnDirection, altitudes
@@ -117,6 +117,7 @@ public struct Hold: Record, Identifiable {
     case navaidHighRouteARTCC, navaidLowRouteARTCC, navaidPosition
     case legTimeMin, legDistanceNM
     case chartingInfo, otherAltitudeSpeed, remarks
+    case effectiveDateComponents = "effectiveDate"
   }
 }
 

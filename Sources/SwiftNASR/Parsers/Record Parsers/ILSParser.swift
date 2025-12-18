@@ -277,7 +277,7 @@ class FixedWidthILSParser: FixedWidthParser {
       operator: operatorName,
       approachBearing: approachBearing,
       magneticVariationDeg: magneticVariation,
-      effectiveDate: effectiveDate
+      effectiveDateComponents: effectiveDate
     )
 
     ILSFacilities[key] = ils
@@ -322,7 +322,7 @@ class FixedWidthILSParser: FixedWidthParser {
 
     let localizer = ILS.Localizer(
       status: transformedValues[4] as? OperationalStatus,
-      statusDate: transformedValues[5] as? DateComponents,
+      statusDateComponents: transformedValues[5] as? DateComponents,
       position: LOCPosition,
       positionSource: transformedValues[10] as? ILS.PositionSource,
       distanceFromApproachEndFt: transformedValues[11] as? Int,
@@ -375,7 +375,7 @@ class FixedWidthILSParser: FixedWidthParser {
 
     let glideSlope = ILS.GlideSlope(
       status: transformedValues[4] as? OperationalStatus,
-      statusDate: transformedValues[5] as? DateComponents,
+      statusDateComponents: transformedValues[5] as? DateComponents,
       position: gsPosition,
       positionSource: transformedValues[10] as? ILS.PositionSource,
       distanceFromApproachEndFt: transformedValues[11] as? Int,
@@ -425,7 +425,7 @@ class FixedWidthILSParser: FixedWidthParser {
 
     let DME = ILS.DME(
       status: transformedValues[4] as? OperationalStatus,
-      statusDate: transformedValues[5] as? DateComponents,
+      statusDateComponents: transformedValues[5] as? DateComponents,
       position: DMEPosition,
       positionSource: transformedValues[10] as? ILS.PositionSource,
       distanceFromApproachEndFt: transformedValues[11] as? Int,
@@ -478,7 +478,7 @@ class FixedWidthILSParser: FixedWidthParser {
     let marker = ILS.MarkerBeacon(
       markerType: markerType,
       status: transformedValues[5] as? OperationalStatus,
-      statusDate: transformedValues[6] as? DateComponents,
+      statusDateComponents: transformedValues[6] as? DateComponents,
       position: mkrPosition,
       positionSource: transformedValues[11] as? ILS.PositionSource,
       distanceFromApproachEndFt: transformedValues[12] as? Int,

@@ -89,7 +89,7 @@ public struct Airport: ParentRecord {
 
   /// The epoch date of the World Magnetic Model that was used to determine
   /// the magnetic variation.
-  public let magneticVariationEpoch: DateComponents?
+  public let magneticVariationEpochComponents: DateComponents?
 
   /// The altitude at which aircraft should fly the traffic pattern (feet AGL).
   /// If there are separate TPAs for separate classes of aircraft, this will be
@@ -114,13 +114,13 @@ public struct Airport: ParentRecord {
   public let positionSource: String?
 
   /// The date at which the ARP was determined.
-  public let positionSourceDate: DateComponents?
+  public let positionSourceDateComponents: DateComponents?
 
   /// The source of airport elevation information.
   public let elevationSource: String?
 
   /// The date at which the airport elevation was determined.
-  public let elevationSourceDate: DateComponents?
+  public let elevationSourceDateComponents: DateComponents?
 
   // MARK: FAA Services
 
@@ -153,7 +153,7 @@ public struct Airport: ParentRecord {
   // MARK: Federal Status
 
   /// The date that the airport was first activated.
-  public let activationDate: DateComponents?
+  public let activationDateComponents: DateComponents?
 
   /// The airport's current activation status.
   public let status: Status
@@ -196,11 +196,11 @@ public struct Airport: ParentRecord {
   public let inspectionAgency: InspectionAgency?
 
   /// The date the last physical inspection was made.
-  public let lastPhysicalInspectionDate: DateComponents?
+  public let lastPhysicalInspectionDateComponents: DateComponents?
 
   /// The date the last request for information for this airport was
   /// completed.
-  public let lastInformationRequestCompletedDate: DateComponents?
+  public let lastInformationRequestCompletedDateComponents: DateComponents?
 
   // MARK: Airport Services
 
@@ -309,7 +309,7 @@ public struct Airport: ParentRecord {
 
   /// The ending date of the one-year period that the operation statistics
   /// are counted from.
-  public let annualPeriodEndDate: DateComponents?
+  public let annualPeriodEndDateComponents: DateComponents?
 
   // MARK: Associations
 
@@ -346,7 +346,7 @@ public struct Airport: ParentRecord {
     referencePointDeterminationMethod: SurveyMethod,
     elevationDeterminationMethod: SurveyMethod?,
     magneticVariationDeg: Int?,
-    magneticVariationEpoch: DateComponents?,
+    magneticVariationEpochComponents: DateComponents?,
     trafficPatternAltitudeFtAGL: Int?,
     sectionalChart: String?,
     distanceCityToAirportNM: UInt?,
@@ -359,7 +359,7 @@ public struct Airport: ParentRecord {
     alternateFSSId: String?,
     NOTAMIssuerId: String?,
     NOTAMDAvailable: Bool?,
-    activationDate: DateComponents?,
+    activationDateComponents: DateComponents?,
     status: Self.Status,
     arffCapability: Self.ARFFCapability?,
     agreements: [Self.FederalAgreement],
@@ -370,8 +370,8 @@ public struct Airport: ParentRecord {
     militaryLandingRights: Bool?,
     inspectionMethod: Self.InspectionMethod?,
     inspectionAgency: Self.InspectionAgency?,
-    lastPhysicalInspectionDate: DateComponents?,
-    lastInformationRequestCompletedDate: DateComponents?,
+    lastPhysicalInspectionDateComponents: DateComponents?,
+    lastInformationRequestCompletedDateComponents: DateComponents?,
     fuelsAvailable: [Self.FuelType],
     airframeRepairAvailable: Self.RepairService?,
     powerplantRepairAvailable: Self.RepairService?,
@@ -399,11 +399,11 @@ public struct Airport: ParentRecord {
     annualLocalGAOps: UInt?,
     annualTransientGAOps: UInt?,
     annualMilitaryOps: UInt?,
-    annualPeriodEndDate: DateComponents?,
+    annualPeriodEndDateComponents: DateComponents?,
     positionSource: String?,
-    positionSourceDate: DateComponents?,
+    positionSourceDateComponents: DateComponents?,
     elevationSource: String?,
-    elevationSourceDate: DateComponents?,
+    elevationSourceDateComponents: DateComponents?,
     contractFuelAvailable: Bool?,
     transientStorageFacilities: [Self.StorageFacility]?,
     otherServices: [Self.Service],
@@ -429,7 +429,7 @@ public struct Airport: ParentRecord {
     self.referencePointDeterminationMethod = referencePointDeterminationMethod
     self.elevationDeterminationMethod = elevationDeterminationMethod
     self.magneticVariationDeg = magneticVariationDeg
-    self.magneticVariationEpoch = magneticVariationEpoch
+    self.magneticVariationEpochComponents = magneticVariationEpochComponents
     self.trafficPatternAltitudeFtAGL = trafficPatternAltitudeFtAGL
     self.sectionalChart = sectionalChart
     self.distanceCityToAirportNM = distanceCityToAirportNM
@@ -442,7 +442,7 @@ public struct Airport: ParentRecord {
     self.alternateFSSId = alternateFSSId
     self.NOTAMIssuerId = NOTAMIssuerId
     self.NOTAMDAvailable = NOTAMDAvailable
-    self.activationDate = activationDate
+    self.activationDateComponents = activationDateComponents
     self.status = status
     self.arffCapability = arffCapability
     self.agreements = agreements
@@ -453,8 +453,9 @@ public struct Airport: ParentRecord {
     self.militaryLandingRights = militaryLandingRights
     self.inspectionMethod = inspectionMethod
     self.inspectionAgency = inspectionAgency
-    self.lastPhysicalInspectionDate = lastPhysicalInspectionDate
-    self.lastInformationRequestCompletedDate = lastInformationRequestCompletedDate
+    self.lastPhysicalInspectionDateComponents = lastPhysicalInspectionDateComponents
+    self.lastInformationRequestCompletedDateComponents =
+      lastInformationRequestCompletedDateComponents
     self.fuelsAvailable = fuelsAvailable
     self.airframeRepairAvailable = airframeRepairAvailable
     self.powerplantRepairAvailable = powerplantRepairAvailable
@@ -482,11 +483,11 @@ public struct Airport: ParentRecord {
     self.annualLocalGAOps = annualLocalGAOps
     self.annualTransientGAOps = annualTransientGAOps
     self.annualMilitaryOps = annualMilitaryOps
-    self.annualPeriodEndDate = annualPeriodEndDate
+    self.annualPeriodEndDateComponents = annualPeriodEndDateComponents
     self.positionSource = positionSource
-    self.positionSourceDate = positionSourceDate
+    self.positionSourceDateComponents = positionSourceDateComponents
     self.elevationSource = elevationSource
-    self.elevationSourceDate = elevationSourceDate
+    self.elevationSourceDateComponents = elevationSourceDateComponents
     self.contractFuelAvailable = contractFuelAvailable
     self.transientStorageFacilities = transientStorageFacilities
     self.otherServices = otherServices
@@ -888,10 +889,11 @@ public struct Airport: ParentRecord {
     public let airService: AirService
 
     /// ARFF certification date
-    public let certificationDate: DateComponents
+    public let certificationDateComponents: DateComponents
 
     enum CodingKeys: String, CodingKey {
-      case `class`, index, airService, certificationDate
+      case `class`, index, airService
+      case certificationDateComponents = "certificationDate"
     }
 
     /// Airport classes as defined by FAR 139.5. For purposes of this enum,
@@ -1035,21 +1037,29 @@ public struct Airport: ParentRecord {
     case id, name, LID, ICAOIdentifier, facilityType, faaRegion, FAAFieldOfficeCode, stateCode,
       county, countyStateCode, city, ownership, publicUse, owner, manager, referencePoint,
       referencePointDeterminationMethod, elevationDeterminationMethod, magneticVariationDeg,
-      magneticVariationEpoch, trafficPatternAltitudeFtAGL, sectionalChart, distanceCityToAirportNM,
+      trafficPatternAltitudeFtAGL, sectionalChart, distanceCityToAirportNM,
       directionCityToAirport, landAreaAcres, boundaryARTCCId, responsibleARTCCId, tieInFSSOnStation,
-      tieInFSSId, alternateFSSId, NOTAMIssuerId, NOTAMDAvailable, activationDate, status,
+      tieInFSSId, alternateFSSId, NOTAMIssuerId, NOTAMDAvailable, status,
       arffCapability, agreements, airspaceAnalysisDetermination, customsEntryAirport,
       customsLandingRightsAirport, jointUseAgreement, militaryLandingRights, inspectionMethod,
-      inspectionAgency, lastPhysicalInspectionDate, lastInformationRequestCompletedDate,
+      inspectionAgency,
       fuelsAvailable, airframeRepairAvailable, powerplantRepairAvailable, bottledOxygenAvailable,
       bulkOxygenAvailable, airportLightingSchedule, beaconLightingSchedule, controlTower,
       UNICOMFrequencyKHz, CTAFKHz, segmentedCircle, beaconColor, hasLandingFee, medicalUse,
       basedSingleEngineGA, basedMultiEngineGA, basedJetGA, basedHelicopterGA,
       basedOperationalGliders, basedOperationalMilitary, basedUltralights, annualCommercialOps,
       annualCommuterOps, annualAirTaxiOps, annualLocalGAOps, annualTransientGAOps,
-      annualMilitaryOps, annualPeriodEndDate, positionSource, positionSourceDate, elevationSource,
-      elevationSourceDate, contractFuelAvailable, transientStorageFacilities, otherServices,
+      annualMilitaryOps, positionSource, elevationSource,
+      contractFuelAvailable, transientStorageFacilities, otherServices,
       windIndicator, minimumOperationalNetwork
+
+    case magneticVariationEpochComponents = "magneticVariationEpoch"
+    case positionSourceDateComponents = "positionSourceDate"
+    case elevationSourceDateComponents = "elevationSourceDate"
+    case activationDateComponents = "activationDate"
+    case lastPhysicalInspectionDateComponents = "lastPhysicalInspectionDate"
+    case lastInformationRequestCompletedDateComponents = "lastInformationRequestCompletedDate"
+    case annualPeriodEndDateComponents = "annualPeriodEndDate"
 
     case attendanceSchedule, runways, remarks
   }

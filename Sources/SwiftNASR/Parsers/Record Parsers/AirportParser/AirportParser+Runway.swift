@@ -295,7 +295,7 @@ extension FixedWidthAirportParser {
       lengthFt: transformedValues[4] as! UInt?,
       widthFt: transformedValues[5] as! UInt?,
       lengthSource: transformedValues[78] as! String?,
-      lengthSourceDate: transformedValues[79] as! DateComponents?,
+      lengthSourceDateComponents: transformedValues[79] as! DateComponents?,
       materials: materials,
       condition: condition,
       treatment: transformedValues[7] as! Runway.Treatment?,

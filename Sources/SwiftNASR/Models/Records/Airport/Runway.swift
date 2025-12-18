@@ -29,7 +29,7 @@ public struct Runway: Record {
   public let lengthSource: String?
 
   /// The date the runway length was determined.
-  public let lengthSourceDate: DateComponents?
+  public let lengthSourceDateComponents: DateComponents?
 
   /// The materials that the runway is made from. Having multiple materials in
   /// this set indicates that the runway consists of multiple segments of
@@ -113,7 +113,7 @@ public struct Runway: Record {
     lengthFt: UInt?,
     widthFt: UInt?,
     lengthSource: String?,
-    lengthSourceDate: DateComponents?,
+    lengthSourceDateComponents: DateComponents?,
     materials: Set<Material>,
     condition: Condition?,
     treatment: Treatment?,
@@ -130,7 +130,7 @@ public struct Runway: Record {
     self.lengthFt = lengthFt
     self.widthFt = widthFt
     self.lengthSource = lengthSource
-    self.lengthSourceDate = lengthSourceDate
+    self.lengthSourceDateComponents = lengthSourceDateComponents
     self.materials = materials
     self.condition = condition
     self.treatment = treatment
@@ -412,9 +412,11 @@ public struct Runway: Record {
 
   private enum CodingKeys: String, CodingKey {
     case identification, lengthFt, widthFt, materials, condition, treatment, pavementClassification,
-      edgeLightsIntensity, baseEnd, reciprocalEnd, lengthSource, lengthSourceDate,
+      edgeLightsIntensity, baseEnd, reciprocalEnd, lengthSource,
       singleWheelWeightBearingCapacityKlb, dualWheelWeightBearingCapacityKlb,
       tandemDualWheelWeightBearingCapacityKlb, doubleTandemDualWheelWeightBearingCapacityKlb
+
+    case lengthSourceDateComponents = "lengthSourceDate"
 
     case remarks
   }

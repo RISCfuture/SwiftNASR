@@ -262,7 +262,7 @@ class FixedWidthAirportParser: FixedWidthParser {
         class: ARFFClass,
         index: ARFFIndex,
         airService: ARFFService,
-        certificationDate: ARFFDateComponents
+        certificationDateComponents: ARFFDateComponents
       )
     }
 
@@ -293,7 +293,7 @@ class FixedWidthAirportParser: FixedWidthParser {
         as! SurveyMethod,
       elevationDeterminationMethod: transformedValues[29] as? SurveyMethod,
       magneticVariationDeg: transformedValues[30] as! Int?,
-      magneticVariationEpoch: transformedValues[31] as! DateComponents?,
+      magneticVariationEpochComponents: transformedValues[31] as! DateComponents?,
       trafficPatternAltitudeFtAGL: transformedValues[32] as! Int?,
       sectionalChart: transformedValues[33] as! String?,
       distanceCityToAirportNM: transformedValues[34] as! UInt?,
@@ -306,7 +306,7 @@ class FixedWidthAirportParser: FixedWidthParser {
       alternateFSSId: transformedValues[48] as! String?,
       NOTAMIssuerId: transformedValues[51] as! String?,
       NOTAMDAvailable: transformedValues[52] as! Bool?,
-      activationDate: transformedValues[53] as! DateComponents?,
+      activationDateComponents: transformedValues[53] as! DateComponents?,
       status: transformedValues[54] as! Airport.Status,
       arffCapability: ARFFCapability,
       agreements: transformedValues[56] as! [Airport.FederalAgreement],
@@ -318,8 +318,8 @@ class FixedWidthAirportParser: FixedWidthParser {
       militaryLandingRights: transformedValues[61] as! Bool?,
       inspectionMethod: transformedValues[62] as! Airport.InspectionMethod?,
       inspectionAgency: transformedValues[63] as! Airport.InspectionAgency?,
-      lastPhysicalInspectionDate: transformedValues[64] as! DateComponents?,
-      lastInformationRequestCompletedDate: transformedValues[65] as! DateComponents?,
+      lastPhysicalInspectionDateComponents: transformedValues[64] as! DateComponents?,
+      lastInformationRequestCompletedDateComponents: transformedValues[65] as! DateComponents?,
       fuelsAvailable: transformedValues[66] as! [Airport.FuelType],
       airframeRepairAvailable: transformedValues[67] as! Airport.RepairService?,
       powerplantRepairAvailable: transformedValues[68] as! Airport.RepairService?,
@@ -347,11 +347,11 @@ class FixedWidthAirportParser: FixedWidthParser {
       annualLocalGAOps: transformedValues[90] as! UInt?,
       annualTransientGAOps: transformedValues[91] as! UInt?,
       annualMilitaryOps: transformedValues[92] as! UInt?,
-      annualPeriodEndDate: transformedValues[93] as! DateComponents?,
+      annualPeriodEndDateComponents: transformedValues[93] as! DateComponents?,
       positionSource: transformedValues[94] as! String?,
-      positionSourceDate: transformedValues[95] as! DateComponents?,
+      positionSourceDateComponents: transformedValues[95] as! DateComponents?,
       elevationSource: transformedValues[96] as! String?,
-      elevationSourceDate: transformedValues[97] as! DateComponents?,
+      elevationSourceDateComponents: transformedValues[97] as! DateComponents?,
       contractFuelAvailable: transformedValues[98] as! Bool?,
       transientStorageFacilities: transformedValues[99] as! [Airport.StorageFacility]?,
       otherServices: transformedValues[100] as! [Airport.Service],

@@ -102,7 +102,7 @@ public struct FSSCommFacility: Record, Identifiable {
   public let status: FSS.Status?
 
   /// Status effective date
-  public let statusDate: DateComponents?
+  public let statusDateComponents: DateComponents?
 
   /// Reference to parent NASRData for cross-referencing.
   weak var data: NASRData?
@@ -154,6 +154,7 @@ public struct FSSCommFacility: Record, Identifiable {
     case frequencies, FSSIdentifier, FSSName
     case alternateFSSIdentifier, alternateFSSName
     case operationalHours, ownerCode, ownerName, operatorCode, operatorName
-    case charts, timeZone, status, statusDate
+    case charts, timeZone, status
+    case statusDateComponents = "statusDate"
   }
 }

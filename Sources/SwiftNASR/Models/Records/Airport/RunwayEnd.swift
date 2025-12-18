@@ -101,31 +101,31 @@ public struct RunwayEnd: Record {
   public let positionSource: String?
 
   /// The date the threshold position was determined.
-  public let positionSourceDate: DateComponents?
+  public let positionSourceDateComponents: DateComponents?
 
   /// The source for the threshold elevation information.
   public let elevationSource: String?
 
   /// The date the threshold elevation was determined.
-  public let elevationSourceDate: DateComponents?
+  public let elevationSourceDateComponents: DateComponents?
 
   /// The source for the displaced threshold position information.
   public let displacedThresholdPositionSource: String?
 
   /// The date the displaced threshold position was determined.
-  public let displacedThresholdPositionSourceDate: DateComponents?
+  public let displacedThresholdPositionSourceDateComponents: DateComponents?
 
   /// The source for the displaced threshold elevation information.
   public let displacedThresholdElevationSource: String?
 
   /// The date the displaced threshold elevation was determined.
-  public let displacedThresholdElevationSourceDate: DateComponents?
+  public let displacedThresholdElevationSourceDateComponents: DateComponents?
 
   /// The source for the TDZE information.
   public let touchdownZoneElevationSource: String?
 
   /// The date the TDZE was determined.
-  public let touchdownZoneElevationSourceDate: DateComponents?
+  public let touchdownZoneElevationSourceDateComponents: DateComponents?
 
   /// The arresting equipment available on this runway.
   public internal(set) var arrestingSystems = [String]()
@@ -163,15 +163,15 @@ public struct RunwayEnd: Record {
     hasEndTouchdownLighting: Bool?,
     controllingObject: Self.ControllingObject?,
     positionSource: String?,
-    positionSourceDate: DateComponents?,
+    positionSourceDateComponents: DateComponents?,
     elevationSource: String?,
-    elevationSourceDate: DateComponents?,
+    elevationSourceDateComponents: DateComponents?,
     displacedThresholdPositionSource: String?,
-    displacedThresholdPositionSourceDate: DateComponents?,
+    displacedThresholdPositionSourceDateComponents: DateComponents?,
     displacedThresholdElevationSource: String?,
-    displacedThresholdElevationSourceDate: DateComponents?,
+    displacedThresholdElevationSourceDateComponents: DateComponents?,
     touchdownZoneElevationSource: String?,
-    touchdownZoneElevationSourceDate: DateComponents?
+    touchdownZoneElevationSourceDateComponents: DateComponents?
   ) {
     self.id = id
     self.heading = heading
@@ -200,15 +200,17 @@ public struct RunwayEnd: Record {
     self.hasEndTouchdownLighting = hasEndTouchdownLighting
     self.controllingObject = controllingObject
     self.positionSource = positionSource
-    self.positionSourceDate = positionSourceDate
+    self.positionSourceDateComponents = positionSourceDateComponents
     self.elevationSource = elevationSource
-    self.elevationSourceDate = elevationSourceDate
+    self.elevationSourceDateComponents = elevationSourceDateComponents
     self.displacedThresholdPositionSource = displacedThresholdPositionSource
-    self.displacedThresholdPositionSourceDate = displacedThresholdPositionSourceDate
+    self.displacedThresholdPositionSourceDateComponents =
+      displacedThresholdPositionSourceDateComponents
     self.displacedThresholdElevationSource = displacedThresholdElevationSource
-    self.displacedThresholdElevationSourceDate = displacedThresholdElevationSourceDate
+    self.displacedThresholdElevationSourceDateComponents =
+      displacedThresholdElevationSourceDateComponents
     self.touchdownZoneElevationSource = touchdownZoneElevationSource
-    self.touchdownZoneElevationSourceDate = touchdownZoneElevationSourceDate
+    self.touchdownZoneElevationSourceDateComponents = touchdownZoneElevationSourceDateComponents
   }
 
   // MARK: - Types
@@ -504,7 +506,7 @@ public struct RunwayEnd: Record {
     public let positionSource: String?
 
     /// The date the position was determined.
-    public let positionSourceDate: DateComponents?
+    public let positionSourceDateComponents: DateComponents?
 
     /// General and per-field remarks.
     public internal(set) var remarks = Remarks<Field>()
@@ -533,8 +535,8 @@ public struct RunwayEnd: Record {
     }
 
     private enum CodingKeys: String, CodingKey {
-      case availableDistanceFt, intersectingRunwayId, definingEntity, position, positionSource,
-        positionSourceDate
+      case availableDistanceFt, intersectingRunwayId, definingEntity, position, positionSource
+      case positionSourceDateComponents = "positionSourceDate"
     }
   }
 
@@ -752,11 +754,17 @@ public struct RunwayEnd: Record {
       thresholdDisplacementFt, touchdownZoneElevationFtMSL, visualGlideslopeIndicator, RVRSensors,
       hasRVV,
       approachLighting, hasREIL, hasCenterlineLighting, hasEndTouchdownLighting, controllingObject,
-      gradientPct, positionSource, positionSourceDate, elevationSource, elevationSourceDate,
-      displacedThresholdPositionSource, displacedThresholdPositionSourceDate,
-      displacedThresholdElevationSource, displacedThresholdElevationSourceDate,
-      touchdownZoneElevationSource, touchdownZoneElevationSourceDate, TORAFt, TODAFt, ASDAFt, LDAFt,
+      gradientPct, positionSource, elevationSource,
+      displacedThresholdPositionSource,
+      displacedThresholdElevationSource,
+      touchdownZoneElevationSource, TORAFt, TODAFt, ASDAFt, LDAFt,
       LAHSO
+
+    case positionSourceDateComponents = "positionSourceDate"
+    case elevationSourceDateComponents = "elevationSourceDate"
+    case displacedThresholdPositionSourceDateComponents = "displacedThresholdPositionSourceDate"
+    case displacedThresholdElevationSourceDateComponents = "displacedThresholdElevationSourceDate"
+    case touchdownZoneElevationSourceDateComponents = "touchdownZoneElevationSourceDate"
 
     case arrestingSystems, remarks
   }

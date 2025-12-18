@@ -27,7 +27,7 @@ public struct ATSAirway: Record, Identifiable {
   }
 
   /// Chart/publication effective date
-  public let effectiveDate: DateComponents
+  public let effectiveDateComponents: DateComponents
 
   // MARK: - Route Points
 
@@ -258,6 +258,7 @@ public struct ATSAirway: Record, Identifiable {
 
   public enum CodingKeys: String, CodingKey {
     case designation, airwayIdentifier, isRNAV, airwayType
-    case effectiveDate, routePoints, routeRemarks
+    case routePoints, routeRemarks
+    case effectiveDateComponents = "effectiveDate"
   }
 }

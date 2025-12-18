@@ -434,7 +434,7 @@ class CSVAirportParser: CSVParser {
         as! SurveyMethod,
       elevationDeterminationMethod: transformedValues[29] as? SurveyMethod,
       magneticVariationDeg: magneticVariation,
-      magneticVariationEpoch: transformedValues[32] as? DateComponents,
+      magneticVariationEpochComponents: transformedValues[32] as? DateComponents,
       trafficPatternAltitudeFtAGL: transformedValues[33] as? Int,
       sectionalChart: transformedValues[34] as? String,
       distanceCityToAirportNM: transformedValues[35] as? UInt,
@@ -447,7 +447,7 @@ class CSVAirportParser: CSVParser {
       alternateFSSId: transformedValues[46] as? String,
       NOTAMIssuerId: transformedValues[49] as? String,
       NOTAMDAvailable: transformedValues[50] as? Bool,
-      activationDate: transformedValues[51] as? DateComponents,
+      activationDateComponents: transformedValues[51] as? DateComponents,
       status: transformedValues[52] as! Airport.Status,
       arffCapability: ARFFCapability,
       agreements: (transformedValues[56] as? [Airport.FederalAgreement]) ?? [],
@@ -459,8 +459,8 @@ class CSVAirportParser: CSVParser {
       militaryLandingRights: transformedValues[61] as? Bool,
       inspectionMethod: transformedValues[62] as? Airport.InspectionMethod,
       inspectionAgency: transformedValues[63] as? Airport.InspectionAgency,
-      lastPhysicalInspectionDate: transformedValues[64] as? DateComponents,
-      lastInformationRequestCompletedDate: transformedValues[65] as? DateComponents,
+      lastPhysicalInspectionDateComponents: transformedValues[64] as? DateComponents,
+      lastInformationRequestCompletedDateComponents: transformedValues[65] as? DateComponents,
       fuelsAvailable: (transformedValues[66] as? [Airport.FuelType]) ?? [],
       airframeRepairAvailable: transformedValues[67] as? Airport.RepairService,
       powerplantRepairAvailable: transformedValues[68] as? Airport.RepairService,
@@ -488,11 +488,11 @@ class CSVAirportParser: CSVParser {
       annualLocalGAOps: nil,  // Not in CSV distribution (TXT-only)
       annualTransientGAOps: nil,  // Not in CSV distribution (TXT-only)
       annualMilitaryOps: nil,  // Not in CSV distribution (TXT-only)
-      annualPeriodEndDate: nil,  // Not in CSV distribution (TXT-only)
+      annualPeriodEndDateComponents: nil,  // Not in CSV distribution (TXT-only)
       positionSource: transformedValues[78] as? String,
-      positionSourceDate: transformedValues[79] as? DateComponents,
+      positionSourceDateComponents: transformedValues[79] as? DateComponents,
       elevationSource: transformedValues[80] as? String,
-      elevationSourceDate: transformedValues[81] as? DateComponents,
+      elevationSourceDateComponents: transformedValues[81] as? DateComponents,
       contractFuelAvailable: transformedValues[82] as? Bool,
       transientStorageFacilities: transientStorageFacilities.presence,
       otherServices: (transformedValues[86] as? [Airport.Service]) ?? [],
@@ -554,7 +554,7 @@ class CSVAirportParser: CSVParser {
       class: ARFFClass,
       index: ARFFIndex,
       airService: ARFFService,
-      certificationDate: ARFFDateComponents
+      certificationDateComponents: ARFFDateComponents
     )
   }
 
@@ -599,7 +599,7 @@ class CSVAirportParser: CSVParser {
 
     // Parse length source info
     let lengthSource = values.stringAt(APTRunwayField.RWY_LEN_SOURCE.rawValue)
-    let lengthSourceDate: DateComponents? =
+    let lengthSourceDateComponents: DateComponents? =
       values
       .stringAt(APTRunwayField.LENGTH_SOURCE_DATE.rawValue)
       .flatMap { DateFormat.yearMonthDaySlash.parse($0) }
@@ -645,15 +645,15 @@ class CSVAirportParser: CSVParser {
       hasEndTouchdownLighting: nil,
       controllingObject: nil,
       positionSource: nil,
-      positionSourceDate: nil,
+      positionSourceDateComponents: nil,
       elevationSource: nil,
-      elevationSourceDate: nil,
+      elevationSourceDateComponents: nil,
       displacedThresholdPositionSource: nil,
-      displacedThresholdPositionSourceDate: nil,
+      displacedThresholdPositionSourceDateComponents: nil,
       displacedThresholdElevationSource: nil,
-      displacedThresholdElevationSourceDate: nil,
+      displacedThresholdElevationSourceDateComponents: nil,
       touchdownZoneElevationSource: nil,
-      touchdownZoneElevationSourceDate: nil
+      touchdownZoneElevationSourceDateComponents: nil
     )
 
     let runway = Runway(
@@ -661,7 +661,7 @@ class CSVAirportParser: CSVParser {
       lengthFt: length,
       widthFt: width,
       lengthSource: lengthSource,
-      lengthSourceDate: lengthSourceDate,
+      lengthSourceDateComponents: lengthSourceDateComponents,
       materials: materials,
       condition: condition,
       treatment: treatment,
@@ -913,34 +913,34 @@ class CSVAirportParser: CSVParser {
 
     // Parse source info
     let positionSource = values.stringAt(APTRunwayEndField.RWY_END_PSN_SOURCE.rawValue)
-    let positionSourceDate: DateComponents? =
+    let positionSourceDateComponents: DateComponents? =
       values.stringAt(APTRunwayEndField.RWY_END_PSN_DATE.rawValue).flatMap {
         DateFormat.yearMonthDaySlash.parse($0)
       }
 
     let elevationSource = values.stringAt(APTRunwayEndField.RWY_END_ELEV_SOURCE.rawValue)
-    let elevationSourceDate: DateComponents? =
+    let elevationSourceDateComponents: DateComponents? =
       values.stringAt(APTRunwayEndField.RWY_END_ELEV_DATE.rawValue).flatMap {
         DateFormat.yearMonthDaySlash.parse($0)
       }
 
     let displacedThresholdPositionSource =
       values.stringAt(APTRunwayEndField.DSPL_THR_PSN_SOURCE.rawValue)
-    let displacedThresholdPositionSourceDate: DateComponents? =
+    let displacedThresholdPositionSourceDateComponents: DateComponents? =
       values.stringAt(APTRunwayEndField.RWY_END_DSPL_THR_PSN_DATE.rawValue).flatMap {
         DateFormat.yearMonthDaySlash.parse($0)
       }
 
     let displacedThresholdElevationSource =
       values.stringAt(APTRunwayEndField.DSPL_THR_ELEV_SOURCE.rawValue)
-    let displacedThresholdElevationSourceDate: DateComponents? =
+    let displacedThresholdElevationSourceDateComponents: DateComponents? =
       values.stringAt(APTRunwayEndField.RWY_END_DSPL_THR_ELEV_DATE.rawValue).flatMap {
         DateFormat.yearMonthDaySlash.parse($0)
       }
 
     let touchdownZoneElevationSource =
       values.stringAt(APTRunwayEndField.TDZ_ELEV_SOURCE.rawValue)
-    let touchdownZoneElevationSourceDate: DateComponents? =
+    let touchdownZoneElevationSourceDateComponents: DateComponents? =
       values.stringAt(APTRunwayEndField.RWY_END_TDZ_ELEV_DATE.rawValue).flatMap {
         DateFormat.yearMonthDaySlash.parse($0)
       }
@@ -973,15 +973,17 @@ class CSVAirportParser: CSVParser {
       hasEndTouchdownLighting: hasEndTouchdownLighting,
       controllingObject: controllingObject,
       positionSource: positionSource,
-      positionSourceDate: positionSourceDate,
+      positionSourceDateComponents: positionSourceDateComponents,
       elevationSource: elevationSource,
-      elevationSourceDate: elevationSourceDate,
+      elevationSourceDateComponents: elevationSourceDateComponents,
       displacedThresholdPositionSource: displacedThresholdPositionSource,
-      displacedThresholdPositionSourceDate: displacedThresholdPositionSourceDate,
+      displacedThresholdPositionSourceDateComponents:
+        displacedThresholdPositionSourceDateComponents,
       displacedThresholdElevationSource: displacedThresholdElevationSource,
-      displacedThresholdElevationSourceDate: displacedThresholdElevationSourceDate,
+      displacedThresholdElevationSourceDateComponents:
+        displacedThresholdElevationSourceDateComponents,
       touchdownZoneElevationSource: touchdownZoneElevationSource,
-      touchdownZoneElevationSourceDate: touchdownZoneElevationSourceDate
+      touchdownZoneElevationSourceDateComponents: touchdownZoneElevationSourceDateComponents
     )
   }
 
@@ -1190,7 +1192,7 @@ class CSVAirportParser: CSVParser {
       definingEntity: definingEntity,
       position: position,
       positionSource: positionSource,
-      positionSourceDate: positionSourceDate
+      positionSourceDateComponents: positionSourceDate
     )
   }
 

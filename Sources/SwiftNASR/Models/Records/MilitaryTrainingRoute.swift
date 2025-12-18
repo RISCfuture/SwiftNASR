@@ -15,7 +15,7 @@ public struct MilitaryTrainingRoute: Record, Identifiable {
   public let routeIdentifier: String
 
   /// Publication effective date.
-  public let effectiveDate: DateComponents?
+  public let effectiveDateComponents: DateComponents?
 
   /// FAA region code.
   public let FAARegionCode: String?
@@ -155,9 +155,10 @@ public struct MilitaryTrainingRoute: Record, Identifiable {
   }
 
   public enum CodingKeys: String, CodingKey {
-    case routeType, routeIdentifier, effectiveDate, FAARegionCode
+    case routeType, routeIdentifier, FAARegionCode
     case ARTCCIdentifiers, FSSIdentifiers, timesOfUse
     case operatingProcedures, routeWidthDescriptions, terrainFollowingOperations
     case routePoints, agencies
+    case effectiveDateComponents = "effectiveDate"
   }
 }

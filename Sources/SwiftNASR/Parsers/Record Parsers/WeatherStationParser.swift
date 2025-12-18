@@ -116,7 +116,7 @@ class FixedWidthWeatherStationParser: FixedWidthParser {
       city: transformedValues[15] as? String,
       country: nil,  // Not in TXT format
       isCommissioned: transformedValues[3] as! Bool,
-      commissionDate: transformedValues[4] as? DateComponents,
+      commissionDateComponents: transformedValues[4] as? DateComponents,
       isNavaidAssociated: transformedValues[5] as? Bool,
       position: position,
       surveyMethod: transformedValues[9] as? SurveyMethod,

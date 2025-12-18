@@ -255,7 +255,7 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
         operator: `operator`,
         operatorName: operatorName,
         status: status,
-        statusDate: statusDate,
+        statusDateComponents: statusDate,
         navaid: navaid,
         navaidType: navaidType
       )

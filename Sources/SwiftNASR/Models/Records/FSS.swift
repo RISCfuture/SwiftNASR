@@ -341,7 +341,7 @@ public struct FSS: ParentRecord {
     public let status: Status?
 
     /// The date that the current status was last updated.
-    public let statusDate: DateComponents?
+    public let statusDateComponents: DateComponents?
 
     /// The navaid ID associated with this comm facility.
     public let navaid: String?
@@ -354,7 +354,8 @@ public struct FSS: ParentRecord {
 
     enum CodingKeys: String, CodingKey {
       case frequency, operationalHours, city, stateName, location, lowAltEnrouteChart, timezone,
-        owner, ownerName, `operator`, operatorName, status, statusDate, navaid, navaidType
+        owner, ownerName, `operator`, operatorName, status, navaid, navaidType
+      case statusDateComponents = "statusDate"
     }
   }
 

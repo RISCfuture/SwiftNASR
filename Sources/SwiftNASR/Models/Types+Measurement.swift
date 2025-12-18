@@ -38,7 +38,7 @@ public extension Location {
         timestamp: .distantPast
       )
     }
-  return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+    return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
   }
 }
 

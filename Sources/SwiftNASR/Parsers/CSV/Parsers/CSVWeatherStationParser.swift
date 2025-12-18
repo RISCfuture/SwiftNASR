@@ -112,7 +112,7 @@ class CSVWeatherStationParser: CSVParser {
         city: transformedValues[4] as? String,
         country: transformedValues[5] as? String,
         isCommissioned: isCommissioned,
-        commissionDate: transformedValues[6] as? DateComponents,
+        commissionDateComponents: transformedValues[6] as? DateComponents,
         isNavaidAssociated: transformedValues[7] as? Bool,
         position: position,
         surveyMethod: transformedValues[11] as? SurveyMethod,

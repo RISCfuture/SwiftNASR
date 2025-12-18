@@ -104,7 +104,7 @@ class FixedWidthMilitaryTrainingRouteParser: LayoutDataParser {
     let route = MilitaryTrainingRoute(
       routeType: type,
       routeIdentifier: routeIdentifier,
-      effectiveDate: parseDate(effectiveDateStr),
+      effectiveDateComponents: parseDate(effectiveDateStr),
       FAARegionCode: FAARegion.isEmpty ? nil : FAARegion,
       ARTCCIdentifiers: ARTCCs,
       FSSIdentifiers: FSSes,

@@ -86,7 +86,7 @@ class CSVILSParser: CSVParser {
         operator: fields.count > 16 ? fields[16].trimmingCharacters(in: .whitespaces) : nil,
         approachBearing: approachBearing,
         magneticVariationDeg: magVar,
-        effectiveDate: effDate
+        effectiveDateComponents: effDate
       )
 
       // Create localizer from BASE file
@@ -112,7 +112,7 @@ class CSVILSParser: CSVParser {
 
       ils.localizer = ILS.Localizer(
         status: LOCStatus,
-        statusDate: LOCStatusDate,
+        statusDateComponents: LOCStatusDate,
         position: LOCPosition,
         positionSource: posSource,
         distanceFromApproachEndFt: nil,
@@ -180,7 +180,7 @@ class CSVILSParser: CSVParser {
 
       let glideSlope = ILS.GlideSlope(
         status: self.parseOperationalStatus(fields[10]),
-        statusDate: self.parseYYYYMMDDDate(fields[11]),
+        statusDateComponents: self.parseYYYYMMDDDate(fields[11]),
         position: gsPosition,
         positionSource: self.parsePositionSource(fields[22]),
         distanceFromApproachEndFt: nil,
@@ -245,7 +245,7 @@ class CSVILSParser: CSVParser {
 
       let DME = ILS.DME(
         status: self.parseOperationalStatus(fields[10]),
-        statusDate: self.parseYYYYMMDDDate(fields[11]),
+        statusDateComponents: self.parseYYYYMMDDDate(fields[11]),
         position: DMEPosition,
         positionSource: self.parsePositionSource(fields[22]),
         distanceFromApproachEndFt: nil,
@@ -323,7 +323,7 @@ class CSVILSParser: CSVParser {
       let marker = ILS.MarkerBeacon(
         markerType: markerType,
         status: self.parseOperationalStatus(fields[11]),
-        statusDate: self.parseYYYYMMDDDate(fields[12]),
+        statusDateComponents: self.parseYYYYMMDDDate(fields[12]),
         position: mkrPosition,
         positionSource: self.parsePositionSource(fields[23]),
         distanceFromApproachEndFt: nil,

@@ -228,7 +228,7 @@ class FixedWidthFSSCommFacilityParser: Parser {
       charts: charts,
       timeZone: (transformedValues[27] as? String).flatMap { StandardTimeZone(rawValue: $0) },
       status: (transformedValues[28] as? String).flatMap { FSS.Status(rawValue: $0) },
-      statusDate: transformedValues[29] as? DateComponents
+      statusDateComponents: transformedValues[29] as? DateComponents
     )
 
     facilities.append(facility)

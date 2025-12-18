@@ -44,7 +44,7 @@ class CSVTerminalCommFacilityParser: CSVParser {
         facilityId: facilityID,
         airportSiteNumber: fields[1].trimmingCharacters(in: .whitespaces).isEmpty
           ? nil : fields[1].trimmingCharacters(in: .whitespaces),
-        effectiveDate: effDate,
+        effectiveDateComponents: effDate,
         regionCode: fields.count > 10
           ? (fields[10].trimmingCharacters(in: .whitespaces).isEmpty
             ? nil : fields[10].trimmingCharacters(in: .whitespaces)) : nil,

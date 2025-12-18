@@ -113,7 +113,7 @@ class FixedWidthHoldParser: LayoutDataParser {
         let hold = Hold(
           name: name,
           patternNumber: patternNum,
-          effectiveDate: effectiveDate,
+          effectiveDateComponents: effectiveDate,
           holdingDirection: holdingDirection,
           magneticBearingDeg: UInt(bearingStr),
           azimuthType: azimuthType,

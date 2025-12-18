@@ -240,7 +240,7 @@ class FixedWidthNavaidParser: FixedWidthParser {
       TACANPosition: TACANPosition,
       surveyAccuracy: transformedValues[26] as! Navaid.SurveyAccuracy?,
       magneticVariationDeg: magneticVariationDeg,
-      magneticVariationEpoch: transformedValues[33] as! DateComponents?,
+      magneticVariationEpochComponents: transformedValues[33] as! DateComponents?,
       simultaneousVoice: transformedValues[34] as! Bool?,
       powerOutputW: transformedValues[35] as! UInt?,
       automaticVoiceId: transformedValues[36] as! Bool?,
