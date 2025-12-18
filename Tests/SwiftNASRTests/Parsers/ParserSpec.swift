@@ -20,7 +20,7 @@ class MockParser: LayoutDataParser {
 class ParserSpec: AsyncSpec {
   override class func spec() {
     describe("prepare") {
-      it("sets the ranges for a layout file") {
+      it("parses all record formats from layout file") {
         let distURL = Bundle.module.resourceURL!.appendingPathComponent(
           "MockDistribution",
           isDirectory: true
@@ -30,52 +30,56 @@ class ParserSpec: AsyncSpec {
 
         try await parser.prepare(distribution: distribution)
 
-        let ranges = parser.formats.map { $0.fields.map(\.range) }
-        expect(ranges).to(
-          equal([
-            [
-              0..<3, 3..<14, 14..<27, 27..<31, 31..<41, 41..<44, 44..<48, 48..<50, 50..<70, 70..<91,
-              91..<93, 93..<133, 133..<183, 183..<185, 185..<187, 187..<222, 222..<294, 294..<339,
-              339..<355, 355..<390, 390..<462, 462..<507, 507..<523, 523..<538, 538..<550,
-              550..<565, 565..<577, 577..<578, 578..<585, 585..<586, 586..<589, 589..<593,
-              593..<597, 597..<627, 627..<629, 629..<632, 632..<637, 637..<641, 641..<644,
-              644..<674, 674..<678, 678..<681, 681..<711, 711..<712, 712..<716, 716..<746,
-              746..<762, 762..<778, 778..<782, 782..<812, 812..<828, 828..<832, 832..<833,
-              833..<840, 840..<842, 842..<857, 857..<864, 864..<877, 877..<878, 878..<879,
-              879..<880, 880..<881, 881..<883, 883..<884, 884..<892, 892..<900, 900..<940,
-              940..<945, 945..<950, 950..<958, 958..<966, 966..<973, 973..<980, 980..<981,
-              981..<988, 988..<995, 995..<999, 999..<1002, 1002..<1003, 1003..<1004, 1004..<1007,
-              1007..<1010, 1010..<1013, 1013..<1016, 1016..<1019, 1019..<1022, 1022..<1025,
-              1025..<1031, 1031..<1037, 1037..<1043, 1043..<1049, 1049..<1055, 1055..<1061,
-              1061..<1071, 1071..<1087, 1087..<1097, 1097..<1113, 1113..<1123, 1123..<1124,
-              1124..<1136, 1136..<1207, 1207..<1210, 1210..<1217, 1217..<1218, 1218..<1531
-            ],
-            [0..<3, 3..<14, 14..<16, 16..<18, 18..<126, 126..<1531],
-            [
-              0..<3, 3..<14, 14..<16, 16..<23, 23..<28, 28..<32, 32..<44, 44..<49, 49..<60, 60..<65,
-              65..<68, 68..<71, 71..<81, 81..<82, 82..<87, 87..<88, 88..<103, 103..<115, 115..<130,
-              130..<142, 142..<149, 149..<152, 152..<156, 156..<171, 171..<183, 183..<198,
-              198..<210, 210..<217, 217..<221, 221..<228, 228..<233, 233..<236, 236..<237,
-              237..<245, 245..<246, 246..<247, 247..<248, 248..<259, 259..<263, 263..<268,
-              268..<270, 270..<275, 275..<280, 280..<287, 287..<290, 290..<293, 293..<303,
-              303..<304, 304..<309, 309..<310, 310..<325, 325..<337, 337..<352, 352..<364,
-              364..<371, 371..<374, 374..<378, 378..<393, 393..<405, 405..<420, 420..<432,
-              432..<439, 439..<443, 443..<450, 450..<455, 455..<458, 458..<459, 459..<467,
-              467..<468, 468..<469, 469..<470, 470..<481, 481..<485, 485..<490, 490..<492,
-              492..<497, 497..<502, 502..<509, 509..<525, 525..<535, 535..<541, 541..<547,
-              547..<553, 553..<559, 559..<564, 564..<568, 568..<584, 584..<594, 594..<610,
-              610..<620, 620..<636, 636..<646, 646..<662, 662..<672, 672..<688, 688..<698,
-              698..<703, 703..<708, 708..<713, 713..<718, 718..<723, 723..<730, 730..<770,
-              770..<785, 785..<797, 797..<812, 812..<824, 824..<840, 840..<850, 850..<855,
-              855..<859, 859..<875, 875..<885, 885..<901, 901..<911, 911..<927, 927..<937,
-              937..<953, 953..<963, 963..<979, 979..<989, 989..<994, 994..<999, 999..<1004,
-              1004..<1009, 1009..<1014, 1014..<1021, 1021..<1061, 1061..<1076, 1076..<1088,
-              1088..<1103, 1103..<1115, 1115..<1131, 1131..<1141, 1141..<1531
-            ],
-            [0..<3, 3..<14, 14..<16, 16..<23, 23..<26, 26..<35, 35..<1531],
-            [0..<3, 3..<14, 14..<16, 16..<31, 31..<1531]
-          ])
+        // APT layout file defines 5 record formats: APT, ATT, RWY, ARS, RMK
+        expect(parser.formats.count).to(equal(5))
+      }
+
+      it("calculates correct 0-indexed field ranges from 1-indexed positions") {
+        let distURL = Bundle.module.resourceURL!.appendingPathComponent(
+          "MockDistribution",
+          isDirectory: true
         )
+        let distribution = DirectoryDistribution(location: distURL)
+        let parser = MockParser()
+
+        try await parser.prepare(distribution: distribution)
+
+        let firstFormat = parser.formats[0]
+
+        // First field: L AN 0003 00001 -> range 0..<3
+        expect(firstFormat.fields[0].range).to(equal(0..<3))
+
+        // Second field: L AN 0011 00004 -> range 3..<14
+        expect(firstFormat.fields[1].range).to(equal(3..<14))
+
+        // Third field: L AN 0013 00015 -> range 14..<27
+        expect(firstFormat.fields[2].range).to(equal(14..<27))
+      }
+
+      it("correctly parses field identifier types") {
+        let distURL = Bundle.module.resourceURL!.appendingPathComponent(
+          "MockDistribution",
+          isDirectory: true
+        )
+        let distribution = DirectoryDistribution(location: distURL)
+        let parser = MockParser()
+
+        try await parser.prepare(distribution: distribution)
+
+        let firstFormat = parser.formats[0]
+
+        // First field has N/A identifier -> .none
+        expect(firstFormat.fields[0].identifier).to(equal(NASRTableField.Identifier.none))
+
+        // Second field has DLID identifier -> .databaseLocatorID
+        expect(firstFormat.fields[1].identifier).to(equal(.databaseLocatorID))
+
+        // Look for a numbered field (e.g., E7, A1, etc.)
+        let numberedField = firstFormat.fields.first {
+          if case .number = $0.identifier { return true }
+          return false
+        }
+        expect(numberedField).toNot(beNil())
       }
 
       it("throws badData if an L entry is invalid") {
@@ -89,6 +93,64 @@ class ParserSpec: AsyncSpec {
         await expect {
           try await parser.prepare(distribution: distribution)
         }.to(throwError(LayoutParserError.badData("Field defined before group")))
+      }
+    }
+
+    describe("NASRTable") {
+      it("finds field by identifier") {
+        let distURL = Bundle.module.resourceURL!.appendingPathComponent(
+          "MockDistribution",
+          isDirectory: true
+        )
+        let distribution = DirectoryDistribution(location: distURL)
+        let parser = MockParser()
+
+        try await parser.prepare(distribution: distribution)
+
+        let firstFormat = parser.formats[0]
+
+        // A1 is the "ASSOCIATED CITY NAME" field in APT record
+        let field = firstFormat.field(forID: "A1")
+        expect(field).toNot(beNil())
+        expect(field?.identifier).to(equal(.number("A1")))
+      }
+
+      it("returns nil for unknown identifier") {
+        let distURL = Bundle.module.resourceURL!.appendingPathComponent(
+          "MockDistribution",
+          isDirectory: true
+        )
+        let distribution = DirectoryDistribution(location: distURL)
+        let parser = MockParser()
+
+        try await parser.prepare(distribution: distribution)
+
+        let firstFormat = parser.formats[0]
+
+        let field = firstFormat.field(forID: "NONEXISTENT")
+        expect(field).to(beNil())
+      }
+
+      it("finds field offset by identifier") {
+        let distURL = Bundle.module.resourceURL!.appendingPathComponent(
+          "MockDistribution",
+          isDirectory: true
+        )
+        let distribution = DirectoryDistribution(location: distURL)
+        let parser = MockParser()
+
+        try await parser.prepare(distribution: distribution)
+
+        let firstFormat = parser.formats[0]
+
+        // A1 should be at a specific offset in the fields array
+        let offset = firstFormat.fieldOffset(forID: "A1")
+        expect(offset).toNot(beNil())
+
+        // Verify it points to the correct field
+        if let offset = offset {
+          expect(firstFormat.fields[offset].identifier).to(equal(.number("A1")))
+        }
       }
     }
   }

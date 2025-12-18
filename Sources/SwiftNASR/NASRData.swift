@@ -82,8 +82,10 @@ public actor NASRData {
       for navaidIndex in 0..<navaids!.count {
         navaids![navaidIndex].data = self
         let findStateByCode = navaids![navaidIndex].findStateByCode()
+        let findAirportById = navaids![navaidIndex].findAirportById()
         for checkpointIndex in 0..<navaids![navaidIndex].checkpoints.count {
           navaids![navaidIndex].checkpoints[checkpointIndex].findStateByCode = findStateByCode
+          navaids![navaidIndex].checkpoints[checkpointIndex].findAirportById = findAirportById
         }
       }
     }

@@ -79,7 +79,7 @@ struct NASRTableField {
   let identifier: Identifier
   let range: Range<UInt>
 
-  enum Identifier: RawRepresentable {
+  enum Identifier: RawRepresentable, Equatable {
     typealias RawValue = String
 
     case none

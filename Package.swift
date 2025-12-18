@@ -34,8 +34,7 @@ let package = Package(
       dependencies: ["SwiftNASR", "Quick", "Nimble"],
       resources: [
         .copy("Resources/MockDistribution"),
-        .copy("Resources/FailingMockDistribution"),
-        .copy("Resources/MockCSVDistribution")
+        .copy("Resources/FailingMockDistribution")
       ],
       linkerSettings: [.linkedLibrary("swift_Concurrency")]
     ),

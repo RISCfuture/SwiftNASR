@@ -24,8 +24,26 @@ public struct CodedDepartureRoute: Record, Identifiable {
   /// Full route string (e.g., "KORD MZV LMN J64 CIVET CIVET4 LAX").
   public let routeString: String
 
-  /// ARTCC identifier (e.g., "KZAU").
-  public let ARTCCIdentifier: String
+  /// Departure center ARTCC identifier (e.g., "ZAU").
+  public let departureCenterIdentifier: String
+
+  /// Arrival center ARTCC identifier (e.g., "ZLA").
+  public let arrivalCenterIdentifier: String?
+
+  /// Space-separated list of transition center ARTCC identifiers.
+  public let transitionCenterIdentifiers: String?
+
+  /// Whether coordination is required for this route.
+  public let coordinationRequired: Bool?
+
+  /// Play information or notes for this route.
+  public let playInfo: String?
+
+  /// Navigation equipment requirements.
+  public let navigationEquipment: String?
+
+  /// Route length in nautical miles.
+  public let lengthNM: UInt?
 
   /// Reference to parent NASRData for cross-referencing.
   weak var data: NASRData?
@@ -42,7 +60,12 @@ public struct CodedDepartureRoute: Record, Identifiable {
     routeString.split(separator: " ").map(String.init)
   }
 
+  /// Backward-compatible alias for `departureCenterIdentifier`.
+  public var ARTCCIdentifier: String { departureCenterIdentifier }
+
   public enum CodingKeys: String, CodingKey {
-    case routeCode, origin, destination, departureFix, routeString, ARTCCIdentifier
+    case routeCode, origin, destination, departureFix, routeString
+    case departureCenterIdentifier, arrivalCenterIdentifier, transitionCenterIdentifiers
+    case coordinationRequired, playInfo, navigationEquipment, lengthNM
   }
 }

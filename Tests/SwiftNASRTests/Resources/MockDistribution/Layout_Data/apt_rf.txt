@@ -4,7 +4,7 @@
 
 
 
-INFORMATION EFFECTIVE DATE: 5/20/2021 CHARTING CYCLE
+INFORMATION EFFECTIVE DATE: 11/27/2025 CHARTING CYCLE
 
     RECORD FORMAT: FIXED
     LOGICAL RECORD LENGTH: 1531
@@ -388,7 +388,7 @@ L AN 0002 00841  N/A     AIRPORT STATUS CODE
 L AN 0015 00843  A26     AIRPORT ARFF CERTIFICATION TYPE AND DATE
                             FORMAT IS THE CLASS CODE ('I', 'II', 'III',
                             OR 'IV') FOLLOWED BY A ONE CHARACTER CODE
-                            A, B, C, D, E, OR L, FOLLOWED BY A
+                            A, B, C, D, E, FOLLOWED BY A
                             ONE CHARACTER CODE S OR U, FOLLOWED
                             BY THE MONTH/YEAR OF CERTIFICATION.
                             (EX. 'I A S 07/1980'   'I C S 01/1983'
@@ -398,8 +398,6 @@ L AN 0015 00843  A26     AIRPORT ARFF CERTIFICATION TYPE AND DATE
                             HAVING A FULL CERTIFICATE UNDER CFR PART
                             139, AND IDENTIFIES THE AIRCRAFT RESCUE
                             AND FIREFIGHTING INDEX FOR THE AIRPORT.
-                            CODE L IS FOR AIRPORTS HAVING LIMITED
-                            CERTIFICATION UNDER CFR PART 139.
 
                             CODE S IS FOR AIRPORTS RECEIVING SCHEDULED
                             AIR CARRIER SERVICE FROM CARRIERS
@@ -504,6 +502,7 @@ L AN 0040 00901  A70     FUEL TYPES AVAILABLE FOR PUBLIC USE AT THE
                          80        Grade 80 gasoline (Red)         
                          100       Grade 100 gasoline (Green)               
                          100LL     100LL gasoline (low lead) (Blue)                           
+                         100R      Unleaded Grade 100 gasoline
                          115       Grade 115 gasoline (115/145 military 
                                        specification) (Purple)            
                          A         Jet A, Kerosene, without FS–II*, 
@@ -525,6 +524,10 @@ L AN 0040 00901  A70     FUEL TYPES AVAILABLE FOR PUBLIC USE AT THE
                                        without FS–II*, FP** minus 50º C.
                          B+        Jet B, Wide–cut, turbine fuel 
                                        with FS–II*, FP** minus 50º C.
+                         G100      Unleaded Grade 100 gasoline. (G100 is G100UL, 
+                                       this fuel type is truncated due to system 
+                                       constraint). 
+                         H         Hydrogen
                          J4        (JP4)(JP–4 military specification) 
                                        FP** minus 58º C.
                          J5        (JP5)(JP–5 military specification) Kerosene 
@@ -599,11 +602,11 @@ L AN 0004 00996  A84     SEGMENTED CIRCLE AIRPORT MARKER SYSTEM ON THE AIRPORT
                             NONE
                             Y-L - YES, LIGHTED
 L AN 0003 01000  A80     LENS COLOR OF OPERABLE BEACON LOCATED ON THE AIRPORT
-                            CG    CLEAR-GREEN (LIGHTED LAND AIRPORT)
-                            CY    CLEAR-YELLOW (LIGHTED SEAPLANE BASE)
-                            CGY   CLEAR-GREEN-YELLOW (HELIPORT)
-                            SCG   SPLIT-CLEAR-GREEN (LIGHTED MILITARY AIRPORT)
-                            C     CLEAR (UNLIGHTED LAND AIRPORT)
+                            WG    WHITE-GREEN (LIGHTED LAND AIRPORT)
+                            WY    WHITE-YELLOW (LIGHTED SEAPLANE BASE)
+                            WGY   WHITE-GREEN-YELLOW (HELIPORT)
+                            SWG   SPLIT-WHITE-GREEN (LIGHTED MILITARY AIRPORT)
+                            W     WHITE (UNLIGHTED LAND AIRPORT)
                             Y     YELLOW (UNLIGHTED SEAPLANE BASE)
                             G     GREEN  (LIGHTED LAND AIRPORT)
                             N     NONE
@@ -838,7 +841,10 @@ L AN 0005 00061  A40     RUNWAY LIGHTS EDGE INTENSITY
                            HIGH - HIGH
                            MED  - MEDIUM
                            LOW  - LOW
+                           FLD  - FLOOD
                            NSTD - NON-STANDARD LIGHTING SYSTEM
+                           PERI - PERIMETER
+                           STRB - STROBE
                            NONE - NO EDGE LIGHTING SYSTEM
 
                          -----------------------------------------------
