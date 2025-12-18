@@ -59,7 +59,7 @@ final class FrequencyParser: Sendable {
     let name = match[nameRef]
 
     return FSS.Frequency(
-      frequency: frequency,
+      frequencyKHz: frequency,
       name: name,
       singleSideband: SSB,
       use: use

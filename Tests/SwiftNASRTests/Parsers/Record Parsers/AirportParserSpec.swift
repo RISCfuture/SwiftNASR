@@ -39,7 +39,7 @@ class AirportParserSpec: AsyncSpec {
         }
         expect(SQL.runways.count).to(equal(1))
         expect(SQL.runways[0].reciprocalEnd).notTo(beNil())
-        expect(SQL.remarks.forField(Airport.Field.trafficPatternAltitude).count).to(equal(1))
+        expect(SQL.remarks.forField(Airport.Field.trafficPatternAltitudeFtAGL).count).to(equal(1))
         expect(SQL.runways[0].baseEnd.remarks.forField(RunwayEnd.Field.rightTraffic).count).to(
           equal(1)
         )

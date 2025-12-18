@@ -29,7 +29,7 @@
 - ``commonSystemUsage``
 - ``publicUse``
 - ``hoursOfOperation``
-- ``magneticVariation``
+- ``magneticVariationDeg``
 - ``magneticVariationEpoch``
 - ``monitoringCategory-swift.property``
 - ``NOTAMAccountabilityCode``
@@ -41,10 +41,10 @@
 ### Radio
 
 - ``simultaneousVoice``
-- ``powerOutput``
+- ``powerOutputW``
 - ``automaticVoiceId``
 - ``radioVoiceCall``
-- ``frequency``
+- ``frequencyKHz``
 - ``beaconIdentifier``
 - ``broadcastsHIWAS``
 

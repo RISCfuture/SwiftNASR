@@ -30,9 +30,9 @@ class CSVWeatherStationParserSpec: AsyncSpec {
             expect(station.stateCode).to(equal("MT"))
             expect(station.city).to(equal("HARDIN"))
             expect(station.isCommissioned).to(beTrue())
-            expect(station.position?.latitude).notTo(beNil())
-            expect(station.position?.longitude).notTo(beNil())
-            expect(station.position?.elevation).to(beCloseTo(3085, within: 1))
+            expect(station.position?.latitudeArcsec).notTo(beNil())
+            expect(station.position?.longitudeArcsec).notTo(beNil())
+            expect(station.position?.elevationFtMSL).to(beCloseTo(3085, within: 1))
             expect(station.surveyMethod).to(equal(SurveyMethod.estimated))
           }
         }

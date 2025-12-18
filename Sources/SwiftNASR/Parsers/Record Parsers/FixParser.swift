@@ -118,9 +118,8 @@ class FixedWidthFixParser: FixedWidthParser {
     let transformedValues = try basicTransformer.applyTo(values)
 
     let position = Location(
-      latitude: transformedValues[4] as! Float,
-      longitude: transformedValues[5] as! Float,
-      elevation: nil
+      latitudeArcsec: transformedValues[4] as! Float,
+      longitudeArcsec: transformedValues[5] as! Float
     )
 
     guard let category = transformedValues[6] as? Fix.Category else {
@@ -230,27 +229,27 @@ private func parseNavaidMakeupDescription(_ description: String) -> Fix.NavaidMa
   let navaidId = parts[0]
   guard let navaidType = Navaid.FacilityType.for(parts[1]) else { return nil }
 
-  var radial: UInt?
-  var distance: Float?
+  var radialDeg: UInt?
+  var distanceNM: Float?
 
   if parts.count >= 3 {
     let radialDistPart = parts[2]
     if radialDistPart.contains("/") {
       let subParts = radialDistPart.components(separatedBy: "/")
-      radial = UInt(subParts[0])
+      radialDeg = UInt(subParts[0])
       if subParts.count > 1 {
-        distance = Float(subParts[1])
+        distanceNM = Float(subParts[1])
       }
     } else {
-      radial = UInt(radialDistPart)
+      radialDeg = UInt(radialDistPart)
     }
   }
 
   return Fix.NavaidMakeup(
     navaidId: navaidId,
     navaidType: navaidType,
-    radial: radial,
-    distance: distance,
+    radialDeg: radialDeg,
+    distanceNM: distanceNM,
     rawDescription: description
   )
 }

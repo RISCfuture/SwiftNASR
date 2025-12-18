@@ -106,8 +106,8 @@ class ATSAirwayParserSpec: AsyncSpec {
         // 24°00'00"N ≈ 86400 arc-seconds, 79°04'12"W ≈ -284652 arc-seconds
         let firstPoint = airway?.routePoints.first { $0.sequenceNumber == 10 }
         expect(firstPoint?.pointName).to(equal("URSUS"))
-        expect(firstPoint?.position?.latitude).to(beCloseTo(86400, within: 100))
-        expect(firstPoint?.position?.longitude).to(beCloseTo(-284651, within: 100))
+        expect(firstPoint?.position?.latitudeArcsec).to(beCloseTo(86400, within: 100))
+        expect(firstPoint?.position?.longitudeArcsec).to(beCloseTo(-284651, within: 100))
       }
 
       it("parses MEA data") {
@@ -122,8 +122,8 @@ class ATSAirwayParserSpec: AsyncSpec {
 
         let airway = airways.first { $0.airwayIdentifier == "A301" }
         let point = airway?.routePoints.first { $0.sequenceNumber == 10 }
-        expect(point?.minimumEnrouteAltitude).to(equal(10000))
-        expect(point?.minimumReceptionAltitude).to(equal(16000))
+        expect(point?.minimumEnrouteAltitudeFt).to(equal(10000))
+        expect(point?.minimumReceptionAltitudeFt).to(equal(16000))
       }
 
       it("parses changeover point data") {

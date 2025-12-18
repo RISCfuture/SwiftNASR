@@ -33,41 +33,41 @@ public struct RunwayEnd: Record {
   public let threshold: Location?
 
   /// The height of the visual glidepath above the runway threshold (feet AGL).
-  public let thresholdCrossingHeight: UInt?
+  public let thresholdCrossingHeightFtAGL: UInt?
 
   /// The glidepath angle for a visual approach (hundredths of degrees).
-  public let visualGlidepath: Float?
+  public let visualGlidepathHundredthsDeg: Float?
 
   /// The location and elevation of the displaced threshold, which is the
   /// start of the landing portion of the runway.
   public let displacedThreshold: Location?
 
   /// The distance between the runway end and displaced threshold (feet).
-  public let thresholdDisplacement: UInt?
+  public let thresholdDisplacementFt: UInt?
 
   /// The highest elevation within the touchdown zone (feet MSL).
-  public let touchdownZoneElevation: Float?
+  public let touchdownZoneElevationFtMSL: Float?
 
   /// The slope between the approach and departure ends of the runway
   /// (percent). A positive value indicates a runway that slopes up towards
   /// the reciprocal end.
-  public let gradient: Float?
+  public let gradientPct: Float?
 
   /// The takeoff run available; the portion of the runway available for a
   /// takeoff roll and rotation (feet).
-  public let TORA: UInt?
+  public let TORAFt: UInt?
 
   /// Takeoff distance available; the portion of the runway and clearway
   /// beyond available for a takeoff and climb to 35 feet AGL (feet).
-  public let TODA: UInt?
+  public let TODAFt: UInt?
 
   /// Accelerate-stop distance available; the portion of the runway and
   /// stopway beyond available for an aborted takeoff (feet).
-  public let ASDA: UInt?
+  public let ASDAFt: UInt?
 
   /// Landing distance available; the portion of the runway available for
   /// landing and rollout (feet).
-  public let LDA: UInt?
+  public let LDAFt: UInt?
 
   /// A location used for land-and-hold-short operations.
   public internal(set) var LAHSO: LAHSOPoint?
@@ -143,16 +143,16 @@ public struct RunwayEnd: Record {
     marking: Self.Marking?,
     markingCondition: Self.MarkingCondition?,
     threshold: Location?,
-    thresholdCrossingHeight: UInt?,
-    visualGlidepath: Float?,
+    thresholdCrossingHeightFtAGL: UInt?,
+    visualGlidepathHundredthsDeg: Float?,
     displacedThreshold: Location?,
-    thresholdDisplacement: UInt?,
-    touchdownZoneElevation: Float?,
-    gradient: Float?,
-    TORA: UInt?,
-    TODA: UInt?,
-    ASDA: UInt?,
-    LDA: UInt?,
+    thresholdDisplacementFt: UInt?,
+    touchdownZoneElevationFtMSL: Float?,
+    gradientPct: Float?,
+    TORAFt: UInt?,
+    TODAFt: UInt?,
+    ASDAFt: UInt?,
+    LDAFt: UInt?,
     LAHSO: Self.LAHSOPoint?,
     visualGlideslopeIndicator: Self.VisualGlideslopeIndicator?,
     RVRSensors: [Self.RVRSensor],
@@ -180,16 +180,16 @@ public struct RunwayEnd: Record {
     self.marking = marking
     self.markingCondition = markingCondition
     self.threshold = threshold
-    self.thresholdCrossingHeight = thresholdCrossingHeight
-    self.visualGlidepath = visualGlidepath
+    self.thresholdCrossingHeightFtAGL = thresholdCrossingHeightFtAGL
+    self.visualGlidepathHundredthsDeg = visualGlidepathHundredthsDeg
     self.displacedThreshold = displacedThreshold
-    self.thresholdDisplacement = thresholdDisplacement
-    self.touchdownZoneElevation = touchdownZoneElevation
-    self.gradient = gradient
-    self.TORA = TORA
-    self.TODA = TODA
-    self.ASDA = ASDA
-    self.LDA = LDA
+    self.thresholdDisplacementFt = thresholdDisplacementFt
+    self.touchdownZoneElevationFtMSL = touchdownZoneElevationFtMSL
+    self.gradientPct = gradientPct
+    self.TORAFt = TORAFt
+    self.TODAFt = TODAFt
+    self.ASDAFt = ASDAFt
+    self.LDAFt = LDAFt
     self.LAHSO = LAHSO
     self.visualGlideslopeIndicator = visualGlideslopeIndicator
     self.RVRSensors = RVRSensors
@@ -294,13 +294,13 @@ public struct RunwayEnd: Record {
     public let runwayCategory: String?
 
     /// Clearance slope, as _x_:1. Slopes greater than 50:1 are coded as 50.
-    public let clearanceSlope: UInt?
+    public let clearanceSlopeRatio: UInt?
 
     /// Obstacle height above runway surface (feet AGL).
-    public let heightAboveRunway: UInt?
+    public let heightAboveRunwayFtAGL: UInt?
 
     /// Obstacle distance from runway threshold (feet).
-    public let distanceFromRunway: UInt?
+    public let distanceFromRunwayFt: UInt?
 
     /// Obstacle offset from extended runway centerline.
     public let offsetFromCenterline: Offset?
@@ -455,19 +455,21 @@ public struct RunwayEnd: Record {
 
     /// Fields that per-field remarks can be associated with.
     public enum Field: String, RemarkField {
-      case category, markings, runwayCategory, clearanceSlope, heightAboveRunway,
-        distanceFromRunway, offsetFromCenterline
+      case category, markings, runwayCategory, clearanceSlopeRatio, heightAboveRunwayFtAGL,
+        distanceFromRunwayFt, offsetFromCenterline
 
       static var fieldOrder: [Self?] {
         var order = [Self?](repeating: nil, count: 37)
         order.append(contentsOf: [
-          .category, .markings, .clearanceSlope, .heightAboveRunway, .distanceFromRunway,
-          .distanceFromRunway, .offsetFromCenterline
+          .category, .markings, .clearanceSlopeRatio, .heightAboveRunwayFtAGL,
+          .distanceFromRunwayFt,
+          .distanceFromRunwayFt, .offsetFromCenterline
         ])
         order.append(contentsOf: Array(repeating: nil, count: 27))
         order.append(contentsOf: [
-          .category, .markings, .clearanceSlope, .heightAboveRunway, .distanceFromRunway,
-          .distanceFromRunway, .offsetFromCenterline
+          .category, .markings, .clearanceSlopeRatio, .heightAboveRunwayFtAGL,
+          .distanceFromRunwayFt,
+          .distanceFromRunwayFt, .offsetFromCenterline
         ])
         order.append(contentsOf: Array(repeating: nil, count: 57))
         return order
@@ -475,8 +477,8 @@ public struct RunwayEnd: Record {
     }
 
     private enum CodingKeys: String, CodingKey {
-      case category, markings, runwayCategory, clearanceSlope, heightAboveRunway,
-        distanceFromRunway, offsetFromCenterline
+      case category, markings, runwayCategory, clearanceSlopeRatio, heightAboveRunwayFtAGL,
+        distanceFromRunwayFt, offsetFromCenterline
     }
   }
 
@@ -485,7 +487,7 @@ public struct RunwayEnd: Record {
   public struct LAHSOPoint: Record {
 
     /// The distance from the landing threshold to the LAHSO point (feet).
-    public let availableDistance: UInt
+    public let availableDistanceFt: UInt
 
     /// The identifier of the intersecting runway defining the LAHSO point,
     /// if defined by runway.
@@ -512,18 +514,18 @@ public struct RunwayEnd: Record {
 
     /// Fields that per-field remarks can be associated with.
     public enum Field: String, RemarkField {
-      case availableDistance, intersectingRunwayId, definingEntity, position, positionSource,
+      case availableDistanceFt, intersectingRunwayId, definingEntity, position, positionSource,
         positionSourceDate
 
       static var fieldOrder: [Self?] {
         var order = [Self?](repeating: nil, count: 100)
         order.append(contentsOf: [
-          .availableDistance, .intersectingRunwayId, .position, .position, .position, .position,
+          .availableDistanceFt, .intersectingRunwayId, .position, .position, .position, .position,
           .positionSource, .positionSourceDate
         ])
         order.append(contentsOf: Array(repeating: nil, count: 16))
         order.append(contentsOf: [
-          .availableDistance, .intersectingRunwayId, .position, .position, .position, .position,
+          .availableDistanceFt, .intersectingRunwayId, .position, .position, .position, .position,
           .positionSource, .positionSourceDate, nil
         ])
         return order
@@ -531,7 +533,7 @@ public struct RunwayEnd: Record {
     }
 
     private enum CodingKeys: String, CodingKey {
-      case availableDistance, intersectingRunwayId, definingEntity, position, positionSource,
+      case availableDistanceFt, intersectingRunwayId, definingEntity, position, positionSource,
         positionSourceDate
     }
   }
@@ -699,8 +701,9 @@ public struct RunwayEnd: Record {
   /// Fields that per-field remarks can be associated with.
   public enum Field: String, RemarkField {
     case id, heading, instrumentLandingSystem, rightTraffic, marking, markingCondition,
-      threshold, thresholdCrossingHeight, visualGlidepath, displacedThreshold,
-      thresholdDisplacement, touchdownZoneElevation, gradient, TORA, TODA, ASDA, LDA, LAHSO,
+      threshold, thresholdCrossingHeightFtAGL, visualGlidepathHundredthsDeg, displacedThreshold,
+      thresholdDisplacementFt, touchdownZoneElevationFtMSL, gradientPct, TORAFt, TODAFt, ASDAFt,
+      LDAFt, LAHSO,
       visualGlideslopeIndicator, RVRSensors, hasRVV, approachLighting, hasREIL,
       hasCenterlineLighting, hasEndTouchdownLighting, controllingObject, positionSource,
       positionSourceDate, elevationSource, elevationSourceDate, displacedThresholdPositionSource,
@@ -715,9 +718,11 @@ public struct RunwayEnd: Record {
       for _ in 1...2 {
         order.append(contentsOf: [
           .id, .heading, .instrumentLandingSystem, .rightTraffic, .marking, .markingCondition,
-          .threshold, .threshold, .threshold, .threshold, .threshold, .thresholdCrossingHeight,
-          .visualGlidepath, .displacedThreshold, .displacedThreshold, .displacedThreshold,
-          .displacedThreshold, .displacedThreshold, .thresholdDisplacement, .touchdownZoneElevation,
+          .threshold, .threshold, .threshold, .threshold, .threshold, .thresholdCrossingHeightFtAGL,
+          .visualGlidepathHundredthsDeg, .displacedThreshold, .displacedThreshold,
+          .displacedThreshold,
+          .displacedThreshold, .displacedThreshold, .thresholdDisplacementFt,
+          .touchdownZoneElevationFtMSL,
           visualGlideslopeIndicator, .RVRSensors, .hasRVV, approachLighting, .hasREIL,
           .hasCenterlineLighting, .hasEndTouchdownLighting,
           .controllingObject, .controllingObject, .controllingObject, .controllingObject,
@@ -727,11 +732,12 @@ public struct RunwayEnd: Record {
       order.append(contentsOf: Array(repeating: nil, count: 6))
       for _ in 1...2 {
         order.append(contentsOf: [
-          .gradient, .gradient, .positionSource, .positionSourceDate, .elevationSource,
+          .gradientPct, .gradientPct, .positionSource, .positionSourceDate, .elevationSource,
           .elevationSourceDate, .displacedThresholdPositionSource,
           .displacedThresholdPositionSourceDate, .displacedThresholdElevationSource,
           .displacedThresholdElevationSourceDate, .touchdownZoneElevationSource,
-          .touchdownZoneElevationSourceDate, .TORA, .TODA, .ASDA, .LDA, .LAHSO, .LAHSO, .LAHSO,
+          .touchdownZoneElevationSourceDate, .TORAFt, .TODAFt, .ASDAFt, .LDAFt, .LAHSO, .LAHSO,
+          .LAHSO,
           .LAHSO, .LAHSO, .LAHSO, .LAHSO, .LAHSO, .LAHSO
         ])
       }
@@ -742,13 +748,15 @@ public struct RunwayEnd: Record {
 
   private enum CodingKeys: String, CodingKey {
     case id, heading, instrumentLandingSystem, rightTraffic, marking, markingCondition,
-      threshold, thresholdCrossingHeight, visualGlidepath, displacedThreshold,
-      thresholdDisplacement, touchdownZoneElevation, visualGlideslopeIndicator, RVRSensors, hasRVV,
+      threshold, thresholdCrossingHeightFtAGL, visualGlidepathHundredthsDeg, displacedThreshold,
+      thresholdDisplacementFt, touchdownZoneElevationFtMSL, visualGlideslopeIndicator, RVRSensors,
+      hasRVV,
       approachLighting, hasREIL, hasCenterlineLighting, hasEndTouchdownLighting, controllingObject,
-      gradient, positionSource, positionSourceDate, elevationSource, elevationSourceDate,
+      gradientPct, positionSource, positionSourceDate, elevationSource, elevationSourceDate,
       displacedThresholdPositionSource, displacedThresholdPositionSourceDate,
       displacedThresholdElevationSource, displacedThresholdElevationSourceDate,
-      touchdownZoneElevationSource, touchdownZoneElevationSourceDate, TORA, TODA, ASDA, LDA, LAHSO
+      touchdownZoneElevationSource, touchdownZoneElevationSourceDate, TORAFt, TODAFt, ASDAFt, LDAFt,
+      LAHSO
 
     case arrestingSystems, remarks
   }

@@ -65,7 +65,7 @@ public struct Navaid: ParentRecord {
 
   /// The magnetic variation at the location of the navaid, in degrees (east
   /// is positive).
-  public let magneticVariation: Int?
+  public let magneticVariationDeg: Int?
 
   /// The epoch date of the magnetic variation data.
   public let magneticVariationEpoch: DateComponents?
@@ -74,7 +74,7 @@ public struct Navaid: ParentRecord {
   public let simultaneousVoice: Bool?
 
   /// The power output of the navaid transmitter (watts).
-  public let powerOutput: UInt?
+  public let powerOutputW: UInt?
 
   /// True if this navaid supports automatic voice identification.
   public let automaticVoiceId: Bool?
@@ -89,7 +89,7 @@ public struct Navaid: ParentRecord {
   public let tacanChannel: TACANChannel?
 
   /// The frequency that this navaid transmits on, if applicable (kHz).
-  public let frequency: UInt?
+  public let frequencyKHz: UInt?
 
   /// The beacon identifier for a fan marker or marine radio beacon, described
   /// in human-readable Morse code (e.g., "DOT DASH DOT").
@@ -212,15 +212,15 @@ public struct Navaid: ParentRecord {
     position: Location,
     TACANPosition: Location?,
     surveyAccuracy: Self.SurveyAccuracy?,
-    magneticVariation: Int?,
+    magneticVariationDeg: Int?,
     magneticVariationEpoch: DateComponents?,
     simultaneousVoice: Bool?,
-    powerOutput: UInt?,
+    powerOutputW: UInt?,
     automaticVoiceId: Bool?,
     monitoringCategory: Self.MonitoringCategory?,
     radioVoiceCall: String?,
     tacanChannel: Self.TACANChannel?,
-    frequency: UInt?,
+    frequencyKHz: UInt?,
     beaconIdentifier: String?,
     fanMarkerType: Self.FanMarkerType?,
     fanMarkerMajorBearing: Bearing<UInt>?,
@@ -264,15 +264,15 @@ public struct Navaid: ParentRecord {
     self.position = position
     self.TACANPosition = TACANPosition
     self.surveyAccuracy = surveyAccuracy
-    self.magneticVariation = magneticVariation
+    self.magneticVariationDeg = magneticVariationDeg
     self.magneticVariationEpoch = magneticVariationEpoch
     self.simultaneousVoice = simultaneousVoice
-    self.powerOutput = powerOutput
+    self.powerOutputW = powerOutputW
     self.automaticVoiceId = automaticVoiceId
     self.monitoringCategory = monitoringCategory
     self.radioVoiceCall = radioVoiceCall
     self.tacanChannel = tacanChannel
-    self.frequency = frequency
+    self.frequencyKHz = frequencyKHz
     self.beaconIdentifier = beaconIdentifier
     self.fanMarkerType = fanMarkerType
     self.fanMarkerMajorBearing = fanMarkerMajorBearing
@@ -302,9 +302,9 @@ public struct Navaid: ParentRecord {
   public enum CodingKeys: String, CodingKey {
     case id, name, type, city, stateName, FAARegion, country, ownerName, operatorName,
       commonSystemUsage, publicUse, navaidClass, hoursOfOperation, highAltitudeARTCCCode,
-      lowAltitudeARTCCCode, position, TACANPosition, surveyAccuracy, magneticVariation,
-      magneticVariationEpoch, simultaneousVoice, powerOutput, automaticVoiceId, monitoringCategory,
-      radioVoiceCall, tacanChannel, frequency, beaconIdentifier, fanMarkerType,
+      lowAltitudeARTCCCode, position, TACANPosition, surveyAccuracy, magneticVariationDeg,
+      magneticVariationEpoch, simultaneousVoice, powerOutputW, automaticVoiceId, monitoringCategory,
+      radioVoiceCall, tacanChannel, frequencyKHz, beaconIdentifier, fanMarkerType,
       fanMarkerMajorBearing, VORServiceVolume, DMEServiceVolume, lowAltitudeInHighStructure,
       ZMarkerAvailable, TWEBHours, TWEBPhone, controllingFSSCode, NOTAMAccountabilityCode, LFRLegs,
       status, isPitchPoint, isCatchPoint, isAssociatedWithSUA, hasRestriction, broadcastsHIWAS,
@@ -595,7 +595,7 @@ public struct VORCheckpoint: Record {
 
   /// The altitude of the checkpoint, when the checkpoint is airborne
   /// (feet MSL).
-  public let altitude: Int?
+  public let altitudeFtMSL: Int?
 
   let airportId: String?
   let stateCode: String
@@ -616,7 +616,7 @@ public struct VORCheckpoint: Record {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(type, forKey: .type)
     try container.encode(bearing, forKey: .bearing)
-    try container.encode(altitude, forKey: .altitude)
+    try container.encode(altitudeFtMSL, forKey: .altitudeFtMSL)
     try container.encode(airportId, forKey: .airportId)
     try container.encode(stateCode, forKey: .stateCode)
     try container.encode(airDescription, forKey: .airDescription)
@@ -629,7 +629,7 @@ public struct VORCheckpoint: Record {
   }
 
   public enum CodingKeys: String, CodingKey {
-    case type, bearing, altitude, airportId, stateCode, airDescription, groundDescription
+    case type, bearing, altitudeFtMSL, airportId, stateCode, airDescription, groundDescription
   }
 
   public enum CheckpointType: String, RecordEnum {

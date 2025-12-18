@@ -113,7 +113,7 @@ class CSVAirwayParser: CSVParser {
         stateCode: stateCode?.isEmpty == true ? nil : stateCode,
         ICAORegionCode: ICAORegion?.isEmpty == true ? nil : ICAORegion,
         navaidId: nil,
-        minimumReceptionAltitude: self.parseOptionalUInt(fields, index: 42)  // MIN_RECEP_ALT
+        minimumReceptionAltitudeFt: self.parseOptionalUInt(fields, index: 42)  // MIN_RECEP_ALT
       )
 
       // Parse changeover point if present
@@ -121,7 +121,7 @@ class CSVAirwayParser: CSVParser {
       let chgovrPtName = fields.count > 18 ? fields[18].trimmingCharacters(in: .whitespaces) : ""
       if !chgovrPtName.isEmpty {
         changeoverPoint = Airway.ChangeoverPoint(
-          distance: self.parseOptionalUInt(fields, index: 19),  // CHGOVR_PT_DIST
+          distanceNM: self.parseOptionalUInt(fields, index: 19),  // CHGOVR_PT_DIST
           navaidName: chgovrPtName,
           navaidType: nil,
           position: nil,
@@ -131,25 +131,25 @@ class CSVAirwayParser: CSVParser {
 
       // Parse altitudes
       let altitudes = try Airway.SegmentAltitudes(
-        MEA: self.parseOptionalUInt(fields, index: 24),  // MIN_ENROUTE_ALT
+        MEAFt: self.parseOptionalUInt(fields, index: 24),  // MIN_ENROUTE_ALT
         MEADirection: self.parseBoundDirection(fields, index: 25),  // MIN_ENROUTE_ALT_DIR
-        MEAOpposite: self.parseOptionalUInt(fields, index: 26),  // MIN_ENROUTE_ALT_OPPOSITE
+        MEAOppositeFt: self.parseOptionalUInt(fields, index: 26),  // MIN_ENROUTE_ALT_OPPOSITE
         MEAOppositeDirection: self.parseBoundDirection(fields, index: 27),
         // MIN_ENROUTE_ALT_OPPOSITE_DIR
-        MAA: self.parseOptionalUInt(fields, index: 43),  // MAX_AUTH_ALT
-        MOCA: self.parseOptionalUInt(fields, index: 36),  // MIN_OBSTN_CLNC_ALT
-        MCA: self.parseOptionalUInt(fields, index: 37),  // MIN_CROSS_ALT
+        MAAFt: self.parseOptionalUInt(fields, index: 43),  // MAX_AUTH_ALT
+        MOCAFt: self.parseOptionalUInt(fields, index: 36),  // MIN_OBSTN_CLNC_ALT
+        MCAFt: self.parseOptionalUInt(fields, index: 37),  // MIN_CROSS_ALT
         MCADirection: self.parseBoundDirection(fields, index: 38),  // MIN_CROSS_ALT_DIR
-        MCAOpposite: self.parseOptionalUInt(fields, index: 40),  // MIN_CROSS_ALT_OPPOSITE
+        MCAOppositeFt: self.parseOptionalUInt(fields, index: 40),  // MIN_CROSS_ALT_OPPOSITE
         MCAOppositeDirection: self.parseBoundDirection(fields, index: 41),
         // MIN_CROSS_ALT_OPPOSITE_DIR
-        GNSS_MEA: self.parseOptionalUInt(fields, index: 28),  // GPS_MIN_ENROUTE_ALT
+        GNSS_MEAFt: self.parseOptionalUInt(fields, index: 28),  // GPS_MIN_ENROUTE_ALT
         GNSS_MEADirection: self.parseBoundDirection(fields, index: 29),  // GPS_MIN_ENROUTE_ALT_DIR
-        GNSS_MEAOpposite: self.parseOptionalUInt(fields, index: 30),  // GPS_MIN_ENROUTE_ALT_OPPOSITE
+        GNSS_MEAOppositeFt: self.parseOptionalUInt(fields, index: 30),  // GPS_MIN_ENROUTE_ALT_OPPOSITE
         GNSS_MEAOppositeDirection: self.parseBoundDirection(fields, index: 31),  // GPS_MEA_OPPOSITE_DIR
-        DME_MEA: self.parseOptionalUInt(fields, index: 32),  // DD_IRU_MEA
+        DME_MEAFt: self.parseOptionalUInt(fields, index: 32),  // DD_IRU_MEA
         DME_MEADirection: self.parseBoundDirection(fields, index: 33),  // DD_IRU_MEA_DIR
-        DME_MEAOpposite: self.parseOptionalUInt(fields, index: 34),  // DD_I_MEA_OPPOSITE
+        DME_MEAOppositeFt: self.parseOptionalUInt(fields, index: 34),  // DD_I_MEA_OPPOSITE
         DME_MEAOppositeDirection: self.parseBoundDirection(fields, index: 35)  // DD_I_MEA_OPPOSITE_DIR
       )
 
@@ -166,9 +166,9 @@ class CSVAirwayParser: CSVParser {
         point: point,
         changeoverPoint: changeoverPoint,
         altitudes: altitudes,
-        distanceToNext: self.parseOptionalFloat(fields, index: 16),  // MAG_COURSE_DIST
-        magneticCourse: self.parseOptionalFloat(fields, index: 14),  // MAG_COURSE
-        magneticCourseOpposite: self.parseOptionalFloat(fields, index: 15),  // OPP_MAG_COURSE
+        distanceToNextNM: self.parseOptionalFloat(fields, index: 16),  // MAG_COURSE_DIST
+        magneticCourseDeg: self.parseOptionalFloat(fields, index: 14),  // MAG_COURSE
+        magneticCourseOppositeDeg: self.parseOptionalFloat(fields, index: 15),  // OPP_MAG_COURSE
         trackAngleOutbound: nil,
         trackAngleInbound: nil,
         hasSignalCoverageGap: hasSignalCoverageGap,

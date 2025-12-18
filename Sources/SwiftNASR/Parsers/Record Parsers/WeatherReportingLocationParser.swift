@@ -181,7 +181,7 @@ class FixedWidthWeatherReportingLocationParser: LayoutDataParser {
   ) throws -> Location? {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
-        return Location(latitude: lat, longitude: lon, elevation: elevation)
+        return Location(latitudeDeg: lat, longitudeDeg: lon, elevationFtMSL: elevation)
       case (.none, .none):
         return nil
       default:

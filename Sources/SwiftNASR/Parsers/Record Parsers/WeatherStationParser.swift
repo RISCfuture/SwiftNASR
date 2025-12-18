@@ -101,9 +101,9 @@ class FixedWidthWeatherStationParser: FixedWidthParser {
     let position: Location?
     if let lat = transformedValues[6] as? Float, let lon = transformedValues[7] as? Float {
       position = Location(
-        latitude: lat,
-        longitude: lon,
-        elevation: transformedValues[8] as? Float
+        latitudeArcsec: lat,
+        longitudeArcsec: lon,
+        elevationFtMSL: transformedValues[8] as? Float
       )
     } else {
       position = nil
@@ -120,8 +120,8 @@ class FixedWidthWeatherStationParser: FixedWidthParser {
       isNavaidAssociated: transformedValues[5] as? Bool,
       position: position,
       surveyMethod: transformedValues[9] as? SurveyMethod,
-      frequency: transformedValues[10] as? UInt,
-      secondaryFrequency: transformedValues[11] as? UInt,
+      frequencyKHz: transformedValues[10] as? UInt,
+      secondaryFrequencyKHz: transformedValues[11] as? UInt,
       phoneNumber: transformedValues[12] as? String,
       secondaryPhoneNumber: transformedValues[13] as? String,
       airportSiteNumber: transformedValues[14] as? String

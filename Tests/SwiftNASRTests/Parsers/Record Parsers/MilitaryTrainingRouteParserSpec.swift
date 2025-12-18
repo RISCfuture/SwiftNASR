@@ -189,12 +189,12 @@ class MilitaryTrainingRouteParserSpec: AsyncSpec {
         }
 
         expect(pointA.navaidIdentifier).to(equal("GQO"))
-        expect(pointA.navaidBearing).to(equal(270))
-        expect(pointA.navaidDistance).to(equal(12))
+        expect(pointA.navaidBearingDeg).to(equal(270))
+        expect(pointA.navaidDistanceNM).to(equal(12))
         // 35-45-30.0000N = 35*3600 + 45*60 + 30 = 128730 arc-seconds
-        expect(pointA.position?.latitude).to(beCloseTo(128730, within: 10))
+        expect(pointA.position?.latitudeArcsec).to(beCloseTo(128730, within: 10))
         // 084-20-15.0000W = -(84*3600 + 20*60 + 15) = -303615 arc-seconds
-        expect(pointA.position?.longitude).to(beCloseTo(-303615, within: 10))
+        expect(pointA.position?.longitudeArcsec).to(beCloseTo(-303615, within: 10))
       }
     }
 

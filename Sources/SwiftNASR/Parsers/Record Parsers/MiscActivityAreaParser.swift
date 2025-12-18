@@ -131,17 +131,17 @@ class FixedWidthMiscActivityAreaParser: LayoutDataParser {
       navaidFacilityTypeCode: navaidTypeCode.isEmpty ? nil : navaidTypeCode,
       navaidFacilityType: navaidTypeDesc.isEmpty ? nil : navaidTypeDesc,
       navaidName: navaidName.isEmpty ? nil : navaidName,
-      navaidAzimuth: Double(azimuthStr),
-      navaidDistance: Double(distanceStr),
+      navaidAzimuthDeg: Double(azimuthStr),
+      navaidDistanceNM: Double(distanceStr),
       associatedAirportId: assocAirportID.isEmpty ? nil : assocAirportID,
       associatedAirportName: assocAirportName.isEmpty ? nil : assocAirportName,
       associatedAirportSiteNumber: assocAirportSite.isEmpty ? nil : assocAirportSite,
       nearestAirportId: nearestAirportID.isEmpty ? nil : nearestAirportID,
-      nearestAirportDistance: Double(nearestDistStr),
+      nearestAirportDistanceNM: Double(nearestDistStr),
       nearestAirportDirection: Direction(rawValue: nearestDir),
       maximumAltitude: maxAlt.isEmpty ? nil : try Altitude(parsing: maxAlt),
       minimumAltitude: minAlt.isEmpty ? nil : try Altitude(parsing: minAlt),
-      areaRadius: Double(radiusStr),
+      areaRadiusNM: Double(radiusStr),
       isShownOnVFRChart: parseYesNo(showVFRStr),
       areaDescription: areaDesc.isEmpty ? nil : areaDesc,
       areaUse: areaUse.isEmpty ? nil : areaUse,
@@ -282,9 +282,9 @@ class FixedWidthMiscActivityAreaParser: LayoutDataParser {
     let facility = MiscActivityArea.ContactFacility(
       facilityId: facilityID.isEmpty ? nil : facilityID,
       facilityName: facilityName.isEmpty ? nil : facilityName,
-      commercialFrequency: Double(commFreqStr).map { UInt($0 * 1000) },
+      commercialFrequencyKHz: Double(commFreqStr).map { UInt($0 * 1000) },
       showCommercialOnChart: commChartFlag == "Y",
-      militaryFrequency: Double(milFreqStr).map { UInt($0 * 1000) },
+      militaryFrequencyKHz: Double(milFreqStr).map { UInt($0 * 1000) },
       showMilitaryOnChart: milChartFlag == "Y"
     )
 
@@ -357,7 +357,7 @@ class FixedWidthMiscActivityAreaParser: LayoutDataParser {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
         // Convert decimal degrees to arc-seconds (multiply by 3600)
-        return Location(latitude: Float(lat * 3600), longitude: Float(lon * 3600))
+        return Location(latitudeArcsec: Float(lat * 3600), longitudeArcsec: Float(lon * 3600))
       case (.none, .none):
         return nil
       default:

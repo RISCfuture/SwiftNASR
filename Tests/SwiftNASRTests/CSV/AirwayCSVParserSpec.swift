@@ -67,8 +67,8 @@ class CSVAirwayParserSpec: AsyncSpec {
             if let firstSegment = airway.segments.first {
               expect(firstSegment.sequenceNumber).to(equal(10))
               expect(firstSegment.point.name).to(equal("AP"))
-              expect(firstSegment.altitudes.MEA).to(equal(3000))
-              expect(firstSegment.distanceToNext).to(beCloseTo(22.7, within: 0.1))
+              expect(firstSegment.altitudes.MEAFt).to(equal(3000))
+              expect(firstSegment.distanceToNextNM).to(beCloseTo(22.7, within: 0.1))
             }
           }
 
@@ -81,7 +81,7 @@ class CSVAirwayParserSpec: AsyncSpec {
             if let firstSegment = airway.segments.first {
               expect(firstSegment.point.name).to(equal("DEEDS"))
               expect(firstSegment.point.pointType).to(equal(.reportingPoint))
-              expect(firstSegment.distanceToNext).to(beCloseTo(76.1, within: 0.1))
+              expect(firstSegment.distanceToNextNM).to(beCloseTo(76.1, within: 0.1))
             }
           }
         }
@@ -104,7 +104,7 @@ class CSVAirwayParserSpec: AsyncSpec {
           expect(b9).notTo(beNil())
           if let airway = b9 {
             if let firstSegment = airway.segments.first {
-              expect(firstSegment.altitudes.MEA).to(equal(2000))
+              expect(firstSegment.altitudes.MEAFt).to(equal(2000))
             }
           }
         }
@@ -129,7 +129,7 @@ class CSVAirwayParserSpec: AsyncSpec {
             if let firstSegment = airway.segments.first {
               expect(firstSegment.changeoverPoint).notTo(beNil())
               expect(firstSegment.changeoverPoint?.navaidName).to(equal("WHITE ROCK"))
-              expect(firstSegment.changeoverPoint?.distance).to(equal(15))
+              expect(firstSegment.changeoverPoint?.distanceNM).to(equal(15))
             }
           }
         }

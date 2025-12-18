@@ -202,7 +202,7 @@ class FixedWidthILSParser: FixedWidthParser {
   ) throws -> Location? {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
-        return Location(latitude: lat, longitude: lon, elevation: elevation)
+        return Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: elevation)
       case (.none, .none):
         return nil
       default:
@@ -250,7 +250,7 @@ class FixedWidthILSParser: FixedWidthParser {
 
     // Convert approach bearing to Bearing<Float>
     let approachBearing = rawApproachBearing.map { value in
-      Bearing(value, reference: .magnetic, magneticVariation: magneticVariation ?? 0)
+      Bearing(value, reference: .magnetic, magneticVariationDeg: magneticVariation ?? 0)
     }
 
     let key = ILSKey(
@@ -270,13 +270,13 @@ class FixedWidthILSParser: FixedWidthParser {
       stateCode: stateCode,
       stateName: stateName,
       regionCode: regionCode,
-      runwayLength: runwayLength,
-      runwayWidth: runwayWidth,
+      runwayLengthFt: runwayLength,
+      runwayWidthFt: runwayWidth,
       category: category,
       owner: owner,
       operator: operatorName,
       approachBearing: approachBearing,
-      magneticVariation: magneticVariation,
+      magneticVariationDeg: magneticVariation,
       effectiveDate: effectiveDate
     )
 
@@ -325,17 +325,17 @@ class FixedWidthILSParser: FixedWidthParser {
       statusDate: transformedValues[5] as? DateComponents,
       position: LOCPosition,
       positionSource: transformedValues[10] as? ILS.PositionSource,
-      distanceFromApproachEnd: transformedValues[11] as? Int,
-      distanceFromCenterline: signedCenterlineDistance(
+      distanceFromApproachEndFt: transformedValues[11] as? Int,
+      distanceFromCenterlineFt: signedCenterlineDistance(
         distance: transformedValues[12] as? UInt,
         direction: transformedValues[13] as? String
       ),
       distanceSource: transformedValues[14] as? ILS.PositionSource,
-      frequency: (transformedValues[16] as? Float).map { UInt($0 * 1000) },
+      frequencyKHz: (transformedValues[16] as? Float).map { UInt($0 * 1000) },
       backCourseStatus: transformedValues[17] as? ILS.BackCourseStatus,
-      courseWidth: transformedValues[18] as? Float,
-      courseWidthAtThreshold: transformedValues[19] as? Float,
-      distanceFromStopEnd: transformedValues[20] as? Int,
+      courseWidthDeg: transformedValues[18] as? Float,
+      courseWidthAtThresholdDeg: transformedValues[19] as? Float,
+      distanceFromStopEndFt: transformedValues[20] as? Int,
       directionFromStopEnd: transformedValues[21] as? LateralDirection,
       serviceCode: transformedValues[22] as? ILS.LocalizerServiceCode
     )
@@ -378,16 +378,16 @@ class FixedWidthILSParser: FixedWidthParser {
       statusDate: transformedValues[5] as? DateComponents,
       position: gsPosition,
       positionSource: transformedValues[10] as? ILS.PositionSource,
-      distanceFromApproachEnd: transformedValues[11] as? Int,
-      distanceFromCenterline: signedCenterlineDistance(
+      distanceFromApproachEndFt: transformedValues[11] as? Int,
+      distanceFromCenterlineFt: signedCenterlineDistance(
         distance: transformedValues[12] as? UInt,
         direction: transformedValues[13] as? String
       ),
       distanceSource: transformedValues[14] as? ILS.PositionSource,
       glideSlopeType: transformedValues[16] as? ILS.GlideSlope.GlidePathType,
-      angle: transformedValues[17] as? Float,
-      frequency: (transformedValues[18] as? Float).map { UInt($0 * 1000) },
-      adjacentRunwayElevation: transformedValues[19] as? Float
+      angleDeg: transformedValues[17] as? Float,
+      frequencyKHz: (transformedValues[18] as? Float).map { UInt($0 * 1000) },
+      adjacentRunwayElevationFtMSL: transformedValues[19] as? Float
     )
 
     ILSFacilities[key]?.glideSlope = glideSlope
@@ -428,14 +428,14 @@ class FixedWidthILSParser: FixedWidthParser {
       statusDate: transformedValues[5] as? DateComponents,
       position: DMEPosition,
       positionSource: transformedValues[10] as? ILS.PositionSource,
-      distanceFromApproachEnd: transformedValues[11] as? Int,
-      distanceFromCenterline: signedCenterlineDistance(
+      distanceFromApproachEndFt: transformedValues[11] as? Int,
+      distanceFromCenterlineFt: signedCenterlineDistance(
         distance: transformedValues[12] as? UInt,
         direction: transformedValues[13] as? String
       ),
       distanceSource: transformedValues[14] as? ILS.PositionSource,
       channel: transformedValues[16] as? String,
-      distanceFromStopEnd: transformedValues[17] as? Int
+      distanceFromStopEndFt: transformedValues[17] as? Int
     )
 
     ILSFacilities[key]?.dme = DME
@@ -481,8 +481,8 @@ class FixedWidthILSParser: FixedWidthParser {
       statusDate: transformedValues[6] as? DateComponents,
       position: mkrPosition,
       positionSource: transformedValues[11] as? ILS.PositionSource,
-      distanceFromApproachEnd: transformedValues[12] as? Int,
-      distanceFromCenterline: signedCenterlineDistance(
+      distanceFromApproachEndFt: transformedValues[12] as? Int,
+      distanceFromCenterlineFt: signedCenterlineDistance(
         distance: transformedValues[13] as? UInt,
         direction: transformedValues[14] as? String
       ),
@@ -490,7 +490,7 @@ class FixedWidthILSParser: FixedWidthParser {
       facilityType: transformedValues[17] as? ILS.MarkerBeacon.MarkerFacilityType,
       locationId: transformedValues[18] as? String,
       name: transformedValues[19] as? String,
-      frequency: transformedValues[20] as? UInt,
+      frequencyKHz: transformedValues[20] as? UInt,
       collocatedNavaid: transformedValues[21] as? String,
       lowPoweredNDBStatus: transformedValues[22] as? OperationalStatus,
       service: transformedValues[23] as? String

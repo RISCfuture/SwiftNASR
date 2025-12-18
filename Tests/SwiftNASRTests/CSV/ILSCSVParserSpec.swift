@@ -30,8 +30,8 @@ class CSVILSParserSpec: AsyncSpec {
             expect(ils.stateCode).to(equal("AL"))
             expect(ils.stateName).to(equal("ALABAMA"))
             expect(ils.regionCode).to(equal("ASO"))
-            expect(ils.runwayLength).to(equal(7000))
-            expect(ils.runwayWidth).to(equal(150))
+            expect(ils.runwayLengthFt).to(equal(7000))
+            expect(ils.runwayWidthFt).to(equal(150))
             expect(ils.category).to(equal(ILS.Category.I))
             expect(ils.approachBearing?.value).to(beCloseTo(52.45, within: 0.01))
             expect(ils.approachBearing?.reference).to(equal(.magnetic))
@@ -48,8 +48,8 @@ class CSVILSParserSpec: AsyncSpec {
           expect(anb?.localizer).notTo(beNil())
           if let localizer = anb?.localizer {
             expect(localizer.status).to(equal(OperationalStatus.operationalRestricted))
-            expect(localizer.frequency).to(equal(111500))
-            expect(localizer.position?.elevation).to(beCloseTo(612.1, within: 0.1))
+            expect(localizer.frequencyKHz).to(equal(111500))
+            expect(localizer.position?.elevationFtMSL).to(beCloseTo(612.1, within: 0.1))
           }
         }
 
@@ -64,16 +64,16 @@ class CSVILSParserSpec: AsyncSpec {
           if let glideSlope = anb?.glideSlope {
             expect(glideSlope.status).to(equal(OperationalStatus.operationalIFR))
             expect(glideSlope.glideSlopeType).to(equal(ILS.GlideSlope.GlidePathType.glideSlope))
-            expect(glideSlope.angle).to(beCloseTo(3.0, within: 0.01))
-            expect(glideSlope.frequency).to(equal(332900))
-            expect(glideSlope.position?.elevation).to(beCloseTo(590.8, within: 0.1))
+            expect(glideSlope.angleDeg).to(beCloseTo(3.0, within: 0.01))
+            expect(glideSlope.frequencyKHz).to(equal(332900))
+            expect(glideSlope.position?.elevationFtMSL).to(beCloseTo(590.8, within: 0.1))
           }
 
           // Check AUO glide slope
           let auo = parser.ILSFacilities.values.first { $0.ILSId == "I-AUO" }
           expect(auo?.glideSlope).notTo(beNil())
-          expect(auo?.glideSlope?.angle).to(beCloseTo(3.0, within: 0.01))
-          expect(auo?.glideSlope?.frequency).to(equal(334400))
+          expect(auo?.glideSlope?.angleDeg).to(beCloseTo(3.0, within: 0.01))
+          expect(auo?.glideSlope?.frequencyKHz).to(equal(334400))
         }
 
         it("parses marker beacons from ILS_MKR.csv") {
@@ -93,7 +93,7 @@ class CSVILSParserSpec: AsyncSpec {
             expect(marker.facilityType).to(equal(ILS.MarkerBeacon.MarkerFacilityType.markerNDB))
             expect(marker.locationId).to(equal("AN"))
             expect(marker.name).to(equal("BOGGA"))
-            expect(marker.frequency).to(equal(211))
+            expect(marker.frequencyKHz).to(equal(211))
             expect(marker.collocatedNavaid).to(equal("AN*NDB"))
           }
 

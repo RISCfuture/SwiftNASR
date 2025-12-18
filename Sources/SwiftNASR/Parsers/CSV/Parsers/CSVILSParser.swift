@@ -64,7 +64,7 @@ class CSVILSParser: CSVParser {
 
       // Convert approach bearing to Bearing<Float>
       let approachBearing = self.parseOptionalFloat(fields, index: 17).map { value in
-        Bearing(value, reference: .magnetic, magneticVariation: magVar ?? 0)
+        Bearing(value, reference: .magnetic, magneticVariationDeg: magVar ?? 0)
       }
 
       // Create base ILS
@@ -79,13 +79,13 @@ class CSVILSParser: CSVParser {
         stateCode: fields[3].trimmingCharacters(in: .whitespaces),
         stateName: fields.count > 10 ? fields[10].trimmingCharacters(in: .whitespaces) : nil,
         regionCode: fields.count > 11 ? fields[11].trimmingCharacters(in: .whitespaces) : nil,
-        runwayLength: self.parseOptionalUInt(fields, index: 12),
-        runwayWidth: self.parseOptionalUInt(fields, index: 13),
+        runwayLengthFt: self.parseOptionalUInt(fields, index: 12),
+        runwayWidthFt: self.parseOptionalUInt(fields, index: 13),
         category: self.parseCategory(fields.count > 14 ? fields[14] : ""),
         owner: fields.count > 15 ? fields[15].trimmingCharacters(in: .whitespaces) : nil,
         operator: fields.count > 16 ? fields[16].trimmingCharacters(in: .whitespaces) : nil,
         approachBearing: approachBearing,
-        magneticVariation: magVar,
+        magneticVariationDeg: magVar,
         effectiveDate: effDate
       )
 
@@ -115,14 +115,14 @@ class CSVILSParser: CSVParser {
         statusDate: LOCStatusDate,
         position: LOCPosition,
         positionSource: posSource,
-        distanceFromApproachEnd: nil,
-        distanceFromCenterline: nil,
+        distanceFromApproachEndFt: nil,
+        distanceFromCenterlineFt: nil,
         distanceSource: nil,
-        frequency: LOCFreq,
+        frequencyKHz: LOCFreq,
         backCourseStatus: backCourse,
-        courseWidth: nil,
-        courseWidthAtThreshold: nil,
-        distanceFromStopEnd: nil,
+        courseWidthDeg: nil,
+        courseWidthAtThresholdDeg: nil,
+        distanceFromStopEndFt: nil,
         directionFromStopEnd: nil,
         serviceCode: nil
       )
@@ -183,13 +183,13 @@ class CSVILSParser: CSVParser {
         statusDate: self.parseYYYYMMDDDate(fields[11]),
         position: gsPosition,
         positionSource: self.parsePositionSource(fields[22]),
-        distanceFromApproachEnd: nil,
-        distanceFromCenterline: nil,
+        distanceFromApproachEndFt: nil,
+        distanceFromCenterlineFt: nil,
         distanceSource: nil,
         glideSlopeType: self.parseGlidePathType(fields[24]),
-        angle: self.parseOptionalFloat(fields, index: 25),
-        frequency: self.parseMHzToKHz(fields, index: 26),
-        adjacentRunwayElevation: nil
+        angleDeg: self.parseOptionalFloat(fields, index: 25),
+        frequencyKHz: self.parseMHzToKHz(fields, index: 26),
+        adjacentRunwayElevationFtMSL: nil
       )
 
       self.ILSFacilities[key]?.glideSlope = glideSlope
@@ -248,11 +248,11 @@ class CSVILSParser: CSVParser {
         statusDate: self.parseYYYYMMDDDate(fields[11]),
         position: DMEPosition,
         positionSource: self.parsePositionSource(fields[22]),
-        distanceFromApproachEnd: nil,
-        distanceFromCenterline: nil,
+        distanceFromApproachEndFt: nil,
+        distanceFromCenterlineFt: nil,
         distanceSource: nil,
         channel: fields[24].trimmingCharacters(in: .whitespaces),
-        distanceFromStopEnd: nil
+        distanceFromStopEndFt: nil
       )
 
       self.ILSFacilities[key]?.dme = DME
@@ -326,13 +326,13 @@ class CSVILSParser: CSVParser {
         statusDate: self.parseYYYYMMDDDate(fields[12]),
         position: mkrPosition,
         positionSource: self.parsePositionSource(fields[23]),
-        distanceFromApproachEnd: nil,
-        distanceFromCenterline: nil,
+        distanceFromApproachEndFt: nil,
+        distanceFromCenterlineFt: nil,
         distanceSource: nil,
         facilityType: self.parseMarkerFacilityType(fields[25]),
         locationId: fields.count > 26 ? fields[26].trimmingCharacters(in: .whitespaces) : nil,
         name: fields.count > 27 ? fields[27].trimmingCharacters(in: .whitespaces) : nil,
-        frequency: self.parseOptionalUInt(fields, index: 28),
+        frequencyKHz: self.parseOptionalUInt(fields, index: 28),
         collocatedNavaid: collocatedNavaid,
         lowPoweredNDBStatus: fields.count > 31
           ? self.parseOperationalStatus(fields[31]) : nil,
@@ -484,7 +484,11 @@ class CSVILSParser: CSVParser {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
         // Convert decimal degrees to arc-seconds (multiply by 3600)
-        return Location(latitude: lat * 3600, longitude: lon * 3600, elevation: elevation)
+        return Location(
+          latitudeArcsec: lat * 3600,
+          longitudeArcsec: lon * 3600,
+          elevationFtMSL: elevation
+        )
       case (.none, .none):
         return nil
       default:

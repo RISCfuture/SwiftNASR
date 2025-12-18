@@ -117,7 +117,11 @@ class CSVFSSParser: CSVParser {
         if let lat = transformedValues[15] as? Float,
           let lon = transformedValues[16] as? Float
         {
-          return Location(latitude: lat * 3600, longitude: lon * 3600, elevation: nil)
+          return Location(
+            latitudeArcsec: lat * 3600,
+            longitudeArcsec: lon * 3600,
+            elevationFtMSL: nil
+          )
         }
         return nil
       }()

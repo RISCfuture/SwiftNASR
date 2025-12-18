@@ -208,16 +208,16 @@ class CSVFixParser: CSVParser {
       let navId = transformedValues[5] as! String
       let navTypeStr = transformedValues[6] as! String
       let bearing = transformedValues[7] as? Float
-      let distance = transformedValues[8] as? Float
+      let distanceNM = transformedValues[8] as? Float
 
       // Map CSV nav types to NavaidTypeCode
       if let navaidType = mapCSVNavType(navTypeStr) {
         let makeup = Fix.NavaidMakeup(
           navaidId: navId,
           navaidType: navaidType,
-          radial: bearing.map { UInt($0) },
-          distance: distance,
-          rawDescription: "\(navId)*\(navTypeStr)*\(bearing ?? 0)/\(distance ?? 0)"
+          radialDeg: bearing.map { UInt($0) },
+          distanceNM: distanceNM,
+          rawDescription: "\(navId)*\(navTypeStr)*\(bearing ?? 0)/\(distanceNM ?? 0)"
         )
         fix.navaidMakeups.append(makeup)
         self.fixes[key] = fix
@@ -278,7 +278,11 @@ class CSVFixParser: CSVParser {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
         // Convert decimal degrees to arc-seconds (multiply by 3600)
-        return Location(latitude: lat * 3600, longitude: lon * 3600, elevation: nil)
+        return Location(
+          latitudeArcsec: lat * 3600,
+          longitudeArcsec: lon * 3600,
+          elevationFtMSL: nil
+        )
       case (.none, .none):
         return nil
       default:

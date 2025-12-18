@@ -74,8 +74,8 @@ class ARTCCBoundarySegmentParserSpec: AsyncSpec {
         // 34°00'00"N = 34*3600 = 122400 arc-seconds
         // 117°30'00"W = -(117*3600 + 30*60) = -423000 arc-seconds
         let segment = segments.first { $0.ARTCCIdentifier == "ZLA" && $0.altitudeStructure == .low }
-        expect(segment?.position.latitude).to(beCloseTo(122400, within: 100))
-        expect(segment?.position.longitude).to(beCloseTo(-423000, within: 100))
+        expect(segment?.position.latitudeArcsec).to(beCloseTo(122400, within: 100))
+        expect(segment?.position.longitudeArcsec).to(beCloseTo(-423000, within: 100))
       }
 
       it("parses boundary description") {

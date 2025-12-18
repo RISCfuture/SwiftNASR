@@ -175,18 +175,18 @@ extension FixedWidthAirportParser {
 
     let threshold = zipOptionals(values[offset1 + 6], values[offset1 + 8]).map { lat, lon in
       Location(
-        latitude: lat as! Float,
-        longitude: lon as! Float,
-        elevation: values[offset1 + 10] as! Float?
+        latitudeArcsec: lat as! Float,
+        longitudeArcsec: lon as! Float,
+        elevationFtMSL: values[offset1 + 10] as! Float?
       )
     }
     let displacedThreshold = zipOptionals(values[offset1 + 13], values[offset1 + 15]).map {
       lat,
       lon in
       Location(
-        latitude: lat as! Float,
-        longitude: lon as! Float,
-        elevation: values[offset1 + 17] as! Float?
+        latitudeArcsec: lat as! Float,
+        longitudeArcsec: lon as! Float,
+        elevationFtMSL: values[offset1 + 17] as! Float?
       )
     }
 
@@ -202,15 +202,14 @@ extension FixedWidthAirportParser {
 
     let location = zipOptionals(values[offset2 + 19], values[offset2 + 21]).map { lat, lon in
       Location(
-        latitude: lat as! Float,
-        longitude: lon as! Float,
-        elevation: nil
+        latitudeArcsec: lat as! Float,
+        longitudeArcsec: lon as! Float
       )
     }
 
     let LAHSO = values[offset2 + 16].map { dist in
       RunwayEnd.LAHSOPoint(
-        availableDistance: dist as! UInt,
+        availableDistanceFt: dist as! UInt,
         intersectingRunwayId: values[offset2 + 17] as! String?,
         definingEntity: values[offset2 + 18] as! String?,
         position: location,
@@ -224,16 +223,16 @@ extension FixedWidthAirportParser {
         category: cat as! RunwayEnd.ControllingObject.Category,
         markings: values[offset1 + 28] as! [RunwayEnd.ControllingObject.Marking],
         runwayCategory: values[offset1 + 29] as! String?,
-        clearanceSlope: values[offset1 + 30] as! UInt?,
-        heightAboveRunway: values[offset1 + 31] as! UInt?,
-        distanceFromRunway: values[offset1 + 32] as! UInt?,
+        clearanceSlopeRatio: values[offset1 + 30] as! UInt?,
+        heightAboveRunwayFtAGL: values[offset1 + 31] as! UInt?,
+        distanceFromRunwayFt: values[offset1 + 32] as! UInt?,
         offsetFromCenterline: values[offset1 + 33] as! Offset?
       )
     }
 
     // Convert true heading to Bearing<UInt>
     let heading = (values[offset1 + 1] as! UInt?).map { value in
-      Bearing(value, reference: .true, magneticVariation: airport.magneticVariation ?? 0)
+      Bearing(value, reference: .true, magneticVariationDeg: airport.magneticVariationDeg ?? 0)
     }
 
     return RunwayEnd(
@@ -244,16 +243,16 @@ extension FixedWidthAirportParser {
       marking: values[offset1 + 4] as! RunwayEnd.Marking?,
       markingCondition: values[offset1 + 5] as! RunwayEnd.MarkingCondition?,
       threshold: threshold,
-      thresholdCrossingHeight: values[offset1 + 11] as! UInt?,
-      visualGlidepath: values[offset1 + 12] as! Float?,
+      thresholdCrossingHeightFtAGL: values[offset1 + 11] as! UInt?,
+      visualGlidepathHundredthsDeg: values[offset1 + 12] as! Float?,
       displacedThreshold: displacedThreshold,
-      thresholdDisplacement: values[offset1 + 18] as! UInt?,
-      touchdownZoneElevation: values[offset1 + 19] as! Float?,
-      gradient: gradient,
-      TORA: values[offset2 + 12] as! UInt?,
-      TODA: values[offset2 + 13] as! UInt?,
-      ASDA: values[offset2 + 14] as! UInt?,
-      LDA: values[offset2 + 15] as! UInt?,
+      thresholdDisplacementFt: values[offset1 + 18] as! UInt?,
+      touchdownZoneElevationFtMSL: values[offset1 + 19] as! Float?,
+      gradientPct: gradient,
+      TORAFt: values[offset2 + 12] as! UInt?,
+      TODAFt: values[offset2 + 13] as! UInt?,
+      ASDAFt: values[offset2 + 14] as! UInt?,
+      LDAFt: values[offset2 + 15] as! UInt?,
       LAHSO: LAHSO,
       visualGlideslopeIndicator: VGSI,
       RVRSensors: values[offset1 + 21] as! [RunwayEnd.RVRSensor],

@@ -25,8 +25,8 @@ class CSVNavaidParserSpec: AsyncSpec {
             expect(firstNavaid.id).notTo(beEmpty())
             expect(firstNavaid.name).notTo(beEmpty())
             expect(firstNavaid.city).notTo(beEmpty())
-            expect(firstNavaid.position.latitude).notTo(beNil())
-            expect(firstNavaid.position.longitude).notTo(beNil())
+            expect(firstNavaid.position.latitudeArcsec).notTo(beNil())
+            expect(firstNavaid.position.longitudeArcsec).notTo(beNil())
           }
         }
 
@@ -62,13 +62,13 @@ class CSVNavaidParserSpec: AsyncSpec {
           try await parser.parse(data: Data())
 
           // Find a navaid with magnetic variation
-          let navaidWithMagVar = parser.navaids.values.first { $0.magneticVariation != nil }
+          let navaidWithMagVar = parser.navaids.values.first { $0.magneticVariationDeg != nil }
 
           if let navaid = navaidWithMagVar {
-            expect(navaid.magneticVariation).notTo(beNil())
+            expect(navaid.magneticVariationDeg).notTo(beNil())
             // Magnetic variation should be reasonable (between -180 and 180)
-            expect(navaid.magneticVariation).to(beGreaterThan(-180))
-            expect(navaid.magneticVariation).to(beLessThan(180))
+            expect(navaid.magneticVariationDeg).to(beGreaterThan(-180))
+            expect(navaid.magneticVariationDeg).to(beLessThan(180))
           }
         }
 
@@ -84,9 +84,9 @@ class CSVNavaidParserSpec: AsyncSpec {
           }
 
           if let navaid = vorNavaid {
-            expect(navaid.frequency).notTo(beNil())
+            expect(navaid.frequencyKHz).notTo(beNil())
             // VOR frequencies are typically between 108-118 MHz (108000-118000 kHz)
-            if let freq = navaid.frequency {
+            if let freq = navaid.frequencyKHz {
               expect(freq).to(beGreaterThan(100000))
               expect(freq).to(beLessThan(120000))
             }

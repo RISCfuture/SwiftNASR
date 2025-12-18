@@ -25,8 +25,8 @@ class CSVFSSParserSpec: AsyncSpec {
             expect(firstFSS.id).notTo(beEmpty())
             expect(firstFSS.name).notTo(beEmpty())
             expect(firstFSS.hoursOfOperation).notTo(beEmpty())
-            expect(firstFSS.location?.latitude).notTo(beNil())
-            expect(firstFSS.location?.longitude).notTo(beNil())
+            expect(firstFSS.location?.latitudeArcsec).notTo(beNil())
+            expect(firstFSS.location?.longitudeArcsec).notTo(beNil())
           }
         }
 

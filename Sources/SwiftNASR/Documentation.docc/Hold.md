@@ -11,12 +11,12 @@
 ### Pattern Definition
 
 - ``holdingDirection``
-- ``magneticBearing``
+- ``magneticBearingDeg``
 - ``azimuthType``
-- ``inboundCourse``
+- ``inboundCourseDeg``
 - ``turnDirection``
-- ``legTime``
-- ``legDistance``
+- ``legTimeMin``
+- ``legDistanceNM``
 
 ### Fix Association
 

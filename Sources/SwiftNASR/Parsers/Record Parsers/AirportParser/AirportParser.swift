@@ -267,9 +267,9 @@ class FixedWidthAirportParser: FixedWidthParser {
     }
 
     let location = Location(
-      latitude: transformedValues[23] as! Float,
-      longitude: transformedValues[25] as! Float,
-      elevation: (transformedValues[28] as! Float)
+      latitudeArcsec: transformedValues[23] as! Float,
+      longitudeArcsec: transformedValues[25] as! Float,
+      elevationFtMSL: (transformedValues[28] as! Float)
     )
 
     let airport = Airport(
@@ -292,13 +292,13 @@ class FixedWidthAirportParser: FixedWidthParser {
       referencePointDeterminationMethod: transformedValues[27]
         as! SurveyMethod,
       elevationDeterminationMethod: transformedValues[29] as? SurveyMethod,
-      magneticVariation: transformedValues[30] as! Int?,
+      magneticVariationDeg: transformedValues[30] as! Int?,
       magneticVariationEpoch: transformedValues[31] as! DateComponents?,
-      trafficPatternAltitude: transformedValues[32] as! Int?,
+      trafficPatternAltitudeFtAGL: transformedValues[32] as! Int?,
       sectionalChart: transformedValues[33] as! String?,
-      distanceCityToAirport: transformedValues[34] as! UInt?,
+      distanceCityToAirportNM: transformedValues[34] as! UInt?,
       directionCityToAirport: transformedValues[35] as! Direction?,
-      landArea: transformedValues[36] as! Float?,
+      landAreaAcres: transformedValues[36] as! Float?,
       boundaryARTCCId: transformedValues[37] as? String,
       responsibleARTCCId: transformedValues[40] as! String,
       tieInFSSOnStation: transformedValues[43] as! Bool?,
@@ -328,8 +328,8 @@ class FixedWidthAirportParser: FixedWidthParser {
       airportLightingSchedule: transformedValues[71] as? String,
       beaconLightingSchedule: transformedValues[72] as? String,
       controlTower: transformedValues[73] as! Bool,
-      UNICOMFrequency: transformedValues[74] as! UInt?,
-      CTAF: transformedValues[75] as! UInt?,
+      UNICOMFrequencyKHz: transformedValues[74] as! UInt?,
+      CTAFKHz: transformedValues[75] as! UInt?,
       segmentedCircle: transformedValues[76] as! Airport.AirportMarker?,
       beaconColor: transformedValues[77] as! Airport.LensColor?,
       hasLandingFee: transformedValues[78] as! Bool?,

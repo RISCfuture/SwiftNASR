@@ -143,11 +143,13 @@ class FixedWidthPreferredRouteParser: FixedWidthParser {
     if let slashIndex = value.firstIndex(of: "/") {
       let radialStr = String(value[..<slashIndex])
       let distanceStr = String(value[value.index(after: slashIndex)...])
-      guard let radial = UInt16(radialStr), let distance = UInt16(distanceStr) else { return nil }
-      return .radialDistance(radial: radial, distance: distance)
+      guard let radialDeg = UInt16(radialStr), let distanceNM = UInt16(distanceStr) else {
+        return nil
+      }
+      return .radialDistanceDegNM(radialDeg: radialDeg, distanceNM: distanceNM)
     }
-    guard let radial = UInt16(value) else { return nil }
-    return .radial(radial)
+    guard let radialDeg = UInt16(value) else { return nil }
+    return .radialDeg(radialDeg)
   }
 
   func finish(data: NASRData) async {

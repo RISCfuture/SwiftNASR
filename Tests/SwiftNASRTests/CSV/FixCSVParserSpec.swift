@@ -27,8 +27,8 @@ class CSVFixParserSpec: AsyncSpec {
           expect(aarta).notTo(beNil())
           if let fix = aarta {
             expect(fix.ICAORegion).to(equal("K7"))
-            expect(fix.position.latitude).notTo(beNil())
-            expect(fix.position.longitude).notTo(beNil())
+            expect(fix.position.latitudeArcsec).notTo(beNil())
+            expect(fix.position.longitudeArcsec).notTo(beNil())
           }
         }
 
@@ -48,8 +48,8 @@ class CSVFixParserSpec: AsyncSpec {
             expect(bvtMakeup).notTo(beNil())
             if let makeup = bvtMakeup {
               expect(makeup.navaidType).to(equal(NavaidFacilityType.VORTAC))
-              expect(makeup.radial).to(equal(270))
-              expect(makeup.distance).to(beCloseTo(15.5, within: 0.1))
+              expect(makeup.radialDeg).to(equal(270))
+              expect(makeup.distanceNM).to(beCloseTo(15.5, within: 0.1))
             }
           }
         }

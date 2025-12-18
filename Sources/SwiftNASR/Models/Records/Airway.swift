@@ -73,7 +73,7 @@ public struct Airway: ParentRecord {
     public let navaidId: String?
 
     /// The minimum reception altitude for fix points (feet).
-    public let minimumReceptionAltitude: UInt?
+    public let minimumReceptionAltitudeFt: UInt?
 
     /// Remarks specific to this point.
     public internal(set) var remarks = [String]()
@@ -82,7 +82,7 @@ public struct Airway: ParentRecord {
 
     public enum CodingKeys: String, CodingKey {
       case sequenceNumber, name, pointType, position, stateCode
-      case ICAORegionCode, navaidId, minimumReceptionAltitude, remarks
+      case ICAORegionCode, navaidId, minimumReceptionAltitudeFt, remarks
     }
   }
 
@@ -104,13 +104,13 @@ public struct Airway: ParentRecord {
     public let altitudes: SegmentAltitudes
 
     /// The distance to the next point (nautical miles).
-    public let distanceToNext: Float?
+    public let distanceToNextNM: Float?
 
     /// The magnetic course of the segment (degrees).
-    public let magneticCourse: Float?
+    public let magneticCourseDeg: Float?
 
     /// The magnetic course in the opposite direction (degrees).
-    public let magneticCourseOpposite: Float?
+    public let magneticCourseOppositeDeg: Float?
 
     /// The track angle outbound (for RNAV routes).
     public let trackAngleOutbound: TrackAnglePair?
@@ -139,8 +139,8 @@ public struct Airway: ParentRecord {
     // MARK: - Nested Types
 
     public enum CodingKeys: String, CodingKey {
-      case sequenceNumber, point, changeoverPoint, altitudes, distanceToNext
-      case magneticCourse, magneticCourseOpposite, trackAngleOutbound, trackAngleInbound
+      case sequenceNumber, point, changeoverPoint, altitudes, distanceToNextNM
+      case magneticCourseDeg, magneticCourseOppositeDeg, trackAngleOutbound, trackAngleInbound
       case hasSignalCoverageGap, isUSAirspaceOnly, isAirwayGap, isDogleg
       case ARTCCID, changeoverExceptions
     }
@@ -152,7 +152,7 @@ public struct Airway: ParentRecord {
     // MARK: - Properties
 
     /// Distance to the changeover point (nautical miles).
-    public let distance: UInt?
+    public let distanceNM: UInt?
 
     /// The navaid name at the changeover point.
     public let navaidName: String?
@@ -169,7 +169,7 @@ public struct Airway: ParentRecord {
     // MARK: - Nested Types
 
     public enum CodingKeys: String, CodingKey {
-      case distance, navaidName, navaidType, position, stateCode
+      case distanceNM, navaidName, navaidType, position, stateCode
     }
   }
 
@@ -179,55 +179,55 @@ public struct Airway: ParentRecord {
     // MARK: - Properties
 
     /// Minimum Enroute Altitude (feet).
-    public let MEA: UInt?
+    public let MEAFt: UInt?
 
     /// MEA direction.
     public let MEADirection: BoundDirection?
 
     /// MEA in opposite direction (feet).
-    public let MEAOpposite: UInt?
+    public let MEAOppositeFt: UInt?
 
     /// MEA opposite direction.
     public let MEAOppositeDirection: BoundDirection?
 
     /// Maximum Authorized Altitude (feet).
-    public let MAA: UInt?
+    public let MAAFt: UInt?
 
     /// Minimum Obstruction Clearance Altitude (feet).
-    public let MOCA: UInt?
+    public let MOCAFt: UInt?
 
     /// Minimum Crossing Altitude (feet).
-    public let MCA: UInt?
+    public let MCAFt: UInt?
 
     /// MCA direction.
     public let MCADirection: BoundDirection?
 
     /// MCA in opposite direction (feet).
-    public let MCAOpposite: UInt?
+    public let MCAOppositeFt: UInt?
 
     /// MCA opposite direction.
     public let MCAOppositeDirection: BoundDirection?
 
     /// GNSS MEA (feet).
-    public let GNSS_MEA: UInt?
+    public let GNSS_MEAFt: UInt?
 
     /// GNSS MEA direction.
     public let GNSS_MEADirection: BoundDirection?
 
     /// GNSS MEA opposite (feet).
-    public let GNSS_MEAOpposite: UInt?
+    public let GNSS_MEAOppositeFt: UInt?
 
     /// GNSS MEA opposite direction.
     public let GNSS_MEAOppositeDirection: BoundDirection?
 
     /// DME/DME/IRU MEA (feet).
-    public let DME_MEA: UInt?
+    public let DME_MEAFt: UInt?
 
     /// DME/DME/IRU MEA direction.
     public let DME_MEADirection: BoundDirection?
 
     /// DME/DME/IRU MEA opposite (feet).
-    public let DME_MEAOpposite: UInt?
+    public let DME_MEAOppositeFt: UInt?
 
     /// DME/DME/IRU MEA opposite direction.
     public let DME_MEAOppositeDirection: BoundDirection?
@@ -235,10 +235,10 @@ public struct Airway: ParentRecord {
     // MARK: - Nested Types
 
     public enum CodingKeys: String, CodingKey {
-      case MEA, MEADirection, MEAOpposite, MEAOppositeDirection
-      case MAA, MOCA, MCA, MCADirection, MCAOpposite, MCAOppositeDirection
-      case GNSS_MEA, GNSS_MEADirection, GNSS_MEAOpposite, GNSS_MEAOppositeDirection
-      case DME_MEA, DME_MEADirection, DME_MEAOpposite, DME_MEAOppositeDirection
+      case MEAFt, MEADirection, MEAOppositeFt, MEAOppositeDirection
+      case MAAFt, MOCAFt, MCAFt, MCADirection, MCAOppositeFt, MCAOppositeDirection
+      case GNSS_MEAFt, GNSS_MEADirection, GNSS_MEAOppositeFt, GNSS_MEAOppositeDirection
+      case DME_MEAFt, DME_MEADirection, DME_MEAOppositeFt, DME_MEAOppositeDirection
     }
   }
 

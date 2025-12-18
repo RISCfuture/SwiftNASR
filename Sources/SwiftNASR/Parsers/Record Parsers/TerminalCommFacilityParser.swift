@@ -244,7 +244,7 @@ class FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   ) throws -> Location? {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
-        return Location(latitude: lat, longitude: lon)
+        return Location(latitudeArcsec: lat, longitudeArcsec: lon)
       case (.none, .none):
         return nil
       default:
@@ -365,7 +365,7 @@ class FixedWidthTerminalCommFacilityParser: FixedWidthParser {
         let freqKHz = FixedWidthTransformer.parseFrequency(freqString)
       {
         let frequency = TerminalCommFacility.Frequency(
-          frequency: freqKHz,
+          frequencyKHz: freqKHz,
           use: transformedValues[useIndex] as? String,
           sectorization: nil
         )
@@ -472,7 +472,7 @@ class FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     )
 
     let satellite = TerminalCommFacility.SatelliteAirport(
-      frequency: frequencyKHz,
+      frequencyKHz: frequencyKHz,
       frequencyUse: transformedValues[3] as? String,
       airportSiteNumber: transformedValues[4] as? String,
       airportId: transformedValues[5] as? String,

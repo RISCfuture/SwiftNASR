@@ -23,10 +23,10 @@ public struct ParachuteJumpArea: Record, Identifiable {
   public let navaidFacilityType: String?
 
   /// Azimuth from navaid (degrees, 000.0-359.99).
-  public let azimuthFromNavaid: Double?
+  public let azimuthFromNavaidDeg: Double?
 
   /// Distance from navaid (nautical miles).
-  public let distanceFromNavaid: Double?
+  public let distanceFromNavaidNM: Double?
 
   /// Navaid name.
   public let navaidName: String?
@@ -56,7 +56,7 @@ public struct ParachuteJumpArea: Record, Identifiable {
   public let maxAltitude: Altitude?
 
   /// Area radius from center point (nautical miles).
-  public let radius: Double?
+  public let radiusNM: Double?
 
   /// Whether sectional charting is required.
   public let sectionalChartingRequired: Bool?
@@ -134,13 +134,13 @@ public struct ParachuteJumpArea: Record, Identifiable {
     public let relatedLocationId: String?
 
     /// Commercial frequency (kHz).
-    public let commercialFrequency: UInt?
+    public let commercialFrequencyKHz: UInt?
 
     /// Whether commercial frequency is charted.
     public let commercialCharted: Bool?
 
     /// Military frequency (kHz).
-    public let militaryFrequency: UInt?
+    public let militaryFrequencyKHz: UInt?
 
     /// Whether military frequency is charted.
     public let militaryCharted: Bool?
@@ -153,19 +153,19 @@ public struct ParachuteJumpArea: Record, Identifiable {
 
     public enum CodingKeys: String, CodingKey {
       case facilityId, facilityName, relatedLocationId
-      case commercialFrequency, commercialCharted
-      case militaryFrequency, militaryCharted
+      case commercialFrequencyKHz, commercialCharted
+      case militaryFrequencyKHz, militaryCharted
       case sector, altitude
     }
   }
 
   public enum CodingKeys: String, CodingKey {
     case PJAId, navaidIdentifier, navaidFacilityTypeCode, navaidFacilityType
-    case azimuthFromNavaid, distanceFromNavaid, navaidName
+    case azimuthFromNavaidDeg, distanceFromNavaidNM, navaidName
     case stateCode, stateName, city
     case position
     case airportName, airportSiteNumber, dropZoneName
-    case maxAltitude, radius
+    case maxAltitude, radiusNM
     case sectionalChartingRequired, publishedInAFD
     case additionalDescription, FSSIdentifier, FSSName, useType
     case timesOfUse, userGroups, contactFacilities, remarks

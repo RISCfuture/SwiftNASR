@@ -277,23 +277,23 @@ extension FixedWidthAirportParser {
       try parseRunwayEnd(transformedValues, offset1: 44, offset2: 109, airport: airport)
     }
 
-    let singleWheelWeightBearingCapacity = transformedValues[80].map { capacity in
+    let singleWheelWeightBearingCapacityKlb = transformedValues[80].map { capacity in
       UInt((capacity as! Float) * 1000)
     }
-    let dualWheelWeightBearingCapacity = transformedValues[81].map { capacity in
+    let dualWheelWeightBearingCapacityKlb = transformedValues[81].map { capacity in
       UInt((capacity as! Float) * 1000)
     }
-    let tandemDualWheelWeightBearingCapacity = transformedValues[82].map { capacity in
+    let tandemDualWheelWeightBearingCapacityKlb = transformedValues[82].map { capacity in
       UInt((capacity as! Float) * 1000)
     }
-    let doubleTandemDualWheelWeightBearingCapacity = transformedValues[83].map { capacity in
+    let doubleTandemDualWheelWeightBearingCapacityKlb = transformedValues[83].map { capacity in
       UInt((capacity as! Float) * 1000)
     }
 
     let runway = Runway(
       identification: transformedValues[3] as! String,
-      length: transformedValues[4] as! UInt?,
-      width: transformedValues[5] as! UInt?,
+      lengthFt: transformedValues[4] as! UInt?,
+      widthFt: transformedValues[5] as! UInt?,
       lengthSource: transformedValues[78] as! String?,
       lengthSourceDate: transformedValues[79] as! DateComponents?,
       materials: materials,
@@ -303,10 +303,10 @@ extension FixedWidthAirportParser {
       edgeLightsIntensity: transformedValues[9] as! Runway.EdgeLightIntensity?,
       baseEnd: base,
       reciprocalEnd: reciprocal,
-      singleWheelWeightBearingCapacity: singleWheelWeightBearingCapacity,
-      dualWheelWeightBearingCapacity: dualWheelWeightBearingCapacity,
-      tandemDualWheelWeightBearingCapacity: tandemDualWheelWeightBearingCapacity,
-      doubleTandemDualWheelWeightBearingCapacity: doubleTandemDualWheelWeightBearingCapacity
+      singleWheelWeightBearingCapacityKlb: singleWheelWeightBearingCapacityKlb,
+      dualWheelWeightBearingCapacityKlb: dualWheelWeightBearingCapacityKlb,
+      tandemDualWheelWeightBearingCapacityKlb: tandemDualWheelWeightBearingCapacityKlb,
+      doubleTandemDualWheelWeightBearingCapacityKlb: doubleTandemDualWheelWeightBearingCapacityKlb
     )
 
     airports[airportIndex]!.runways.append(runway)

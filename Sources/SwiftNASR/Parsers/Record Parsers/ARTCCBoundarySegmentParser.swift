@@ -77,7 +77,7 @@ class FixedWidthARTCCBoundarySegmentParser: Parser {
 
     let lat = transformedValues[3] as! Double
     let lon = transformedValues[4] as! Double
-    let position = Location(latitude: lat, longitude: lon)
+    let position = Location(latitudeDeg: lat, longitudeDeg: lon)
 
     let segment = ARTCCBoundarySegment(
       recordIdentifier: recordId,

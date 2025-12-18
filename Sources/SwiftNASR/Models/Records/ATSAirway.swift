@@ -128,7 +128,7 @@ public struct ATSAirway: Record, Identifiable {
     public let position: Location?
 
     /// The minimum reception altitude (MRA) for fixes (feet).
-    public let minimumReceptionAltitude: UInt?
+    public let minimumReceptionAltitudeFt: UInt?
 
     /// The navaid identifier
     public let navaidIdentifier: String?
@@ -139,13 +139,13 @@ public struct ATSAirway: Record, Identifiable {
     public let trackAngleOutbound: TrackAnglePair?
 
     /// Distance to changeover point (nautical miles; RNAV).
-    public let distanceToChangeoverPoint: UInt?
+    public let distanceToChangeoverPointNM: UInt?
 
     /// Track angle inbound (RNAV)
     public let trackAngleInbound: TrackAnglePair?
 
     /// Distance to next point (nautical miles).
-    public let distanceToNextPoint: Double?
+    public let distanceToNextPointNM: Double?
 
     /// Segment magnetic course.
     public let magneticCourse: Bearing<Double>?
@@ -154,37 +154,37 @@ public struct ATSAirway: Record, Identifiable {
     public let magneticCourseOpposite: Bearing<Double>?
 
     /// Minimum enroute altitude (feet).
-    public let minimumEnrouteAltitude: UInt?
+    public let minimumEnrouteAltitudeFt: UInt?
 
     /// MEA direction.
     public let MEADirection: BoundDirection?
 
     /// MEA opposite direction altitude (feet).
-    public let MEAOppositeAltitude: UInt?
+    public let MEAOppositeAltitudeFt: UInt?
 
     /// MEA opposite direction.
     public let MEAOppositeDirection: BoundDirection?
 
     /// Maximum authorized altitude (feet).
-    public let maximumAuthorizedAltitude: UInt?
+    public let maximumAuthorizedAltitudeFt: UInt?
 
     /// Minimum obstruction clearance altitude (feet).
-    public let minimumObstructionClearanceAltitude: UInt?
+    public let minimumObstructionClearanceAltitudeFt: UInt?
 
     /// Whether the airway has a gap at this point
     public let hasAirwayGap: Bool?
 
     /// Distance to changeover point for next navaid (nautical miles).
-    public let changeoverPointDistance: UInt?
+    public let changeoverPointDistanceNM: UInt?
 
     /// Minimum crossing altitude (feet).
-    public let minimumCrossingAltitude: UInt?
+    public let minimumCrossingAltitudeFt: UInt?
 
     /// Direction of crossing.
     public let crossingDirection: BoundDirection?
 
     /// Minimum crossing altitude opposite direction (feet).
-    public let crossingAltitudeOpposite: UInt?
+    public let crossingAltitudeOppositeFt: UInt?
 
     /// Direction of crossing opposite.
     public let crossingDirectionOpposite: BoundDirection?
@@ -196,31 +196,31 @@ public struct ATSAirway: Record, Identifiable {
     public let usAirspaceOnly: Bool?
 
     /// The variation between magnetic and true north (degrees; positive is east).
-    public let magneticVariation: Int?
+    public let magneticVariationDeg: Int?
 
     /// ARTCC identifier
     public let ARTCCIdentifier: String?
 
     /// GNSS MEA (feet).
-    public let GNSS_MEA: UInt?
+    public let GNSS_MEAFt: UInt?
 
     /// GNSS MEA direction.
     public let GNSS_MEADirection: BoundDirection?
 
     /// GNSS MEA opposite altitude (feet).
-    public let GNSS_MEAOpposite: UInt?
+    public let GNSS_MEAOppositeFt: UInt?
 
     /// GNSS MEA opposite direction.
     public let GNSS_MEAOppositeDirection: BoundDirection?
 
     /// DME/DME/IRU MEA (feet).
-    public let DME_DME_IRU_MEA: UInt?
+    public let DME_DME_IRU_MEAFt: UInt?
 
     /// DME/DME/IRU MEA direction.
     public let DME_DME_IRU_MEADirection: BoundDirection?
 
     /// DME/DME/IRU MEA opposite altitude (feet).
-    public let DME_DME_IRU_MEAOpposite: UInt?
+    public let DME_DME_IRU_MEAOppositeFt: UInt?
 
     /// DME/DME/IRU MEA opposite direction.
     public let DME_DME_IRU_MEAOppositeDirection: BoundDirection?
@@ -228,8 +228,8 @@ public struct ATSAirway: Record, Identifiable {
     /// Whether this is a dogleg (turn point not at a navaid)
     public let isDogleg: Bool?
 
-    /// Required Navigation Performance (RNP)
-    public let RNP: Double?
+    /// Required Navigation Performance (RNP) in nautical miles.
+    public let RNP_NM: Double?
 
     // MARK: - Changeover Point Data (from ATS3)
 

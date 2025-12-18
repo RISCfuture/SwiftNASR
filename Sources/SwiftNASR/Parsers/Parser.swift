@@ -40,8 +40,8 @@ final class OffsetParser: Sendable {
     guard let match = try rx.regex.wholeMatch(in: string) else { return nil }
     let distance = match[distanceRef]
     let direction = match[directionRef]
-    guard let distance else { return .init(distance: 0, direction: .both) }
-    return .init(distance: distance, direction: direction)
+    guard let distance else { return .init(distanceFt: 0, direction: .both) }
+    return .init(distanceFt: distance, direction: direction)
   }
 }
 

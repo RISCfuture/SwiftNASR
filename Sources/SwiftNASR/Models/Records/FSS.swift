@@ -237,7 +237,7 @@ public struct FSS: ParentRecord {
   public struct Frequency: Record {
 
     /// The radio frequency, in kHz.
-    let frequency: UInt
+    let frequencyKHz: UInt
 
     /// The FSS callsign used on this frequency.
     let name: String?

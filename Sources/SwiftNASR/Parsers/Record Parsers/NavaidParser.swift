@@ -192,19 +192,19 @@ class FixedWidthNavaidParser: FixedWidthParser {
     let transformedValues = try basicTransformer.applyTo(values)
 
     let position = Location(
-      latitude: transformedValues[22] as! Float,
-      longitude: transformedValues[24] as! Float,
-      elevation: transformedValues[31] as! Float?
+      latitudeArcsec: transformedValues[22] as! Float,
+      longitudeArcsec: transformedValues[24] as! Float,
+      elevationFtMSL: transformedValues[31] as! Float?
     )
     let TACANPosition = zipOptionals(transformedValues[27], transformedValues[29]).map { lat, lon in
-      Location(latitude: lat as! Float, longitude: lon as! Float, elevation: nil)
+      Location(latitudeArcsec: lat as! Float, longitudeArcsec: lon as! Float, elevationFtMSL: nil)
     }
 
-    let magneticVariation = transformedValues[32] as! Int?
+    let magneticVariationDeg = transformedValues[32] as! Int?
 
     // Convert fan marker bearing to Bearing<UInt>
     let fanMarkerMajorBearing = (transformedValues[43] as! UInt?).map { value in
-      Bearing(value, reference: .magnetic, magneticVariation: magneticVariation ?? 0)
+      Bearing(value, reference: .magnetic, magneticVariationDeg: magneticVariationDeg ?? 0)
     }
 
     // Convert LFR leg bearings to Bearing<UInt>
@@ -212,7 +212,11 @@ class FixedWidthNavaidParser: FixedWidthParser {
     let LFRLegs = rawLFRLegs?.map { quadrant, bearing in
       LFRLeg(
         quadrant: quadrant,
-        bearing: Bearing(bearing, reference: .magnetic, magneticVariation: magneticVariation ?? 0)
+        bearing: Bearing(
+          bearing,
+          reference: .magnetic,
+          magneticVariationDeg: magneticVariationDeg ?? 0
+        )
       )
     }
 
@@ -235,15 +239,15 @@ class FixedWidthNavaidParser: FixedWidthParser {
       position: position,
       TACANPosition: TACANPosition,
       surveyAccuracy: transformedValues[26] as! Navaid.SurveyAccuracy?,
-      magneticVariation: magneticVariation,
+      magneticVariationDeg: magneticVariationDeg,
       magneticVariationEpoch: transformedValues[33] as! DateComponents?,
       simultaneousVoice: transformedValues[34] as! Bool?,
-      powerOutput: transformedValues[35] as! UInt?,
+      powerOutputW: transformedValues[35] as! UInt?,
       automaticVoiceId: transformedValues[36] as! Bool?,
       monitoringCategory: transformedValues[37] as! Navaid.MonitoringCategory?,
       radioVoiceCall: transformedValues[38] as! String?,
       tacanChannel: transformedValues[39] as! Navaid.TACANChannel?,
-      frequency: transformedValues[40] as! UInt?,
+      frequencyKHz: transformedValues[40] as! UInt?,
       beaconIdentifier: transformedValues[41] as! String?,
       fanMarkerType: transformedValues[42] as! Navaid.FanMarkerType?,
       fanMarkerMajorBearing: fanMarkerMajorBearing,
@@ -321,12 +325,12 @@ class FixedWidthNavaidParser: FixedWidthParser {
       let bearing = Bearing(
         transformedValues[4] as! UInt,
         reference: .magnetic,
-        magneticVariation: navaid.magneticVariation ?? 0
+        magneticVariationDeg: navaid.magneticVariationDeg ?? 0
       )
       let checkpoint = VORCheckpoint(
         type: transformedValues[3] as! VORCheckpoint.CheckpointType,
         bearing: bearing,
-        altitude: transformedValues[5] as! Int?,
+        altitudeFtMSL: transformedValues[5] as! Int?,
         airportId: transformedValues[6] as! String?,
         stateCode: transformedValues[7] as! String,
         airDescription: transformedValues[8] as! String?,

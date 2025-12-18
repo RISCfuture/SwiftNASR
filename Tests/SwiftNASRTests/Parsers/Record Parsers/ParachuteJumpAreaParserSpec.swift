@@ -63,9 +63,9 @@ class ParachuteJumpAreaParserSpec: AsyncSpec {
         }
 
         // 61°18'47.4645"N = 61*3600 + 18*60 + 47.4645 ≈ 220727.46 arc-seconds
-        expect(pak005.position?.latitude).to(beCloseTo(220727.46, within: 1))
+        expect(pak005.position?.latitudeArcsec).to(beCloseTo(220727.46, within: 1))
         // 149°33'55.9086"W = -(149*3600 + 33*60 + 55.9086) ≈ -538435.91 arc-seconds
-        expect(pak005.position?.longitude).to(beCloseTo(-538435.91, within: 1))
+        expect(pak005.position?.longitudeArcsec).to(beCloseTo(-538435.91, within: 1))
       }
 
       it("parses altitude and charting info") {
@@ -153,7 +153,7 @@ class ParachuteJumpAreaParserSpec: AsyncSpec {
         if let facility = pak006.contactFacilities.first {
           expect(facility.facilityId).to(equal("ANC"))
           expect(facility.facilityName).to(contain("TED STEVENS ANCHORAGE"))
-          expect(facility.commercialFrequency).to(equal(126400))
+          expect(facility.commercialFrequencyKHz).to(equal(126400))
           expect(facility.commercialCharted).to(equal(false))
         }
       }

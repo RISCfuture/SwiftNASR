@@ -188,8 +188,9 @@ class NASRDataSpec: AsyncSpec {
       describe("CommFrequency") {
         describe("associatedAirport") {
           it("returns the object") {
-            guard let parsedFreq = parsedZOA.frequencies.first(where: { $0.frequency == 134550 }),
-              let decodedFreq = decodedZOA.frequencies.first(where: { $0.frequency == 134550 })
+            guard
+              let parsedFreq = parsedZOA.frequencies.first(where: { $0.frequencyKHz == 134550 }),
+              let decodedFreq = decodedZOA.frequencies.first(where: { $0.frequencyKHz == 134550 })
             else {
               fail()
               return

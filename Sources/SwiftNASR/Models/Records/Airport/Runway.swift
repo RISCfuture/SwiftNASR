@@ -20,10 +20,10 @@ public struct Runway: Record {
   public let identification: String
 
   /// The total runway length, in feet.
-  public let length: UInt?
+  public let lengthFt: UInt?
 
   /// The runway width, in feet.
-  public let width: UInt?
+  public let widthFt: UInt?
 
   /// The source of the runway length data.
   public let lengthSource: String?
@@ -58,19 +58,19 @@ public struct Runway: Record {
 
   /// The maximum weight of an aircraft with single-wheel type landing gear
   /// (thousands of pounds; e.g., Douglas DC-3, F-15 Eagle).
-  public let singleWheelWeightBearingCapacity: UInt?
+  public let singleWheelWeightBearingCapacityKlb: UInt?
 
   /// The maximum weight of an aircraft with dual-wheel type landing gear
   /// (thousands of pounds; e.g., Beech 1900, Boeing 737, Airbus A319).
-  public let dualWheelWeightBearingCapacity: UInt?
+  public let dualWheelWeightBearingCapacityKlb: UInt?
 
   /// The maximum weight of an aircraft with two dual wheels in tandem type
   /// landing gear (thousands of pounds; e.g., Boeing 707).
-  public let tandemDualWheelWeightBearingCapacity: UInt?
+  public let tandemDualWheelWeightBearingCapacityKlb: UInt?
 
   /// The maximum weight of an aircraft with two dual wheels in double tandem
   /// body gear (thousands of pounds; e.g., Boeing 747).
-  public let doubleTandemDualWheelWeightBearingCapacity: UInt?
+  public let doubleTandemDualWheelWeightBearingCapacityKlb: UInt?
 
   /// The remarks for this runway record and its fields.
   public internal(set) var remarks = Remarks<Field>()
@@ -93,14 +93,14 @@ public struct Runway: Record {
   /**
    Returns the estimated gradient of the runway, calculated using the base
    and reciprocal end TDZEs and the runway length. This value could be used in
-   lieu of ``RunwayEnd/gradient`` if that data is unavailable. Returns `nil`
+   lieu of ``RunwayEnd/gradientPct`` if that data is unavailable. Returns `nil`
    if a necessary value is not present. A positive value indicates a runway
    that slopes up towards the reciprocal end.
    */
-  public var estimatedGradient: Float? {
-    guard let baseElevation = self.baseEnd.touchdownZoneElevation,
-      let reciprocalElevation = self.reciprocalEnd?.touchdownZoneElevation,
-      let runwayLength = self.length
+  public var estimatedGradientPct: Float? {
+    guard let baseElevation = self.baseEnd.touchdownZoneElevationFtMSL,
+      let reciprocalElevation = self.reciprocalEnd?.touchdownZoneElevationFtMSL,
+      let runwayLength = self.lengthFt
     else { return nil }
 
     return (reciprocalElevation - baseElevation) / Float(runwayLength) * 100.0
@@ -110,8 +110,8 @@ public struct Runway: Record {
 
   init(
     identification: String,
-    length: UInt?,
-    width: UInt?,
+    lengthFt: UInt?,
+    widthFt: UInt?,
     lengthSource: String?,
     lengthSourceDate: DateComponents?,
     materials: Set<Material>,
@@ -121,14 +121,14 @@ public struct Runway: Record {
     edgeLightsIntensity: EdgeLightIntensity?,
     baseEnd: RunwayEnd,
     reciprocalEnd: RunwayEnd?,
-    singleWheelWeightBearingCapacity: UInt?,
-    dualWheelWeightBearingCapacity: UInt?,
-    tandemDualWheelWeightBearingCapacity: UInt?,
-    doubleTandemDualWheelWeightBearingCapacity: UInt?
+    singleWheelWeightBearingCapacityKlb: UInt?,
+    dualWheelWeightBearingCapacityKlb: UInt?,
+    tandemDualWheelWeightBearingCapacityKlb: UInt?,
+    doubleTandemDualWheelWeightBearingCapacityKlb: UInt?
   ) {
     self.identification = identification
-    self.length = length
-    self.width = width
+    self.lengthFt = lengthFt
+    self.widthFt = widthFt
     self.lengthSource = lengthSource
     self.lengthSourceDate = lengthSourceDate
     self.materials = materials
@@ -138,10 +138,11 @@ public struct Runway: Record {
     self.edgeLightsIntensity = edgeLightsIntensity
     self.baseEnd = baseEnd
     self.reciprocalEnd = reciprocalEnd
-    self.singleWheelWeightBearingCapacity = singleWheelWeightBearingCapacity
-    self.dualWheelWeightBearingCapacity = dualWheelWeightBearingCapacity
-    self.tandemDualWheelWeightBearingCapacity = tandemDualWheelWeightBearingCapacity
-    self.doubleTandemDualWheelWeightBearingCapacity = doubleTandemDualWheelWeightBearingCapacity
+    self.singleWheelWeightBearingCapacityKlb = singleWheelWeightBearingCapacityKlb
+    self.dualWheelWeightBearingCapacityKlb = dualWheelWeightBearingCapacityKlb
+    self.tandemDualWheelWeightBearingCapacityKlb = tandemDualWheelWeightBearingCapacityKlb
+    self.doubleTandemDualWheelWeightBearingCapacityKlb =
+      doubleTandemDualWheelWeightBearingCapacityKlb
   }
 
   // MARK: - Types
@@ -385,22 +386,22 @@ public struct Runway: Record {
 
   /// Fields that per-field remarks can be associated with.
   public enum Field: String, RemarkField {
-    case identification, length, width, lengthSource, lengthSourceDate, materials, condition,
+    case identification, lengthFt, widthFt, lengthSource, lengthSourceDate, materials, condition,
       treatment, pavementClassification, edgeLightsIntensity, baseEnd, reciprocalEnd,
-      singleWheelWeightBearingCapacity, dualWheelWeightBearingCapacity,
-      tandemDualWheelWeightBearingCapacity, doubleTandemDualWheelWeightBearingCapacity
+      singleWheelWeightBearingCapacityKlb, dualWheelWeightBearingCapacityKlb,
+      tandemDualWheelWeightBearingCapacityKlb, doubleTandemDualWheelWeightBearingCapacityKlb
 
     static var fieldOrder: [Self?] {
       var order: [Self?] = [
         nil, nil, nil, .identification,
-        .length, .width, .materials, .treatment, .pavementClassification, .edgeLightsIntensity
+        .lengthFt, .widthFt, .materials, .treatment, .pavementClassification, .edgeLightsIntensity
       ]
       order.append(contentsOf: Array(repeating: .baseEnd, count: 34))
       order.append(contentsOf: Array(repeating: .reciprocalEnd, count: 34))
       order.append(contentsOf: [
-        .lengthSource, .lengthSourceDate, .singleWheelWeightBearingCapacity,
-        .dualWheelWeightBearingCapacity, .tandemDualWheelWeightBearingCapacity,
-        .doubleTandemDualWheelWeightBearingCapacity
+        .lengthSource, .lengthSourceDate, .singleWheelWeightBearingCapacityKlb,
+        .dualWheelWeightBearingCapacityKlb, .tandemDualWheelWeightBearingCapacityKlb,
+        .doubleTandemDualWheelWeightBearingCapacityKlb
       ])
       order.append(contentsOf: Array(repeating: .baseEnd, count: 25))
       order.append(contentsOf: Array(repeating: .reciprocalEnd, count: 25))
@@ -410,10 +411,10 @@ public struct Runway: Record {
   }
 
   private enum CodingKeys: String, CodingKey {
-    case identification, length, width, materials, condition, treatment, pavementClassification,
+    case identification, lengthFt, widthFt, materials, condition, treatment, pavementClassification,
       edgeLightsIntensity, baseEnd, reciprocalEnd, lengthSource, lengthSourceDate,
-      singleWheelWeightBearingCapacity, dualWheelWeightBearingCapacity,
-      tandemDualWheelWeightBearingCapacity, doubleTandemDualWheelWeightBearingCapacity
+      singleWheelWeightBearingCapacityKlb, dualWheelWeightBearingCapacityKlb,
+      tandemDualWheelWeightBearingCapacityKlb, doubleTandemDualWheelWeightBearingCapacityKlb
 
     case remarks
   }

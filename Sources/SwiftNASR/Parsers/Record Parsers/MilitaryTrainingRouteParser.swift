@@ -247,8 +247,8 @@ class FixedWidthMilitaryTrainingRouteParser: LayoutDataParser {
       segmentDescriptionLeading: leadingDesc,
       segmentDescriptionLeaving: leavingDesc,
       navaidIdentifier: navaidIdent.isEmpty ? nil : navaidIdent,
-      navaidBearing: UInt(navaidBearingStr),
-      navaidDistance: UInt(navaidDistanceStr),
+      navaidBearingDeg: UInt(navaidBearingStr),
+      navaidDistanceNM: UInt(navaidDistanceStr),
       position: position,
       sequenceNumber: UInt(seqStr)
     )
@@ -326,7 +326,7 @@ class FixedWidthMilitaryTrainingRouteParser: LayoutDataParser {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
         // Convert decimal degrees to arc-seconds (multiply by 3600)
-        return Location(latitude: Float(lat * 3600), longitude: Float(lon * 3600))
+        return Location(latitudeArcsec: Float(lat * 3600), longitudeArcsec: Float(lon * 3600))
       case (.none, .none):
         return nil
       default:

@@ -155,16 +155,16 @@ public struct Fix: ParentRecord {
     public let navaidType: Navaid.FacilityType
 
     /// The radial or bearing from the navaid (degrees).
-    public let radial: UInt?
+    public let radialDeg: UInt?
 
     /// The DME distance from the navaid (nautical miles).
-    public let distance: Float?
+    public let distanceNM: Float?
 
     /// Raw description string (e.g., "ABC*V*090/12.5").
     public let rawDescription: String
 
     public enum CodingKeys: String, CodingKey {
-      case navaidId, navaidType, radial, distance, rawDescription
+      case navaidId, navaidType, radialDeg, distanceNM, rawDescription
     }
   }
 

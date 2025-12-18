@@ -158,15 +158,15 @@ class FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
   private func makeLocation(latitude: Float?, longitude: Float?) -> Location? {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
-        return Location(latitude: Double(lat), longitude: Double(lon))
+        return Location(latitudeDeg: Double(lat), longitudeDeg: Double(lon))
       case (.none, .none):
         return nil
       case let (.some(lat), .none):
         // Log but don't throw - this parser is more lenient due to data quality issues
-        return Location(latitude: Double(lat), longitude: nil)
+        return Location(latitudeDeg: Double(lat), longitudeDeg: nil)
       case let (.none, .some(lon)):
         // Log but don't throw - this parser is more lenient due to data quality issues
-        return Location(latitude: nil, longitude: Double(lon))
+        return Location(latitudeDeg: nil, longitudeDeg: Double(lon))
     }
   }
 

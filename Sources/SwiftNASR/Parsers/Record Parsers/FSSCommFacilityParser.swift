@@ -135,7 +135,7 @@ class FixedWidthFSSCommFacilityParser: Parser {
           // Convert MHz to kHz (multiply by 1000)
           if let mhz = Double(freqStr) {
             let khz = UInt(mhz * 1000)
-            frequencies.append(FSSCommFacility.Frequency(frequency: khz, use: use))
+            frequencies.append(FSSCommFacility.Frequency(frequencyKHz: khz, use: use))
           }
         }
       }
@@ -248,7 +248,7 @@ class FixedWidthFSSCommFacilityParser: Parser {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
         // Convert decimal degrees to arc-seconds (multiply by 3600)
-        return Location(latitude: Float(lat * 3600), longitude: Float(lon * 3600))
+        return Location(latitudeArcsec: Float(lat * 3600), longitudeArcsec: Float(lon * 3600))
       case (.none, .none):
         return nil
       default:

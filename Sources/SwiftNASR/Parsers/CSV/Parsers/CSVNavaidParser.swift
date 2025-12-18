@@ -168,9 +168,9 @@ class CSVNavaidParser: CSVParser {
 
       // Parse location - convert from decimal degrees to arc-seconds
       let position = Location(
-        latitude: (transformedValues[20] as? Float ?? 0) * 3600,
-        longitude: (transformedValues[21] as? Float ?? 0) * 3600,
-        elevation: transformedValues[25] as? Float
+        latitudeArcsec: (transformedValues[20] as? Float ?? 0) * 3600,
+        longitudeArcsec: (transformedValues[21] as? Float ?? 0) * 3600,
+        elevationFtMSL: transformedValues[25] as? Float
       )
 
       // Parse TACAN position if available - convert from decimal degrees to arc-seconds
@@ -179,13 +179,17 @@ class CSVNavaidParser: CSVParser {
           let TACANLon = transformedValues[24] as? Float,
           TACANLat != 0 || TACANLon != 0
         {
-          return Location(latitude: TACANLat * 3600, longitude: TACANLon * 3600, elevation: nil)
+          return Location(
+            latitudeArcsec: TACANLat * 3600,
+            longitudeArcsec: TACANLon * 3600,
+            elevationFtMSL: nil
+          )
         }
         return nil
       }()
 
       // Parse mag var from transformer output (already parsed as float)
-      let magneticVariation: Int? = {
+      let magneticVariationDeg: Int? = {
         if let magVar = transformedValues[26] as? Float {
           let hemisphere = mappedFields[27]
           if !hemisphere.isEmpty {
@@ -199,7 +203,7 @@ class CSVNavaidParser: CSVParser {
 
       // Convert fan marker bearing to Bearing<UInt>
       let fanMarkerMajorBearing = (transformedValues[38] as? UInt).map { value in
-        Bearing(value, reference: .magnetic, magneticVariation: magneticVariation ?? 0)
+        Bearing(value, reference: .magnetic, magneticVariationDeg: magneticVariationDeg ?? 0)
       }
 
       let navaid = Navaid(
@@ -221,15 +225,15 @@ class CSVNavaidParser: CSVParser {
         position: position,
         TACANPosition: TACANPosition,
         surveyAccuracy: transformedValues[22] as? Navaid.SurveyAccuracy,
-        magneticVariation: magneticVariation,
+        magneticVariationDeg: magneticVariationDeg,
         magneticVariationEpoch: transformedValues[28] as? DateComponents,
         simultaneousVoice: transformedValues[29] as? Bool,
-        powerOutput: transformedValues[30] as? UInt,
+        powerOutputW: transformedValues[30] as? UInt,
         automaticVoiceId: transformedValues[31] as? Bool,
         monitoringCategory: transformedValues[32] as? Navaid.MonitoringCategory,
         radioVoiceCall: transformedValues[33] as? String,
         tacanChannel: transformedValues[34] as? Navaid.TACANChannel,
-        frequency: transformedValues[35] as? UInt,
+        frequencyKHz: transformedValues[35] as? UInt,
         beaconIdentifier: transformedValues[36] as? String,
         fanMarkerType: transformedValues[37] as? Navaid.FanMarkerType,
         fanMarkerMajorBearing: fanMarkerMajorBearing,

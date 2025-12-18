@@ -196,7 +196,7 @@ class FixedWidthAirwayParser: FixedWidthParser {
   ) throws -> Location? {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
-        return Location(latitude: lat, longitude: lon)
+        return Location(latitudeArcsec: lat, longitudeArcsec: lon)
       case (.none, .none):
         return nil
       default:
@@ -225,23 +225,23 @@ class FixedWidthAirwayParser: FixedWidthParser {
 
     // Create altitude info
     let altitudes = Airway.SegmentAltitudes(
-      MEA: transformedValues[13] as? UInt,
+      MEAFt: transformedValues[13] as? UInt,
       MEADirection: try parseBoundDirection(transformedValues[14] as? String),
-      MEAOpposite: transformedValues[15] as? UInt,
+      MEAOppositeFt: transformedValues[15] as? UInt,
       MEAOppositeDirection: try parseBoundDirection(transformedValues[16] as? String),
-      MAA: transformedValues[17] as? UInt,
-      MOCA: transformedValues[18] as? UInt,
-      MCA: transformedValues[21] as? UInt,
+      MAAFt: transformedValues[17] as? UInt,
+      MOCAFt: transformedValues[18] as? UInt,
+      MCAFt: transformedValues[21] as? UInt,
       MCADirection: try parseBoundDirection(transformedValues[22] as? String),
-      MCAOpposite: transformedValues[23] as? UInt,
+      MCAOppositeFt: transformedValues[23] as? UInt,
       MCAOppositeDirection: try parseBoundDirection(transformedValues[24] as? String),
-      GNSS_MEA: transformedValues[31] as? UInt,
+      GNSS_MEAFt: transformedValues[31] as? UInt,
       GNSS_MEADirection: try parseBoundDirection(transformedValues[32] as? String),
-      GNSS_MEAOpposite: transformedValues[33] as? UInt,
+      GNSS_MEAOppositeFt: transformedValues[33] as? UInt,
       GNSS_MEAOppositeDirection: try parseBoundDirection(transformedValues[34] as? String),
-      DME_MEA: transformedValues[36] as? UInt,
+      DME_MEAFt: transformedValues[36] as? UInt,
       DME_MEADirection: try parseBoundDirection(transformedValues[37] as? String),
-      DME_MEAOpposite: transformedValues[38] as? UInt,
+      DME_MEAOppositeFt: transformedValues[38] as? UInt,
       DME_MEAOppositeDirection: try parseBoundDirection(transformedValues[39] as? String)
     )
 
@@ -256,7 +256,7 @@ class FixedWidthAirwayParser: FixedWidthParser {
         stateCode: nil,
         ICAORegionCode: nil,
         navaidId: nil,
-        minimumReceptionAltitude: nil
+        minimumReceptionAltitudeFt: nil
       )
 
     // Create segment
@@ -266,9 +266,9 @@ class FixedWidthAirwayParser: FixedWidthParser {
       point: point,
       changeoverPoint: changeoverPoints[segmentKey],
       altitudes: altitudes,
-      distanceToNext: transformedValues[12] as? Float,
-      magneticCourse: transformedValues[10] as? Float,
-      magneticCourseOpposite: transformedValues[11] as? Float,
+      distanceToNextNM: transformedValues[12] as? Float,
+      magneticCourseDeg: transformedValues[10] as? Float,
+      magneticCourseOppositeDeg: transformedValues[11] as? Float,
       trackAngleOutbound: try (transformedValues[5] as? String).map {
         try TrackAnglePair(parsing: $0)
       },
@@ -312,7 +312,7 @@ class FixedWidthAirwayParser: FixedWidthParser {
       stateCode: transformedValues[7] as? String,
       ICAORegionCode: transformedValues[8] as? String,
       navaidId: transformedValues[12] as? String,
-      minimumReceptionAltitude: transformedValues[11] as? UInt
+      minimumReceptionAltitudeFt: transformedValues[11] as? UInt
     )
 
     points[segmentKey] = point
@@ -324,9 +324,9 @@ class FixedWidthAirwayParser: FixedWidthParser {
         point: point,
         changeoverPoint: segment.changeoverPoint,
         altitudes: segment.altitudes,
-        distanceToNext: segment.distanceToNext,
-        magneticCourse: segment.magneticCourse,
-        magneticCourseOpposite: segment.magneticCourseOpposite,
+        distanceToNextNM: segment.distanceToNextNM,
+        magneticCourseDeg: segment.magneticCourseDeg,
+        magneticCourseOppositeDeg: segment.magneticCourseOppositeDeg,
         trackAngleOutbound: segment.trackAngleOutbound,
         trackAngleInbound: segment.trackAngleInbound,
         hasSignalCoverageGap: segment.hasSignalCoverageGap,
@@ -357,7 +357,7 @@ class FixedWidthAirwayParser: FixedWidthParser {
     )
 
     let changeoverPoint = Airway.ChangeoverPoint(
-      distance: nil,  // Distance comes from AWY1 record
+      distanceNM: nil,  // Distance comes from AWY1 record
       navaidName: transformedValues[4] as? String,
       navaidType: transformedValues[5] as? String,
       position: copPosition,
@@ -373,9 +373,9 @@ class FixedWidthAirwayParser: FixedWidthParser {
         point: segment.point,
         changeoverPoint: changeoverPoint,
         altitudes: segment.altitudes,
-        distanceToNext: segment.distanceToNext,
-        magneticCourse: segment.magneticCourse,
-        magneticCourseOpposite: segment.magneticCourseOpposite,
+        distanceToNextNM: segment.distanceToNextNM,
+        magneticCourseDeg: segment.magneticCourseDeg,
+        magneticCourseOppositeDeg: segment.magneticCourseOppositeDeg,
         trackAngleOutbound: segment.trackAngleOutbound,
         trackAngleInbound: segment.trackAngleInbound,
         hasSignalCoverageGap: segment.hasSignalCoverageGap,

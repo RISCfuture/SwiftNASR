@@ -116,8 +116,8 @@ class CSVWeatherStationParser: CSVParser {
         isNavaidAssociated: transformedValues[7] as? Bool,
         position: position,
         surveyMethod: transformedValues[11] as? SurveyMethod,
-        frequency: nil,  // Not directly in CSV (would need to parse from another source)
-        secondaryFrequency: nil,
+        frequencyKHz: nil,  // Not directly in CSV (would need to parse from another source)
+        secondaryFrequencyKHz: nil,
         phoneNumber: transformedValues[12] as? String,
         secondaryPhoneNumber: transformedValues[13] as? String,
         airportSiteNumber: transformedValues[14] as? String
@@ -148,7 +148,11 @@ class CSVWeatherStationParser: CSVParser {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
         // Convert decimal degrees to arc-seconds (multiply by 3600)
-        return Location(latitude: lat * 3600, longitude: lon * 3600, elevation: elevation)
+        return Location(
+          latitudeArcsec: lat * 3600,
+          longitudeArcsec: lon * 3600,
+          elevationFtMSL: elevation
+        )
       case (.none, .none):
         return nil
       default:

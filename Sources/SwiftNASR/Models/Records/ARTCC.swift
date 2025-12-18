@@ -111,7 +111,7 @@ public struct ARTCC: ParentRecord {
   public struct CommFrequency: Record {
 
     /// The radio frequency, in kHz.
-    public let frequency: UInt
+    public let frequencyKHz: UInt
 
     /// The altitude blocks that this frequency is used for.
     public let altitude: [Altitude]
@@ -134,13 +134,13 @@ public struct ARTCC: ParentRecord {
     var findAirportById: (@Sendable (_ airportId: String) async -> Airport?)!
 
     init(
-      frequency: UInt,
+      frequencyKHz: UInt,
       altitude: [Altitude],
       specialUsageName: String?,
       remoteOutletFrequencyCharted: Bool?,
       associatedAirportCode: String?
     ) {
-      self.frequency = frequency
+      self.frequencyKHz = frequencyKHz
       self.altitude = altitude
       self.specialUsageName = specialUsageName
       self.remoteOutletFrequencyCharted = remoteOutletFrequencyCharted
@@ -162,7 +162,7 @@ public struct ARTCC: ParentRecord {
     }
 
     enum CodingKeys: String, CodingKey {
-      case frequency, altitude, specialUsageName, remoteOutletFrequencyCharted,
+      case frequencyKHz, altitude, specialUsageName, remoteOutletFrequencyCharted,
         associatedAirportCode, remarks
     }
 

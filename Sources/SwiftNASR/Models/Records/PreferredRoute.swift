@@ -100,10 +100,10 @@ public struct PreferredRoute: Record, Identifiable {
   /// Radial and optional distance from a navaid.
   public enum RadialDistance: Hashable, Sendable, Codable {
     /// Radial only (bearing in degrees).
-    case radial(UInt16)
+    case radialDeg(UInt16)
 
-    /// Radial and distance from navaid.
-    case radialDistance(radial: UInt16, distance: UInt16)
+    /// Radial (degrees) and distance (nautical miles) from navaid.
+    case radialDistanceDegNM(radialDeg: UInt16, distanceNM: UInt16)
   }
 
   // MARK: - Nested Types

@@ -25,8 +25,8 @@ class CSVAirportParserSpec: AsyncSpec {
             expect(firstAirport.LID).notTo(beEmpty())
             expect(firstAirport.name).notTo(beEmpty())
             expect(firstAirport.city).notTo(beEmpty())
-            expect(firstAirport.referencePoint.latitude).notTo(equal(0))
-            expect(firstAirport.referencePoint.longitude).notTo(equal(0))
+            expect(firstAirport.referencePoint.latitudeArcsec).notTo(equal(0))
+            expect(firstAirport.referencePoint.longitudeArcsec).notTo(equal(0))
           }
         }
 
@@ -103,13 +103,15 @@ class CSVAirportParserSpec: AsyncSpec {
           try await parser.parse(data: Data())
 
           // Find an airport with elevation
-          let airportWithElev = parser.airports.values.first { $0.referencePoint.elevation != nil }
+          let airportWithElev = parser.airports.values.first {
+            $0.referencePoint.elevationFtMSL != nil
+          }
 
           if let airport = airportWithElev {
-            expect(airport.referencePoint.elevation).notTo(beNil())
+            expect(airport.referencePoint.elevationFtMSL).notTo(beNil())
             // Elevation should be reasonable (between -500 and 20000 feet)
-            expect(airport.referencePoint.elevation).to(beGreaterThan(-500))
-            expect(airport.referencePoint.elevation).to(beLessThan(20000))
+            expect(airport.referencePoint.elevationFtMSL).to(beGreaterThan(-500))
+            expect(airport.referencePoint.elevationFtMSL).to(beLessThan(20000))
           }
         }
       }

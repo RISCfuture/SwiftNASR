@@ -10,8 +10,8 @@
 ### Dimensions and Geographics
 
 - ``heading``
-- ``visualGlidepath``
-- ``gradient``
+- ``visualGlidepathHundredthsDeg``
+- ``gradientPct``
 - ``LAHSO``
 - ``controllingObject-swift.property``
 
@@ -23,8 +23,8 @@
 
 ### Elevation
 
-- ``thresholdCrossingHeight``
-- ``touchdownZoneElevation``
+- ``thresholdCrossingHeightFtAGL``
+- ``touchdownZoneElevationFtMSL``
 - ``elevationSource``
 - ``elevationSourceDate``
 - ``touchdownZoneElevationSource``
@@ -33,7 +33,7 @@
 ### Displaced Threshold
 
 - ``displacedThreshold``
-- ``thresholdDisplacement``
+- ``thresholdDisplacementFt``
 - ``displacedThresholdPositionSource``
 - ``displacedThresholdPositionSourceDate``
 - ``displacedThresholdElevationSource``
@@ -41,10 +41,10 @@
 
 ### Declared Distances
 
-- ``TORA``
-- ``TODA``
-- ``ASDA``
-- ``LDA``
+- ``TORAFt``
+- ``TODAFt``
+- ``ASDAFt``
+- ``LDAFt``
 
 ### Equipment
 

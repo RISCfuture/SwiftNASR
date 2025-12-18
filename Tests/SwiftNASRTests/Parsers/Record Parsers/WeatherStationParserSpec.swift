@@ -40,11 +40,11 @@ class WeatherStationParserSpec: AsyncSpec {
         expect(station00U.city).to(equal("HARDIN"))
         expect(station00U.isCommissioned).to(beTrue())
         // Position stored as arc-seconds: 45.7453194 * 3600 = 164683.15
-        expect(station00U.position?.latitude).to(beCloseTo(164683.15, within: 1.0))
+        expect(station00U.position?.latitudeArcsec).to(beCloseTo(164683.15, within: 1.0))
         // -107.6598139 * 3600 = -387575.33
-        expect(station00U.position?.longitude).to(beCloseTo(-387575.33, within: 1.0))
-        expect(station00U.position?.elevation).to(beCloseTo(3085.0, within: 0.1))
-        expect(station00U.frequency).to(equal(118325))
+        expect(station00U.position?.longitudeArcsec).to(beCloseTo(-387575.33, within: 1.0))
+        expect(station00U.position?.elevationFtMSL).to(beCloseTo(3085.0, within: 0.1))
+        expect(station00U.frequencyKHz).to(equal(118325))
 
         // Verify station with AWOS-3P type
         guard let station04V = stations.first(where: { $0.stationId == "04V" }) else {

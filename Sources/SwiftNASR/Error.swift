@@ -172,7 +172,7 @@ extension Error: LocalizedError {
       case let .unknownFrequencyFieldId(fieldId, frequency, ARTCC):
         return String(
           localized:
-            "Unknown field ID ‘\(fieldId)’ for \(frequency.frequency) kHz at ‘\(ARTCC.code) \(ARTCC.locationName)’.",
+            "Unknown field ID '\(fieldId)' for \(frequency.frequencyKHz) kHz at '\(ARTCC.code) \(ARTCC.locationName)'.",
           comment: "failure reason"
         )
       case .invalidFrequency(let string):

@@ -62,8 +62,8 @@ class MiscActivityAreaParserSpec: AsyncSpec {
         let area = areas.first { $0.MAAId == "AA0001" }
         expect(area?.navaidIdentifier).to(equal("SJC"))
         expect(area?.navaidFacilityType).to(equal("VORTAC"))
-        expect(area?.navaidAzimuth).to(beCloseTo(90.0, within: 0.1))
-        expect(area?.navaidDistance).to(beCloseTo(10.5, within: 0.1))
+        expect(area?.navaidAzimuthDeg).to(beCloseTo(90.0, within: 0.1))
+        expect(area?.navaidDistanceNM).to(beCloseTo(10.5, within: 0.1))
       }
 
       it("parses coordinates") {
@@ -78,8 +78,8 @@ class MiscActivityAreaParserSpec: AsyncSpec {
 
         // 37°22'01.5"N ≈ 134521.5 arc-seconds, 122°03'45.8"W ≈ -439425.8 arc-seconds
         let area = areas.first { $0.MAAId == "AA0001" }
-        expect(area?.position?.latitude).to(beCloseTo(134522, within: 10))
-        expect(area?.position?.longitude).to(beCloseTo(-439426, within: 10))
+        expect(area?.position?.latitudeArcsec).to(beCloseTo(134522, within: 10))
+        expect(area?.position?.longitudeArcsec).to(beCloseTo(-439426, within: 10))
       }
 
       it("parses altitude limits") {
@@ -97,7 +97,7 @@ class MiscActivityAreaParserSpec: AsyncSpec {
         expect(area?.maximumAltitude?.datum).to(equal(.MSL))
         expect(area?.minimumAltitude?.value).to(equal(3000))
         expect(area?.minimumAltitude?.datum).to(equal(.AGL))
-        expect(area?.areaRadius).to(equal(5.0))
+        expect(area?.areaRadiusNM).to(equal(5.0))
         expect(area?.isShownOnVFRChart).to(beTrue())
       }
 
@@ -114,7 +114,9 @@ class MiscActivityAreaParserSpec: AsyncSpec {
         let area = areas.first { $0.MAAId == "AA0001" }
         expect(area?.polygonCoordinates.count).to(equal(4))
         // 37°25'00"N ≈ 134700 arc-seconds
-        expect(area?.polygonCoordinates.first?.position?.latitude).to(beCloseTo(134700, within: 10))
+        expect(area?.polygonCoordinates.first?.position?.latitudeArcsec).to(
+          beCloseTo(134700, within: 10)
+        )
       }
 
       it("parses times of use") {
@@ -161,7 +163,7 @@ class MiscActivityAreaParserSpec: AsyncSpec {
         expect(area?.contactFacilities.count).to(equal(1))
         expect(area?.contactFacilities.first?.facilityId).to(equal("NCT"))
         expect(area?.contactFacilities.first?.facilityName).to(equal("NORCAL APPROACH"))
-        expect(area?.contactFacilities.first?.commercialFrequency).to(equal(124000))
+        expect(area?.contactFacilities.first?.commercialFrequencyKHz).to(equal(124000))
         expect(area?.contactFacilities.first?.showCommercialOnChart).to(beTrue())
       }
 
@@ -210,7 +212,7 @@ class MiscActivityAreaParserSpec: AsyncSpec {
         expect(area).toNot(beNil())
         expect(area?.areaType).to(equal(.spaceLaunch))
         expect(area?.nearestAirportId).to(equal("SMX"))
-        expect(area?.nearestAirportDistance).to(beCloseTo(15.5, within: 0.1))
+        expect(area?.nearestAirportDistanceNM).to(beCloseTo(15.5, within: 0.1))
         expect(area?.nearestAirportDirection).to(equal(.northwest))
       }
 

@@ -21,8 +21,8 @@
 - ``navaidFacilityTypeCode``
 - ``navaidFacilityType``
 - ``navaidName``
-- ``azimuthFromNavaid``
-- ``distanceFromNavaid``
+- ``azimuthFromNavaidDeg``
+- ``distanceFromNavaidNM``
 
 ### Associated Airport
 
@@ -32,7 +32,7 @@
 ### Area Definition
 
 - ``maxAltitude``
-- ``radius``
+- ``radiusNM``
 - ``additionalDescription``
 - ``sectionalChartingRequired``
 - ``publishedInAFD``

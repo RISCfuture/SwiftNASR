@@ -120,9 +120,8 @@ class FixedWidthARTCCParser: FixedWidthParser {
     var location: Location?
     if transformedValues[9] != nil && transformedValues[11] != nil {
       location = Location(
-        latitude: transformedValues[9] as! Float,
-        longitude: transformedValues[11] as! Float,
-        elevation: nil
+        latitudeArcsec: transformedValues[9] as! Float,
+        longitudeArcsec: transformedValues[11] as! Float
       )
     }
 
@@ -152,7 +151,7 @@ class FixedWidthARTCCParser: FixedWidthParser {
 
     try updateARTCC(transformedValues) { center in
       let frequency = ARTCC.CommFrequency(
-        frequency: transformedValues[4] as! UInt,
+        frequencyKHz: transformedValues[4] as! UInt,
         altitude: transformedValues[5] as! [ARTCC.CommFrequency.Altitude],
         specialUsageName: transformedValues[6] as! String?,
         remoteOutletFrequencyCharted: transformedValues[7] as! Bool?,
@@ -168,7 +167,7 @@ class FixedWidthARTCCParser: FixedWidthParser {
     try updateARTCC(transformedValues) { center in
       guard
         let freqIndex = center.frequencies.firstIndex(where: {
-          $0.frequency == transformedValues[4] as! UInt
+          $0.frequencyKHz == transformedValues[4] as! UInt
         })
       else {
         throw Error.unknownARTCCFrequency(transformedValues[4] as! UInt, ARTCC: center)

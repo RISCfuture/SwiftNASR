@@ -41,10 +41,10 @@ class AirwayParserSpec: AsyncSpec {
         // Verify first segment of A16
         if let firstSegment = a16.segments.first {
           expect(firstSegment.sequenceNumber).to(equal(10))
-          expect(firstSegment.altitudes.MEA).to(equal(3000))
-          expect(firstSegment.distanceToNext).to(beCloseTo(22.7, within: 0.1))
-          expect(firstSegment.magneticCourse).to(beCloseTo(53.79, within: 0.01))
-          expect(firstSegment.magneticCourseOpposite).to(beCloseTo(234.2, within: 0.01))
+          expect(firstSegment.altitudes.MEAFt).to(equal(3000))
+          expect(firstSegment.distanceToNextNM).to(beCloseTo(22.7, within: 0.1))
+          expect(firstSegment.magneticCourseDeg).to(beCloseTo(53.79, within: 0.01))
+          expect(firstSegment.magneticCourseOppositeDeg).to(beCloseTo(234.2, within: 0.01))
 
           // Note: Changeover points come from AWY3 records, which aren't in mock data
           // So we don't expect changeover point to be present
@@ -62,8 +62,8 @@ class AirwayParserSpec: AsyncSpec {
         if let firstSegment = b9.segments.first {
           expect(firstSegment.point.name).to(equal("DEEDS"))
           expect(firstSegment.point.pointType).to(equal(.reportingPoint))
-          expect(firstSegment.distanceToNext).to(beCloseTo(76.1, within: 0.1))
-          expect(firstSegment.altitudes.MEA).to(equal(2000))
+          expect(firstSegment.distanceToNextNM).to(beCloseTo(76.1, within: 0.1))
+          expect(firstSegment.altitudes.MEAFt).to(equal(2000))
         }
 
         // Verify G13 airway
@@ -76,7 +76,7 @@ class AirwayParserSpec: AsyncSpec {
 
         if let firstSegment = g13.segments.first {
           expect(firstSegment.point.name).to(equal("ZOLMN"))
-          expect(firstSegment.altitudes.MEA).to(equal(2000))
+          expect(firstSegment.altitudes.MEAFt).to(equal(2000))
         }
       }
     }

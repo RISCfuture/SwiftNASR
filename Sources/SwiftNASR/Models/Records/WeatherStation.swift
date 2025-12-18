@@ -38,10 +38,10 @@ public struct WeatherStation: ParentRecord {
   public let surveyMethod: SurveyMethod?
 
   /// The primary frequency for receiving weather broadcasts (kHz).
-  public let frequency: UInt?
+  public let frequencyKHz: UInt?
 
   /// The secondary frequency for receiving weather broadcasts (kHz).
-  public let secondaryFrequency: UInt?
+  public let secondaryFrequencyKHz: UInt?
 
   /// The primary phone number for the station.
   public let phoneNumber: String?
@@ -117,7 +117,7 @@ public struct WeatherStation: ParentRecord {
     case stationId, type, stateCode, city, country
     case isCommissioned, commissionDate, isNavaidAssociated
     case position, surveyMethod
-    case frequency, secondaryFrequency, phoneNumber, secondaryPhoneNumber
+    case frequencyKHz, secondaryFrequencyKHz, phoneNumber, secondaryPhoneNumber
     case airportSiteNumber, remarks
   }
 }

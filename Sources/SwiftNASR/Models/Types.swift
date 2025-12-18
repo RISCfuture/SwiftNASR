@@ -27,7 +27,7 @@ public struct Bearing<T: Codable & Equatable & Hashable & Sendable>: Record, Equ
   public let reference: Reference
 
   /// The magnetic variation at the location (degrees; positive is east).
-  public let magneticVariation: Int
+  public let magneticVariationDeg: Int
 
   // MARK: - Initialization
 
@@ -35,11 +35,11 @@ public struct Bearing<T: Codable & Equatable & Hashable & Sendable>: Record, Equ
   /// - Parameters:
   ///   - value: The bearing value in degrees.
   ///   - reference: Whether the bearing is referenced to true or magnetic north.
-  ///   - magneticVariation: The magnetic variation at the location (degrees; east is positive).
-  public init(_ value: T, reference: Reference, magneticVariation: Int) {
+  ///   - magneticVariationDeg: The magnetic variation at the location (degrees; east is positive).
+  public init(_ value: T, reference: Reference, magneticVariationDeg: Int) {
     self.value = value
     self.reference = reference
-    self.magneticVariation = magneticVariation
+    self.magneticVariationDeg = magneticVariationDeg
   }
 
   // MARK: - Nested Types
@@ -60,8 +60,8 @@ extension Bearing where T: BinaryInteger {
   /// If this bearing is already referenced to true north, returns itself unchanged.
   public func asTrueBearing() -> Bearing<T> {
     guard reference == .magnetic else { return self }
-    let converted = normalize(Int(value) + magneticVariation)
-    return Bearing(T(converted), reference: .true, magneticVariation: magneticVariation)
+    let converted = normalize(Int(value) + magneticVariationDeg)
+    return Bearing(T(converted), reference: .true, magneticVariationDeg: magneticVariationDeg)
   }
 
   /// Returns this bearing converted to magnetic north reference.
@@ -69,8 +69,8 @@ extension Bearing where T: BinaryInteger {
   /// If this bearing is already referenced to magnetic north, returns itself unchanged.
   public func asMagneticBearing() -> Bearing<T> {
     guard reference == .true else { return self }
-    let converted = normalize(Int(value) - magneticVariation)
-    return Bearing(T(converted), reference: .magnetic, magneticVariation: magneticVariation)
+    let converted = normalize(Int(value) - magneticVariationDeg)
+    return Bearing(T(converted), reference: .magnetic, magneticVariationDeg: magneticVariationDeg)
   }
 
   private func normalize(_ degrees: Int) -> Int {
@@ -86,8 +86,8 @@ extension Bearing where T: BinaryFloatingPoint {
   /// If this bearing is already referenced to true north, returns itself unchanged.
   public func asTrueBearing() -> Bearing<T> {
     guard reference == .magnetic else { return self }
-    let converted = normalize(value + T(magneticVariation))
-    return Bearing(converted, reference: .true, magneticVariation: magneticVariation)
+    let converted = normalize(value + T(magneticVariationDeg))
+    return Bearing(converted, reference: .true, magneticVariationDeg: magneticVariationDeg)
   }
 
   /// Returns this bearing converted to magnetic north reference.
@@ -95,8 +95,8 @@ extension Bearing where T: BinaryFloatingPoint {
   /// If this bearing is already referenced to magnetic north, returns itself unchanged.
   public func asMagneticBearing() -> Bearing<T> {
     guard reference == .true else { return self }
-    let converted = normalize(value - T(magneticVariation))
-    return Bearing(converted, reference: .magnetic, magneticVariation: magneticVariation)
+    let converted = normalize(value - T(magneticVariationDeg))
+    return Bearing(converted, reference: .magnetic, magneticVariationDeg: magneticVariationDeg)
   }
 
   private func normalize(_ degrees: T) -> T {
@@ -115,30 +115,30 @@ extension Bearing where T: BinaryFloatingPoint {
 public struct Location: Record, Equatable, Hashable, Sendable {
 
   /// The latitude (arc-seconds; positive is north).
-  public let latitude: Float
+  public let latitudeArcsec: Float
 
   /// The longitude (arc-seconds; positive is east).
-  public let longitude: Float
+  public let longitudeArcsec: Float
 
   /// The elevation (feet MSL).
-  public let elevation: Float?
+  public let elevationFtMSL: Float?
 
   /// Creates a location from arc-seconds coordinates.
-  public init(latitude: Float, longitude: Float, elevation: Float? = nil) {
-    self.latitude = latitude
-    self.longitude = longitude
-    self.elevation = elevation
+  public init(latitudeArcsec: Float, longitudeArcsec: Float, elevationFtMSL: Float? = nil) {
+    self.latitudeArcsec = latitudeArcsec
+    self.longitudeArcsec = longitudeArcsec
+    self.elevationFtMSL = elevationFtMSL
   }
 
   /// Creates a location from decimal degrees coordinates.
-  public init(latitude: Double?, longitude: Double?, elevation: Float? = nil) {
-    self.latitude = latitude.map { Float($0 * 3600) } ?? 0
-    self.longitude = longitude.map { Float($0 * 3600) } ?? 0
-    self.elevation = elevation
+  public init(latitudeDeg: Double?, longitudeDeg: Double?, elevationFtMSL: Float? = nil) {
+    self.latitudeArcsec = latitudeDeg.map { Float($0 * 3600) } ?? 0
+    self.longitudeArcsec = longitudeDeg.map { Float($0 * 3600) } ?? 0
+    self.elevationFtMSL = elevationFtMSL
   }
 
   private enum CodingKeys: String, CodingKey {
-    case latitude, longitude, elevation
+    case latitudeArcsec, longitudeArcsec, elevationFtMSL
   }
 }
 
@@ -218,14 +218,14 @@ public struct Altitude: Record, Equatable, Hashable, Sendable {
  */
 public struct TrackAnglePair: Record, Equatable, Hashable, Sendable {
   /// The primary track angle (degrees, 0-360).
-  public let primary: UInt16
+  public let primaryDeg: UInt16
 
   /// The reciprocal track angle (degrees, 0-360).
-  public let reciprocal: UInt16
+  public let reciprocalDeg: UInt16
 
-  public init(primary: UInt16, reciprocal: UInt16) {
-    self.primary = primary
-    self.reciprocal = reciprocal
+  public init(primaryDeg: UInt16, reciprocalDeg: UInt16) {
+    self.primaryDeg = primaryDeg
+    self.reciprocalDeg = reciprocalDeg
   }
 
   /// Parses a track angle pair from format "NNN/NNN".
@@ -235,14 +235,14 @@ public struct TrackAnglePair: Record, Equatable, Hashable, Sendable {
     guard parts.count == 2 else {
       throw ParserError.invalidValue(string)
     }
-    guard let primary = UInt16(parts[0]), primary <= 360 else {
+    guard let primaryDeg = UInt16(parts[0]), primaryDeg <= 360 else {
       throw ParserError.invalidValue(string)
     }
-    guard let reciprocal = UInt16(parts[1]), reciprocal <= 360 else {
+    guard let reciprocalDeg = UInt16(parts[1]), reciprocalDeg <= 360 else {
       throw ParserError.invalidValue(string)
     }
-    self.primary = primary
-    self.reciprocal = reciprocal
+    self.primaryDeg = primaryDeg
+    self.reciprocalDeg = reciprocalDeg
   }
 }
 
@@ -253,7 +253,7 @@ public struct TrackAnglePair: Record, Equatable, Hashable, Sendable {
 public struct Offset: Record {
 
   /// The distance from an extended centerline (feet).
-  public let distance: UInt
+  public let distanceFt: UInt
 
   /// The direction from an extended centerline.
   public let direction: Direction

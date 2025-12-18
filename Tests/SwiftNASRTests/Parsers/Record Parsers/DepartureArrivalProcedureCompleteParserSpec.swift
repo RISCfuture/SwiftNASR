@@ -76,8 +76,8 @@ class DepartureArrivalProcedureCompleteParserSpec: AsyncSpec {
         // N40°27'12.3" = 40.4534... degrees × 3600 = 145632.24 arc-seconds
         // W103°45'25.2" = -103.757... degrees × 3600 = -373525.2 arc-seconds
         if let firstPoint = aalle.points.first {
-          expect(firstPoint.position.latitude).to(beCloseTo(145632.24, within: 36))
-          expect(firstPoint.position.longitude).to(beCloseTo(-373525.2, within: 36))
+          expect(firstPoint.position.latitudeArcsec).to(beCloseTo(145632.24, within: 36))
+          expect(firstPoint.position.longitudeArcsec).to(beCloseTo(-373525.2, within: 36))
         }
       }
     }

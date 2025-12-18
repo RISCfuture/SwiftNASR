@@ -228,7 +228,7 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       }
 
       let location = zipOptionals(lat, lon).map { lat, lon in
-        Location(latitude: lat, longitude: lon, elevation: nil)
+        Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: nil)
       }
 
       let (navaid, navaidType) =
@@ -290,18 +290,16 @@ class FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       FSS.DirectionFindingEquipment(
         type: type,
         location: Location(
-          latitude: transformedValues[35] as! Float,
-          longitude: transformedValues[36] as! Float,
-          elevation: nil
+          latitudeArcsec: transformedValues[35] as! Float,
+          longitudeArcsec: transformedValues[36] as! Float
         )
       )
     }
 
     let location = zipOptionals(transformedValues[27], transformedValues[28]).map { lat, lon in
       Location(
-        latitude: lat as! Float,
-        longitude: lon as! Float,
-        elevation: nil
+        latitudeArcsec: lat as! Float,
+        longitudeArcsec: lon as! Float
       )
     }
 

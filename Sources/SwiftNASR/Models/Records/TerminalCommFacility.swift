@@ -287,7 +287,7 @@ public struct TerminalCommFacility: ParentRecord {
   /// Communication frequency and use.
   public struct Frequency: Record {
     /// The frequency (kHz).
-    public let frequency: UInt
+    public let frequencyKHz: UInt
 
     /// Use or purpose of the frequency (e.g., "LCL/P", "GND/P").
     public let use: String?
@@ -296,7 +296,7 @@ public struct TerminalCommFacility: ParentRecord {
     public let sectorization: String?
 
     public enum CodingKeys: String, CodingKey {
-      case frequency, use, sectorization
+      case frequencyKHz, use, sectorization
     }
   }
 
@@ -381,7 +381,7 @@ public struct TerminalCommFacility: ParentRecord {
   /// Satellite airport information.
   public struct SatelliteAirport: Record {
     /// Frequency for satellite airport (kHz).
-    public let frequency: UInt?
+    public let frequencyKHz: UInt?
 
     /// Frequency use (e.g., "APCH/P DEP/P").
     public let frequencyUse: String?
@@ -435,7 +435,7 @@ public struct TerminalCommFacility: ParentRecord {
     public let masterAirportName: String?
 
     public enum CodingKeys: String, CodingKey {
-      case frequency, frequencyUse, airportSiteNumber, airportId
+      case frequencyKHz, frequencyUse, airportSiteNumber, airportId
       case regionCode, stateName, stateCode, city, airportName
       case position, FSSId, FSSName
       case masterAirportSiteNumber, masterAirportRegionCode

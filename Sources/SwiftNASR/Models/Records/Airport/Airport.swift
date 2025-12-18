@@ -85,7 +85,7 @@ public struct Airport: ParentRecord {
   public let elevationDeterminationMethod: SurveyMethod?
 
   /// The variation between magnetic and true north (degrees; positive is east).
-  public let magneticVariation: Int?
+  public let magneticVariationDeg: Int?
 
   /// The epoch date of the World Magnetic Model that was used to determine
   /// the magnetic variation.
@@ -94,21 +94,21 @@ public struct Airport: ParentRecord {
   /// The altitude at which aircraft should fly the traffic pattern (feet AGL).
   /// If there are separate TPAs for separate classes of aircraft, this will be
   /// indicated in the remarks for this field.
-  public let trafficPatternAltitude: Int?
+  public let trafficPatternAltitudeFtAGL: Int?
 
   /// The identifier for the sectional chart this airport appears in.
   public let sectionalChart: String?
 
   /// The distance from the airport to the central business district of the
   /// associated city (nautical miles).
-  public let distanceCityToAirport: UInt?
+  public let distanceCityToAirportNM: UInt?
 
   /// The direction from the airport to the central business district of the
   /// associated city.
   public let directionCityToAirport: Direction?
 
   /// The area of land occupied by this airport (acres).
-  public let landArea: Float?
+  public let landAreaAcres: Float?
 
   /// The source of ARP information.
   public let positionSource: String?
@@ -240,10 +240,10 @@ public struct Airport: ParentRecord {
   public let controlTower: Bool
 
   /// The UNICOM frequency assigned to the airport (in kHz).
-  public let UNICOMFrequency: UInt?
+  public let UNICOMFrequencyKHz: UInt?
 
   /// The common traffic advisory frequency assigned to the airport (in kHz).
-  public let CTAF: UInt?
+  public let CTAFKHz: UInt?
 
   /// Whether this airport has a segmented circle indicating traffic pattern
   /// direction.
@@ -345,13 +345,13 @@ public struct Airport: ParentRecord {
     referencePoint: Location,
     referencePointDeterminationMethod: SurveyMethod,
     elevationDeterminationMethod: SurveyMethod?,
-    magneticVariation: Int?,
+    magneticVariationDeg: Int?,
     magneticVariationEpoch: DateComponents?,
-    trafficPatternAltitude: Int?,
+    trafficPatternAltitudeFtAGL: Int?,
     sectionalChart: String?,
-    distanceCityToAirport: UInt?,
+    distanceCityToAirportNM: UInt?,
     directionCityToAirport: Direction?,
-    landArea: Float?,
+    landAreaAcres: Float?,
     boundaryARTCCId: String?,
     responsibleARTCCId: String,
     tieInFSSOnStation: Bool?,
@@ -380,8 +380,8 @@ public struct Airport: ParentRecord {
     airportLightingSchedule: String?,
     beaconLightingSchedule: String?,
     controlTower: Bool,
-    UNICOMFrequency: UInt?,
-    CTAF: UInt?,
+    UNICOMFrequencyKHz: UInt?,
+    CTAFKHz: UInt?,
     segmentedCircle: Self.AirportMarker?,
     beaconColor: Self.LensColor?,
     hasLandingFee: Bool?,
@@ -428,13 +428,13 @@ public struct Airport: ParentRecord {
     self.referencePoint = referencePoint
     self.referencePointDeterminationMethod = referencePointDeterminationMethod
     self.elevationDeterminationMethod = elevationDeterminationMethod
-    self.magneticVariation = magneticVariation
+    self.magneticVariationDeg = magneticVariationDeg
     self.magneticVariationEpoch = magneticVariationEpoch
-    self.trafficPatternAltitude = trafficPatternAltitude
+    self.trafficPatternAltitudeFtAGL = trafficPatternAltitudeFtAGL
     self.sectionalChart = sectionalChart
-    self.distanceCityToAirport = distanceCityToAirport
+    self.distanceCityToAirportNM = distanceCityToAirportNM
     self.directionCityToAirport = directionCityToAirport
-    self.landArea = landArea
+    self.landAreaAcres = landAreaAcres
     self.boundaryARTCCId = boundaryARTCCId
     self.responsibleARTCCId = responsibleARTCCId
     self.tieInFSSOnStation = tieInFSSOnStation
@@ -463,8 +463,8 @@ public struct Airport: ParentRecord {
     self.airportLightingSchedule = airportLightingSchedule
     self.beaconLightingSchedule = beaconLightingSchedule
     self.controlTower = controlTower
-    self.UNICOMFrequency = UNICOMFrequency
-    self.CTAF = CTAF
+    self.UNICOMFrequencyKHz = UNICOMFrequencyKHz
+    self.CTAFKHz = CTAFKHz
     self.segmentedCircle = segmentedCircle
     self.beaconColor = beaconColor
     self.hasLandingFee = hasLandingFee
@@ -965,8 +965,8 @@ public struct Airport: ParentRecord {
     case ownership, publicUse, owner, manager
 
     case referencePoint, referencePointDeterminationMethod, elevationDeterminationMethod,
-      magneticVariation, magneticVariationEpoch, trafficPatternAltitude, sectionalChart,
-      distanceCityToAirport, directionCityToAirport, landArea
+      magneticVariationDeg, magneticVariationEpoch, trafficPatternAltitudeFtAGL, sectionalChart,
+      distanceCityToAirportNM, directionCityToAirport, landAreaAcres
 
     case boundaryARTCCId, responsibleARTCCId, tieInFSSOnStation, tieInFSSId, alternateFSSId,
       NOTAMIssuerId, NOTAMDAvailable
@@ -980,7 +980,7 @@ public struct Airport: ParentRecord {
     case fuelsAvailable, airframeRepairAvailable, powerplantRepairAvailable, bottledOxygenAvailable,
       bulkOxygenAvailable
 
-    case airportLightingSchedule, beaconLightingSchedule, controlTower, UNICOMFrequency, CTAF,
+    case airportLightingSchedule, beaconLightingSchedule, controlTower, UNICOMFrequencyKHz, CTAFKHz,
       segmentedCircle, beaconColor, hasLandingFee, medicalUse
 
     case basedSingleEngineGA, basedMultiEngineGA, basedJetGA, basedHelicopterGA,
@@ -1003,8 +1003,8 @@ public struct Airport: ParentRecord {
       .manager,
       .referencePoint, .referencePoint, .referencePoint, .referencePoint,
       .referencePointDeterminationMethod, .referencePoint, .elevationDeterminationMethod,
-      .magneticVariation, .magneticVariationEpoch, .trafficPatternAltitude, .sectionalChart,
-      .distanceCityToAirport, .directionCityToAirport, .landArea,
+      .magneticVariationDeg, .magneticVariationEpoch, .trafficPatternAltitudeFtAGL, .sectionalChart,
+      .distanceCityToAirportNM, .directionCityToAirport, .landAreaAcres,
       .boundaryARTCCId, .boundaryARTCCId, .boundaryARTCCId, .responsibleARTCCId,
       .responsibleARTCCId, .responsibleARTCCId, .tieInFSSOnStation, .tieInFSSId, .tieInFSSId,
       .tieInFSSId, .tieInFSSId, .alternateFSSId, .alternateFSSId, .alternateFSSId, .NOTAMIssuerId,
@@ -1016,7 +1016,8 @@ public struct Airport: ParentRecord {
       .lastInformationRequestCompletedDate,
       .fuelsAvailable, .airframeRepairAvailable, .powerplantRepairAvailable,
       .bottledOxygenAvailable, .bulkOxygenAvailable,
-      .airportLightingSchedule, .beaconLightingSchedule, .controlTower, .UNICOMFrequency, .CTAF,
+      .airportLightingSchedule, .beaconLightingSchedule, .controlTower, .UNICOMFrequencyKHz,
+      .CTAFKHz,
       .segmentedCircle, .beaconColor, .hasLandingFee, .medicalUse,
       .basedSingleEngineGA, .basedMultiEngineGA, .basedJetGA, .basedHelicopterGA,
       .basedOperationalGliders, .basedOperationalMilitary, .basedUltralights,
@@ -1033,16 +1034,16 @@ public struct Airport: ParentRecord {
   public enum CodingKeys: String, CodingKey {
     case id, name, LID, ICAOIdentifier, facilityType, faaRegion, FAAFieldOfficeCode, stateCode,
       county, countyStateCode, city, ownership, publicUse, owner, manager, referencePoint,
-      referencePointDeterminationMethod, elevationDeterminationMethod, magneticVariation,
-      magneticVariationEpoch, trafficPatternAltitude, sectionalChart, distanceCityToAirport,
-      directionCityToAirport, landArea, boundaryARTCCId, responsibleARTCCId, tieInFSSOnStation,
+      referencePointDeterminationMethod, elevationDeterminationMethod, magneticVariationDeg,
+      magneticVariationEpoch, trafficPatternAltitudeFtAGL, sectionalChart, distanceCityToAirportNM,
+      directionCityToAirport, landAreaAcres, boundaryARTCCId, responsibleARTCCId, tieInFSSOnStation,
       tieInFSSId, alternateFSSId, NOTAMIssuerId, NOTAMDAvailable, activationDate, status,
       arffCapability, agreements, airspaceAnalysisDetermination, customsEntryAirport,
       customsLandingRightsAirport, jointUseAgreement, militaryLandingRights, inspectionMethod,
       inspectionAgency, lastPhysicalInspectionDate, lastInformationRequestCompletedDate,
       fuelsAvailable, airframeRepairAvailable, powerplantRepairAvailable, bottledOxygenAvailable,
       bulkOxygenAvailable, airportLightingSchedule, beaconLightingSchedule, controlTower,
-      UNICOMFrequency, CTAF, segmentedCircle, beaconColor, hasLandingFee, medicalUse,
+      UNICOMFrequencyKHz, CTAFKHz, segmentedCircle, beaconColor, hasLandingFee, medicalUse,
       basedSingleEngineGA, basedMultiEngineGA, basedJetGA, basedHelicopterGA,
       basedOperationalGliders, basedOperationalMilitary, basedUltralights, annualCommercialOps,
       annualCommuterOps, annualAirTaxiOps, annualLocalGAOps, annualTransientGAOps,

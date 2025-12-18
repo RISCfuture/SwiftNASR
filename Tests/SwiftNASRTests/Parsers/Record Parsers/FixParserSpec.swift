@@ -38,9 +38,9 @@ class FixParserSpec: AsyncSpec {
         expect(aarta.stateName).to(equal("ALABAMA"))
         expect(aarta.ICAORegion).to(equal("K7"))
         // 34-36-21.290N = 34*3600 + 36*60 + 21.290 = 124581.29 arc-seconds
-        expect(aarta.position.latitude).to(beCloseTo(124581.29, within: 0.01))
+        expect(aarta.position.latitudeArcsec).to(beCloseTo(124581.29, within: 0.01))
         // 087-16-24.750W = -(87*3600 + 16*60 + 24.750) = -314184.75 arc-seconds
-        expect(aarta.position.longitude).to(beCloseTo(-314184.75, within: 0.01))
+        expect(aarta.position.longitudeArcsec).to(beCloseTo(-314184.75, within: 0.01))
         expect(aarta.category).to(equal(Fix.Category.civil))
         expect(aarta.isPublished).to(beTrue())
         expect(aarta.use).to(equal(Fix.Use.waypoint))

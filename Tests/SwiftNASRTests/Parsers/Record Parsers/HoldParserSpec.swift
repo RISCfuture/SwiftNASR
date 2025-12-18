@@ -40,9 +40,9 @@ class HoldParserSpec: AsyncSpec {
         expect(aabee.patternNumber).to(equal(1))
         expect(aabee.effectiveDate).to(equal(DateComponents(year: 2021, month: 12, day: 30)))
         expect(aabee.holdingDirection).to(equal(CardinalDirection.northeast))
-        expect(aabee.magneticBearing).to(equal(26))
+        expect(aabee.magneticBearingDeg).to(equal(26))
         expect(aabee.azimuthType).to(equal(Hold.AzimuthType.course))
-        expect(aabee.inboundCourse).to(equal(206))
+        expect(aabee.inboundCourseDeg).to(equal(206))
         expect(aabee.turnDirection).to(equal(LateralDirection.left))
       }
 
@@ -68,9 +68,9 @@ class HoldParserSpec: AsyncSpec {
         expect(aabee.fixARTCC).to(equal("ZTL"))
 
         // 34-04-05.000N = 34*3600 + 4*60 + 5 = 122645 arc-seconds
-        expect(aabee.fixPosition?.latitude).to(beCloseTo(122645, within: 10))
+        expect(aabee.fixPosition?.latitudeArcsec).to(beCloseTo(122645, within: 10))
         // 084-12-51.710W = -(84*3600 + 12*60 + 51.71) = -303171.71 arc-seconds
-        expect(aabee.fixPosition?.longitude).to(beCloseTo(-303172, within: 10))
+        expect(aabee.fixPosition?.longitudeArcsec).to(beCloseTo(-303172, within: 10))
       }
 
       it("parses charting info") {
@@ -132,8 +132,8 @@ class HoldParserSpec: AsyncSpec {
           return
         }
 
-        expect(aaden.legDistance).to(equal(15))
-        expect(aaden.legTime).to(beNil())
+        expect(aaden.legDistanceNM).to(equal(15))
+        expect(aaden.legTimeMin).to(beNil())
       }
 
       it("parses multiple charting records") {

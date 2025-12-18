@@ -91,8 +91,8 @@ class FSSCommFacilityParserSpec: AsyncSpec {
 
         // 37°43'30"N ≈ 135810 arc-seconds, 122°13'30"W ≈ -440010 arc-seconds
         let facility = facilities.first { $0.outletIdentifier == "OAK" }
-        expect(facility?.outletPosition?.latitude).to(beCloseTo(135810, within: 100))
-        expect(facility?.outletPosition?.longitude).to(beCloseTo(-440010, within: 100))
+        expect(facility?.outletPosition?.latitudeArcsec).to(beCloseTo(135810, within: 100))
+        expect(facility?.outletPosition?.longitudeArcsec).to(beCloseTo(-440010, within: 100))
       }
 
       it("parses frequencies") {
@@ -108,8 +108,8 @@ class FSSCommFacilityParserSpec: AsyncSpec {
         let facility = facilities.first { $0.outletIdentifier == "OAK" }
         expect(facility?.frequencies.count).to(equal(3))
         // 122.2 MHz = 122200 kHz, 122.55 MHz = 122550 kHz
-        expect(facility?.frequencies.map(\.frequency)).to(contain(122200))
-        expect(facility?.frequencies.map(\.frequency)).to(contain(122550))
+        expect(facility?.frequencies.map(\.frequencyKHz)).to(contain(122200))
+        expect(facility?.frequencies.map(\.frequencyKHz)).to(contain(122550))
         // All OAK frequencies should have no use restriction
         expect(facility?.frequencies.allSatisfy { $0.use == nil }).to(beTrue())
       }
@@ -127,10 +127,10 @@ class FSSCommFacilityParserSpec: AsyncSpec {
         let facility = facilities.first { $0.outletIdentifier == "LVK" }
         expect(facility?.frequencies.count).to(equal(2))
         // 122.35R MHz = 122350 kHz receive-only
-        let receiveOnlyFreq = facility?.frequencies.first { $0.frequency == 122350 }
+        let receiveOnlyFreq = facility?.frequencies.first { $0.frequencyKHz == 122350 }
         expect(receiveOnlyFreq?.use).to(equal(.receiveOnly))
         // 122.5 MHz = 122500 kHz normal
-        let normalFreq = facility?.frequencies.first { $0.frequency == 122500 }
+        let normalFreq = facility?.frequencies.first { $0.frequencyKHz == 122500 }
         expect(normalFreq?.use).to(beNil())
       }
 

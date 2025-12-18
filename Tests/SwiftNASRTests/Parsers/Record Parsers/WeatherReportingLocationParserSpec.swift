@@ -39,7 +39,7 @@ class WeatherReportingLocationParserSpec: AsyncSpec {
 
         expect(a08.city).to(equal("MARION"))
         expect(a08.stateCode).to(equal("AL"))
-        expect(a08.position?.elevation).to(equal(215))
+        expect(a08.position?.elevationFtMSL).to(equal(215))
         expect(a08.elevationAccuracy).to(equal(.estimated))
       }
 
@@ -62,8 +62,8 @@ class WeatherReportingLocationParserSpec: AsyncSpec {
           return
         }
 
-        expect(a08.position?.latitude).to(beCloseTo(117060.1, within: 1))
-        expect(a08.position?.longitude).to(beCloseTo(-314587.1, within: 1))
+        expect(a08.position?.latitudeArcsec).to(beCloseTo(117060.1, within: 1))
+        expect(a08.position?.longitudeArcsec).to(beCloseTo(-314587.1, within: 1))
       }
 
       it("parses weather services") {
@@ -131,7 +131,7 @@ class WeatherReportingLocationParserSpec: AsyncSpec {
           return
         }
 
-        expect(a39.position?.elevation).to(equal(1283))
+        expect(a39.position?.elevationFtMSL).to(equal(1283))
         expect(a39.elevationAccuracy).to(equal(.surveyed))
       }
 

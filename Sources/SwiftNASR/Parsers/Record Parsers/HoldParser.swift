@@ -115,14 +115,14 @@ class FixedWidthHoldParser: LayoutDataParser {
           patternNumber: patternNum,
           effectiveDate: effectiveDate,
           holdingDirection: holdingDirection,
-          magneticBearing: UInt(bearingStr),
+          magneticBearingDeg: UInt(bearingStr),
           azimuthType: azimuthType,
           ILSFacilityIdentifier: ILSIdentParsed.isEmpty ? nil : ILSIdentParsed,
           ilsFacilityType: ILSType,
           navaidIdentifier: navaidIdentParsed.isEmpty ? nil : navaidIdentParsed,
           navaidFacilityType: navaidType,
           additionalFacility: additionalFacility.isEmpty ? nil : additionalFacility,
-          inboundCourse: UInt(inboundCourseStr),
+          inboundCourseDeg: UInt(inboundCourseStr),
           turnDirection: turnDirection,
           altitudes: altitudes,
           fixIdentifier: fixIdent,
@@ -133,8 +133,8 @@ class FixedWidthHoldParser: LayoutDataParser {
           navaidHighRouteARTCC: navHighARTCC.isEmpty ? nil : navHighARTCC,
           navaidLowRouteARTCC: navLowARTCC.isEmpty ? nil : navLowARTCC,
           navaidPosition: navaidPosition,
-          legTime: legTime,
-          legDistance: legDist
+          legTimeMin: legTime,
+          legDistanceNM: legDist
         )
 
         holds[holdKey] = hold
@@ -225,7 +225,7 @@ class FixedWidthHoldParser: LayoutDataParser {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
         // Convert decimal degrees to arc-seconds (multiply by 3600)
-        return Location(latitude: Float(lat * 3600), longitude: Float(lon * 3600))
+        return Location(latitudeArcsec: Float(lat * 3600), longitudeArcsec: Float(lon * 3600))
       case (.none, .none):
         return nil
       default:

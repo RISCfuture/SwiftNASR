@@ -33,7 +33,7 @@ class NavaidParserSpec: AsyncSpec {
           fail()
           return
         }
-        expect(AST.position.elevation).to(equal(10.6))
+        expect(AST.position.elevationFtMSL).to(equal(10.6))
         expect(AST.remarks.count).to(equal(2))
         expect(AST.associatedFixNames.count).to(equal(21))
         expect(AST.associatedHoldingPatterns.count).to(equal(1))

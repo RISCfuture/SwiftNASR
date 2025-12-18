@@ -114,8 +114,8 @@ class FixedWidthParachuteJumpAreaParser: LayoutDataParser {
       navaidIdentifier: navaidIdent.isEmpty ? nil : navaidIdent,
       navaidFacilityTypeCode: navaidTypeCode.isEmpty ? nil : navaidTypeCode,
       navaidFacilityType: navaidType.isEmpty ? nil : navaidType,
-      azimuthFromNavaid: Double(azimuthStr),
-      distanceFromNavaid: Double(distanceStr),
+      azimuthFromNavaidDeg: Double(azimuthStr),
+      distanceFromNavaidNM: Double(distanceStr),
       navaidName: navaidName.isEmpty ? nil : navaidName,
       stateCode: stateCode.isEmpty ? nil : stateCode,
       stateName: stateName.isEmpty ? nil : stateName,
@@ -125,7 +125,7 @@ class FixedWidthParachuteJumpAreaParser: LayoutDataParser {
       airportSiteNumber: airportSiteNum.isEmpty ? nil : airportSiteNum,
       dropZoneName: dropZone.isEmpty ? nil : dropZone,
       maxAltitude: maxAlt.isEmpty ? nil : try Altitude(parsing: maxAlt),
-      radius: Double(radiusStr),
+      radiusNM: Double(radiusStr),
       sectionalChartingRequired: parseYesNo(sectionalStr),
       publishedInAFD: parseYesNo(afdStr),
       additionalDescription: additionalDesc.isEmpty ? nil : additionalDesc,
@@ -232,9 +232,9 @@ class FixedWidthParachuteJumpAreaParser: LayoutDataParser {
       facilityId: facilityID.isEmpty ? nil : facilityID,
       facilityName: facilityName.isEmpty ? nil : facilityName,
       relatedLocationId: relatedLocID.isEmpty ? nil : relatedLocID,
-      commercialFrequency: Double(commFreqStr).map { UInt($0 * 1000) },
+      commercialFrequencyKHz: Double(commFreqStr).map { UInt($0 * 1000) },
       commercialCharted: commChartFlag == "Y",
-      militaryFrequency: Double(milFreqStr).map { UInt($0 * 1000) },
+      militaryFrequencyKHz: Double(milFreqStr).map { UInt($0 * 1000) },
       militaryCharted: milChartFlag == "Y",
       sector: sector.isEmpty ? nil : sector,
       altitude: altitude.isEmpty ? nil : altitude
@@ -281,7 +281,7 @@ class FixedWidthParachuteJumpAreaParser: LayoutDataParser {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
         // Convert decimal degrees to arc-seconds (multiply by 3600)
-        return Location(latitude: Float(lat * 3600), longitude: Float(lon * 3600))
+        return Location(latitudeArcsec: Float(lat * 3600), longitudeArcsec: Float(lon * 3600))
       case (.none, .none):
         return nil
       default:

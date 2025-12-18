@@ -127,7 +127,7 @@ public struct FSSCommFacility: Record, Identifiable {
   public struct Frequency: Record, Equatable, Hashable, Codable, Sendable {
 
     /// The radio frequency, in kHz.
-    public let frequency: UInt
+    public let frequencyKHz: UInt
 
     /// How this frequency is used.
     public let use: Use?

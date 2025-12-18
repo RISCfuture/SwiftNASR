@@ -47,10 +47,10 @@ public struct MiscActivityArea: Record, Identifiable {
   public let navaidName: String?
 
   /// The azimuth (bearing) from the navaid (degrees).
-  public let navaidAzimuth: Double?
+  public let navaidAzimuthDeg: Double?
 
   /// The distance from the navaid (nautical miles).
-  public let navaidDistance: Double?
+  public let navaidDistanceNM: Double?
 
   // MARK: - Associated Airport
 
@@ -69,7 +69,7 @@ public struct MiscActivityArea: Record, Identifiable {
   public let nearestAirportId: String?
 
   /// The distance to the nearest airport (nautical miles; space launch areas only).
-  public let nearestAirportDistance: Double?
+  public let nearestAirportDistanceNM: Double?
 
   /// The direction to the nearest airport (space launch areas only)
   public let nearestAirportDirection: Direction?
@@ -85,7 +85,7 @@ public struct MiscActivityArea: Record, Identifiable {
   // MARK: - Area Definition
 
   /// The area radius from the center point (nautical miles).
-  public let areaRadius: Double?
+  public let areaRadiusNM: Double?
 
   /// Whether to show on VFR chart
   public let isShownOnVFRChart: Bool?
@@ -159,13 +159,13 @@ public struct MiscActivityArea: Record, Identifiable {
     public let facilityName: String?
 
     /// The commercial (civil) frequency (kHz).
-    public let commercialFrequency: UInt?
+    public let commercialFrequencyKHz: UInt?
 
     /// Whether to show on VFR chart for commercial frequency
     public let showCommercialOnChart: Bool
 
     /// The military frequency (kHz).
-    public let militaryFrequency: UInt?
+    public let militaryFrequencyKHz: UInt?
 
     /// Whether to show on VFR chart for military frequency
     public let showMilitaryOnChart: Bool
@@ -174,10 +174,10 @@ public struct MiscActivityArea: Record, Identifiable {
   public enum CodingKeys: String, CodingKey {
     case MAAId, areaType, areaName, stateCode, stateName, city, position
     case navaidIdentifier, navaidFacilityTypeCode, navaidFacilityType, navaidName
-    case navaidAzimuth, navaidDistance
+    case navaidAzimuthDeg, navaidDistanceNM
     case associatedAirportId, associatedAirportName, associatedAirportSiteNumber
-    case nearestAirportId, nearestAirportDistance, nearestAirportDirection
-    case maximumAltitude, minimumAltitude, areaRadius, isShownOnVFRChart
+    case nearestAirportId, nearestAirportDistanceNM, nearestAirportDirection
+    case maximumAltitude, minimumAltitude, areaRadiusNM, isShownOnVFRChart
     case areaDescription, areaUse
     case polygonCoordinates, timesOfUse, userGroups, contactFacilities
     case checkForNOTAMs, remarks

@@ -44,10 +44,10 @@ public struct ILS: ParentRecord {
   // MARK: - Runway Information
 
   /// Runway length (feet).
-  public let runwayLength: UInt?
+  public let runwayLengthFt: UInt?
 
   /// Runway width (feet).
-  public let runwayWidth: UInt?
+  public let runwayWidthFt: UInt?
 
   // MARK: - System Information
 
@@ -64,7 +64,7 @@ public struct ILS: ParentRecord {
   public let approachBearing: Bearing<Float>?
 
   /// The variation between magnetic and true north (degrees; positive is east).
-  public let magneticVariation: Int?
+  public let magneticVariationDeg: Int?
 
   /// Information effective date.
   public let effectiveDate: DateComponents?
@@ -260,28 +260,28 @@ public struct ILS: ParentRecord {
     public let positionSource: PositionSource?
 
     /// Distance from approach end of runway (feet; negative = inboard).
-    public let distanceFromApproachEnd: Int?
+    public let distanceFromApproachEndFt: Int?
 
     /// Distance from runway centerline (feet; negative = left, positive = right).
-    public let distanceFromCenterline: Int?
+    public let distanceFromCenterlineFt: Int?
 
     /// Source of distance information.
     public let distanceSource: PositionSource?
 
     /// Localizer frequency (kHz).
-    public let frequency: UInt?
+    public let frequencyKHz: UInt?
 
     /// Back course status.
     public let backCourseStatus: BackCourseStatus?
 
     /// Course width (degrees).
-    public let courseWidth: Float?
+    public let courseWidthDeg: Float?
 
     /// Course width at threshold (degrees).
-    public let courseWidthAtThreshold: Float?
+    public let courseWidthAtThresholdDeg: Float?
 
     /// Distance from stop end of runway (feet; negative = inboard).
-    public let distanceFromStopEnd: Int?
+    public let distanceFromStopEndFt: Int?
 
     /// Direction from stop end of runway.
     public let directionFromStopEnd: LateralDirection?
@@ -291,9 +291,9 @@ public struct ILS: ParentRecord {
 
     public enum CodingKeys: String, CodingKey {
       case status, statusDate, position, positionSource
-      case distanceFromApproachEnd, distanceFromCenterline
-      case distanceSource, frequency, backCourseStatus
-      case courseWidth, courseWidthAtThreshold, distanceFromStopEnd
+      case distanceFromApproachEndFt, distanceFromCenterlineFt
+      case distanceSource, frequencyKHz, backCourseStatus
+      case courseWidthDeg, courseWidthAtThresholdDeg, distanceFromStopEndFt
       case directionFromStopEnd, serviceCode
     }
   }
@@ -313,10 +313,10 @@ public struct ILS: ParentRecord {
     public let positionSource: PositionSource?
 
     /// Distance from approach end of runway (feet; negative = inboard).
-    public let distanceFromApproachEnd: Int?
+    public let distanceFromApproachEndFt: Int?
 
     /// Distance from runway centerline (feet; negative = left, positive = right).
-    public let distanceFromCenterline: Int?
+    public let distanceFromCenterlineFt: Int?
 
     /// Source of distance information.
     public let distanceSource: PositionSource?
@@ -325,13 +325,13 @@ public struct ILS: ParentRecord {
     public let glideSlopeType: GlidePathType?
 
     /// Glide slope angle (degrees).
-    public let angle: Float?
+    public let angleDeg: Float?
 
     /// Glide slope transmission frequency (kHz).
-    public let frequency: UInt?
+    public let frequencyKHz: UInt?
 
     /// Elevation of runway adjacent to glide slope antenna (feet MSL).
-    public let adjacentRunwayElevation: Float?
+    public let adjacentRunwayElevationFtMSL: Float?
 
     /// Glide slope class/type.
     public enum GlidePathType: String, RecordEnum {
@@ -348,9 +348,9 @@ public struct ILS: ParentRecord {
 
     public enum CodingKeys: String, CodingKey {
       case status, statusDate, position, positionSource
-      case distanceFromApproachEnd, distanceFromCenterline
-      case distanceSource, glideSlopeType, angle, frequency
-      case adjacentRunwayElevation
+      case distanceFromApproachEndFt, distanceFromCenterlineFt
+      case distanceSource, glideSlopeType, angleDeg, frequencyKHz
+      case adjacentRunwayElevationFtMSL
     }
   }
 
@@ -369,10 +369,10 @@ public struct ILS: ParentRecord {
     public let positionSource: PositionSource?
 
     /// Distance from approach end of runway (feet; negative = inboard).
-    public let distanceFromApproachEnd: Int?
+    public let distanceFromApproachEndFt: Int?
 
     /// Distance from runway centerline (feet; negative = left, positive = right).
-    public let distanceFromCenterline: Int?
+    public let distanceFromCenterlineFt: Int?
 
     /// Source of distance information.
     public let distanceSource: PositionSource?
@@ -381,12 +381,12 @@ public struct ILS: ParentRecord {
     public let channel: String?
 
     /// Distance from stop end of runway (feet; negative = inboard).
-    public let distanceFromStopEnd: Int?
+    public let distanceFromStopEndFt: Int?
 
     public enum CodingKeys: String, CodingKey {
       case status, statusDate, position, positionSource
-      case distanceFromApproachEnd, distanceFromCenterline
-      case distanceSource, channel, distanceFromStopEnd
+      case distanceFromApproachEndFt, distanceFromCenterlineFt
+      case distanceSource, channel, distanceFromStopEndFt
     }
   }
 
@@ -408,10 +408,10 @@ public struct ILS: ParentRecord {
     public let positionSource: PositionSource?
 
     /// Distance from approach end of runway (feet; negative = inboard).
-    public let distanceFromApproachEnd: Int?
+    public let distanceFromApproachEndFt: Int?
 
     /// Distance from runway centerline (feet; negative = left, positive = right).
-    public let distanceFromCenterline: Int?
+    public let distanceFromCenterlineFt: Int?
 
     /// Source of distance information.
     public let distanceSource: PositionSource?
@@ -426,7 +426,7 @@ public struct ILS: ParentRecord {
     public let name: String?
 
     /// Frequency of locator beacon (kHz).
-    public let frequency: UInt?
+    public let frequencyKHz: UInt?
 
     /// Collocated navaid identifier and type (e.g., "AN*NDB").
     public let collocatedNavaid: String?
@@ -476,17 +476,17 @@ public struct ILS: ParentRecord {
 
     public enum CodingKeys: String, CodingKey {
       case markerType, status, statusDate, position, positionSource
-      case distanceFromApproachEnd, distanceFromCenterline
+      case distanceFromApproachEndFt, distanceFromCenterlineFt
       case distanceSource, facilityType, locationId, name
-      case frequency, collocatedNavaid, lowPoweredNDBStatus, service
+      case frequencyKHz, collocatedNavaid, lowPoweredNDBStatus, service
     }
   }
 
   public enum CodingKeys: String, CodingKey {
     case airportSiteNumber, runwayEndId, systemType, ILSId, airportId
     case airportName, city, stateCode, stateName, regionCode
-    case runwayLength, runwayWidth, category, owner, `operator`
-    case approachBearing, magneticVariation, effectiveDate
+    case runwayLengthFt, runwayWidthFt, category, owner, `operator`
+    case approachBearing, magneticVariationDeg, effectiveDate
     case localizer, glideSlope, dme, markers, remarks
   }
 }

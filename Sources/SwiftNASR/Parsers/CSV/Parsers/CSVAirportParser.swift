@@ -433,13 +433,13 @@ class CSVAirportParser: CSVParser {
       referencePointDeterminationMethod: transformedValues[27]
         as! SurveyMethod,
       elevationDeterminationMethod: transformedValues[29] as? SurveyMethod,
-      magneticVariation: magneticVariation,
+      magneticVariationDeg: magneticVariation,
       magneticVariationEpoch: transformedValues[32] as? DateComponents,
-      trafficPatternAltitude: transformedValues[33] as? Int,
+      trafficPatternAltitudeFtAGL: transformedValues[33] as? Int,
       sectionalChart: transformedValues[34] as? String,
-      distanceCityToAirport: transformedValues[35] as? UInt,
+      distanceCityToAirportNM: transformedValues[35] as? UInt,
       directionCityToAirport: transformedValues[36] as? Direction,
-      landArea: transformedValues[37] as? Float,
+      landAreaAcres: transformedValues[37] as? Float,
       boundaryARTCCId: nil,  // Not available in CSV format
       responsibleARTCCId: transformedValues[38] as! String,
       tieInFSSOnStation: transformedValues[41] as? Bool,
@@ -469,8 +469,8 @@ class CSVAirportParser: CSVParser {
       airportLightingSchedule: transformedValues[71] as? String,
       beaconLightingSchedule: transformedValues[72] as? String,
       controlTower: controlTower,
-      UNICOMFrequency: unicomFrequencies[transformedValues[3] as! String],
-      CTAF: ctafFrequencies[transformedValues[3] as! String],
+      UNICOMFrequencyKHz: unicomFrequencies[transformedValues[3] as! String],
+      CTAFKHz: ctafFrequencies[transformedValues[3] as! String],
       segmentedCircle: transformedValues[74] as? Airport.AirportMarker,
       beaconColor: transformedValues[75] as? Airport.LensColor,
       hasLandingFee: transformedValues[76] as? Bool,
@@ -605,15 +605,15 @@ class CSVAirportParser: CSVParser {
       .flatMap { DateFormat.yearMonthDaySlash.parse($0) }
 
     // Parse weight bearing capacities (values are in thousands of lbs, may be decimal like 12.5)
-    let singleWheelWeight = values.doubleAt(APTRunwayField.GROSS_WT_SW.rawValue).map {
+    let singleWheelWeightKlb = values.doubleAt(APTRunwayField.GROSS_WT_SW.rawValue).map {
       UInt($0 * 1000)
     }
-    let dualWheelWeight = values.doubleAt(APTRunwayField.GROSS_WT_DW.rawValue).map {
+    let dualWheelWeightKlb = values.doubleAt(APTRunwayField.GROSS_WT_DW.rawValue).map {
       UInt($0 * 1000)
     }
-    let tandemDualWheelWeight =
+    let tandemDualWheelWeightKlb =
       values.doubleAt(APTRunwayField.GROSS_WT_DTW.rawValue).map { UInt($0 * 1000) }
-    let doubleTandemDualWheelWeight =
+    let doubleTandemDualWheelWeightKlb =
       values.doubleAt(APTRunwayField.GROSS_WT_DDTW.rawValue).map { UInt($0 * 1000) }
 
     // Create a placeholder RunwayEnd - will be populated later from APT_RWY_END.csv
@@ -625,16 +625,16 @@ class CSVAirportParser: CSVParser {
       marking: nil,
       markingCondition: nil,
       threshold: nil,
-      thresholdCrossingHeight: nil,
-      visualGlidepath: nil,
+      thresholdCrossingHeightFtAGL: nil,
+      visualGlidepathHundredthsDeg: nil,
       displacedThreshold: nil,
-      thresholdDisplacement: nil,
-      touchdownZoneElevation: nil,
-      gradient: nil,
-      TORA: nil,
-      TODA: nil,
-      ASDA: nil,
-      LDA: nil,
+      thresholdDisplacementFt: nil,
+      touchdownZoneElevationFtMSL: nil,
+      gradientPct: nil,
+      TORAFt: nil,
+      TODAFt: nil,
+      ASDAFt: nil,
+      LDAFt: nil,
       LAHSO: nil,
       visualGlideslopeIndicator: nil,
       RVRSensors: [],
@@ -658,8 +658,8 @@ class CSVAirportParser: CSVParser {
 
     let runway = Runway(
       identification: runwayId,
-      length: length,
-      width: width,
+      lengthFt: length,
+      widthFt: width,
       lengthSource: lengthSource,
       lengthSourceDate: lengthSourceDate,
       materials: materials,
@@ -669,10 +669,10 @@ class CSVAirportParser: CSVParser {
       edgeLightsIntensity: edgeLightsIntensity,
       baseEnd: placeholderEnd,
       reciprocalEnd: nil,
-      singleWheelWeightBearingCapacity: singleWheelWeight,
-      dualWheelWeightBearingCapacity: dualWheelWeight,
-      tandemDualWheelWeightBearingCapacity: tandemDualWheelWeight,
-      doubleTandemDualWheelWeightBearingCapacity: doubleTandemDualWheelWeight
+      singleWheelWeightBearingCapacityKlb: singleWheelWeightKlb,
+      dualWheelWeightBearingCapacityKlb: dualWheelWeightKlb,
+      tandemDualWheelWeightBearingCapacityKlb: tandemDualWheelWeightKlb,
+      doubleTandemDualWheelWeightBearingCapacityKlb: doubleTandemDualWheelWeightKlb
     )
 
     airports[compositeId]!.runways.append(runway)
@@ -756,7 +756,10 @@ class CSVAirportParser: CSVParser {
       })
     else { return }
 
-    let runwayEnd = try buildRunwayEnd(from: values, magneticVariation: airport.magneticVariation)
+    let runwayEnd = try buildRunwayEnd(
+      from: values,
+      magneticVariation: airport.magneticVariationDeg
+    )
 
     // Determine if this is base or reciprocal end
     let runwayComponents = runwayId.split(separator: "/")
@@ -775,7 +778,7 @@ class CSVAirportParser: CSVParser {
 
     // Convert true heading to Bearing<UInt>
     let heading = values.intAt(APTRunwayEndField.TRUE_ALIGNMENT.rawValue).map { value in
-      Bearing(UInt(value), reference: .true, magneticVariation: magneticVariation ?? 0)
+      Bearing(UInt(value), reference: .true, magneticVariationDeg: magneticVariation ?? 0)
     }
 
     // Parse ILS type
@@ -950,16 +953,16 @@ class CSVAirportParser: CSVParser {
       marking: marking,
       markingCondition: markingCondition,
       threshold: threshold,
-      thresholdCrossingHeight: thresholdCrossingHeight,
-      visualGlidepath: visualGlidepath,
+      thresholdCrossingHeightFtAGL: thresholdCrossingHeight,
+      visualGlidepathHundredthsDeg: visualGlidepath,
       displacedThreshold: displacedThreshold,
-      thresholdDisplacement: thresholdDisplacement,
-      touchdownZoneElevation: touchdownZoneElevation,
-      gradient: gradient,
-      TORA: TORA,
-      TODA: TODA,
-      ASDA: ASDA,
-      LDA: LDA,
+      thresholdDisplacementFt: thresholdDisplacement,
+      touchdownZoneElevationFtMSL: touchdownZoneElevation,
+      gradientPct: gradient,
+      TORAFt: TORA,
+      TODAFt: TODA,
+      ASDAFt: ASDA,
+      LDAFt: LDA,
       LAHSO: LAHSO,
       visualGlideslopeIndicator: visualGlideslopeIndicator,
       RVRSensors: RVRSensors,
@@ -992,7 +995,11 @@ class CSVAirportParser: CSVParser {
     let longArcSec = Float(longDecimal * 3600)
     let elevation = values.doubleAt(APTRunwayEndField.RWY_END_ELEV.rawValue).map { Float($0) }
 
-    return Location(latitude: latArcSec, longitude: longArcSec, elevation: elevation)
+    return Location(
+      latitudeArcsec: latArcSec,
+      longitudeArcsec: longArcSec,
+      elevationFtMSL: elevation
+    )
   }
 
   private func parseDisplacedThresholdLocation(_ values: [String]) -> Location? {
@@ -1006,7 +1013,11 @@ class CSVAirportParser: CSVParser {
     let longArcSec = Float(longDecimal * 3600)
     let elevation = values.doubleAt(APTRunwayEndField.DISPLACED_THR_ELEV.rawValue).map { Float($0) }
 
-    return Location(latitude: latArcSec, longitude: longArcSec, elevation: elevation)
+    return Location(
+      latitudeArcsec: latArcSec,
+      longitudeArcsec: longArcSec,
+      elevationFtMSL: elevation
+    )
   }
 
   private func parseVGSI(_ value: String) throws -> RunwayEnd.VisualGlideslopeIndicator? {
@@ -1109,9 +1120,9 @@ class CSVAirportParser: CSVParser {
       category: category,
       markings: markings,
       runwayCategory: runwayCategory,
-      clearanceSlope: clearanceSlope,
-      heightAboveRunway: heightAboveRunway,
-      distanceFromRunway: distanceFromRunway,
+      clearanceSlopeRatio: clearanceSlope,
+      heightAboveRunwayFtAGL: heightAboveRunway,
+      distanceFromRunwayFt: distanceFromRunway,
       offsetFromCenterline: offsetFromCenterline
     )
   }
@@ -1127,7 +1138,7 @@ class CSVAirportParser: CSVParser {
         .left  // Default fallback
       }
 
-    return Offset(distance: UInt(distance), direction: direction)
+    return Offset(distanceFt: UInt(distance), direction: direction)
   }
 
   private func parseGradient(_ values: [String]) -> Float? {
@@ -1160,7 +1171,11 @@ class CSVAirportParser: CSVParser {
     {
       let latArcSec = Float(latDecimal * 3600)
       let longArcSec = Float(longDecimal * 3600)
-      position = Location(latitude: latArcSec, longitude: longArcSec, elevation: nil)
+      position = Location(
+        latitudeArcsec: latArcSec,
+        longitudeArcsec: longArcSec,
+        elevationFtMSL: nil
+      )
     }
 
     let positionSource = values.stringAt(APTRunwayEndField.LAHSO_PSN_SOURCE.rawValue)
@@ -1170,7 +1185,7 @@ class CSVAirportParser: CSVParser {
       }
 
     return RunwayEnd.LAHSOPoint(
-      availableDistance: UInt(availableDistance),
+      availableDistanceFt: UInt(availableDistance),
       intersectingRunwayId: intersectingRunwayId,
       definingEntity: definingEntity,
       position: position,
@@ -1387,7 +1402,11 @@ class CSVAirportParser: CSVParser {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
         // Convert decimal degrees to arc-seconds (multiply by 3600)
-        return Location(latitude: lat * 3600, longitude: lon * 3600, elevation: elevation)
+        return Location(
+          latitudeArcsec: lat * 3600,
+          longitudeArcsec: lon * 3600,
+          elevationFtMSL: elevation
+        )
       case (.none, .none):
         return nil
       default:

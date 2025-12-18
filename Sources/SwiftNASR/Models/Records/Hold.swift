@@ -22,7 +22,7 @@ public struct Hold: Record, Identifiable {
   public let holdingDirection: CardinalDirection?
 
   /// Magnetic bearing or radial of holding (degrees).
-  public let magneticBearing: UInt?
+  public let magneticBearingDeg: UInt?
 
   /// Type of azimuth (radial, course, bearing, or RNAV track).
   public let azimuthType: AzimuthType?
@@ -43,7 +43,7 @@ public struct Hold: Record, Identifiable {
   public let additionalFacility: String?
 
   /// Inbound course (degrees).
-  public let inboundCourse: UInt?
+  public let inboundCourseDeg: UInt?
 
   /// Turn direction (left or right).
   public let turnDirection: LateralDirection?
@@ -76,10 +76,10 @@ public struct Hold: Record, Identifiable {
   public let navaidPosition: Location?
 
   /// Outbound leg time (minutes).
-  public let legTime: Double?
+  public let legTimeMin: Double?
 
   /// Outbound leg distance (nautical miles).
-  public let legDistance: Double?
+  public let legDistanceNM: Double?
 
   /// Charting information for this hold.
   public internal(set) var chartingInfo = [String]()
@@ -108,14 +108,14 @@ public struct Hold: Record, Identifiable {
   }
 
   public enum CodingKeys: String, CodingKey {
-    case name, patternNumber, effectiveDate, holdingDirection, magneticBearing
+    case name, patternNumber, effectiveDate, holdingDirection, magneticBearingDeg
     case azimuthType, ILSFacilityIdentifier, ilsFacilityType
     case navaidIdentifier, navaidFacilityType, additionalFacility
-    case inboundCourse, turnDirection, altitudes
+    case inboundCourseDeg, turnDirection, altitudes
     case fixIdentifier, fixStateCode, fixICAORegion, fixARTCC
     case fixPosition
     case navaidHighRouteARTCC, navaidLowRouteARTCC, navaidPosition
-    case legTime, legDistance
+    case legTimeMin, legDistanceNM
     case chartingInfo, otherAltitudeSpeed, remarks
   }
 }

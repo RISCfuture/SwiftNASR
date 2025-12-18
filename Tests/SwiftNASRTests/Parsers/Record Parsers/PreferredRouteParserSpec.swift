@@ -78,7 +78,7 @@ class PreferredRouteParserSpec: AsyncSpec {
           expect(firstSeg.segmentType).to(equal(PreferredRoute.SegmentType.navaid))
           expect(firstSeg.navaidType).to(equal(NavaidFacilityType.VORTAC))
           expect(firstSeg.navaidTypeDescription).to(equal("VORTAC"))
-          expect(firstSeg.radialDistance).to(equal(PreferredRoute.RadialDistance.radial(90)))
+          expect(firstSeg.radialDistance).to(equal(PreferredRoute.RadialDistance.radialDeg(90)))
         }
 
         // Second segment should be ARD VOR/DME with radial and distance
@@ -87,7 +87,7 @@ class PreferredRouteParserSpec: AsyncSpec {
           expect(secondSeg.identifier).to(equal("ARD"))
           expect(secondSeg.navaidType).to(equal(NavaidFacilityType.VOR_DME))
           expect(secondSeg.radialDistance).to(
-            equal(PreferredRoute.RadialDistance.radialDistance(radial: 270, distance: 15))
+            equal(PreferredRoute.RadialDistance.radialDistanceDegNM(radialDeg: 270, distanceNM: 15))
           )
         }
 

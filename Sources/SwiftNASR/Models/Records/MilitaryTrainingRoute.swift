@@ -96,11 +96,11 @@ public struct MilitaryTrainingRoute: Record, Identifiable {
     /// Related navaid identifier.
     public let navaidIdentifier: String?
 
-    /// Bearing from point to navaid in degrees.
-    public let navaidBearing: UInt?
+    /// Bearing from point to navaid, in degrees.
+    public let navaidBearingDeg: UInt?
 
-    /// Distance from point to navaid in nautical miles.
-    public let navaidDistance: UInt?
+    /// Distance from point to navaid, in nautical miles.
+    public let navaidDistanceNM: UInt?
 
     /// Position of the point.
     public let position: Location?
@@ -111,7 +111,7 @@ public struct MilitaryTrainingRoute: Record, Identifiable {
     public enum CodingKeys: String, CodingKey {
       case pointId
       case segmentDescriptionLeading, segmentDescriptionLeaving
-      case navaidIdentifier, navaidBearing, navaidDistance
+      case navaidIdentifier, navaidBearingDeg, navaidDistanceNM
       case position, sequenceNumber
     }
   }
