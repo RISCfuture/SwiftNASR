@@ -34,17 +34,6 @@ public final class ArchiveFileDistribution: Distribution {
     self.location = location
     self.format = format
 
-    // Check file size and warn if too large
-    if let fileSize = try? FileManager.default.attributesOfItem(atPath: location.path)[.size]
-      as? Int64
-    {
-      if fileSize > 100_000_000 {  // 100MB
-        print(
-          "WARNING: Large archive detected (\(fileSize / 1_000_000) MB). This may use significant memory."
-        )
-      }
-    }
-
     let archive = try Archive(url: location, accessMode: .read)
     self.archive = archive
   }
