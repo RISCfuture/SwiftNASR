@@ -148,7 +148,7 @@ class ParserSpec: AsyncSpec {
         expect(offset).toNot(beNil())
 
         // Verify it points to the correct field
-        if let offset = offset {
+        if let offset {
           expect(firstFormat.fields[offset].identifier).to(equal(.number("A1")))
         }
       }

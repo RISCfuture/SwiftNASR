@@ -35,7 +35,7 @@ class DirectoryDistributionSpec: AsyncSpec {
 
         for try await data in stream {
           if iter == 0 {
-            await expect(progress.completedUnitCount).toEventually(equal(34))
+            await expect(progress.completedUnitCount).toEventually(equal(35))
             expect(data).to(equal("Hello, world!".data(using: .isoLatin1)!))
           } else if iter == 1 {
             expect(data).to(equal("Line 2".data(using: .isoLatin1)!))

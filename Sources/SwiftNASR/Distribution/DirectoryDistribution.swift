@@ -14,7 +14,8 @@ public final class DirectoryDistribution: Distribution {
   public let format: DataFormat
 
   private let chunkSize = 4096
-  private let delimiter = "\r\n".data(using: .isoLatin1)!
+  private let delimiter = "\n".data(using: .isoLatin1)!
+  private let carriageReturn = UInt8(ascii: "\r")
 
   /**
    Creates a new instance from the given directory.
@@ -68,8 +69,13 @@ public final class DirectoryDistribution: Distribution {
         }
 
         let subrange = buffer.startIndex..<EOL.lowerBound
-        let subdata = buffer.subdata(in: subrange)
-        Task { @MainActor in progress.completedUnitCount += Int64(subdata.count) }
+        var subdata = buffer.subdata(in: subrange)
+        let byteCount = subdata.count
+        // Strip trailing \r for Windows-style line endings
+        if subdata.last == carriageReturn {
+          subdata.removeLast()
+        }
+        Task { @MainActor in progress.completedUnitCount += Int64(byteCount) }
 
         eachLine(subdata)
         lines += 1
@@ -80,6 +86,10 @@ public final class DirectoryDistribution: Distribution {
         Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
         guard !data.isEmpty else {
           if !buffer.isEmpty {
+            // Strip trailing \r for Windows-style line endings
+            if buffer.last == carriageReturn {
+              buffer.removeLast()
+            }
             eachLine(buffer)
             lines += 1
           }
