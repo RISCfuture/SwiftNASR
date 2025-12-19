@@ -26,6 +26,13 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
   @Flag(name: .shortAndLong, help: "Print all errors instead of summary")
   var verbose: Bool = false
 
+  @Option(
+    name: .shortAndLong,
+    help:
+      "Comma-separated list of record types to parse (e.g., APT,NAV,FIX). If not specified, all record types are parsed."
+  )
+  var recordTypes: String?
+
   private var txtDistributionURL: URL {
     workingDirectory.appendingPathComponent("distribution_txt.zip")
   }
@@ -72,12 +79,23 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
 
   mutating func run() async throws {
     let formats = determineFormats()
+    let selectedRecordTypes = try parseRecordTypesFilter()
+
+    if let selected = selectedRecordTypes {
+      print(
+        "Filtering to record types: \(selected.map(\.rawValue).sorted().joined(separator: ", "))"
+      )
+    }
 
     if formats.contains("txt") {
       print("\n=== Testing TXT Format ===")
       if let nasr = getTxtNASR() {
         do {
-          try await runForFormat(nasr: nasr, formatName: "TXT")
+          try await runForFormat(
+            nasr: nasr,
+            formatName: "TXT",
+            selectedRecordTypes: selectedRecordTypes
+          )
         } catch {
           print("Warning: TXT format test failed: \(error)")
           print("This may be due to the cycle data not being available for the current date.")
@@ -94,7 +112,11 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
       print("\n=== Testing CSV Format ===")
       if let nasr = getCsvNASR() {
         do {
-          try await runForFormat(nasr: nasr, formatName: "CSV")
+          try await runForFormat(
+            nasr: nasr,
+            formatName: "CSV",
+            selectedRecordTypes: selectedRecordTypes
+          )
         } catch {
           print("Warning: CSV format test failed: \(error)")
           print("This may be due to the cycle data not being available for the current date.")
@@ -118,9 +140,16 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     return ["txt", "csv"]
   }
 
-  private mutating func runForFormat(nasr: NASR, formatName: String) async throws {
+  private mutating func runForFormat(
+    nasr: NASR,
+    formatName: String,
+    selectedRecordTypes: Set<RecordType>?
+  ) async throws {
     let isCSV = formatName.lowercased() == "csv"
-    await progress.reset(totalUnitCount: totalWeight(isCSV: isCSV))
+    let effectiveRecordTypes = effectiveTypes(for: isCSV, selectedRecordTypes: selectedRecordTypes)
+    await progress.reset(
+      totalUnitCount: totalWeight(isCSV: isCSV, selectedRecordTypes: effectiveRecordTypes)
+    )
     print("Loading \(formatName)…")
     let progress = self.progress
     try await nasr.load { child in
@@ -130,7 +159,12 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
 
     progressTask = trackProgress(progress: progress)
     let errorCollector = ErrorCollector()
-    try await parseValues(nasr: nasr, isCSV: isCSV, errorCollector: errorCollector)
+    try await parseValues(
+      nasr: nasr,
+      isCSV: isCSV,
+      errorCollector: errorCollector,
+      selectedRecordTypes: effectiveRecordTypes
+    )
 
     // Clear the progress line before printing results
     print("\r" + String(repeating: " ", count: terminalWidth()) + "\r", terminator: "")
@@ -139,20 +173,47 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     await errorCollector.printSummary(verbose: verbose, formatName: formatName)
 
     print("\nSaving \(formatName)…")
-    await saveData(nasr: nasr, formatName: formatName, workingDirectory: workingDirectory)
+    await saveData(
+      nasr: nasr,
+      formatName: formatName,
+      workingDirectory: workingDirectory,
+      selectedRecordTypes: effectiveRecordTypes
+    )
 
     // Verify completion
-    await verifyCompletion(nasr: nasr, formatName: formatName, isCSV: isCSV)
+    await verifyCompletion(
+      nasr: nasr,
+      formatName: formatName,
+      isCSV: isCSV,
+      selectedRecordTypes: effectiveRecordTypes
+    )
 
     // Verify associations
     print("\nVerifying associations…")
-    await verifyAssociations(nasr: nasr, formatName: formatName, isCSV: isCSV)
+    await verifyAssociations(
+      nasr: nasr,
+      formatName: formatName,
+      isCSV: isCSV,
+      selectedRecordTypes: effectiveRecordTypes
+    )
+  }
+
+  /// Returns the effective set of record types to parse, filtering by format availability and user selection.
+  private func effectiveTypes(for isCSV: Bool, selectedRecordTypes: Set<RecordType>?) -> Set<
+    RecordType
+  > {
+    let availableTypes = isCSV ? CSVRecordTypes : txtRecordTypes
+    if let selected = selectedRecordTypes {
+      return availableTypes.intersection(selected)
+    }
+    return availableTypes
   }
 
   private mutating func parseValues(
     nasr: NASR,
     isCSV: Bool,
-    errorCollector: ErrorCollector
+    errorCollector: ErrorCollector,
+    selectedRecordTypes: Set<RecordType>
   ) async throws {
     let progress = self.progress
 
@@ -184,204 +245,56 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
       )
     }
 
-    async let airports = try nasr.parse(
-      .airports,
-      withProgress: progressHandler(for: .airports),
-      errorHandler: errorHandler(for: .airports)
-    )
-
-    async let artccs = try nasr.parse(
-      .ARTCCFacilities,
-      withProgress: progressHandler(for: .ARTCCFacilities),
-      errorHandler: errorHandler(for: .ARTCCFacilities)
-    )
-
-    async let fsses = try nasr.parse(
-      .flightServiceStations,
-      withProgress: progressHandler(for: .flightServiceStations),
-      errorHandler: errorHandler(for: .flightServiceStations)
-    )
-
-    async let navaids = try nasr.parse(
-      .navaids,
-      withProgress: progressHandler(for: .navaids),
-      errorHandler: errorHandler(for: .navaids)
-    )
-
-    async let fixes = try nasr.parse(
-      .reportingPoints,
-      withProgress: progressHandler(for: .reportingPoints),
-      errorHandler: errorHandler(for: .reportingPoints)
-    )
-
-    async let weatherStations = try nasr.parse(
-      .weatherReportingStations,
-      withProgress: progressHandler(for: .weatherReportingStations),
-      errorHandler: errorHandler(for: .weatherReportingStations)
-    )
-
-    async let airways = try nasr.parse(
-      .airways,
-      withProgress: progressHandler(for: .airways),
-      errorHandler: errorHandler(for: .airways)
-    )
-
-    async let ILSFacilities = try nasr.parse(
-      .ILSes,
-      withProgress: progressHandler(for: .ILSes),
-      errorHandler: errorHandler(for: .ILSes)
-    )
-
-    async let terminalCommFacilities = try nasr.parse(
-      .terminalCommFacilities,
-      withProgress: progressHandler(for: .terminalCommFacilities),
-      errorHandler: errorHandler(for: .terminalCommFacilities)
-    )
-
-    // The following record types are TXT-only (no CSV parser)
-    async let departureArrivalProceduresComplete: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .departureArrivalProceduresComplete,
-          withProgress: progressHandler(for: .departureArrivalProceduresComplete),
-          errorHandler: errorHandler(for: .departureArrivalProceduresComplete)
-        )
+    // Parse all selected record types concurrently
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      for recordType in selectedRecordTypes {
+        group.addTask {
+          _ = try await nasr.parse(
+            recordType,
+            withProgress: progressHandler(for: recordType),
+            errorHandler: errorHandler(for: recordType)
+          )
+        }
       }
-      return true
-    }()
-
-    async let preferredRoutes: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .preferredRoutes,
-          withProgress: progressHandler(for: .preferredRoutes),
-          errorHandler: errorHandler(for: .preferredRoutes)
-        )
-      }
-      return true
-    }()
-
-    async let holds: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .holds,
-          withProgress: progressHandler(for: .holds),
-          errorHandler: errorHandler(for: .holds)
-        )
-      }
-      return true
-    }()
-
-    async let weatherReportingLocations: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .weatherReportingLocations,
-          withProgress: progressHandler(for: .weatherReportingLocations),
-          errorHandler: errorHandler(for: .weatherReportingLocations)
-        )
-      }
-      return true
-    }()
-
-    async let parachuteJumpAreas: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .parachuteJumpAreas,
-          withProgress: progressHandler(for: .parachuteJumpAreas),
-          errorHandler: errorHandler(for: .parachuteJumpAreas)
-        )
-      }
-      return true
-    }()
-
-    async let militaryTrainingRoutes: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .militaryTrainingRoutes,
-          withProgress: progressHandler(for: .militaryTrainingRoutes),
-          errorHandler: errorHandler(for: .militaryTrainingRoutes)
-        )
-      }
-      return true
-    }()
-
-    // codedDepartureRoutes is only available in CSV format
-    async let codedDepartureRoutes: Bool = {
-      if isCSV {
-        return try await nasr.parse(
-          .codedDepartureRoutes,
-          withProgress: progressHandler(for: .codedDepartureRoutes),
-          errorHandler: errorHandler(for: .codedDepartureRoutes)
-        )
-      }
-      return true
-    }()
-
-    async let miscActivityAreas: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .miscActivityAreas,
-          withProgress: progressHandler(for: .miscActivityAreas),
-          errorHandler: errorHandler(for: .miscActivityAreas)
-        )
-      }
-      return true
-    }()
-
-    async let ARTCCBoundarySegments: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .ARTCCBoundarySegments,
-          withProgress: progressHandler(for: .ARTCCBoundarySegments),
-          errorHandler: errorHandler(for: .ARTCCBoundarySegments)
-        )
-      }
-      return true
-    }()
-
-    async let FSSCommFacilities: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .FSSCommFacilities,
-          withProgress: progressHandler(for: .FSSCommFacilities),
-          errorHandler: errorHandler(for: .FSSCommFacilities)
-        )
-      }
-      return true
-    }()
-
-    async let atsAirways: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .ATSAirways,
-          withProgress: progressHandler(for: .ATSAirways),
-          errorHandler: errorHandler(for: .ATSAirways)
-        )
-      }
-      return true
-    }()
-
-    async let locationIdentifiers: Bool = {
-      if !isCSV {
-        return try await nasr.parse(
-          .locationIdentifiers,
-          withProgress: progressHandler(for: .locationIdentifiers),
-          errorHandler: errorHandler(for: .locationIdentifiers)
-        )
-      }
-      return true
-    }()
-
-    _ = try await [
-      airports, artccs, fsses, navaids, fixes, weatherStations, airways, ILSFacilities,
-      terminalCommFacilities, departureArrivalProceduresComplete,
-      preferredRoutes, holds, weatherReportingLocations, parachuteJumpAreas,
-      militaryTrainingRoutes, codedDepartureRoutes, miscActivityAreas, ARTCCBoundarySegments,
-      FSSCommFacilities, atsAirways, locationIdentifiers
-    ]
+      try await group.waitForAll()
+    }
 
     // Clear current record type when done
     await progress.setCurrentRecordType(nil)
+  }
+
+  /// Parses the record types option into a set of RecordType values.
+  /// Returns nil if no filter was specified (meaning all types should be parsed).
+  private func parseRecordTypesFilter() throws -> Set<RecordType>? {
+    guard let recordTypesString = recordTypes else { return nil }
+
+    var selectedTypes = Set<RecordType>()
+    let codes = recordTypesString.split(separator: ",").map {
+      $0.trimmingCharacters(in: .whitespaces)
+    }
+
+    for code in codes {
+      if let recordType = RecordType(rawValue: code) {
+        selectedTypes.insert(recordType)
+      } else {
+        // Try case-insensitive match
+        if let matchingType = allRecordTypes.first(where: {
+          $0.rawValue.lowercased() == code.lowercased()
+        }) {
+          selectedTypes.insert(matchingType)
+        } else {
+          throw ValidationError(
+            "Unknown record type: '\(code)'. Valid types are: \(allRecordTypes.map(\.rawValue).sorted().joined(separator: ", "))"
+          )
+        }
+      }
+    }
+
+    if selectedTypes.isEmpty {
+      throw ValidationError("At least one valid record type must be specified.")
+    }
+
+    return selectedTypes
   }
 
   private enum CodingKeys: String, CodingKey {
@@ -389,5 +302,6 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     case format
     case localCSVPath
     case verbose
+    case recordTypes
   }
 }
