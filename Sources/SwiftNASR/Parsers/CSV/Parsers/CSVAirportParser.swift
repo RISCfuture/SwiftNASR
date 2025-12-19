@@ -4,7 +4,13 @@ import ZIPFoundation
 
 /// CSV Airport Parser using declarative transformers like FixedWidthAirportParser
 class CSVAirportParser: CSVParser {
-  var csvDirectory = URL(fileURLWithPath: "/")
+  var CSVDirectory = URL(fileURLWithPath: "/")
+  var progress: Progress?
+  var bytesRead: Int64 = 0
+  let CSVFiles = [
+    "FRQ.csv", "APT_BASE.csv", "APT_CON.csv", "APT_RWY.csv",
+    "APT_RWY_END.csv", "APT_ARS.csv", "APT_ATT.csv", "APT_RMK.csv"
+  ]
 
   var airports = [String: Airport]()
 
@@ -285,7 +291,7 @@ class CSVAirportParser: CSVParser {
   func prepare(distribution: Distribution) throws {
     // Set the CSV directory for CSV distributions
     if let dirDist = distribution as? DirectoryDistribution {
-      csvDirectory = dirDist.location
+      CSVDirectory = dirDist.location
     } else if let archiveDist = distribution as? ArchiveFileDistribution {
       // For downloaded CSV archives, extract to a temporary directory
       let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
@@ -295,7 +301,7 @@ class CSVAirportParser: CSVParser {
 
       // Extract the archive to the temporary directory
       try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      csvDirectory = tempDir
+      CSVDirectory = tempDir
     }
   }
 

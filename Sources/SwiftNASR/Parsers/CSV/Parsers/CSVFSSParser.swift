@@ -4,12 +4,16 @@ import ZIPFoundation
 
 /// CSV FSS Parser using declarative transformers like FixedWidthFSSParser
 class CSVFSSParser: CSVParser {
-  var csvDirectory = URL(fileURLWithPath: "/")
+  var CSVDirectory = URL(fileURLWithPath: "/")
+  var progress: Progress?
+  var bytesRead: Int64 = 0
+  let CSVFiles = ["FSS_BASE.csv", "FSS_RMK.csv"]
+
   var FSSes = [String: FSS]()
 
   // CSV field mapping based on FSS_BASE.csv headers
   // Maps CSV column indices to transformer array positions
-  private let csvFieldMapping: [Int] = [
+  private let CSVFieldMapping: [Int] = [
     1,  // 0: FSS_ID -> ID
     2,  // 1: NAME -> name
     5,  // 2: VOICE_CALL -> radioIdentifier
@@ -66,14 +70,14 @@ class CSVFSSParser: CSVParser {
   func prepare(distribution: Distribution) throws {
     // Set the CSV directory for CSV distributions
     if let dirDist = distribution as? DirectoryDistribution {
-      csvDirectory = dirDist.location
+      CSVDirectory = dirDist.location
     } else if let archiveDist = distribution as? ArchiveFileDistribution {
       let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
         "SwiftNASR_CSV_\(UUID().uuidString)"
       )
       try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
       try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      csvDirectory = tempDir
+      CSVDirectory = tempDir
     }
   }
 
@@ -85,7 +89,7 @@ class CSVFSSParser: CSVParser {
       // Map CSV fields to transformer indices
       var mappedFields = [String](repeating: "", count: 24)
 
-      for (transformerIndex, csvIndex) in csvFieldMapping.enumerated() {
+      for (transformerIndex, csvIndex) in CSVFieldMapping.enumerated() {
         if csvIndex >= 0 && csvIndex < fields.count {
           mappedFields[transformerIndex] = fields[csvIndex]
         }

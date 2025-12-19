@@ -13,10 +13,10 @@ class CSVNavaidParser: CSVParser {
 
   // CSV field mapping based on NAV_BASE.csv headers (0-based indices)
   // Index mapping from CSV columns to transformer array positions
-  private let csvFieldMapping: [Int] = [
+  private let CSVFieldMapping: [Int] = [
     0,  // 0: EFF_DATE -> effective date
     1,  // 1: NAV_ID -> ID
-    2,  // 2: NAV_TYPE -> facility type
+    2,  // 2: NAV_TYPE -> facility typegit
     7,  // 3: NAME -> name
     4,  // 4: CITY -> city
     3,  // 5: STATE_CODE -> state PO code
@@ -136,14 +136,14 @@ class CSVNavaidParser: CSVParser {
   func prepare(distribution: Distribution) throws {
     // Set the CSV directory for CSV distributions
     if let dirDist = distribution as? DirectoryDistribution {
-      csvDirectory = dirDist.location
+      CSVDirectory = dirDist.location
     } else if let archiveDist = distribution as? ArchiveFileDistribution {
       let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
         "SwiftNASR_CSV_\(UUID().uuidString)"
       )
       try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
       try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      csvDirectory = tempDir
+      CSVDirectory = tempDir
     }
   }
 
@@ -155,7 +155,7 @@ class CSVNavaidParser: CSVParser {
       // Map CSV fields to transformer indices
       var mappedFields = [String](repeating: "", count: 51)
 
-      for (transformerIndex, csvIndex) in csvFieldMapping.enumerated() {
+      for (transformerIndex, csvIndex) in CSVFieldMapping.enumerated() {
         if csvIndex >= 0 && csvIndex < fields.count {
           mappedFields[transformerIndex] = fields[csvIndex]
         }

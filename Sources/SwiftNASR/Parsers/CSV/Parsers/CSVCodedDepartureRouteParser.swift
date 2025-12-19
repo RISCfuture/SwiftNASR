@@ -7,12 +7,16 @@ import ZIPFoundation
 /// CDR is a comma-delimited file with 12 fields:
 /// RCode, Orig, Dest, DepFix, Route String, DCNTR, ACNTR, TCNTRs, CoordReq, Play, NavEqp, Length
 class CSVCodedDepartureRouteParser: CSVParser {
-  var csvDirectory = URL(fileURLWithPath: "/")
+  var CSVDirectory = URL(fileURLWithPath: "/")
+  var progress: Progress?
+  var bytesRead: Int64 = 0
+  let CSVFiles = ["CDR.csv"]
+
   var routes = [String: CodedDepartureRoute]()
 
   // CSV field mapping (0-based indices)
   // Fields: RCode, Orig, Dest, DepFix, Route String, DCNTR, ACNTR, TCNTRs, CoordReq, Play, NavEqp, Length
-  private let csvFieldMapping: [Int] = [
+  private let CSVFieldMapping: [Int] = [
     0,  // 0: RCode (Route Code)
     1,  // 1: Orig (Origin)
     2,  // 2: Dest (Destination)
@@ -44,14 +48,14 @@ class CSVCodedDepartureRouteParser: CSVParser {
 
   func prepare(distribution: Distribution) throws {
     if let dirDist = distribution as? DirectoryDistribution {
-      csvDirectory = dirDist.location
+      CSVDirectory = dirDist.location
     } else if let archiveDist = distribution as? ArchiveFileDistribution {
       let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
         "SwiftNASR_CSV_\(UUID().uuidString)"
       )
       try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
       try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      csvDirectory = tempDir
+      CSVDirectory = tempDir
     }
   }
 
@@ -66,7 +70,7 @@ class CSVCodedDepartureRouteParser: CSVParser {
       }
 
       var mappedFields = [String](repeating: "", count: 12)
-      for (transformerIndex, csvIndex) in self.csvFieldMapping.enumerated()
+      for (transformerIndex, csvIndex) in self.CSVFieldMapping.enumerated()
       where csvIndex < fields.count {
         mappedFields[transformerIndex] = fields[csvIndex]
       }

@@ -1,5 +1,5 @@
 {
-  "originHash" : "966479a9dab23de737659ecc83e5050db8a1ca42d4133c6e779a5c151c125006",
+  "originHash" : "4570e4642635b6624942cad1450f6d25fd2803d0a5e0d83c0433b4bb70f58608",
   "pins" : [
     {
       "identity" : "cwlcatchexception",
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/StreamingCSV.git",
       "state" : {
-        "revision" : "4538df94633a0161063ccdcbeafe1c0fb816ba49",
-        "version" : "1.1.1"
+        "revision" : "74a57e122b2e495161623fbd1e05b5d607c0b072",
+        "version" : "1.1.2"
       }
     },
     {

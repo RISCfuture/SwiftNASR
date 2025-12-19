@@ -187,6 +187,35 @@ public actor NASR {
     let parser = parserFor(recordType: type, format: distribution.format)
     try await parser.prepare(distribution: distribution)
 
+    // For CSV parsers, progress is based on bytes read across all files.
+    // The caller's weight system handles proportional distribution across record types.
+    if var csvParser = parser as? CSVParser {
+      let progress = Progress(totalUnitCount: 1)  // Will be updated by initializeProgress()
+      csvParser.progress = progress
+      csvParser.bytesRead = 0
+      csvParser.initializeProgress()
+      progressHandler(progress)
+
+      let data = await distribution.read(type: type)
+      for try await chunk in data {
+        do {
+          try await parser.parse(data: chunk)
+        } catch {
+          let shouldContinue = errorHandler(error)
+          if !shouldContinue {
+            await parser.finish(data: self.data)
+            return false
+          }
+        }
+      }
+
+      // Ensure progress completes
+      progress.completedUnitCount = progress.totalUnitCount
+      await parser.finish(data: self.data)
+      return true
+    }
+
+    // TXT parsers use line-based progress
     let progress = Progress(totalUnitCount: 10)
     progressHandler(progress)
     var parseProgress: Progress!

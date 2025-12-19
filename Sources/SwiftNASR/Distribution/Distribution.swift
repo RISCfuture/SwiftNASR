@@ -163,7 +163,7 @@ extension Distribution {
   @FileReadActor
   public func readCSVFiles(
     for type: RecordType,
-    withProgress _: @Sendable (_ progress: Progress) -> Void = { _ in },
+    withProgress progressHandler: @Sendable (_ progress: Progress) -> Void = { _ in },
     returningLines linesHandler: (_ lines: UInt) -> Void = { _ in }
   ) -> AsyncThrowingStream<Data, Swift.Error> {
     // For CSV format, the actual parsing happens in the CSV parsers which read files directly
@@ -181,6 +181,11 @@ extension Distribution {
 
     // For CSV, we'll just return a marker indicating CSV format
     // The actual parsing happens in the CSV parsers which read files directly
+    // Report a completed progress for the "read" phase since CSV files are read all at once
+    let readProgress = Progress(totalUnitCount: 1)
+    readProgress.completedUnitCount = 1
+    progressHandler(readProgress)
+
     // Call the lines handler with 1 to ensure parseProgress is initialized
     linesHandler(1)
     return AsyncThrowingStream { continuation in

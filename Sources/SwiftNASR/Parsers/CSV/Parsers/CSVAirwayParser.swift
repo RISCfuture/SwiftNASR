@@ -4,20 +4,24 @@ import ZIPFoundation
 
 /// CSV Airway Parser for parsing AWY_BASE.csv and AWY_SEG_ALT.csv
 class CSVAirwayParser: CSVParser {
-  var csvDirectory = URL(fileURLWithPath: "/")
+  var CSVDirectory = URL(fileURLWithPath: "/")
+  var progress: Progress?
+  var bytesRead: Int64 = 0
+  let CSVFiles = ["AWY_BASE.csv", "AWY_SEG_ALT.csv"]
+
   var airways = [AirwayKey: Airway]()
   var segments = [SegmentKey: Airway.Segment]()
 
   func prepare(distribution: Distribution) throws {
     if let dirDist = distribution as? DirectoryDistribution {
-      csvDirectory = dirDist.location
+      CSVDirectory = dirDist.location
     } else if let archiveDist = distribution as? ArchiveFileDistribution {
       let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
         "SwiftNASR_CSV_\(UUID().uuidString)"
       )
       try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
       try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      csvDirectory = tempDir
+      CSVDirectory = tempDir
     }
   }
 

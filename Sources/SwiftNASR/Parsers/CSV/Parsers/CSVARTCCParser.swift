@@ -4,7 +4,11 @@ import ZIPFoundation
 
 /// CSV ARTCC Parser using declarative transformers like FixedWidthARTCCParser
 class CSVARTCCParser: CSVParser {
-  var csvDirectory = URL(fileURLWithPath: "/")
+  var CSVDirectory = URL(fileURLWithPath: "/")
+  var progress: Progress?
+  var bytesRead: Int64 = 0
+  let CSVFiles = ["ATC_BASE.csv", "ATC_RMK.csv", "ATC_SVC.csv"]
+
   var ARTCCs = [ARTCCKey: ARTCC]()
 
   // Matching FixedWidthARTCCParser transformer field types
@@ -29,14 +33,14 @@ class CSVARTCCParser: CSVParser {
   func prepare(distribution: Distribution) throws {
     // Set the CSV directory for CSV distributions
     if let dirDist = distribution as? DirectoryDistribution {
-      csvDirectory = dirDist.location
+      CSVDirectory = dirDist.location
     } else if let archiveDist = distribution as? ArchiveFileDistribution {
       let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
         "SwiftNASR_CSV_\(UUID().uuidString)"
       )
       try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
       try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      csvDirectory = tempDir
+      CSVDirectory = tempDir
     }
   }
 

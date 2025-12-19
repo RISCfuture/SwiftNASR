@@ -4,7 +4,11 @@ import ZIPFoundation
 
 /// CSV Fix Parser for parsing FIX_BASE.csv, FIX_NAV.csv, and FIX_CHRT.csv
 class CSVFixParser: CSVParser {
-  var csvDirectory = URL(fileURLWithPath: "/")
+  var CSVDirectory = URL(fileURLWithPath: "/")
+  var progress: Progress?
+  var bytesRead: Int64 = 0
+  let CSVFiles = ["FIX_BASE.csv", "FIX_NAV.csv", "FIX_CHRT.csv"]
+
   var fixes = [FixKey: Fix]()
 
   // CSV field mapping for FIX_BASE.csv (0-based indices)
@@ -95,14 +99,14 @@ class CSVFixParser: CSVParser {
 
   func prepare(distribution: Distribution) throws {
     if let dirDist = distribution as? DirectoryDistribution {
-      csvDirectory = dirDist.location
+      CSVDirectory = dirDist.location
     } else if let archiveDist = distribution as? ArchiveFileDistribution {
       let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
         "SwiftNASR_CSV_\(UUID().uuidString)"
       )
       try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
       try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      csvDirectory = tempDir
+      CSVDirectory = tempDir
     }
   }
 

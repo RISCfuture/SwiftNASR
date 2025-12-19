@@ -4,14 +4,18 @@ import ZIPFoundation
 
 /// CSV Weather Station Parser for parsing AWOS.csv
 class CSVWeatherStationParser: CSVParser {
-  var csvDirectory = URL(fileURLWithPath: "/")
+  var CSVDirectory = URL(fileURLWithPath: "/")
+  var progress: Progress?
+  var bytesRead: Int64 = 0
+  let CSVFiles = ["AWOS.csv"]
+
   var stations = [WeatherStationKey: WeatherStation]()
 
   // CSV field mapping for AWOS.csv (0-based indices)
   // Headers: EFF_DATE,ASOS_AWOS_ID,ASOS_AWOS_TYPE,STATE_CODE,CITY,COUNTRY_CODE,COMMISSIONED_DATE,NAVAID_FLAG,
   //          LAT_DEG,LAT_MIN,LAT_SEC,LAT_HEMIS,LAT_DECIMAL,LONG_DEG,LONG_MIN,LONG_SEC,LONG_HEMIS,LONG_DECIMAL,
   //          ELEV,SURVEY_METHOD_CODE,PHONE_NO,SECOND_PHONE_NO,SITE_NO,SITE_TYPE_CODE,REMARK
-  private let csvFieldMapping: [Int] = [
+  private let CSVFieldMapping: [Int] = [
     0,  //  0: EFF_DATE
     1,  //  1: ASOS_AWOS_ID
     2,  //  2: ASOS_AWOS_TYPE
@@ -51,14 +55,14 @@ class CSVWeatherStationParser: CSVParser {
 
   func prepare(distribution: Distribution) throws {
     if let dirDist = distribution as? DirectoryDistribution {
-      csvDirectory = dirDist.location
+      CSVDirectory = dirDist.location
     } else if let archiveDist = distribution as? ArchiveFileDistribution {
       let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
         "SwiftNASR_CSV_\(UUID().uuidString)"
       )
       try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
       try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      csvDirectory = tempDir
+      CSVDirectory = tempDir
     }
   }
 
@@ -73,7 +77,7 @@ class CSVWeatherStationParser: CSVParser {
       }
 
       var mappedFields = [String](repeating: "", count: 16)
-      for (transformerIndex, csvIndex) in self.csvFieldMapping.enumerated()
+      for (transformerIndex, csvIndex) in self.CSVFieldMapping.enumerated()
       where csvIndex < fields.count {
         mappedFields[transformerIndex] = fields[csvIndex]
       }

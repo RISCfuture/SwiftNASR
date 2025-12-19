@@ -10,17 +10,44 @@ import StreamingCSV
  */
 public protocol CSVParser: Parser {
   /// The directory containing CSV files for this record type.
-  var csvDirectory: URL { get set }
+  var CSVDirectory: URL { get set }
+
+  /// The CSV files this parser will process.
+  var CSVFiles: [String] { get }
+
+  /// Progress object for reporting parsing progress.
+  var progress: Progress? { get set }
+
+  /// Cumulative bytes read across all files (for progress tracking).
+  var bytesRead: Int64 { get set }
 }
 
 extension CSVParser {
-  /// Helper method to parse a CSV file using raw string arrays
+  /// Calculates total bytes for all CSV files this parser will process.
+  func calculateTotalBytes() -> Int64 {
+    CSVFiles.reduce(0) { total, filename in
+      let fileURL = CSVDirectory.appendingPathComponent(filename)
+      if let attrs = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
+        let size = attrs[.size] as? Int64
+      {
+        return total + size
+      }
+      return total
+    }
+  }
+
+  /// Initializes progress tracking. Call this after prepare() and before parsing.
+  func initializeProgress() {
+    progress?.totalUnitCount = calculateTotalBytes()
+  }
+
+  /// Helper method to parse a CSV file using raw string arrays.
   func parseCSVFile(
     filename: String,
     expectedFieldCount: Int,
     handler: ([String]) async throws -> Void
   ) async throws {
-    let fileURL = csvDirectory.appendingPathComponent(filename)
+    let fileURL = CSVDirectory.appendingPathComponent(filename)
 
     guard FileManager.default.fileExists(atPath: fileURL.path) else {
       throw ParserError.badData("CSV file not found: \(filename)")
@@ -29,18 +56,11 @@ extension CSVParser {
     let reader = try StreamingCSVReader(url: fileURL)
     _ = try await reader.readRow()  // Skip header row
 
-    var rowCount = 0
-    var skippedCount = 0
-    var processedCount = 0
-
     while let row = try await reader.readRow() {
-      rowCount += 1
-
       // More flexible field count validation
       // Allow rows with fewer fields if they're mostly empty at the end
       // or rows with slightly more fields (might have extra commas)
       if row.count < expectedFieldCount - 5 || row.count > expectedFieldCount + 5 {
-        skippedCount += 1
         // Skip rows with field count mismatches
         continue
       }
@@ -55,8 +75,19 @@ extension CSVParser {
         adjustedRow = Array(row.prefix(expectedFieldCount))
       }
 
-      processedCount += 1
       try await handler(adjustedRow)
+
+      // Update cumulative progress
+      if let progress = self.progress {
+        let currentFileBytes = await reader.bytesRead
+        progress.completedUnitCount = bytesRead + currentFileBytes
+      }
+    }
+
+    // Add this file's total bytes to cumulative count
+    if let fileBytes = await reader.totalBytes {
+      bytesRead += fileBytes
+      progress?.completedUnitCount = bytesRead
     }
   }
 }
