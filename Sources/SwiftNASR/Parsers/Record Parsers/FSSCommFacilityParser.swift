@@ -8,7 +8,7 @@ import Foundation
 ///
 /// Note: This parser uses hardcoded field positions because the FAA layout file
 /// does not contain group separators required by the layout parser.
-class FixedWidthFSSCommFacilityParser: Parser {
+actor FixedWidthFSSCommFacilityParser: Parser {
   // Field positions (0-indexed start, length)
   private static let fields: [(Int, Int)] = [
     (0, 4),  // outlet identifier

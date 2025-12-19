@@ -25,7 +25,7 @@ public struct ARTCCKey: Hashable {
   }
 }
 
-class FixedWidthARTCCParser: FixedWidthParser {
+actor FixedWidthARTCCParser: FixedWidthParser {
   typealias RecordIdentifier = ARTCCRecordIdentifier
 
   static let type: RecordType = .ARTCCFacilities

@@ -255,26 +255,34 @@ extension FixedWidthAirportParser {
 
     let transformedValues = try runwayTransformer.applyTo(values)
 
-    let (materials, condition) =
-      try transformedValues[6].map { condStr in
-        do {
-          return try parseRunwaySurface(condStr as! String)
-        } catch {
-          throw FixedWidthParserError.invalidValue(transformedValues[6] as! String, at: 6)
-        }
-      } ?? (.init(), nil) as (Set<Runway.Material>, Runway.Condition?)
-
-    let pavementClassification = try transformedValues[8].map { classStr in
+    let (materials, condition): (Set<Runway.Material>, Runway.Condition?)
+    if let condStr = transformedValues[6] as? String {
       do {
-        return try parsePavementClassification(classStr as! String)
+        (materials, condition) = try parseRunwaySurface(condStr)
       } catch {
-        throw FixedWidthParserError.invalidValue(transformedValues[8] as! String, at: 8)
+        throw FixedWidthParserError.invalidValue(condStr, at: 6)
       }
+    } else {
+      (materials, condition) = (.init(), nil)
+    }
+
+    let pavementClassification: Runway.PavementClassification?
+    if let classStr = transformedValues[8] as? String {
+      do {
+        pavementClassification = try parsePavementClassification(classStr)
+      } catch {
+        throw FixedWidthParserError.invalidValue(classStr, at: 8)
+      }
+    } else {
+      pavementClassification = nil
     }
 
     let base = try parseRunwayEnd(transformedValues, offset1: 10, offset2: 84, airport: airport)
-    let reciprocal = try transformedValues[44].map { _ in
-      try parseRunwayEnd(transformedValues, offset1: 44, offset2: 109, airport: airport)
+    let reciprocal: RunwayEnd?
+    if transformedValues[44] != nil {
+      reciprocal = try parseRunwayEnd(transformedValues, offset1: 44, offset2: 109, airport: airport)
+    } else {
+      reciprocal = nil
     }
 
     let singleWheelWeightBearingCapacityKlb = transformedValues[80].map { capacity in

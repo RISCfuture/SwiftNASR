@@ -11,7 +11,7 @@ import Foundation
 /// Note: This parser uses hardcoded field positions rather than layout file formats
 /// because the record type detection logic is complex (based on first character and
 /// content of subsequent fields).
-class FixedWidthWeatherReportingLocationParser: LayoutDataParser {
+actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
   static let type = RecordType.weatherReportingLocations
 
   // Base record field positions (0-indexed start, length)

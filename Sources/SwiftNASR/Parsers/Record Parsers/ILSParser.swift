@@ -27,7 +27,7 @@ struct ILSKey: Hashable {
   }
 }
 
-class FixedWidthILSParser: FixedWidthParser {
+actor FixedWidthILSParser: FixedWidthParser {
   typealias RecordIdentifier = ILSRecordIdentifier
 
   static let type: RecordType = .ILSes

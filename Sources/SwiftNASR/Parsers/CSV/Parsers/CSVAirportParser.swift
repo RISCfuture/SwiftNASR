@@ -3,7 +3,7 @@ import StreamingCSV
 import ZIPFoundation
 
 /// CSV Airport Parser using declarative transformers like FixedWidthAirportParser
-class CSVAirportParser: CSVParser {
+actor CSVAirportParser: CSVParser {
   var CSVDirectory = URL(fileURLWithPath: "/")
   var progress: Progress?
   var bytesRead: Int64 = 0

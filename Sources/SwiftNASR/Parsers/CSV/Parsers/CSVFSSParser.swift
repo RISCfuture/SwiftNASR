@@ -3,7 +3,7 @@ import StreamingCSV
 import ZIPFoundation
 
 /// CSV FSS Parser using declarative transformers like FixedWidthFSSParser
-class CSVFSSParser: CSVParser {
+actor CSVFSSParser: CSVParser {
   var CSVDirectory = URL(fileURLWithPath: "/")
   var progress: Progress?
   var bytesRead: Int64 = 0

@@ -12,7 +12,7 @@ enum LIDRecordIdentifier: String {
 /// Records are 1039 characters fixed-width with three record types:
 /// USA (United States), DOD (Dept of Defense overseas), and CAN (Canadian).
 /// This parser currently handles USA records only.
-class FixedWidthLocationIdentifierParser: FixedWidthParser {
+actor FixedWidthLocationIdentifierParser: FixedWidthParser {
   typealias RecordIdentifier = LIDRecordIdentifier
 
   static let type = RecordType.locationIdentifiers

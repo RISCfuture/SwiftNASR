@@ -5,7 +5,7 @@ import Foundation
 /// These files contain published holding patterns.
 /// Records are 487 characters fixed-width with HP1 (base), HP2 (charting),
 /// HP3 (other altitude/speed), and HP4 (remarks) record types.
-class FixedWidthHoldParser: LayoutDataParser {
+actor FixedWidthHoldParser: LayoutDataParser {
   static let type = RecordType.holds
 
   var formats = [NASRTable]()

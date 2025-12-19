@@ -4,7 +4,7 @@ import Quick
 
 @testable import SwiftNASR
 
-class MockParser: LayoutDataParser {
+actor MockParser: LayoutDataParser {
   static let type = RecordType.airports
   var formats = [NASRTable]()
 
@@ -31,7 +31,8 @@ class ParserSpec: AsyncSpec {
         try await parser.prepare(distribution: distribution)
 
         // APT layout file defines 5 record formats: APT, ATT, RWY, ARS, RMK
-        expect(parser.formats.count).to(equal(5))
+        let formatCount = await parser.formats.count
+        expect(formatCount).to(equal(5))
       }
 
       it("calculates correct 0-indexed field ranges from 1-indexed positions") {
@@ -44,7 +45,7 @@ class ParserSpec: AsyncSpec {
 
         try await parser.prepare(distribution: distribution)
 
-        let firstFormat = parser.formats[0]
+        let firstFormat = await parser.formats[0]
 
         // First field: L AN 0003 00001 -> range 0..<3
         expect(firstFormat.fields[0].range).to(equal(0..<3))
@@ -66,7 +67,7 @@ class ParserSpec: AsyncSpec {
 
         try await parser.prepare(distribution: distribution)
 
-        let firstFormat = parser.formats[0]
+        let firstFormat = await parser.formats[0]
 
         // First field has N/A identifier -> .none
         expect(firstFormat.fields[0].identifier).to(equal(NASRTableField.Identifier.none))
@@ -107,7 +108,7 @@ class ParserSpec: AsyncSpec {
 
         try await parser.prepare(distribution: distribution)
 
-        let firstFormat = parser.formats[0]
+        let firstFormat = await parser.formats[0]
 
         // A1 is the "ASSOCIATED CITY NAME" field in APT record
         let field = firstFormat.field(forID: "A1")
@@ -125,7 +126,7 @@ class ParserSpec: AsyncSpec {
 
         try await parser.prepare(distribution: distribution)
 
-        let firstFormat = parser.formats[0]
+        let firstFormat = await parser.formats[0]
 
         let field = firstFormat.field(forID: "NONEXISTENT")
         expect(field).to(beNil())
@@ -141,7 +142,7 @@ class ParserSpec: AsyncSpec {
 
         try await parser.prepare(distribution: distribution)
 
-        let firstFormat = parser.formats[0]
+        let firstFormat = await parser.formats[0]
 
         // A1 should be at a specific offset in the fields array
         let offset = firstFormat.fieldOffset(forID: "A1")

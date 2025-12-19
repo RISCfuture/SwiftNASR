@@ -31,7 +31,7 @@ struct NavaidKey: Hashable {
   }
 }
 
-class FixedWidthNavaidParser: FixedWidthParser {
+actor FixedWidthNavaidParser: FixedWidthParser {
   typealias RecordIdentifier = NavaidRecordIdentifier
 
   static let type: RecordType = .navaids

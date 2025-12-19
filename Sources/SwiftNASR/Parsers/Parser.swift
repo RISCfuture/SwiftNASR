@@ -1,7 +1,7 @@
 import Foundation
 @preconcurrency import RegexBuilder
 
-public protocol Parser: AnyObject {
+public protocol Parser: Actor {
   func prepare(distribution: Distribution) async throws
 
   func parse(data: Data) async throws

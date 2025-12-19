@@ -36,9 +36,13 @@ extension CSVParser {
     }
   }
 
-  /// Initializes progress tracking. Call this after prepare() and before parsing.
-  func initializeProgress() {
-    progress?.totalUnitCount = calculateTotalBytes()
+  /// Sets up progress tracking and returns the Progress object.
+  /// Call this after prepare() and before parsing.
+  func setupProgress() -> Progress {
+    let prog = Progress(totalUnitCount: calculateTotalBytes())
+    progress = prog
+    bytesRead = 0
+    return prog
   }
 
   /// Helper method to parse a CSV file using raw string arrays.

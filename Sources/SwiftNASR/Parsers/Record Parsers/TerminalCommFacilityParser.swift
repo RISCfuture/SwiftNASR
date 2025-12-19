@@ -12,7 +12,7 @@ enum TWRRecordIdentifier: String {
   case atis = "TWR9"
 }
 
-class FixedWidthTerminalCommFacilityParser: FixedWidthParser {
+actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   typealias RecordIdentifier = TWRRecordIdentifier
 
   static let type: RecordType = .terminalCommFacilities

@@ -3,7 +3,7 @@ import StreamingCSV
 import ZIPFoundation
 
 /// CSV Terminal Communications Facility Parser for parsing ATC_BASE.csv, ATC_SVC.csv, ATC_ATIS.csv, ATC_RMK.csv
-class CSVTerminalCommFacilityParser: CSVParser {
+actor CSVTerminalCommFacilityParser: CSVParser {
   var CSVDirectory = URL(fileURLWithPath: "/")
   var progress: Progress?
   var bytesRead: Int64 = 0

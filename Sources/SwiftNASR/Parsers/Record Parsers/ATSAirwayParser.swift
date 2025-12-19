@@ -6,7 +6,7 @@ import Foundation
 /// and Puerto Rico routes. Records are 355 characters fixed-width with 6 record types:
 /// ATS1 (base/MEA data), ATS2 (point description), ATS3 (changeover point),
 /// ATS4 (point remarks), ATS5 (changeover exceptions), and RMK (route remarks).
-class FixedWidthATSAirwayParser: Parser {
+actor FixedWidthATSAirwayParser: Parser {
   var airways = [String: ATSAirway]()
   var pointData = [String: [UInt: ATSAirway.RoutePoint]]()
 

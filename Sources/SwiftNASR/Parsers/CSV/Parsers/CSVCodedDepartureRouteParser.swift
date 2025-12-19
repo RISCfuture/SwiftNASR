@@ -6,7 +6,7 @@ import ZIPFoundation
 ///
 /// CDR is a comma-delimited file with 12 fields:
 /// RCode, Orig, Dest, DepFix, Route String, DCNTR, ACNTR, TCNTRs, CoordReq, Play, NavEqp, Length
-class CSVCodedDepartureRouteParser: CSVParser {
+actor CSVCodedDepartureRouteParser: CSVParser {
   var CSVDirectory = URL(fileURLWithPath: "/")
   var progress: Progress?
   var bytesRead: Int64 = 0

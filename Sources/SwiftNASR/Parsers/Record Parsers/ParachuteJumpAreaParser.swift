@@ -5,7 +5,7 @@ import Foundation
 /// These files contain parachute jump area information.
 /// Records are 473 characters fixed-width with PJA1 (base), PJA2 (times),
 /// PJA3 (user groups), PJA4 (contact facilities), and PJA5 (remarks) record types.
-class FixedWidthParachuteJumpAreaParser: LayoutDataParser {
+actor FixedWidthParachuteJumpAreaParser: LayoutDataParser {
   static let type = RecordType.parachuteJumpAreas
 
   var formats = [NASRTable]()

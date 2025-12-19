@@ -23,7 +23,7 @@ struct FixKey: Hashable {
   }
 }
 
-class FixedWidthFixParser: FixedWidthParser {
+actor FixedWidthFixParser: FixedWidthParser {
   typealias RecordIdentifier = FixRecordIdentifier
 
   static let type: RecordType = .reportingPoints

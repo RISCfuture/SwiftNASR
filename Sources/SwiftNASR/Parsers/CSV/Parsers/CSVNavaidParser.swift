@@ -3,7 +3,7 @@ import StreamingCSV
 import ZIPFoundation
 
 /// CSV Navaid Parser using declarative transformers like FixedWidthNavaidParser
-class CSVNavaidParser: CSVParser {
+actor CSVNavaidParser: CSVParser {
   var CSVDirectory = URL(fileURLWithPath: "/")
   var progress: Progress?
   var bytesRead: Int64 = 0

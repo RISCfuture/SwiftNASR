@@ -3,7 +3,7 @@ import StreamingCSV
 import ZIPFoundation
 
 /// CSV ILS Parser for parsing ILS_BASE.csv, ILS_GS.csv, ILS_DME.csv, ILS_MKR.csv, and ILS_RMK.csv
-class CSVILSParser: CSVParser {
+actor CSVILSParser: CSVParser {
   var CSVDirectory = URL(fileURLWithPath: "/")
   var progress: Progress?
   var bytesRead: Int64 = 0

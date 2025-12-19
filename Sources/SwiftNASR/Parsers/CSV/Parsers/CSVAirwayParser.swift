@@ -3,7 +3,7 @@ import StreamingCSV
 import ZIPFoundation
 
 /// CSV Airway Parser for parsing AWY_BASE.csv and AWY_SEG_ALT.csv
-class CSVAirwayParser: CSVParser {
+actor CSVAirwayParser: CSVParser {
   var CSVDirectory = URL(fileURLWithPath: "/")
   var progress: Progress?
   var bytesRead: Int64 = 0

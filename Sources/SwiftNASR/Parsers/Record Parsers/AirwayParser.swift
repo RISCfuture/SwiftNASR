@@ -29,7 +29,7 @@ struct SegmentKey: Hashable {
   let sequenceNumber: UInt
 }
 
-class FixedWidthAirwayParser: FixedWidthParser {
+actor FixedWidthAirwayParser: FixedWidthParser {
   typealias RecordIdentifier = AirwayRecordIdentifier
 
   static let type: RecordType = .airways

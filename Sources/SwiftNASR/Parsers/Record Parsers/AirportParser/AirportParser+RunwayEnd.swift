@@ -165,12 +165,15 @@ extension FixedWidthAirportParser {
   func parseRunwayEnd(_ values: [Any?], offset1: Int, offset2: Int, airport: Airport) throws
     -> RunwayEnd
   {
-    let VGSI = try values[offset1 + 20].map { str in
+    let VGSI: RunwayEnd.VisualGlideslopeIndicator?
+    if let str = values[offset1 + 20] as? String {
       do {
-        return try parseVGSI(str as! String)
+        VGSI = try parseVGSI(str)
       } catch {
-        throw FixedWidthParserError.invalidValue(values[offset1 + 20] as! String, at: offset1 + 20)
+        throw FixedWidthParserError.invalidValue(str, at: offset1 + 20)
       }
+    } else {
+      VGSI = nil
     }
 
     let threshold = zipOptionals(values[offset1 + 6], values[offset1 + 8]).map { lat, lon in
@@ -190,14 +193,18 @@ extension FixedWidthAirportParser {
       )
     }
 
-    let gradient = try values[offset2].map { grad in
-      var grad = grad as! Float
-      switch values[offset2 + 1] as! String {
+    let gradient: Float?
+    if let gradValue = values[offset2] as? Float {
+      var grad = gradValue
+      let direction = values[offset2 + 1] as! String
+      switch direction {
         case "UP": break
         case "DOWN": grad *= -1
-        default: throw FixedWidthParserError.invalidValue(values[offset2] as! String, at: offset2)
+        default: throw FixedWidthParserError.invalidValue(String(grad), at: offset2)
       }
-      return grad
+      gradient = grad
+    } else {
+      gradient = nil
     }
 
     let location = zipOptionals(values[offset2 + 19], values[offset2 + 21]).map { lat, lon in

@@ -3,7 +3,7 @@ import StreamingCSV
 import ZIPFoundation
 
 /// CSV Weather Station Parser for parsing AWOS.csv
-class CSVWeatherStationParser: CSVParser {
+actor CSVWeatherStationParser: CSVParser {
   var CSVDirectory = URL(fileURLWithPath: "/")
   var progress: Progress?
   var bytesRead: Int64 = 0

@@ -20,7 +20,7 @@ struct WeatherStationKey: Hashable {
   }
 }
 
-class FixedWidthWeatherStationParser: FixedWidthParser {
+actor FixedWidthWeatherStationParser: FixedWidthParser {
   typealias RecordIdentifier = WeatherStationRecordIdentifier
 
   static let type: RecordType = .weatherReportingStations

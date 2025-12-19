@@ -3,7 +3,7 @@ import StreamingCSV
 import ZIPFoundation
 
 /// CSV Fix Parser for parsing FIX_BASE.csv, FIX_NAV.csv, and FIX_CHRT.csv
-class CSVFixParser: CSVParser {
+actor CSVFixParser: CSVParser {
   var CSVDirectory = URL(fileURLWithPath: "/")
   var progress: Progress?
   var bytesRead: Int64 = 0

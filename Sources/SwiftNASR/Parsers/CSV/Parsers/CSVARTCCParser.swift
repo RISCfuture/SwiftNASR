@@ -3,7 +3,7 @@ import StreamingCSV
 import ZIPFoundation
 
 /// CSV ARTCC Parser using declarative transformers like FixedWidthARTCCParser
-class CSVARTCCParser: CSVParser {
+actor CSVARTCCParser: CSVParser {
   var CSVDirectory = URL(fileURLWithPath: "/")
   var progress: Progress?
   var bytesRead: Int64 = 0

@@ -5,7 +5,7 @@ import Foundation
 /// This parser uses the same format as SSD but represents the complete
 /// comprehensive set of STAR and DP procedures, including multiple main
 /// body procedures and procedures without computer IDs.
-class FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
+actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
   static let type = RecordType.departureArrivalProceduresComplete
 
   var formats = [NASRTable]()

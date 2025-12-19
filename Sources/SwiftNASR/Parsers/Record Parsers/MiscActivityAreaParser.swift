@@ -7,7 +7,7 @@ import Foundation
 /// Records are 919 characters fixed-width with MAA1 (base), MAA2 (polygon coordinates),
 /// MAA3 (times of use), MAA4 (user groups), MAA5 (contact facilities),
 /// MAA6 (check for NOTAMs), and MAA7 (remarks).
-class FixedWidthMiscActivityAreaParser: LayoutDataParser {
+actor FixedWidthMiscActivityAreaParser: LayoutDataParser {
   static let type = RecordType.miscActivityAreas
 
   var formats = [NASRTable]()

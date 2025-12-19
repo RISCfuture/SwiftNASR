@@ -9,7 +9,7 @@ enum PFRRecordIdentifier: String {
 ///
 /// These files contain preferred IFR routes between airports.
 /// Records are 344 characters fixed-width with PFR1 (base) and PFR2 (segment) record types.
-class FixedWidthPreferredRouteParser: FixedWidthParser {
+actor FixedWidthPreferredRouteParser: FixedWidthParser {
   typealias RecordIdentifier = PFRRecordIdentifier
 
   static let type = RecordType.preferredRoutes

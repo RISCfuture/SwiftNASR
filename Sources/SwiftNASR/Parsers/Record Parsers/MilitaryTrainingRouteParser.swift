@@ -5,7 +5,7 @@ import Foundation
 /// These files contain military training route information.
 /// Records are 519 characters fixed-width with MTR1 (base), MTR2 (operating procedures),
 /// MTR3 (route width), MTR4 (terrain following), MTR5 (route points), and MTR6 (agencies).
-class FixedWidthMilitaryTrainingRouteParser: LayoutDataParser {
+actor FixedWidthMilitaryTrainingRouteParser: LayoutDataParser {
   static let type = RecordType.militaryTrainingRoutes
 
   var formats = [NASRTable]()
