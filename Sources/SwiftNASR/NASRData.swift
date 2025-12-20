@@ -913,6 +913,19 @@ public struct NASRDataCodable: Codable {
   var weatherStations: [WeatherStation]?
   var airways: [Airway]?
   var ILSFacilities: [ILS]?
+  var terminalCommFacilities: [TerminalCommFacility]?
+  var departureArrivalProceduresComplete: [DepartureArrivalProcedure]?
+  var preferredRoutes: [PreferredRoute]?
+  var holds: [Hold]?
+  var weatherReportingLocations: [WeatherReportingLocation]?
+  var parachuteJumpAreas: [ParachuteJumpArea]?
+  var militaryTrainingRoutes: [MilitaryTrainingRoute]?
+  var codedDepartureRoutes: [CodedDepartureRoute]?
+  var miscActivityAreas: [MiscActivityArea]?
+  var ARTCCBoundarySegments: [ARTCCBoundarySegment]?
+  var FSSCommFacilities: [FSSCommFacility]?
+  var atsAirways: [ATSAirway]?
+  var locationIdentifiers: [LocationIdentifier]?
 
   public init(data: NASRData) async {
     cycle = await data.cycle
@@ -925,6 +938,20 @@ public struct NASRDataCodable: Codable {
     weatherStations = await data.weatherStations?.sorted { $0.id < $1.id }
     airways = await data.airways?.sorted { $0.id < $1.id }
     ILSFacilities = await data.ILSFacilities?.sorted { $0.id < $1.id }
+    terminalCommFacilities = await data.terminalCommFacilities?.sorted { $0.id < $1.id }
+    departureArrivalProceduresComplete = await data.departureArrivalProceduresComplete?
+      .sorted { $0.id < $1.id }
+    preferredRoutes = await data.preferredRoutes?.sorted { $0.id < $1.id }
+    holds = await data.holds?.sorted { $0.id < $1.id }
+    weatherReportingLocations = await data.weatherReportingLocations?.sorted { $0.id < $1.id }
+    parachuteJumpAreas = await data.parachuteJumpAreas?.sorted { $0.id < $1.id }
+    militaryTrainingRoutes = await data.militaryTrainingRoutes?.sorted { $0.id < $1.id }
+    codedDepartureRoutes = await data.codedDepartureRoutes?.sorted { $0.id < $1.id }
+    miscActivityAreas = await data.miscActivityAreas?.sorted { $0.id < $1.id }
+    ARTCCBoundarySegments = await data.ARTCCBoundarySegments?.sorted { $0.id < $1.id }
+    FSSCommFacilities = await data.FSSCommFacilities?.sorted { $0.id < $1.id }
+    atsAirways = await data.atsAirways?.sorted { $0.id < $1.id }
+    locationIdentifiers = await data.locationIdentifiers?.sorted { $0.id < $1.id }
   }
 
   public init(from decoder: Decoder) throws {
@@ -946,6 +973,55 @@ public struct NASRDataCodable: Codable {
       Array<ILS>.self,
       forKey: .ILSFacilities
     )
+    let decodedTerminalCommFacilities = try container.decodeIfPresent(
+      Array<TerminalCommFacility>.self,
+      forKey: .terminalCommFacilities
+    )
+    let decodedDepartureArrivalProceduresComplete = try container.decodeIfPresent(
+      Array<DepartureArrivalProcedure>.self,
+      forKey: .departureArrivalProceduresComplete
+    )
+    let decodedPreferredRoutes = try container.decodeIfPresent(
+      Array<PreferredRoute>.self,
+      forKey: .preferredRoutes
+    )
+    let decodedHolds = try container.decodeIfPresent(Array<Hold>.self, forKey: .holds)
+    let decodedWeatherReportingLocations = try container.decodeIfPresent(
+      Array<WeatherReportingLocation>.self,
+      forKey: .weatherReportingLocations
+    )
+    let decodedParachuteJumpAreas = try container.decodeIfPresent(
+      Array<ParachuteJumpArea>.self,
+      forKey: .parachuteJumpAreas
+    )
+    let decodedMilitaryTrainingRoutes = try container.decodeIfPresent(
+      Array<MilitaryTrainingRoute>.self,
+      forKey: .militaryTrainingRoutes
+    )
+    let decodedCodedDepartureRoutes = try container.decodeIfPresent(
+      Array<CodedDepartureRoute>.self,
+      forKey: .codedDepartureRoutes
+    )
+    let decodedMiscActivityAreas = try container.decodeIfPresent(
+      Array<MiscActivityArea>.self,
+      forKey: .miscActivityAreas
+    )
+    let decodedARTCCBoundarySegments = try container.decodeIfPresent(
+      Array<ARTCCBoundarySegment>.self,
+      forKey: .ARTCCBoundarySegments
+    )
+    let decodedFSSCommFacilities = try container.decodeIfPresent(
+      Array<FSSCommFacility>.self,
+      forKey: .FSSCommFacilities
+    )
+    let decodedAtsAirways = try container.decodeIfPresent(
+      Array<ATSAirway>.self,
+      forKey: .atsAirways
+    )
+    let decodedLocationIdentifiers = try container.decodeIfPresent(
+      Array<LocationIdentifier>.self,
+      forKey: .locationIdentifiers
+    )
 
     // stick these setters in a defer block so that the didSet hooks get called
     defer {
@@ -959,6 +1035,19 @@ public struct NASRDataCodable: Codable {
       weatherStations = decodedWeatherStations
       airways = decodedAirways
       ILSFacilities = decodedILSFacilities
+      terminalCommFacilities = decodedTerminalCommFacilities
+      departureArrivalProceduresComplete = decodedDepartureArrivalProceduresComplete
+      preferredRoutes = decodedPreferredRoutes
+      holds = decodedHolds
+      weatherReportingLocations = decodedWeatherReportingLocations
+      parachuteJumpAreas = decodedParachuteJumpAreas
+      militaryTrainingRoutes = decodedMilitaryTrainingRoutes
+      codedDepartureRoutes = decodedCodedDepartureRoutes
+      miscActivityAreas = decodedMiscActivityAreas
+      ARTCCBoundarySegments = decodedARTCCBoundarySegments
+      FSSCommFacilities = decodedFSSCommFacilities
+      atsAirways = decodedAtsAirways
+      locationIdentifiers = decodedLocationIdentifiers
     }
   }
 
@@ -974,13 +1063,29 @@ public struct NASRDataCodable: Codable {
       fixes: fixes,
       weatherStations: weatherStations,
       airways: airways,
-      ILSFacilities: ILSFacilities
+      ILSFacilities: ILSFacilities,
+      terminalCommFacilities: terminalCommFacilities,
+      departureArrivalProceduresComplete: departureArrivalProceduresComplete,
+      preferredRoutes: preferredRoutes,
+      holds: holds,
+      weatherReportingLocations: weatherReportingLocations,
+      parachuteJumpAreas: parachuteJumpAreas,
+      militaryTrainingRoutes: militaryTrainingRoutes,
+      codedDepartureRoutes: codedDepartureRoutes,
+      miscActivityAreas: miscActivityAreas,
+      ARTCCBoundarySegments: ARTCCBoundarySegments,
+      FSSCommFacilities: FSSCommFacilities,
+      atsAirways: atsAirways,
+      locationIdentifiers: locationIdentifiers
     )
     return data
   }
 
   enum CodingKeys: String, CodingKey {
     case cycle, states, airports, ARTCCs, FSSes, navaids, fixes, weatherStations, airways
-    case ILSFacilities
+    case ILSFacilities, terminalCommFacilities, departureArrivalProceduresComplete
+    case preferredRoutes, holds, weatherReportingLocations, parachuteJumpAreas
+    case militaryTrainingRoutes, codedDepartureRoutes, miscActivityAreas
+    case ARTCCBoundarySegments, FSSCommFacilities, atsAirways, locationIdentifiers
   }
 }

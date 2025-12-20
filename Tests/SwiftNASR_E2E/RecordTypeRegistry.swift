@@ -76,25 +76,25 @@ let recordTypeRegistry: [RecordType: RecordTypeInfo] = [
     recordType: .departureArrivalProceduresComplete,
     displayName: "Departure/Arrival Procedures Complete",
     txtWeight: 37,  // STARDP.txt: ~37k lines
-    csvWeight: nil  // Not available in CSV
+    csvWeight: 4  // DP_*.csv + STAR_*.csv: ~4MB total
   ),
   .preferredRoutes: RecordTypeInfo(
     recordType: .preferredRoutes,
     displayName: "Preferred Routes",
     txtWeight: 87,  // PFR.txt: ~87k lines
-    csvWeight: nil  // Not available in CSV
+    csvWeight: 8  // PFR_*.csv: ~8MB total
   ),
   .holds: RecordTypeInfo(
     recordType: .holds,
     displayName: "Holds",
     txtWeight: 45,  // HPF.txt: ~45k lines
-    csvWeight: nil  // Not available in CSV
+    csvWeight: 3  // HPF_*.csv: ~3MB total
   ),
   .weatherReportingLocations: RecordTypeInfo(
     recordType: .weatherReportingLocations,
     displayName: "Weather Reporting Locations",
     txtWeight: 3,  // WXL.txt: ~3k lines
-    csvWeight: nil  // Not available in CSV
+    csvWeight: 1  // WXL_*.csv: ~1MB total
   ),
   .parachuteJumpAreas: RecordTypeInfo(
     recordType: .parachuteJumpAreas,
@@ -106,7 +106,7 @@ let recordTypeRegistry: [RecordType: RecordTypeInfo] = [
     recordType: .militaryTrainingRoutes,
     displayName: "Military Training Routes",
     txtWeight: 31,  // MTR.txt: ~31k lines
-    csvWeight: nil  // Not available in CSV
+    csvWeight: 3  // MTR_*.csv: ~3MB total
   ),
   .codedDepartureRoutes: RecordTypeInfo(
     recordType: .codedDepartureRoutes,
@@ -118,19 +118,19 @@ let recordTypeRegistry: [RecordType: RecordTypeInfo] = [
     recordType: .miscActivityAreas,
     displayName: "Misc Activity Areas",
     txtWeight: 1,  // MAA.txt: ~1k lines
-    csvWeight: nil  // Not available in CSV
+    csvWeight: 1  // MAA_*.csv: ~0.1MB total
   ),
   .ARTCCBoundarySegments: RecordTypeInfo(
     recordType: .ARTCCBoundarySegments,
     displayName: "ARTCC Boundary Segments",
     txtWeight: 3,  // ARB.txt: ~3k lines
-    csvWeight: nil  // Not available in CSV
+    csvWeight: 1  // ARB_SEG.csv: ~0.3MB
   ),
   .FSSCommFacilities: RecordTypeInfo(
     recordType: .FSSCommFacilities,
     displayName: "FSS Comm Facilities",
     txtWeight: 1,  // COM.txt: ~1k lines
-    csvWeight: nil  // Not available in CSV
+    csvWeight: 1  // COM.csv: ~0.3MB
   ),
   .ATSAirways: RecordTypeInfo(
     recordType: .ATSAirways,

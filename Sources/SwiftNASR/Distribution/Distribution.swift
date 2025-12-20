@@ -124,6 +124,24 @@ public protocol Distribution: Sendable {
    - Returns: The parsed cycle, or `nil` if the cycle could not be parsed.
    */
   func readCycle() async throws -> Cycle?
+
+  /**
+   Reads a file as raw data chunks without line splitting.
+  
+   This method streams the file content as raw `Data` chunks, suitable for
+   parsers that handle their own buffering and line detection (such as CSV
+   parsers with multi-line quoted fields).
+  
+   - Parameter path: The path to the file within the distribution.
+   - Parameter progressHandler: A block that receives the Progress object when
+                                the task begins.
+   - Returns: An `AsyncThrowingStream` that yields raw data chunks.
+   */
+  @FileReadActor
+  func readFileRaw(
+    path: String,
+    withProgress progressHandler: @Sendable (_ progress: Progress) -> Void
+  ) -> AsyncThrowingStream<Data, Swift.Error>
 }
 
 extension Distribution {
@@ -170,7 +188,10 @@ extension Distribution {
     // We just need to check if the record type is supported
     switch type {
       case .airports, .navaids, .flightServiceStations, .ARTCCFacilities, .reportingPoints,
-        .weatherReportingStations, .airways, .ILSes, .terminalCommFacilities, .codedDepartureRoutes:
+        .weatherReportingStations, .airways, .ILSes, .terminalCommFacilities, .codedDepartureRoutes,
+        .locationIdentifiers, .parachuteJumpAreas, .weatherReportingLocations, .holds,
+        .ARTCCBoundarySegments, .miscActivityAreas, .militaryTrainingRoutes, .preferredRoutes,
+        .departureArrivalProceduresComplete, .FSSCommFacilities:
         break  // These types are supported for CSV
       default:
         // For unsupported types, return empty stream

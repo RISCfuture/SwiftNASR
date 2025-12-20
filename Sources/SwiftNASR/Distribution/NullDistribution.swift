@@ -22,6 +22,13 @@ public final class NullDistribution: Distribution {
     return AsyncThrowingStream { $0.finish(throwing: Error.nullDistribution) }
   }
 
+  public func readFileRaw(
+    path _: String,
+    withProgress _: @Sendable (Progress) -> Void = { _ in }
+  ) -> AsyncThrowingStream<Data, Swift.Error> {
+    return AsyncThrowingStream { $0.finish(throwing: Error.nullDistribution) }
+  }
+
   public func readCycle() throws -> Cycle? {
     return nil
   }

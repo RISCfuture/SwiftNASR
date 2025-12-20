@@ -20,7 +20,7 @@ let package = Package(
     .package(url: "https://github.com/Quick/Nimble.git", from: "13.7.1"),
     .package(url: "https://github.com/swiftlang/swift-docc-plugin.git", from: "1.4.3"),
     .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
-    .package(url: "https://github.com/RISCfuture/StreamingCSV.git", from: "1.1.2")
+    .package(url: "https://github.com/RISCfuture/StreamingCSV.git", from: "2.0.0")
   ],
   targets: [
     .target(

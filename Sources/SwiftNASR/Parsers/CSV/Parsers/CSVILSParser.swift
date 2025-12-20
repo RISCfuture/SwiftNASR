@@ -1,10 +1,9 @@
 import Foundation
 import StreamingCSV
-import ZIPFoundation
 
 /// CSV ILS Parser for parsing ILS_BASE.csv, ILS_GS.csv, ILS_DME.csv, ILS_MKR.csv, and ILS_RMK.csv
 actor CSVILSParser: CSVParser {
-  var CSVDirectory = URL(fileURLWithPath: "/")
+  var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["ILS_BASE.csv", "ILS_GS.csv", "ILS_DME.csv", "ILS_MKR.csv", "ILS_RMK.csv"]
@@ -12,16 +11,7 @@ actor CSVILSParser: CSVParser {
   var ILSFacilities = [ILSKey: ILS]()
 
   func prepare(distribution: Distribution) throws {
-    if let dirDist = distribution as? DirectoryDistribution {
-      CSVDirectory = dirDist.location
-    } else if let archiveDist = distribution as? ArchiveFileDistribution {
-      let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
-        "SwiftNASR_CSV_\(UUID().uuidString)"
-      )
-      try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-      try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      CSVDirectory = tempDir
-    }
+    self.distribution = distribution
   }
 
   func parse(data _: Data) async throws {

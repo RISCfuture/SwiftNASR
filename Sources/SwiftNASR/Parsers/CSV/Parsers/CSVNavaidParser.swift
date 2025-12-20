@@ -1,10 +1,9 @@
 import Foundation
 import StreamingCSV
-import ZIPFoundation
 
 /// CSV Navaid Parser using declarative transformers like FixedWidthNavaidParser
 actor CSVNavaidParser: CSVParser {
-  var CSVDirectory = URL(fileURLWithPath: "/")
+  var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["NAV_BASE.csv", "NAV_RMK.csv", "NAV_CKPT.csv"]
@@ -134,17 +133,7 @@ actor CSVNavaidParser: CSVParser {
   ])
 
   func prepare(distribution: Distribution) throws {
-    // Set the CSV directory for CSV distributions
-    if let dirDist = distribution as? DirectoryDistribution {
-      CSVDirectory = dirDist.location
-    } else if let archiveDist = distribution as? ArchiveFileDistribution {
-      let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
-        "SwiftNASR_CSV_\(UUID().uuidString)"
-      )
-      try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-      try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      CSVDirectory = tempDir
-    }
+    self.distribution = distribution
   }
 
   func parse(data _: Data) async throws {

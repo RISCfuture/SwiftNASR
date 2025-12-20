@@ -280,7 +280,12 @@ extension FixedWidthAirportParser {
     let base = try parseRunwayEnd(transformedValues, offset1: 10, offset2: 84, airport: airport)
     let reciprocal: RunwayEnd?
     if transformedValues[44] != nil {
-      reciprocal = try parseRunwayEnd(transformedValues, offset1: 44, offset2: 109, airport: airport)
+      reciprocal = try parseRunwayEnd(
+        transformedValues,
+        offset1: 44,
+        offset2: 109,
+        airport: airport
+      )
     } else {
       reciprocal = nil
     }

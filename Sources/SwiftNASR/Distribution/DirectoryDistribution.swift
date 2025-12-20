@@ -120,6 +120,43 @@ public final class DirectoryDistribution: Distribution {
     }
   }
 
+  public func readFileRaw(
+    path: String,
+    withProgress progressHandler: (Progress) -> Void = { _ in }
+  ) -> AsyncThrowingStream<Data, Swift.Error> {
+    return AsyncThrowingStream { continuation in
+      do {
+        let fileURL = location.appendingPathComponent(path)
+        let handle: FileHandle
+        do {
+          handle = try FileHandle(forReadingFrom: fileURL)
+        } catch let error as NSError {
+          if error.domain == NSCocoaErrorDomain && error.code == NSFileNoSuchFileError {
+            throw Error.noSuchFile(path: path)
+          }
+          throw error
+        }
+
+        let filesize =
+          try FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as! NSNumber
+        let progress = Progress(totalUnitCount: filesize.int64Value)
+        progressHandler(progress)
+
+        while true {
+          let data = handle.readData(ofLength: chunkSize)
+          guard !data.isEmpty else { break }
+          Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
+          continuation.yield(data)
+        }
+
+        try handle.close()
+        continuation.finish()
+      } catch {
+        continuation.finish(throwing: error)
+      }
+    }
+  }
+
   public func readCycle() throws -> Cycle? {
     if format == .csv {
       // For CSV distributions, try to parse cycle from directory name

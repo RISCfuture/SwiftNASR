@@ -1,10 +1,9 @@
 import Foundation
 import StreamingCSV
-import ZIPFoundation
 
 /// CSV Airway Parser for parsing AWY_BASE.csv and AWY_SEG_ALT.csv
 actor CSVAirwayParser: CSVParser {
-  var CSVDirectory = URL(fileURLWithPath: "/")
+  var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["AWY_BASE.csv", "AWY_SEG_ALT.csv"]
@@ -13,16 +12,7 @@ actor CSVAirwayParser: CSVParser {
   var segments = [SegmentKey: Airway.Segment]()
 
   func prepare(distribution: Distribution) throws {
-    if let dirDist = distribution as? DirectoryDistribution {
-      CSVDirectory = dirDist.location
-    } else if let archiveDist = distribution as? ArchiveFileDistribution {
-      let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
-        "SwiftNASR_CSV_\(UUID().uuidString)"
-      )
-      try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-      try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      CSVDirectory = tempDir
-    }
+    self.distribution = distribution
   }
 
   func parse(data _: Data) async throws {

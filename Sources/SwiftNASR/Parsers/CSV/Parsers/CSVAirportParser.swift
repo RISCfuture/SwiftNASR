@@ -1,10 +1,9 @@
 import Foundation
 import StreamingCSV
-import ZIPFoundation
 
 /// CSV Airport Parser using declarative transformers like FixedWidthAirportParser
 actor CSVAirportParser: CSVParser {
-  var CSVDirectory = URL(fileURLWithPath: "/")
+  var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = [
@@ -289,20 +288,7 @@ actor CSVAirportParser: CSVParser {
   // MARK: - Protocol Methods
 
   func prepare(distribution: Distribution) throws {
-    // Set the CSV directory for CSV distributions
-    if let dirDist = distribution as? DirectoryDistribution {
-      CSVDirectory = dirDist.location
-    } else if let archiveDist = distribution as? ArchiveFileDistribution {
-      // For downloaded CSV archives, extract to a temporary directory
-      let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
-        "SwiftNASR_CSV_\(UUID().uuidString)"
-      )
-      try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-
-      // Extract the archive to the temporary directory
-      try FileManager.default.unzipItem(at: archiveDist.location, to: tempDir)
-      CSVDirectory = tempDir
-    }
+    self.distribution = distribution
   }
 
   func parse(data _: Data) async throws {
@@ -446,7 +432,7 @@ actor CSVAirportParser: CSVParser {
       distanceCityToAirportNM: transformedValues[35] as? UInt,
       directionCityToAirport: transformedValues[36] as? Direction,
       landAreaAcres: transformedValues[37] as? Float,
-      boundaryARTCCId: nil,  // Not available in CSV format
+      boundaryARTCCId: transformedValues[39] as? String,
       responsibleARTCCId: transformedValues[38] as! String,
       tieInFSSOnStation: transformedValues[41] as? Bool,
       tieInFSSId: transformedValues[42] as! String,

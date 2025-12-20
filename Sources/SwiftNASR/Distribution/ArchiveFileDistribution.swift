@@ -135,6 +135,35 @@ public final class ArchiveFileDistribution: Distribution {
     }
   }
 
+  public func readFileRaw(
+    path: String,
+    withProgress progressHandler: (Progress) -> Void = { _ in }
+  ) -> AsyncThrowingStream<Data, Swift.Error> {
+    return AsyncThrowingStream { continuation in
+      do {
+        // Try exact match first, then case-insensitive match
+        let entry =
+          archive[path] ?? archive.first { $0.path.caseInsensitiveCompare(path) == .orderedSame }
+        guard let entry else {
+          continuation.finish(throwing: Error.noSuchFile(path: path))
+          return
+        }
+
+        let progress = Progress(totalUnitCount: Int64(entry.uncompressedSize))
+        progressHandler(progress)
+
+        _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: true, progress: nil) {
+          data in
+          Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
+          continuation.yield(data)
+        }
+        continuation.finish()
+      } catch {
+        continuation.finish(throwing: error)
+      }
+    }
+  }
+
   public func readCycle() async throws -> Cycle? {
     if format == .csv {
       // For CSV format, try to extract cycle from the filename

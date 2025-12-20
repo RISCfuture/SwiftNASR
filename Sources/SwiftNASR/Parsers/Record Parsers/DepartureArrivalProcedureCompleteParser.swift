@@ -62,12 +62,7 @@ actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
 
     if fixType == .adaptedAirport {
       // This is an adapted airport record
-      guard let position = makeLocation(latitude: latitude, longitude: longitude) else {
-        throw ParserError.missingRequiredField(
-          field: "position",
-          recordType: "STARDP AdaptedAirport"
-        )
-      }
+      let position = makeLocation(latitude: latitude, longitude: longitude)
       guard !identifier.isEmpty else {
         throw ParserError.missingRequiredField(
           field: "identifier",
@@ -76,7 +71,8 @@ actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
       }
       let airport = DepartureArrivalProcedure.AdaptedAirport(
         position: position,
-        identifier: identifier
+        identifier: identifier,
+        runwayEndID: nil
       )
       procedure.adaptedAirports.append(airport)
     } else if !isNewProcedure && !computerCode.isEmpty && computerCode != "NOT ASSIGNED"
@@ -91,12 +87,10 @@ actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
 
       // Add first point of transition
       if let fixTypeValue = fixType {
-        guard let position = makeLocation(latitude: latitude, longitude: longitude) else {
-          throw ParserError.missingRequiredField(field: "position", recordType: "STARDP Point")
-        }
         guard !identifier.isEmpty else {
           throw ParserError.missingRequiredField(field: "identifier", recordType: "STARDP Point")
         }
+        let position = makeLocation(latitude: latitude, longitude: longitude)
         let point = DepartureArrivalProcedure.Point(
           fixType: fixTypeValue,
           position: position,
@@ -113,12 +107,10 @@ actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
       guard let fixTypeValue = fixType else {
         throw ParserError.missingRequiredField(field: "fixType", recordType: "STARDP Point")
       }
-      guard let position = makeLocation(latitude: latitude, longitude: longitude) else {
-        throw ParserError.missingRequiredField(field: "position", recordType: "STARDP Point")
-      }
       guard !identifier.isEmpty else {
         throw ParserError.missingRequiredField(field: "identifier", recordType: "STARDP Point")
       }
+      let position = makeLocation(latitude: latitude, longitude: longitude)
       let point = DepartureArrivalProcedure.Point(
         fixType: fixTypeValue,
         position: position,
@@ -129,12 +121,10 @@ actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
       procedure.transitions[procedure.transitions.count - 1].points.append(point)
     } else if let fixTypeValue = fixType {
       // Add point to main body
-      guard let position = makeLocation(latitude: latitude, longitude: longitude) else {
-        throw ParserError.missingRequiredField(field: "position", recordType: "STARDP Point")
-      }
       guard !identifier.isEmpty else {
         throw ParserError.missingRequiredField(field: "identifier", recordType: "STARDP Point")
       }
+      let position = makeLocation(latitude: latitude, longitude: longitude)
       let point = DepartureArrivalProcedure.Point(
         fixType: fixTypeValue,
         position: position,

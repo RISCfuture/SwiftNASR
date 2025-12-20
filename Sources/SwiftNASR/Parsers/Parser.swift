@@ -136,6 +136,16 @@ func parserFor(recordType: RecordType, format: DataFormat = .txt) -> Parser {
         case .ILSes: return CSVILSParser()
         case .terminalCommFacilities: return CSVTerminalCommFacilityParser()
         case .codedDepartureRoutes: return CSVCodedDepartureRouteParser()
+        case .locationIdentifiers: return CSVLocationIdentifierParser()
+        case .parachuteJumpAreas: return CSVParachuteJumpAreaParser()
+        case .weatherReportingLocations: return CSVWeatherReportingLocationParser()
+        case .holds: return CSVHoldParser()
+        case .ARTCCBoundarySegments: return CSVARTCCBoundarySegmentParser()
+        case .miscActivityAreas: return CSVMiscActivityAreaParser()
+        case .militaryTrainingRoutes: return CSVMilitaryTrainingRouteParser()
+        case .preferredRoutes: return CSVPreferredRouteParser()
+        case .departureArrivalProceduresComplete: return CSVDepartureArrivalProcedureParser()
+        case .FSSCommFacilities: return CSVFSSCommFacilityParser()
         default:
           preconditionFailure("No CSV parser for \(recordType)")
       }

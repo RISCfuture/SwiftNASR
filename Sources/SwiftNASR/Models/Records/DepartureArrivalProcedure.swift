@@ -156,7 +156,11 @@ public struct DepartureArrivalProcedure: Record, Identifiable {
     public let fixType: FixType
 
     /// Geographic position.
-    public let position: Location
+    ///
+    /// This is available when parsing from TXT format but not from CSV format.
+    /// For CSV-parsed data, use the identifier to look up the position from
+    /// the corresponding fix, navaid, or airport records.
+    public let position: Location?
 
     /// Fix/navaid/airport identifier.
     public let identifier: String
@@ -175,13 +179,23 @@ public struct DepartureArrivalProcedure: Record, Identifiable {
   /// An airport adapted to use this procedure.
   public struct AdaptedAirport: Record {
     /// Geographic position.
-    public let position: Location
+    ///
+    /// This is available when parsing from TXT format but not from CSV format.
+    /// For CSV-parsed data, use the identifier to look up the position from
+    /// the airport records.
+    public let position: Location?
 
     /// Airport identifier.
     public let identifier: String
 
+    /// Runway end identifier (e.g., "08", "26L", "ALL").
+    ///
+    /// Only available when parsing from CSV format. When "ALL", the procedure
+    /// applies to all runways at this airport.
+    public let runwayEndID: String?
+
     public enum CodingKeys: String, CodingKey {
-      case position, identifier
+      case position, identifier, runwayEndID
     }
   }
 

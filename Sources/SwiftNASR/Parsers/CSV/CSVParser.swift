@@ -9,8 +9,8 @@ import StreamingCSV
  to separate fields.
  */
 public protocol CSVParser: Parser {
-  /// The directory containing CSV files for this record type.
-  var CSVDirectory: URL { get set }
+  /// The distribution to read CSV files from.
+  var distribution: (any Distribution)? { get set }
 
   /// The CSV files this parser will process.
   var CSVFiles: [String] { get }
@@ -23,44 +23,40 @@ public protocol CSVParser: Parser {
 }
 
 extension CSVParser {
-  /// Calculates total bytes for all CSV files this parser will process.
-  func calculateTotalBytes() -> Int64 {
-    CSVFiles.reduce(0) { total, filename in
-      let fileURL = CSVDirectory.appendingPathComponent(filename)
-      if let attrs = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
-        let size = attrs[.size] as? Int64
-      {
-        return total + size
-      }
-      return total
-    }
-  }
-
   /// Sets up progress tracking and returns the Progress object.
-  /// Call this after prepare() and before parsing.
   func setupProgress() -> Progress {
-    let prog = Progress(totalUnitCount: calculateTotalBytes())
+    let prog = Progress(totalUnitCount: 1)
     progress = prog
     bytesRead = 0
     return prog
   }
 
   /// Helper method to parse a CSV file using raw string arrays.
+  /// Streams data directly from the distribution using true streaming (no buffering).
   func parseCSVFile(
     filename: String,
     expectedFieldCount: Int,
     handler: ([String]) async throws -> Void
   ) async throws {
-    let fileURL = CSVDirectory.appendingPathComponent(filename)
-
-    guard FileManager.default.fileExists(atPath: fileURL.path) else {
-      throw ParserError.badData("CSV file not found: \(filename)")
+    guard let distribution else {
+      throw ParserError.badData("Distribution not set for CSV parser")
     }
 
-    let reader = try StreamingCSVReader(url: fileURL)
-    _ = try await reader.readRow()  // Skip header row
+    let dataStream = await distribution.readFileRaw(path: filename) { _ in }
 
-    while let row = try await reader.readRow() {
+    // Use true streaming - rows are parsed as data arrives
+    let rowStream = StreamingCSVReader.stream(from: dataStream)
+
+    var isFirstRow = true
+    for try await rowBytes in rowStream {
+      // Skip header row
+      if isFirstRow {
+        isFirstRow = false
+        continue
+      }
+
+      let row = rowBytes.stringFields
+
       // More flexible field count validation
       // Allow rows with fewer fields if they're mostly empty at the end
       // or rows with slightly more fields (might have extra commas)
@@ -80,18 +76,6 @@ extension CSVParser {
       }
 
       try await handler(adjustedRow)
-
-      // Update cumulative progress
-      if let progress = self.progress {
-        let currentFileBytes = await reader.bytesRead
-        progress.completedUnitCount = bytesRead + currentFileBytes
-      }
-    }
-
-    // Add this file's total bytes to cumulative count
-    if let fileBytes = await reader.totalBytes {
-      bytesRead += fileBytes
-      progress?.completedUnitCount = bytesRead
     }
   }
 }

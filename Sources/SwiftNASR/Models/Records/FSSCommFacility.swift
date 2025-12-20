@@ -113,12 +113,19 @@ public struct FSSCommFacility: Record, Identifiable {
 
   /// The type of communications outlet
   public enum OutletType: String, RecordEnum, CaseIterable, Equatable, Hashable, Codable, Sendable {
+    /// Remote Communication Outlet
     case rco = "RCO"
+
+    /// Remote Communication Outlet (alternate designation)
     case rco1 = "RCO1"
+
+    /// Remote Communications Air/Ground facility
+    case RCAG = "RCAG"
 
     public var description: String {
       switch self {
         case .rco, .rco1: return "Remote Communication Outlet"
+        case .RCAG: return "Remote Communications Air/Ground"
       }
     }
   }

@@ -85,6 +85,9 @@ public struct PreferredRoute: Record, Identifiable {
 
     /// North American Route
     case northAmericanRoute = "NAR"
+
+    /// High altitude primary directional
+    case highPrimaryDirectional = "HPD"
   }
 
   /// Type of segment in a preferred route.
@@ -95,6 +98,12 @@ public struct PreferredRoute: Record, Identifiable {
     case arrivalProc = "STAR"
     case navaid = "NAVAID"
     case unknown = "UNKNOWN"
+
+    /// Fix radial distance (navaid identifier + radial + distance)
+    case fixRadialDistance = "FRD"
+
+    /// Radial (navaid identifier + radial only)
+    case radial = "RADIAL"
   }
 
   /// Radial and optional distance from a navaid.
