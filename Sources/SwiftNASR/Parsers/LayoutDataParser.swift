@@ -189,7 +189,7 @@ enum LayoutParserError: Swift.Error, CustomStringConvertible {
   var description: String {
     switch self {
       case .badData(let reason):
-        return "Invalid data: \(reason)"
+        return String(localized: "Invalid data: \(reason)")
     }
   }
 }

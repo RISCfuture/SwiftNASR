@@ -1,5 +1,4 @@
 import Foundation
-import StreamingCSV
 
 /// CSV ILS Parser for parsing ILS_BASE.csv, ILS_GS.csv, ILS_DME.csv, ILS_MKR.csv, and ILS_RMK.csv
 actor CSVILSParser: CSVParser {
@@ -16,24 +15,13 @@ actor CSVILSParser: CSVParser {
 
   func parse(data _: Data) async throws {
     // Parse ILS_BASE.csv first for base ILS data
-    // Headers: EFF_DATE,SITE_NO,SITE_TYPE_CODE,STATE_CODE,ARPT_ID,CITY,COUNTRY_CODE,RWY_END_ID,
-    //          ILS_LOC_ID,SYSTEM_TYPE_CODE,STATE_NAME,REGION_CODE,RWY_LEN,RWY_WIDTH,CATEGORY,
-    //          OWNER,OPERATOR,APCH_BEAR,MAG_VAR,MAG_VAR_HEMIS,COMPONENT_STATUS,COMPONENT_STATUS_DATE,
-    //          LAT_DEG,LAT_MIN,LAT_SEC,LAT_HEMIS,LAT_DECIMAL,LONG_DEG,LONG_MIN,LONG_SEC,LONG_HEMIS,
-    //          LONG_DECIMAL,LAT_LONG_SOURCE_CODE,SITE_ELEVATION,LOC_FREQ,BK_COURSE_STATUS_CODE
-    try await parseCSVFile(filename: "ILS_BASE.csv", expectedFieldCount: 36) { fields in
-      guard fields.count >= 32 else {
-        throw ParserError.truncatedRecord(
-          recordType: "ILS_BASE",
-          expectedMinLength: 32,
-          actualLength: fields.count
-        )
-      }
-
-      let siteNo = fields[1].trimmingCharacters(in: .whitespaces)
-      let runwayEndId = fields[7].trimmingCharacters(in: .whitespaces)
-      let systemTypeCode = fields[9].trimmingCharacters(in: .whitespaces)
-      let systemType = parseSystemType(systemTypeCode)
+    try await parseCSVFile(
+      filename: "ILS_BASE.csv",
+      requiredColumns: ["SITE_NO", "RWY_END_ID", "SYSTEM_TYPE_CODE", "LAT_DECIMAL", "LONG_DECIMAL"]
+    ) { row in
+      let siteNo = try row["SITE_NO"]
+      let runwayEndId = try row["RWY_END_ID"]
+      let systemType = try parseSystemType(try row["SYSTEM_TYPE_CODE"])
 
       let key = ILSKey(
         airportSiteNumber: siteNo,
@@ -41,57 +29,58 @@ actor CSVILSParser: CSVParser {
         systemType: systemType
       )
 
-      // Parse effective date
-      let effDate = self.parseYYYYMMDDDate(fields[0])
-
       // Parse position (convert decimal degrees to arc-seconds)
-      let latDecimal = Float(fields[26].trimmingCharacters(in: .whitespaces))
-      let lonDecimal = Float(fields[31].trimmingCharacters(in: .whitespaces))
+      let latDecimal = Float(try row["LAT_DECIMAL"])
+      let lonDecimal = Float(try row["LONG_DECIMAL"])
 
       // Parse magnetic variation (W = negative, E = positive)
       let magVar: Int? = {
-        let magVarValue = fields.count > 18 ? fields[18].trimmingCharacters(in: .whitespaces) : ""
-        let magVarHemis = fields.count > 19 ? fields[19].trimmingCharacters(in: .whitespaces) : ""
-        guard !magVarValue.isEmpty, let value = Int(magVarValue) else { return nil }
+        guard let magVarValue = row[ifExists: "MAG_VAR"],
+          let value = Int(magVarValue)
+        else { return nil }
+        let magVarHemis = row[ifExists: "MAG_VAR_HEMIS"] ?? ""
         return magVarHemis == "W" ? -value : value
       }()
 
       // Convert approach bearing to Bearing<Float>
-      let approachBearing = self.parseOptionalFloat(fields, index: 17).map { value in
-        Bearing(value, reference: .magnetic, magneticVariationDeg: magVar ?? 0)
-      }
+      let approachBearing: Bearing<Float>? =
+        if let bearStr = row[ifExists: "APCH_BEAR"],
+          let value = Float(bearStr)
+        {
+          Bearing(value, reference: .magnetic, magneticVariationDeg: magVar ?? 0)
+        } else {
+          nil
+        }
 
       // Create base ILS
       var ils = ILS(
         airportSiteNumber: siteNo,
         runwayEndId: runwayEndId,
         systemType: systemType,
-        ILSId: fields[8].trimmingCharacters(in: .whitespaces),
-        airportId: fields[4].trimmingCharacters(in: .whitespaces),
-        airportName: "",  // Not directly in CSV BASE, but could be derived
-        city: fields[5].trimmingCharacters(in: .whitespaces),
-        stateCode: fields[3].trimmingCharacters(in: .whitespaces),
-        stateName: fields.count > 10 ? fields[10].trimmingCharacters(in: .whitespaces) : nil,
-        regionCode: fields.count > 11 ? fields[11].trimmingCharacters(in: .whitespaces) : nil,
-        runwayLengthFt: self.parseOptionalUInt(fields, index: 12),
-        runwayWidthFt: self.parseOptionalUInt(fields, index: 13),
-        category: self.parseCategory(fields.count > 14 ? fields[14] : ""),
-        owner: fields.count > 15 ? fields[15].trimmingCharacters(in: .whitespaces) : nil,
-        operator: fields.count > 16 ? fields[16].trimmingCharacters(in: .whitespaces) : nil,
+        ILSId: try row["ILS_LOC_ID"],
+        airportId: try row["ARPT_ID"],
+        airportName: "",  // Not directly in CSV BASE
+        city: try row["CITY"],
+        stateCode: try row["STATE_CODE"],
+        stateName: row[ifExists: "STATE_NAME"],
+        regionCode: row[ifExists: "REGION_CODE"],
+        runwayLengthFt: row[ifExists: "RWY_LEN"].flatMap { UInt($0) },
+        runwayWidthFt: row[ifExists: "RWY_WIDTH"].flatMap { UInt($0) },
+        category: self.parseCategory(row[ifExists: "CATEGORY"]),
+        owner: row[ifExists: "OWNER"],
+        operator: row[ifExists: "OPERATOR"],
         approachBearing: approachBearing,
         magneticVariationDeg: magVar,
-        effectiveDateComponents: effDate
+        effectiveDateComponents: self.parseYYYYMMDDDate(row[ifExists: "EFF_DATE"])
       )
 
       // Create localizer from BASE file
-      let LOCStatus = self.parseOperationalStatus(
-        fields.count > 20 ? fields[20] : ""
-      )
-      let LOCStatusDate = self.parseYYYYMMDDDate(fields.count > 21 ? fields[21] : "")
-      let LOCFreq = self.parseMHzToKHz(fields, index: 34)
-      let backCourse = self.parseBackCourseStatus(fields.count > 35 ? fields[35] : "")
-      let posSource = self.parsePositionSource(fields.count > 32 ? fields[32] : "")
-      let siteElev = self.parseOptionalFloat(fields, index: 33)
+      let LOCStatus = self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"])
+      let LOCStatusDate = self.parseYYYYMMDDDate(row[ifExists: "COMPONENT_STATUS_DATE"])
+      let LOCFreq = row[ifExists: "LOC_FREQ"].flatMap { Float($0) }.map { UInt($0 * 1000) }
+      let backCourse = self.parseBackCourseStatus(row[ifExists: "BK_COURSE_STATUS_CODE"])
+      let posSource = self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"])
+      let siteElev = row[ifExists: "SITE_ELEVATION"].flatMap { Float($0) }
 
       guard
         let LOCPosition = try self.makeLocation(
@@ -125,23 +114,13 @@ actor CSVILSParser: CSVParser {
     }
 
     // Parse ILS_GS.csv for glide slope data
-    // Headers: EFF_DATE,SITE_NO,SITE_TYPE_CODE,STATE_CODE,ARPT_ID,CITY,COUNTRY_CODE,RWY_END_ID,
-    //          ILS_LOC_ID,SYSTEM_TYPE_CODE,COMPONENT_STATUS,COMPONENT_STATUS_DATE,LAT_DEG,LAT_MIN,
-    //          LAT_SEC,LAT_HEMIS,LAT_DECIMAL,LONG_DEG,LONG_MIN,LONG_SEC,LONG_HEMIS,LONG_DECIMAL,
-    //          LAT_LONG_SOURCE_CODE,SITE_ELEVATION,G_S_TYPE_CODE,G_S_ANGLE,G_S_FREQ
-    try await parseCSVFile(filename: "ILS_GS.csv", expectedFieldCount: 27) { fields in
-      guard fields.count >= 25 else {
-        throw ParserError.truncatedRecord(
-          recordType: "ILS_GS",
-          expectedMinLength: 25,
-          actualLength: fields.count
-        )
-      }
-
-      let siteNo = fields[1].trimmingCharacters(in: .whitespaces)
-      let runwayEndId = fields[7].trimmingCharacters(in: .whitespaces)
-      let systemTypeCode = fields[9].trimmingCharacters(in: .whitespaces)
-      let systemType = self.parseSystemType(systemTypeCode)
+    try await parseCSVFile(
+      filename: "ILS_GS.csv",
+      requiredColumns: ["SITE_NO", "RWY_END_ID", "SYSTEM_TYPE_CODE", "LAT_DECIMAL", "LONG_DECIMAL"]
+    ) { row in
+      let siteNo = try row["SITE_NO"]
+      let runwayEndId = try row["RWY_END_ID"]
+      let systemType = try self.parseSystemType(try row["SYSTEM_TYPE_CODE"])
 
       let key = ILSKey(
         airportSiteNumber: siteNo,
@@ -157,10 +136,10 @@ actor CSVILSParser: CSVParser {
         )
       }
 
-      let latDecimal = Float(fields[16].trimmingCharacters(in: .whitespaces))
-      let lonDecimal = Float(fields[21].trimmingCharacters(in: .whitespaces))
+      let latDecimal = Float(try row["LAT_DECIMAL"])
+      let lonDecimal = Float(try row["LONG_DECIMAL"])
 
-      let gsElev = self.parseOptionalFloat(fields, index: 23)
+      let gsElev = row[ifExists: "SITE_ELEVATION"].flatMap { Float($0) }
       guard
         let gsPosition = try self.makeLocation(
           latitude: latDecimal,
@@ -173,16 +152,16 @@ actor CSVILSParser: CSVParser {
       }
 
       let glideSlope = ILS.GlideSlope(
-        status: self.parseOperationalStatus(fields[10]),
-        statusDateComponents: self.parseYYYYMMDDDate(fields[11]),
+        status: self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"]),
+        statusDateComponents: self.parseYYYYMMDDDate(row[ifExists: "COMPONENT_STATUS_DATE"]),
         position: gsPosition,
-        positionSource: self.parsePositionSource(fields[22]),
+        positionSource: self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"]),
         distanceFromApproachEndFt: nil,
         distanceFromCenterlineFt: nil,
         distanceSource: nil,
-        glideSlopeType: self.parseGlidePathType(fields[24]),
-        angleDeg: self.parseOptionalFloat(fields, index: 25),
-        frequencyKHz: self.parseMHzToKHz(fields, index: 26),
+        glideSlopeType: self.parseGlidePathType(row[ifExists: "G_S_TYPE_CODE"]),
+        angleDeg: row[ifExists: "G_S_ANGLE"].flatMap { Float($0) },
+        frequencyKHz: row[ifExists: "G_S_FREQ"].flatMap { Float($0) }.map { UInt($0 * 1000) },
         adjacentRunwayElevationFtMSL: nil
       )
 
@@ -190,23 +169,13 @@ actor CSVILSParser: CSVParser {
     }
 
     // Parse ILS_DME.csv for DME data
-    // Headers: EFF_DATE,SITE_NO,SITE_TYPE_CODE,STATE_CODE,ARPT_ID,CITY,COUNTRY_CODE,RWY_END_ID,
-    //          ILS_LOC_ID,SYSTEM_TYPE_CODE,COMPONENT_STATUS,COMPONENT_STATUS_DATE,LAT_DEG,LAT_MIN,
-    //          LAT_SEC,LAT_HEMIS,LAT_DECIMAL,LONG_DEG,LONG_MIN,LONG_SEC,LONG_HEMIS,LONG_DECIMAL,
-    //          LAT_LONG_SOURCE_CODE,SITE_ELEVATION,CHANNEL
-    try await parseCSVFile(filename: "ILS_DME.csv", expectedFieldCount: 25) { fields in
-      guard fields.count >= 24 else {
-        throw ParserError.truncatedRecord(
-          recordType: "ILS_DME",
-          expectedMinLength: 24,
-          actualLength: fields.count
-        )
-      }
-
-      let siteNo = fields[1].trimmingCharacters(in: .whitespaces)
-      let runwayEndId = fields[7].trimmingCharacters(in: .whitespaces)
-      let systemTypeCode = fields[9].trimmingCharacters(in: .whitespaces)
-      let systemType = self.parseSystemType(systemTypeCode)
+    try await parseCSVFile(
+      filename: "ILS_DME.csv",
+      requiredColumns: ["SITE_NO", "RWY_END_ID", "SYSTEM_TYPE_CODE", "LAT_DECIMAL", "LONG_DECIMAL"]
+    ) { row in
+      let siteNo = try row["SITE_NO"]
+      let runwayEndId = try row["RWY_END_ID"]
+      let systemType = try self.parseSystemType(try row["SYSTEM_TYPE_CODE"])
 
       let key = ILSKey(
         airportSiteNumber: siteNo,
@@ -222,10 +191,10 @@ actor CSVILSParser: CSVParser {
         )
       }
 
-      let latDecimal = Float(fields[16].trimmingCharacters(in: .whitespaces))
-      let lonDecimal = Float(fields[21].trimmingCharacters(in: .whitespaces))
+      let latDecimal = Float(try row["LAT_DECIMAL"])
+      let lonDecimal = Float(try row["LONG_DECIMAL"])
 
-      let DMEElev = self.parseOptionalFloat(fields, index: 23)
+      let DMEElev = row[ifExists: "SITE_ELEVATION"].flatMap { Float($0) }
       guard
         let DMEPosition = try self.makeLocation(
           latitude: latDecimal,
@@ -238,14 +207,14 @@ actor CSVILSParser: CSVParser {
       }
 
       let DME = ILS.DME(
-        status: self.parseOperationalStatus(fields[10]),
-        statusDateComponents: self.parseYYYYMMDDDate(fields[11]),
+        status: self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"]),
+        statusDateComponents: self.parseYYYYMMDDDate(row[ifExists: "COMPONENT_STATUS_DATE"]),
         position: DMEPosition,
-        positionSource: self.parsePositionSource(fields[22]),
+        positionSource: self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"]),
         distanceFromApproachEndFt: nil,
         distanceFromCenterlineFt: nil,
         distanceSource: nil,
-        channel: fields[24].trimmingCharacters(in: .whitespaces),
+        channel: row[ifExists: "CHANNEL"] ?? "",
         distanceFromStopEndFt: nil
       )
 
@@ -253,24 +222,16 @@ actor CSVILSParser: CSVParser {
     }
 
     // Parse ILS_MKR.csv for marker beacon data
-    // Headers: EFF_DATE,SITE_NO,SITE_TYPE_CODE,STATE_CODE,ARPT_ID,CITY,COUNTRY_CODE,RWY_END_ID,
-    //          ILS_LOC_ID,SYSTEM_TYPE_CODE,ILS_COMP_TYPE_CODE,COMPONENT_STATUS,COMPONENT_STATUS_DATE,
-    //          LAT_DEG,LAT_MIN,LAT_SEC,LAT_HEMIS,LAT_DECIMAL,LONG_DEG,LONG_MIN,LONG_SEC,LONG_HEMIS,
-    //          LONG_DECIMAL,LAT_LONG_SOURCE_CODE,SITE_ELEVATION,MKR_FAC_TYPE_CODE,MARKER_ID_BEACON,
-    //          COMPASS_LOCATOR_NAME,FREQ,NAV_ID,NAV_TYPE,LOW_POWERED_NDB_STATUS
-    try await parseCSVFile(filename: "ILS_MKR.csv", expectedFieldCount: 32) { fields in
-      guard fields.count >= 26 else {
-        throw ParserError.truncatedRecord(
-          recordType: "ILS_MKR",
-          expectedMinLength: 26,
-          actualLength: fields.count
-        )
-      }
-
-      let siteNo = fields[1].trimmingCharacters(in: .whitespaces)
-      let runwayEndId = fields[7].trimmingCharacters(in: .whitespaces)
-      let systemTypeCode = fields[9].trimmingCharacters(in: .whitespaces)
-      let systemType = self.parseSystemType(systemTypeCode)
+    try await parseCSVFile(
+      filename: "ILS_MKR.csv",
+      requiredColumns: [
+        "SITE_NO", "RWY_END_ID", "SYSTEM_TYPE_CODE", "ILS_COMP_TYPE_CODE",
+        "LAT_DECIMAL", "LONG_DECIMAL"
+      ]
+    ) { row in
+      let siteNo = try row["SITE_NO"]
+      let runwayEndId = try row["RWY_END_ID"]
+      let systemType = try self.parseSystemType(try row["SYSTEM_TYPE_CODE"])
 
       let key = ILSKey(
         airportSiteNumber: siteNo,
@@ -286,23 +247,22 @@ actor CSVILSParser: CSVParser {
         )
       }
 
-      let markerTypeCode = fields[10].trimmingCharacters(in: .whitespaces)
-      guard let markerType = self.parseMarkerType(markerTypeCode) else {
-        throw ParserError.unknownRecordEnumValue(markerTypeCode)
+      guard let markerType = self.parseMarkerType(try row["ILS_COMP_TYPE_CODE"]) else {
+        throw ParserError.unknownRecordEnumValue(try row["ILS_COMP_TYPE_CODE"])
       }
 
-      let latDecimal = Float(fields[17].trimmingCharacters(in: .whitespaces))
-      let lonDecimal = Float(fields[22].trimmingCharacters(in: .whitespaces))
+      let latDecimal = Float(try row["LAT_DECIMAL"])
+      let lonDecimal = Float(try row["LONG_DECIMAL"])
 
       // Parse collocated navaid
       var collocatedNavaid: String?
-      let navId = fields.count > 29 ? fields[29].trimmingCharacters(in: .whitespaces) : ""
-      let navType = fields.count > 30 ? fields[30].trimmingCharacters(in: .whitespaces) : ""
+      let navId = row[ifExists: "NAV_ID"] ?? ""
+      let navType = row[ifExists: "NAV_TYPE"] ?? ""
       if !navId.isEmpty && !navType.isEmpty {
         collocatedNavaid = "\(navId)*\(navType)"
       }
 
-      let mkrElev = self.parseOptionalFloat(fields, index: 24)
+      let mkrElev = row[ifExists: "SITE_ELEVATION"].flatMap { Float($0) }
       guard
         let mkrPosition = try self.makeLocation(
           latitude: latDecimal,
@@ -316,20 +276,19 @@ actor CSVILSParser: CSVParser {
 
       let marker = ILS.MarkerBeacon(
         markerType: markerType,
-        status: self.parseOperationalStatus(fields[11]),
-        statusDateComponents: self.parseYYYYMMDDDate(fields[12]),
+        status: self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"]),
+        statusDateComponents: self.parseYYYYMMDDDate(row[ifExists: "COMPONENT_STATUS_DATE"]),
         position: mkrPosition,
-        positionSource: self.parsePositionSource(fields[23]),
+        positionSource: self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"]),
         distanceFromApproachEndFt: nil,
         distanceFromCenterlineFt: nil,
         distanceSource: nil,
-        facilityType: self.parseMarkerFacilityType(fields[25]),
-        locationId: fields.count > 26 ? fields[26].trimmingCharacters(in: .whitespaces) : nil,
-        name: fields.count > 27 ? fields[27].trimmingCharacters(in: .whitespaces) : nil,
-        frequencyKHz: self.parseOptionalUInt(fields, index: 28),
+        facilityType: self.parseMarkerFacilityType(row[ifExists: "MKR_FAC_TYPE_CODE"]),
+        locationId: row[ifExists: "MARKER_ID_BEACON"],
+        name: row[ifExists: "COMPASS_LOCATOR_NAME"],
+        frequencyKHz: row[ifExists: "FREQ"].flatMap { UInt($0) },
         collocatedNavaid: collocatedNavaid,
-        lowPoweredNDBStatus: fields.count > 31
-          ? self.parseOperationalStatus(fields[31]) : nil,
+        lowPoweredNDBStatus: self.parseOperationalStatus(row[ifExists: "LOW_POWERED_NDB_STATUS"]),
         service: nil
       )
 
@@ -337,21 +296,13 @@ actor CSVILSParser: CSVParser {
     }
 
     // Parse ILS_RMK.csv for remarks
-    // Headers: EFF_DATE,SITE_NO,SITE_TYPE_CODE,STATE_CODE,ARPT_ID,CITY,COUNTRY_CODE,RWY_END_ID,
-    //          ILS_LOC_ID,SYSTEM_TYPE_CODE,TAB_NAME,ILS_COMP_TYPE_CODE,REF_COL_NAME,REF_COL_SEQ_NO,REMARK
-    try await parseCSVFile(filename: "ILS_RMK.csv", expectedFieldCount: 15) { fields in
-      guard fields.count >= 15 else {
-        throw ParserError.truncatedRecord(
-          recordType: "ILS_RMK",
-          expectedMinLength: 15,
-          actualLength: fields.count
-        )
-      }
-
-      let siteNo = fields[1].trimmingCharacters(in: .whitespaces)
-      let runwayEndId = fields[7].trimmingCharacters(in: .whitespaces)
-      let systemTypeCode = fields[9].trimmingCharacters(in: .whitespaces)
-      let systemType = self.parseSystemType(systemTypeCode)
+    try await parseCSVFile(
+      filename: "ILS_RMK.csv",
+      requiredColumns: ["SITE_NO", "RWY_END_ID", "SYSTEM_TYPE_CODE", "REMARK"]
+    ) { row in
+      let siteNo = try row["SITE_NO"]
+      let runwayEndId = try row["RWY_END_ID"]
+      let systemType = try self.parseSystemType(try row["SYSTEM_TYPE_CODE"])
 
       let key = ILSKey(
         airportSiteNumber: siteNo,
@@ -367,7 +318,7 @@ actor CSVILSParser: CSVParser {
         )
       }
 
-      let remark = fields[14].trimmingCharacters(in: .whitespaces)
+      let remark = try row["REMARK"]
       if !remark.isEmpty {
         self.ILSFacilities[key]?.remarks.append(remark)
       }
@@ -380,26 +331,8 @@ actor CSVILSParser: CSVParser {
 
   // MARK: - Helper methods
 
-  private func parseOptionalUInt(_ fields: [String], index: Int) -> UInt? {
-    guard index < fields.count else { return nil }
-    let value = fields[index].trimmingCharacters(in: .whitespaces)
-    return value.isEmpty ? nil : UInt(value)
-  }
-
-  private func parseOptionalFloat(_ fields: [String], index: Int) -> Float? {
-    guard index < fields.count else { return nil }
-    let value = fields[index].trimmingCharacters(in: .whitespaces)
-    return value.isEmpty ? nil : Float(value)
-  }
-
-  private func parseMHzToKHz(_ fields: [String], index: Int) -> UInt? {
-    guard let mhz = parseOptionalFloat(fields, index: index) else { return nil }
-    return UInt(mhz * 1000)
-  }
-
-  private func parseYYYYMMDDDate(_ string: String) -> DateComponents? {
-    let trimmed = string.trimmingCharacters(in: .whitespaces)
-    guard !trimmed.isEmpty else { return nil }
+  private func parseYYYYMMDDDate(_ string: String?) -> DateComponents? {
+    guard let trimmed = string, !trimmed.isEmpty else { return nil }
 
     // Format: YYYY/MM/DD
     let parts = trimmed.split(separator: "/")
@@ -412,50 +345,45 @@ actor CSVILSParser: CSVParser {
     return DateComponents(year: year, month: month, day: day)
   }
 
-  private func parseSystemType(_ code: String) -> ILS.SystemType {
-    let trimmed = code.trimmingCharacters(in: .whitespaces)
-    return ILS.SystemType.for(trimmed) ?? .ILS
+  private func parseSystemType(_ code: String) throws -> ILS.SystemType {
+    guard let systemType = ILS.SystemType.for(code) else {
+      throw ParserError.unknownRecordEnumValue(code)
+    }
+    return systemType
   }
 
-  private func parseCategory(_ code: String) -> ILS.Category? {
-    let trimmed = code.trimmingCharacters(in: .whitespaces)
-    guard !trimmed.isEmpty else { return nil }
+  private func parseCategory(_ code: String?) -> ILS.Category? {
+    guard let trimmed = code, !trimmed.isEmpty else { return nil }
     return ILS.Category.for(trimmed)
   }
 
-  private func parseOperationalStatus(_ status: String) -> OperationalStatus? {
-    let trimmed = status.trimmingCharacters(in: .whitespaces)
-    guard !trimmed.isEmpty else { return nil }
+  private func parseOperationalStatus(_ status: String?) -> OperationalStatus? {
+    guard let trimmed = status, !trimmed.isEmpty else { return nil }
     return OperationalStatus.for(trimmed)
   }
 
-  private func parsePositionSource(_ code: String) -> ILS.PositionSource? {
-    let trimmed = code.trimmingCharacters(in: .whitespaces)
-    guard !trimmed.isEmpty else { return nil }
+  private func parsePositionSource(_ code: String?) -> ILS.PositionSource? {
+    guard let trimmed = code, !trimmed.isEmpty else { return nil }
     return ILS.PositionSource.for(trimmed)
   }
 
-  private func parseBackCourseStatus(_ code: String) -> ILS.BackCourseStatus? {
-    let trimmed = code.trimmingCharacters(in: .whitespaces)
-    guard !trimmed.isEmpty else { return nil }
+  private func parseBackCourseStatus(_ code: String?) -> ILS.BackCourseStatus? {
+    guard let trimmed = code, !trimmed.isEmpty else { return nil }
     return ILS.BackCourseStatus.for(trimmed)
   }
 
-  private func parseGlidePathType(_ code: String) -> ILS.GlideSlope.GlidePathType? {
-    let trimmed = code.trimmingCharacters(in: .whitespaces)
-    guard !trimmed.isEmpty else { return nil }
+  private func parseGlidePathType(_ code: String?) -> ILS.GlideSlope.GlidePathType? {
+    guard let trimmed = code, !trimmed.isEmpty else { return nil }
     return ILS.GlideSlope.GlidePathType.for(trimmed)
   }
 
-  private func parseMarkerType(_ code: String) -> ILS.MarkerBeacon.MarkerType? {
-    let trimmed = code.trimmingCharacters(in: .whitespaces)
-    guard !trimmed.isEmpty else { return nil }
+  private func parseMarkerType(_ code: String?) -> ILS.MarkerBeacon.MarkerType? {
+    guard let trimmed = code, !trimmed.isEmpty else { return nil }
     return ILS.MarkerBeacon.MarkerType.for(trimmed)
   }
 
-  private func parseMarkerFacilityType(_ code: String) -> ILS.MarkerBeacon.MarkerFacilityType? {
-    let trimmed = code.trimmingCharacters(in: .whitespaces)
-    guard !trimmed.isEmpty else { return nil }
+  private func parseMarkerFacilityType(_ code: String?) -> ILS.MarkerBeacon.MarkerFacilityType? {
+    guard let trimmed = code, !trimmed.isEmpty else { return nil }
     // Handle short codes from CSV
     switch trimmed {
       case "M": return .marker

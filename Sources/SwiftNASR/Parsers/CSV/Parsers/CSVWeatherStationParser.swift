@@ -10,46 +10,22 @@ actor CSVWeatherStationParser: CSVParser {
 
   var stations = [WeatherStationKey: WeatherStation]()
 
-  // CSV field mapping for AWOS.csv (0-based indices)
-  // Headers: EFF_DATE,ASOS_AWOS_ID,ASOS_AWOS_TYPE,STATE_CODE,CITY,COUNTRY_CODE,COMMISSIONED_DATE,NAVAID_FLAG,
-  //          LAT_DEG,LAT_MIN,LAT_SEC,LAT_HEMIS,LAT_DECIMAL,LONG_DEG,LONG_MIN,LONG_SEC,LONG_HEMIS,LONG_DECIMAL,
-  //          ELEV,SURVEY_METHOD_CODE,PHONE_NO,SECOND_PHONE_NO,SITE_NO,SITE_TYPE_CODE,REMARK
-  private let CSVFieldMapping: [Int] = [
-    0,  //  0: EFF_DATE
-    1,  //  1: ASOS_AWOS_ID
-    2,  //  2: ASOS_AWOS_TYPE
-    3,  //  3: STATE_CODE
-    4,  //  4: CITY
-    5,  //  5: COUNTRY_CODE
-    6,  //  6: COMMISSIONED_DATE
-    7,  //  7: NAVAID_FLAG
-    12,  //  8: LAT_DECIMAL
-    17,  //  9: LONG_DECIMAL
-    18,  // 10: ELEV
-    19,  // 11: SURVEY_METHOD_CODE
-    20,  // 12: PHONE_NO
-    21,  // 13: SECOND_PHONE_NO
-    22,  // 14: SITE_NO
-    24  // 15: REMARK
-  ]
-
   private let basicTransformer = CSVTransformer([
-    .null,  //  0: effective date
-    .string(),  //  1: station ID
-    .generic { try raw($0, toEnum: WeatherStation.StationType.self) },  //  2: type
-    .string(nullable: .blank),  //  3: state code
-    .string(nullable: .blank),  //  4: city
-    .string(nullable: .blank),  //  5: country code
-    .dateComponents(format: .yearMonthDaySlash, nullable: .blank),  //  6: commission date
-    .boolean(),  //  7: navaid flag
-    .float(nullable: .blank),  //  8: lat decimal
-    .float(nullable: .blank),  //  9: lon decimal
-    .float(nullable: .blank),  // 10: elevation
-    .generic({ try raw($0, toEnum: SurveyMethod.self) }, nullable: .blank),  // 11: survey method
-    .string(nullable: .blank),  // 12: phone number
-    .string(nullable: .blank),  // 13: secondary phone number
-    .string(nullable: .blank),  // 14: site number
-    .string(nullable: .blank)  // 15: remark
+    .init("ASOS_AWOS_ID", .string()),
+    .init("ASOS_AWOS_TYPE", .recordEnum(WeatherStation.StationType.self)),
+    .init("STATE_CODE", .string(nullable: .blank)),
+    .init("CITY", .string(nullable: .blank)),
+    .init("COUNTRY_CODE", .string(nullable: .blank)),
+    .init("COMMISSIONED_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("NAVAID_FLAG", .boolean()),
+    .init("LAT_DECIMAL", .float(nullable: .blank)),
+    .init("LONG_DECIMAL", .float(nullable: .blank)),
+    .init("ELEV", .float(nullable: .blank)),
+    .init("SURVEY_METHOD_CODE", .recordEnum(SurveyMethod.self, nullable: .blank)),
+    .init("PHONE_NO", .string(nullable: .blank)),
+    .init("SECOND_PHONE_NO", .string(nullable: .blank)),
+    .init("SITE_NO", .string(nullable: .blank)),
+    .init("REMARK", .string(nullable: .blank))
   ])
 
   func prepare(distribution: Distribution) throws {
@@ -57,31 +33,17 @@ actor CSVWeatherStationParser: CSVParser {
   }
 
   func parse(data _: Data) async throws {
-    try await parseCSVFile(filename: "AWOS.csv", expectedFieldCount: 25) { fields in
-      guard fields.count >= 19 else {
-        throw ParserError.truncatedRecord(
-          recordType: "AWOS",
-          expectedMinLength: 19,
-          actualLength: fields.count
-        )
-      }
-
-      var mappedFields = [String](repeating: "", count: 16)
-      for (transformerIndex, csvIndex) in self.CSVFieldMapping.enumerated()
-      where csvIndex < fields.count {
-        mappedFields[transformerIndex] = fields[csvIndex]
-      }
-
-      let transformedValues = try self.basicTransformer.applyTo(
-        mappedFields,
-        indices: Array(0..<16)
-      )
+    try await parseCSVFile(
+      filename: "AWOS.csv",
+      requiredColumns: ["ASOS_AWOS_ID", "ASOS_AWOS_TYPE", "LAT_DECIMAL", "LONG_DECIMAL"]
+    ) { row in
+      let t = try self.basicTransformer.applyTo(row)
 
       // Parse position from decimal degrees - convert to arc-seconds for Location
-      let latDecimal = transformedValues[8] as? Float
-      let lonDecimal = transformedValues[9] as? Float
-      let elevation = transformedValues[10] as? Float
-      let stationID = transformedValues[1] as! String
+      let latDecimal: Float? = try t[optional: "LAT_DECIMAL"]
+      let lonDecimal: Float? = try t[optional: "LONG_DECIMAL"]
+      let elevation: Float? = try t[optional: "ELEV"]
+      let stationID: String = try t["ASOS_AWOS_ID"]
 
       guard
         let position = try self.makeLocation(
@@ -96,29 +58,29 @@ actor CSVWeatherStationParser: CSVParser {
 
       // CSV has a single remark field, but we need to check commission status
       // Since the COMMISSIONED_DATE can be empty or a date
-      let commissionDateStr = fields[6]
-      let isCommissioned = !commissionDateStr.isEmpty
+      let commissionDate: DateComponents? = try t[optional: "COMMISSIONED_DATE"]
+      let isCommissioned = commissionDate != nil
 
       var station = WeatherStation(
         stationId: stationID,
-        type: transformedValues[2] as! WeatherStation.StationType,
-        stateCode: transformedValues[3] as? String,
-        city: transformedValues[4] as? String,
-        country: transformedValues[5] as? String,
+        type: try t["ASOS_AWOS_TYPE"],
+        stateCode: try t[optional: "STATE_CODE"],
+        city: try t[optional: "CITY"],
+        country: try t[optional: "COUNTRY_CODE"],
         isCommissioned: isCommissioned,
-        commissionDateComponents: transformedValues[6] as? DateComponents,
-        isNavaidAssociated: transformedValues[7] as? Bool,
+        commissionDateComponents: commissionDate,
+        isNavaidAssociated: try t[optional: "NAVAID_FLAG"],
         position: position,
-        surveyMethod: transformedValues[11] as? SurveyMethod,
+        surveyMethod: try t[optional: "SURVEY_METHOD_CODE"],
         frequencyKHz: nil,  // Not directly in CSV (would need to parse from another source)
         secondaryFrequencyKHz: nil,
-        phoneNumber: transformedValues[12] as? String,
-        secondaryPhoneNumber: transformedValues[13] as? String,
-        airportSiteNumber: transformedValues[14] as? String
+        phoneNumber: try t[optional: "PHONE_NO"],
+        secondaryPhoneNumber: try t[optional: "SECOND_PHONE_NO"],
+        airportSiteNumber: try t[optional: "SITE_NO"]
       )
 
       // Add remark if present
-      if let remark = transformedValues[15] as? String, !remark.isEmpty {
+      if let remark: String = try t[optional: "REMARK"], !remark.isEmpty {
         station.remarks.append(remark)
       }
 

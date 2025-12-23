@@ -68,37 +68,38 @@ actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
       return String(data: data[range], encoding: .isoLatin1) ?? ""
     }
 
-    let transformedValues = try baseTransformer.applyTo(values)
+    let t = try baseTransformer.applyTo(values)
 
-    let identifier = (transformedValues[0] as! String).trimmingCharacters(in: .whitespaces)
-    guard !identifier.isEmpty else {
+    let identifier: String = try t[0]
+    let trimmedId = identifier.trimmingCharacters(in: .whitespaces)
+    guard !trimmedId.isEmpty else {
       throw ParserError.missingRequiredField(field: "identifier", recordType: "WXL")
     }
 
-    let latStr = transformedValues[1] as? String ?? ""
-    let lonStr = transformedValues[2] as? String ?? ""
+    let latStr: String? = try t[optional: 1]
+    let lonStr: String? = try t[optional: 2]
 
-    let latitude = parseLatitude(latStr)
-    let longitude = parseLongitude(lonStr)
-    let city = transformedValues[3] as? String
-    let stateCode = transformedValues[4] as? String
-    let countryCode = transformedValues[5] as? String
-    let elevation = transformedValues[6] as? Int
-    let elevAccuracyStr = transformedValues[7] as? String ?? ""
-    let servicesStr = transformedValues[8] as? String ?? ""
+    let latitude = parseLatitude(latStr ?? "")
+    let longitude = parseLongitude(lonStr ?? "")
+    let city: String? = try t[optional: 3]
+    let stateCode: String? = try t[optional: 4]
+    let countryCode: String? = try t[optional: 5]
+    let elevation: Int? = try t[optional: 6]
+    let elevAccuracyStr: String? = try t[optional: 7]
+    let servicesStr: String? = try t[optional: 8]
 
-    let elevationAccuracy = WeatherReportingLocation.ElevationAccuracy.for(elevAccuracyStr)
-    let weatherServices = parseWeatherServices(servicesStr)
+    let elevationAccuracy = WeatherReportingLocation.ElevationAccuracy.for(elevAccuracyStr ?? "")
+    let weatherServices = parseWeatherServices(servicesStr ?? "")
 
     let position = try makeLocation(
       latitude: latitude,
       longitude: longitude,
       elevation: elevation.map { Float($0) },
-      context: "weather reporting location \(identifier)"
+      context: "weather reporting location \(trimmedId)"
     )
 
     let location = WeatherReportingLocation(
-      identifier: identifier,
+      identifier: trimmedId,
       position: position,
       city: city,
       stateCode: stateCode,
@@ -109,8 +110,8 @@ actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
       affectedAreas: []
     )
 
-    locations[identifier] = location
-    currentLocationId = identifier
+    locations[trimmedId] = location
+    currentLocationId = trimmedId
   }
 
   private func parseContinuationRecord(_ data: Data) throws {

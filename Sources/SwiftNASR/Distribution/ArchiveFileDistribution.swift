@@ -155,7 +155,8 @@ public final class ArchiveFileDistribution: Distribution {
         _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: true, progress: nil) {
           data in
           Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
-          continuation.yield(data)
+          // Force a copy to avoid ZIPFoundation buffer reuse issues
+          continuation.yield(Data(data))
         }
         continuation.finish()
       } catch {

@@ -13,36 +13,19 @@ actor CSVCodedDepartureRouteParser: CSVParser {
 
   var routes = [String: CodedDepartureRoute]()
 
-  // CSV field mapping (0-based indices)
-  // Fields: RCode, Orig, Dest, DepFix, Route String, DCNTR, ACNTR, TCNTRs, CoordReq, Play, NavEqp, Length
-  private let CSVFieldMapping: [Int] = [
-    0,  // 0: RCode (Route Code)
-    1,  // 1: Orig (Origin)
-    2,  // 2: Dest (Destination)
-    3,  // 3: DepFix (Departure Fix)
-    4,  // 4: Route String
-    5,  // 5: DCNTR (Departure Center)
-    6,  // 6: ACNTR (Arrival Center)
-    7,  // 7: TCNTRs (Transition Centers)
-    8,  // 8: CoordReq (Coordination Required)
-    9,  // 9: Play (Play Info)
-    10,  // 10: NavEqp (Navigation Equipment)
-    11  // 11: Length
-  ]
-
   private let transformer = CSVTransformer([
-    .string(),  // 0: RCode
-    .string(),  // 1: Orig
-    .string(),  // 2: Dest
-    .string(),  // 3: DepFix
-    .string(),  // 4: Route String
-    .string(),  // 5: DCNTR
-    .string(nullable: .blank),  // 6: ACNTR
-    .string(nullable: .blank),  // 7: TCNTRs
-    .string(nullable: .blank),  // 8: CoordReq (Y/N)
-    .string(nullable: .blank),  // 9: Play
-    .string(nullable: .blank),  // 10: NavEqp
-    .unsignedInteger(nullable: .blank)  // 11: Length
+    .init("RCode", .string()),
+    .init("Orig", .string()),
+    .init("Dest", .string()),
+    .init("DepFix", .string()),
+    .init("Route String", .string()),
+    .init("DCNTR", .string()),
+    .init("ACNTR", .string(nullable: .blank)),
+    .init("TCNTRs", .string(nullable: .blank)),
+    .init("CoordReq", .string(nullable: .blank)),
+    .init("Play", .string(nullable: .blank)),
+    .init("NavEqp", .string(nullable: .blank)),
+    .init("Length", .unsignedInteger(nullable: .blank))
   ])
 
   func prepare(distribution: Distribution) throws {
@@ -50,30 +33,16 @@ actor CSVCodedDepartureRouteParser: CSVParser {
   }
 
   func parse(data _: Data) async throws {
-    try await parseCSVFile(filename: "CDR.csv", expectedFieldCount: 12) { fields in
-      guard fields.count >= 6 else {
-        throw ParserError.truncatedRecord(
-          recordType: "CDR",
-          expectedMinLength: 6,
-          actualLength: fields.count
-        )
-      }
+    try await parseCSVFile(
+      filename: "CDR.csv",
+      requiredColumns: ["RCode", "Orig", "Dest", "DepFix", "Route String", "DCNTR"]
+    ) { row in
+      let t = try self.transformer.applyTo(row)
 
-      var mappedFields = [String](repeating: "", count: 12)
-      for (transformerIndex, csvIndex) in self.CSVFieldMapping.enumerated()
-      where csvIndex < fields.count {
-        mappedFields[transformerIndex] = fields[csvIndex]
-      }
-
-      let transformedValues = try self.transformer.applyTo(
-        mappedFields,
-        indices: Array(0..<12)
-      )
-
-      let routeCode = transformedValues[0] as! String
+      let routeCode: String = try t["RCode"]
 
       // Parse CoordReq (Y/N) to Bool
-      let coordReqString = transformedValues[8] as? String
+      let coordReqString: String? = try t[optional: "CoordReq"]
       let coordinationRequired: Bool?
       switch coordReqString?.uppercased() {
         case "Y": coordinationRequired = true
@@ -83,17 +52,17 @@ actor CSVCodedDepartureRouteParser: CSVParser {
 
       let route = CodedDepartureRoute(
         routeCode: routeCode,
-        origin: transformedValues[1] as! String,
-        destination: transformedValues[2] as! String,
-        departureFix: transformedValues[3] as! String,
-        routeString: transformedValues[4] as! String,
-        departureCenterIdentifier: transformedValues[5] as! String,
-        arrivalCenterIdentifier: transformedValues[6] as? String,
-        transitionCenterIdentifiers: transformedValues[7] as? String,
+        origin: try t["Orig"],
+        destination: try t["Dest"],
+        departureFix: try t["DepFix"],
+        routeString: try t["Route String"],
+        departureCenterIdentifier: try t["DCNTR"],
+        arrivalCenterIdentifier: try t[optional: "ACNTR"],
+        transitionCenterIdentifiers: try t[optional: "TCNTRs"],
         coordinationRequired: coordinationRequired,
-        playInfo: transformedValues[9] as? String,
-        navigationEquipment: transformedValues[10] as? String,
-        lengthNM: transformedValues[11] as? UInt
+        playInfo: try t[optional: "Play"],
+        navigationEquipment: try t[optional: "NavEqp"],
+        lengthNM: try t[optional: "Length"]
       )
 
       self.routes[routeCode] = route

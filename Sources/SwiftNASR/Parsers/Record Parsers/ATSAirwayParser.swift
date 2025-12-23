@@ -61,7 +61,7 @@ actor FixedWidthATSAirwayParser: Parser {
       case "RMK":
         try parseRMK(line, key: airwayKey)
       default:
-        break
+        throw ParserError.unknownRecordIdentifier(recordType)
     }
   }
 
@@ -147,7 +147,7 @@ actor FixedWidthATSAirwayParser: Parser {
       airways[key] = ATSAirway(
         designation: designationEnum,
         airwayIdentifier: airwayId,
-        isRNAV: rnavIndicator == "R",
+        isRNAV: try parseRNAVIndicator(rnavIndicator),
         airwayType: airwayTypeEnum,
         effectiveDateComponents: effectiveDateValue,
         routePoints: [],
@@ -179,14 +179,14 @@ actor FixedWidthATSAirwayParser: Parser {
       MEAOppositeDirection: try parseBoundDirection(MEAOppDir),
       maximumAuthorizedAltitudeFt: UInt(maxAlt),
       minimumObstructionClearanceAltitudeFt: UInt(moca),
-      hasAirwayGap: gapFlag == "X",
+      hasAirwayGap: try ParserHelpers.parseXFlag(gapFlag, fieldName: "hasAirwayGap"),
       changeoverPointDistanceNM: UInt(copDist),
       minimumCrossingAltitudeFt: UInt(mca),
       crossingDirection: try parseBoundDirection(mcaDir),
       crossingAltitudeOppositeFt: UInt(mcaOpp),
       crossingDirectionOpposite: try parseBoundDirection(mcaOppDir),
-      hasSignalGap: sigGap == "Y",
-      usAirspaceOnly: usOnly == "Y",
+      hasSignalGap: try ParserHelpers.parseYNFlagRequired(sigGap, fieldName: "hasSignalGap"),
+      usAirspaceOnly: try ParserHelpers.parseYNFlagRequired(usOnly, fieldName: "usAirspaceOnly"),
       magneticVariationDeg: magneticVariation,
       ARTCCIdentifier: artcc.isEmpty ? nil : artcc,
       GNSS_MEAFt: UInt(gnssMea),
@@ -197,7 +197,7 @@ actor FixedWidthATSAirwayParser: Parser {
       DME_DME_IRU_MEADirection: try parseBoundDirection(DME_MEADir),
       DME_DME_IRU_MEAOppositeFt: UInt(DME_MEAOpp),
       DME_DME_IRU_MEAOppositeDirection: try parseBoundDirection(DME_MEAOppDir),
-      isDogleg: dogleg == "Y",
+      isDogleg: try ParserHelpers.parseYNFlagRequired(dogleg, fieldName: "isDogleg"),
       RNP_NM: Double(rnpStr),
       changeoverNavaidName: nil,
       changeoverNavaidType: nil,
@@ -535,5 +535,15 @@ actor FixedWidthATSAirwayParser: Parser {
     }
 
     return isWest ? -value : value
+  }
+
+  /// Parses RNAV indicator with strict validation.
+  /// - Returns: `true` for "R", `false` for empty/blank.
+  /// - Throws: `ParserError.invalidValue` for any other value.
+  private func parseRNAVIndicator(_ value: String) throws -> Bool {
+    let trimmed = value.trimmingCharacters(in: .whitespaces)
+    if trimmed.isEmpty { return false }
+    if trimmed == "R" { return true }
+    throw ParserError.invalidValue("RNAV indicator: \(value)")
   }
 }

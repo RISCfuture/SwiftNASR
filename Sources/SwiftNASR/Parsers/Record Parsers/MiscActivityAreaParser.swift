@@ -48,7 +48,7 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser {
       case "MAA7":
         try parseRemarks(line, MAAId: MAAId)
       default:
-        break
+        throw ParserError.unknownRecordIdentifier(recordType)
     }
   }
 
@@ -142,7 +142,7 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser {
       maximumAltitude: maxAlt.isEmpty ? nil : try Altitude(parsing: maxAlt),
       minimumAltitude: minAlt.isEmpty ? nil : try Altitude(parsing: minAlt),
       areaRadiusNM: Double(radiusStr),
-      isShownOnVFRChart: parseYesNo(showVFRStr),
+      isShownOnVFRChart: try parseYesNo(showVFRStr),
       areaDescription: areaDesc.isEmpty ? nil : areaDesc,
       areaUse: areaUse.isEmpty ? nil : areaUse,
       polygonCoordinates: [],
@@ -283,9 +283,15 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser {
       facilityId: facilityID.isEmpty ? nil : facilityID,
       facilityName: facilityName.isEmpty ? nil : facilityName,
       commercialFrequencyKHz: Double(commFreqStr).map { UInt($0 * 1000) },
-      showCommercialOnChart: commChartFlag == "Y",
+      showCommercialOnChart: try ParserHelpers.parseYNFlagRequired(
+        commChartFlag,
+        fieldName: "showCommercialOnChart"
+      ),
       militaryFrequencyKHz: Double(milFreqStr).map { UInt($0 * 1000) },
-      showMilitaryOnChart: milChartFlag == "Y"
+      showMilitaryOnChart: try ParserHelpers.parseYNFlagRequired(
+        milChartFlag,
+        fieldName: "showMilitaryOnChart"
+      )
     )
 
     areas[MAAId]?.contactFacilities.append(facility)
@@ -369,11 +375,12 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser {
     }
   }
 
-  private func parseYesNo(_ str: String) -> Bool? {
+  private func parseYesNo(_ str: String) throws -> Bool? {
     switch str.uppercased() {
+      case "": return nil
       case "YES", "Y": return true
       case "NO", "N": return false
-      default: return nil
+      default: throw ParserError.unknownRecordEnumValue(str)
     }
   }
 

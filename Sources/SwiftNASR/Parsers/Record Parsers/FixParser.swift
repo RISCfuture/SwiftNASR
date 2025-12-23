@@ -17,9 +17,14 @@ struct FixKey: Hashable {
     stateName = fix.stateName
   }
 
-  init(values: [Any?]) {
-    id = (values[1] as! String).trimmingCharacters(in: .whitespaces)
-    stateName = (values[2] as! String).trimmingCharacters(in: .whitespaces)
+  init(values: FixedWidthTransformedRow) throws {
+    id = try (values[1] as String).trimmingCharacters(in: .whitespaces)
+    stateName = try (values[2] as String).trimmingCharacters(in: .whitespaces)
+  }
+
+  init(id: String, stateName: String) {
+    self.id = id.trimmingCharacters(in: .whitespaces)
+    self.stateName = stateName.trimmingCharacters(in: .whitespaces)
   }
 }
 
@@ -43,13 +48,13 @@ actor FixedWidthFixParser: FixedWidthParser {
     .string(nullable: .blank),  //  3 ICAO region code
     .DDMMSS(),  //  4 latitude
     .DDMMSS(),  //  5 longitude
-    .generic({ try raw($0, toEnum: Fix.Category.self) }, nullable: .blank),  //  6 category (MIL/FIX)
+    .recordEnum(Fix.Category.self, nullable: .blank),  //  6 category (MIL/FIX)
     .string(nullable: .blank),  //  7 navaid description
     .string(nullable: .blank),  //  8 radar description
     .string(nullable: .blank),  //  9 previous name
     .string(nullable: .blank),  // 10 charting info
     .boolean(),  // 11 published flag
-    .generic({ try raw($0, toEnum: Fix.Use.self) }, nullable: .blank),  // 12 fix use
+    .recordEnum(Fix.Use.self, nullable: .blank),  // 12 fix use
     .string(nullable: .blank),  // 13 NAS ID
     .string(nullable: .blank),  // 14 high ARTCC code
     .string(nullable: .blank),  // 15 low ARTCC code
@@ -115,49 +120,47 @@ actor FixedWidthFixParser: FixedWidthParser {
   }
 
   private func parseBasicRecord(_ values: [String]) throws {
-    let transformedValues = try basicTransformer.applyTo(values)
+    let t = try basicTransformer.applyTo(values),
+      lat: Float = try t[4],
+      lon: Float = try t[5],
+      position = Location(latitudeArcsec: lat, longitudeArcsec: lon)
 
-    let position = Location(
-      latitudeArcsec: transformedValues[4] as! Float,
-      longitudeArcsec: transformedValues[5] as! Float
-    )
-
-    guard let category = transformedValues[6] as? Fix.Category else {
+    guard let category: Fix.Category = try t[optional: 6] else {
       throw ParserError.missingRequiredField(field: "category", recordType: "FIX1")
     }
 
     let fix = Fix(
-      id: transformedValues[1] as! String,
-      stateName: transformedValues[2] as! String,
-      ICAORegion: transformedValues[3] as? String,
+      id: try t[1],
+      stateName: try t[2],
+      ICAORegion: try t[optional: 3],
       position: position,
       category: category,
-      navaidDescription: transformedValues[7] as? String,
-      radarDescription: transformedValues[8] as? String,
-      previousName: transformedValues[9] as? String,
-      chartingInfo: transformedValues[10] as? String,
-      isPublished: transformedValues[11] as! Bool,
-      use: transformedValues[12] as? Fix.Use,
-      NASId: transformedValues[13] as? String,
-      highARTCCCode: transformedValues[14] as? String,
-      lowARTCCCode: transformedValues[15] as? String,
-      country: transformedValues[16] as? String,
-      isPitchPoint: transformedValues[17] as? Bool,
-      isCatchPoint: transformedValues[18] as? Bool,
-      isAssociatedWithSUA: transformedValues[19] as? Bool
+      navaidDescription: try t[optional: 7],
+      radarDescription: try t[optional: 8],
+      previousName: try t[optional: 9],
+      chartingInfo: try t[optional: 10],
+      isPublished: try t[11],
+      use: try t[optional: 12],
+      NASId: try t[optional: 13],
+      highARTCCCode: try t[optional: 14],
+      lowARTCCCode: try t[optional: 15],
+      country: try t[optional: 16],
+      isPitchPoint: try t[optional: 17],
+      isCatchPoint: try t[optional: 18],
+      isAssociatedWithSUA: try t[optional: 19]
     )
 
     fixes[FixKey(fix: fix)] = fix
   }
 
   private func parseNavaidMakeup(_ values: [String]) throws {
-    let transformedValues = try navaidMakeupTransformer.applyTo(values)
+    let t = try navaidMakeupTransformer.applyTo(values)
 
-    guard let rawDescription = transformedValues[4] as? String, !rawDescription.isEmpty else {
+    guard let rawDescription: String = try t[optional: 4], !rawDescription.isEmpty else {
       return
     }
 
-    try updateFix(transformedValues) { fix in
+    try updateFix(t) { fix in
       if let makeup = parseNavaidMakeupDescription(rawDescription) {
         fix.navaidMakeups.append(makeup)
       }
@@ -165,13 +168,13 @@ actor FixedWidthFixParser: FixedWidthParser {
   }
 
   private func parseILSMakeup(_ values: [String]) throws {
-    let transformedValues = try ILSMakeupTransformer.applyTo(values)
+    let t = try ILSMakeupTransformer.applyTo(values)
 
-    guard let rawDescription = transformedValues[4] as? String, !rawDescription.isEmpty else {
+    guard let rawDescription: String = try t[optional: 4], !rawDescription.isEmpty else {
       return
     }
 
-    try updateFix(transformedValues) { fix in
+    try updateFix(t) { fix in
       if let makeup = parseILSMakeupDescription(rawDescription) {
         fix.ILSMakeups.append(makeup)
       }
@@ -179,34 +182,36 @@ actor FixedWidthFixParser: FixedWidthParser {
   }
 
   private func parseRemark(_ values: [String]) throws {
-    let transformedValues = try remarkTransformer.applyTo(values)
+    let t = try remarkTransformer.applyTo(values)
 
-    guard let fieldLabel = transformedValues[4] as? String,
-      let text = transformedValues[5] as? String
+    guard let fieldLabel: String = try t[optional: 4],
+      let text: String = try t[optional: 5]
     else {
       return
     }
 
-    try updateFix(transformedValues) { fix in
+    try updateFix(t) { fix in
       let remark = FieldRemark(fieldLabel: fieldLabel, text: text)
       fix.remarks.append(remark)
     }
   }
 
   private func parseCharting(_ values: [String]) throws {
-    let transformedValues = try chartingTransformer.applyTo(values)
+    let t = try chartingTransformer.applyTo(values)
 
-    guard let chartType = transformedValues[4] as? String else {
+    guard let chartType: String = try t[optional: 4] else {
       return
     }
 
-    try updateFix(transformedValues) { fix in
+    try updateFix(t) { fix in
       fix.chartTypes.insert(chartType)
     }
   }
 
-  private func updateFix(_ values: [Any?], process: (inout Fix) throws -> Void) throws {
-    let key = FixKey(values: values)
+  private func updateFix(_ values: FixedWidthTransformedRow, process: (inout Fix) throws -> Void)
+    throws
+  {
+    let key = try FixKey(values: values)
     guard var fix = fixes[key] else {
       throw ParserError.unknownParentRecord(
         parentType: "Fix",

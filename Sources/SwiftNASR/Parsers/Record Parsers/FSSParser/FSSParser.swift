@@ -36,11 +36,11 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       .null,  //  6 airport state
       .null,  //  7 airport lat
       .null,  //  8 airport lon
-      .generic { try Self.raw($0, toEnum: FSS.FSSType.self) },  //  9 facility type
+      .recordEnum(FSS.FSSType.self),  //  9 facility type
       .string(nullable: .blank),  // 10 radio identifier
-      .generic { try Self.raw($0, toEnum: FSS.Operator.self) },  // 11 owner code
+      .recordEnum(FSS.Operator.self),  // 11 owner code
       .string(nullable: .blank),  // 12 owner name
-      .generic { try Self.raw($0, toEnum: FSS.Operator.self) },  // 13 operator code
+      .recordEnum(FSS.Operator.self),  // 13 operator code
       .string(nullable: .blank),  // 14 operator name
       .fixedWidthArray(
         width: 40,
@@ -48,10 +48,7 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
         nullable: .compact
       ),  // 15 primary freqs
       .string(),  // 16 hours of operation
-      .generic(
-        { try Self.raw($0, toEnum: FSS.Status.self) },
-        nullable: .blank
-      ),  // 17 status
+      .recordEnum(FSS.Status.self, nullable: .blank),  // 17 status
       .string(nullable: .blank),  // 18 name of nearest FSS with teletype capability
       .fixedWidthArray(
         width: 14,
@@ -109,13 +106,13 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       ),  // 44 comm facility lon
       .fixedWidthArray(
         width: 1,
-        convert: { try Self.raw($0, toEnum: FSS.Operator.self) },
+        convert: { try FSS.Operator.require($0) },
         nullable: .blank
       ),  // 45 comm facility owner code
       .fixedWidthArray(width: 69, nullable: .blank),  // 46 comm facility owner name
       .fixedWidthArray(
         width: 1,
-        convert: { try Self.raw($0, toEnum: FSS.Operator.self) },
+        convert: { try FSS.Operator.require($0) },
         nullable: .blank
       ),  // 47 comm facility operator code
       .fixedWidthArray(width: 69, nullable: .blank),  // 48 comm facility operator name
@@ -128,7 +125,7 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       .fixedWidthArray(width: 20, nullable: .blank),  // 51 comm facility operational hours (local)
       .fixedWidthArray(
         width: 20,
-        convert: { try Self.raw($0, toEnum: FSS.Status.self) },
+        convert: { try FSS.Status.require($0) },
         nullable: .blank
       ),  // 52 comm facility status
       .fixedWidthArray(
@@ -202,30 +199,43 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
     await data.finishParsing(FSSes: Array(FSSes.values))
   }
 
-  private func parseFSS(_ transformedValues: [Any?]) throws {
-    let ID = transformedValues[0] as! String
+  private func parseFSS(_ t: FixedWidthTransformedRow) throws {
+    let ID: String = try t[0],
+      frequencies50: [FSS.Frequency?] = try t[50],
+      cities41: [String?] = try t[41],
+      states42: [String?] = try t[42],
+      lats43: [Float?] = try t[43],
+      lons44: [Float?] = try t[44],
+      owners45: [FSS.Operator?] = try t[45],
+      ownerNames46: [String?] = try t[46],
+      operators47: [FSS.Operator?] = try t[47],
+      operatorNames48: [String?] = try t[48],
+      hours51: [String?] = try t[51],
+      statuses52: [FSS.Status?] = try t[52],
+      statusDates53: [DateComponents?] = try t[53],
+      navaidsAndTypes54: [[Substring]?] = try t[54],
+      charts55: [String?] = try t[55],
+      timezones56: [String?] = try t[56]
 
     var commFacilities = [FSS.CommFacility]()
     commFacilities.reserveCapacity(facilityCount)
     for i in 0..<facilityCount {
-      guard let frequency = (transformedValues[50] as! [FSS.Frequency?])[i] else { continue }
+      guard let frequency = frequencies50[i] else { continue }
 
-      let city = (transformedValues[41] as! [String?])[i]
-      let state = (transformedValues[42] as! [String?])[i]
-      let lat = (transformedValues[43] as! [Float?])[i]
-      let lon = (transformedValues[44] as! [Float?])[i]
-      let owner = (transformedValues[45] as! [FSS.Operator?])[i]
-      let ownerName = (transformedValues[46] as! [String?])[i]
-      let `operator` = (transformedValues[47] as! [FSS.Operator?])[i]
-      let operatorName = (transformedValues[48] as! [String?])[i]
-      let hours = (transformedValues[51] as! [String?])[i]
-      let status = (transformedValues[52] as! [FSS.Status?])[i]
-      let statusDate = (transformedValues[53] as! [DateComponents?])[i]
-      let navaidAndType = (transformedValues[54] as! [[Substring]?])[i]
-      let chart = (transformedValues[55] as! [String?])[i]
-      let timezone = (transformedValues[56] as! [String?])[i].flatMap {
-        StandardTimeZone(rawValue: $0)
-      }
+      let city = cities41[i],
+        state = states42[i],
+        lat = lats43[i],
+        lon = lons44[i],
+        owner = owners45[i],
+        ownerName = ownerNames46[i],
+        `operator` = operators47[i],
+        operatorName = operatorNames48[i],
+        hours = hours51[i],
+        status = statuses52[i],
+        statusDate = statusDates53[i],
+        navaidAndType = navaidsAndTypes54[i],
+        chart = charts55[i],
+        timezone = timezones56[i].flatMap { StandardTimeZone(rawValue: $0) }
 
       let location = zipOptionals(lat, lon).map { lat, lon in
         Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: nil)
@@ -262,118 +272,114 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       commFacilities.append(facility)
     }
 
-    let outlets = try (transformedValues[19] as! [[Substring]]).map { IDAndType -> FSS.Outlet in
-      let type = try Self.raw(String(IDAndType[1]), toEnum: FSS.Outlet.OutletType.self)
-      return FSS.Outlet(
-        identification: String(IDAndType[0]),
-        type: type
-      )
-    }
+    let outletsRaw: [[Substring]] = try t[19],
+      outlets = try outletsRaw.map { IDAndType -> FSS.Outlet in
+        let type = try FSS.Outlet.OutletType.require(String(IDAndType[1]))
+        return FSS.Outlet(identification: String(IDAndType[0]), type: type)
+      }
 
-    let navaids = (transformedValues[20] as! [[Substring]]).map { IDAndType -> FSS.Navaid in
-      return FSS.Navaid(
-        identification: String(IDAndType[0]),
-        type: Navaid.FacilityType.for(String(IDAndType[1]))!
-      )
-    }
+    let navaidsRaw: [[Substring]] = try t[20],
+      navaids = navaidsRaw.map { IDAndType -> FSS.Navaid in
+        FSS.Navaid(
+          identification: String(IDAndType[0]),
+          type: Navaid.FacilityType.for(String(IDAndType[1]))!
+        )
+      }
 
-    let VOLMETCount = (transformedValues[32] as! [Any]).count
+    let VOLMETFreqs: [FSS.Frequency?] = try t[32],
+      VOLMETSchedules: [String?] = try t[33]
     var VOLMETs = [FSS.VOLMET]()
-    VOLMETs.reserveCapacity(VOLMETCount)
-    for (i, frequency) in (transformedValues[32] as! [FSS.Frequency?]).enumerated() {
+    VOLMETs.reserveCapacity(VOLMETFreqs.count)
+    for (i, frequency) in VOLMETFreqs.enumerated() {
       guard let frequency else { continue }
-      let schedule = (transformedValues[33] as! [String?])[i]
+      let schedule = VOLMETSchedules[i]
       VOLMETs.append(FSS.VOLMET(frequency: frequency, schedule: schedule!))
     }
 
-    let DFEquipment = (transformedValues[34] as! String?).map { type in
-      FSS.DirectionFindingEquipment(
-        type: type,
-        location: Location(
-          latitudeArcsec: transformedValues[35] as! Float,
-          longitudeArcsec: transformedValues[36] as! Float
+    let DFType: String? = try t[optional: 34],
+      DFLat: Float? = try t[optional: 35],
+      DFLon: Float? = try t[optional: 36],
+      DFEquipment = DFType.map { type in
+        FSS.DirectionFindingEquipment(
+          type: type,
+          location: Location(latitudeArcsec: DFLat!, longitudeArcsec: DFLon!)
         )
-      )
-    }
+      }
 
-    let location = zipOptionals(transformedValues[27], transformedValues[28]).map { lat, lon in
-      Location(
-        latitudeArcsec: lat as! Float,
-        longitudeArcsec: lon as! Float
-      )
-    }
+    let lat27: Float? = try t[optional: 27],
+      lon28: Float? = try t[optional: 28],
+      location = zipOptionals(lat27, lon28).map { lat, lon in
+        Location(latitudeArcsec: lat, longitudeArcsec: lon)
+      }
 
-    let commRemarks = (transformedValues[57] as! [String])
-      .map { String($0[$0.index($0.startIndex, offsetBy: 4)...]) }
+    let commRemarksRaw: [String] = try t[57],
+      commRemarks = commRemarksRaw.map { String($0[$0.index($0.startIndex, offsetBy: 4)...]) }
 
     let fss = FSS(
       id: ID,
-      airportId: transformedValues[3] as! String?,
-      name: transformedValues[1] as! String,
-      radioIdentifier: transformedValues[10] as! String?,
-      type: transformedValues[9] as! FSS.FSSType,
-      hoursOfOperation: transformedValues[16] as! String,
-      status: transformedValues[17] as! FSS.Status?,
-      lowAltEnrouteChartNumber: transformedValues[36] as! String?,
-      frequencies: transformedValues[15] as! [FSS.Frequency],
+      airportId: try t[optional: 3],
+      name: try t[1],
+      radioIdentifier: try t[optional: 10],
+      type: try t[9],
+      hoursOfOperation: try t[16],
+      status: try t[optional: 17],
+      lowAltEnrouteChartNumber: try t[optional: 37],
+      frequencies: try t[15],
       commFacilities: commFacilities,
       outlets: outlets,
       navaids: navaids,
-      airportAdvisoryFrequencies: transformedValues[31] as! [FSS.Frequency],
+      airportAdvisoryFrequencies: try t[31],
       VOLMETs: VOLMETs,
-      owner: transformedValues[11] as! FSS.Operator?,
-      ownerName: transformedValues[12] as! String?,
-      operator: transformedValues[13] as! FSS.Operator,
-      operatorName: transformedValues[14] as! String?,
-      hasWeatherRadar: transformedValues[22] as! Bool?,
-      hasEFAS: transformedValues[23] as? Bool,
-      flightWatchAvailability: transformedValues[24] as! String?,
-      nearestFSSIdWithTeletype: transformedValues[18] as! String?,
-      city: transformedValues[25] as! String?,
-      stateName: transformedValues[26] as! String?,
-      region: transformedValues[29] as! String?,
+      owner: try t[optional: 11],
+      ownerName: try t[optional: 12],
+      operator: try t[13],
+      operatorName: try t[optional: 14],
+      hasWeatherRadar: try t[optional: 22],
+      hasEFAS: try t[optional: 23],
+      flightWatchAvailability: try t[optional: 24],
+      nearestFSSIdWithTeletype: try t[optional: 18],
+      city: try t[optional: 25],
+      stateName: try t[optional: 26],
+      region: try t[optional: 29],
       location: location,
       DFEquipment: DFEquipment,
-      phoneNumber: transformedValues[38] as! String?,
-      remarks: transformedValues[40] as! [String],
+      phoneNumber: try t[optional: 38],
+      remarks: try t[40],
       commRemarks: commRemarks
     )
     FSSes[ID] = fss
   }
 
-  private func parseContinuation(_ transformedValues: [Any?]) throws {
-    try updateFSS(transformedValues) { fss in
-      for IDAndType in transformedValues[1] as! [[Substring]] {
-        let type = try Self.raw(String(IDAndType[1]), toEnum: FSS.Outlet.OutletType.self)
+  private func parseContinuation(_ t: FixedWidthTransformedRow) throws {
+    let outletsRaw: [[Substring]] = try t[1],
+      navaidsRaw: [[Substring]] = try t[2],
+      remarksRaw: [String] = try t[3]
+
+    try updateFSS(t) { fss in
+      for IDAndType in outletsRaw {
+        let type = try FSS.Outlet.OutletType.require(String(IDAndType[1]))
         fss.outlets.append(
-          FSS.Outlet(
-            identification: String(IDAndType[0]),
-            type: type
-          )
+          FSS.Outlet(identification: String(IDAndType[0]), type: type)
         )
       }
 
-      for IDAndType in transformedValues[2] as! [[Substring]] {
-        let navaid = String(IDAndType[0])
-        let typeString = String(IDAndType[1])
+      for IDAndType in navaidsRaw {
+        let navaid = String(IDAndType[0]),
+          typeString = String(IDAndType[1])
         guard let navaidType = Navaid.FacilityType.for(typeString) else {
           throw FixedWidthParserError.invalidValue(typeString, at: 54)
         }
-        fss.navaids.append(
-          FSS.Navaid(
-            identification: navaid,
-            type: navaidType
-          )
-        )
+        fss.navaids.append(FSS.Navaid(identification: navaid, type: navaidType))
       }
 
-      fss.remarks.append(contentsOf: (transformedValues[3] as! [String]))
+      fss.remarks.append(contentsOf: remarksRaw)
     }
   }
 
-  private func updateFSS(_ transformedValues: [Any?], process: (inout FSS) throws -> Void) throws {
-    let IDAndStar = transformedValues[0] as! Substring
-    let ID = String(IDAndStar[IDAndStar.startIndex..<IDAndStar.index(before: IDAndStar.endIndex)])
+  private func updateFSS(_ t: FixedWidthTransformedRow, process: (inout FSS) throws -> Void) throws
+  {
+    let IDAndStar: Substring = try t[0],
+      ID = String(IDAndStar[IDAndStar.startIndex..<IDAndStar.index(before: IDAndStar.endIndex)])
     guard var fss = FSSes[ID] else { throw Error.unknownFSS(ID) }
 
     try process(&fss)

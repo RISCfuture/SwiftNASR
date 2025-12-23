@@ -16,44 +16,28 @@ actor CSVTerminalCommFacilityParser: CSVParser {
 
   func parse(data _: Data) async throws {
     // Parse ATC_BASE.csv for base facility data
-    try await parseCSVFile(filename: "ATC_BASE.csv", expectedFieldCount: 30) { fields in
-      guard fields.count >= 10 else {
-        throw ParserError.truncatedRecord(
-          recordType: "ATC_BASE",
-          expectedMinLength: 10,
-          actualLength: fields.count
-        )
-      }
-
-      let facilityID = fields[5].trimmingCharacters(in: .whitespaces)
+    try await parseCSVFile(
+      filename: "ATC_BASE.csv",
+      requiredColumns: ["FACILITY_ID", "FACILITY_TYPE"]
+    ) { row in
+      let facilityID = try row["FACILITY_ID"]
       guard !facilityID.isEmpty else {
         throw ParserError.missingRequiredField(field: "facilityId", recordType: "ATC_BASE")
       }
 
-      let effDate = self.parseYYYYMMDDDate(fields[0])
-      let facilityTypeStr = fields[3].trimmingCharacters(in: .whitespaces)
-      let facilityType = TerminalCommFacility.FacilityType.for(facilityTypeStr)
-
       let facility = TerminalCommFacility(
         facilityId: facilityID,
-        airportSiteNumber: fields[1].trimmingCharacters(in: .whitespaces).isEmpty
-          ? nil : fields[1].trimmingCharacters(in: .whitespaces),
-        effectiveDateComponents: effDate,
-        regionCode: fields.count > 10
-          ? (fields[10].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[10].trimmingCharacters(in: .whitespaces)) : nil,
+        airportSiteNumber: try row.optional("SITE_NO"),
+        effectiveDateComponents: self.parseYYYYMMDDDate(try row["EFF_DATE"]),
+        regionCode: try row.optional("REGION_CODE"),
         stateName: nil,  // Not in CSV BASE
-        stateCode: fields[4].trimmingCharacters(in: .whitespaces).isEmpty
-          ? nil : fields[4].trimmingCharacters(in: .whitespaces),
-        city: fields[6].trimmingCharacters(in: .whitespaces).isEmpty
-          ? nil : fields[6].trimmingCharacters(in: .whitespaces),
-        airportName: fields.count > 9
-          ? (fields[9].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[9].trimmingCharacters(in: .whitespaces)) : nil,
+        stateCode: try row.optional("STATE_CODE"),
+        city: try row.optional("CITY"),
+        airportName: try row.optional("FACILITY_NAME"),
         position: nil,  // Not directly in CSV BASE
         tieInFSSId: nil,
         tieInFSSName: nil,
-        facilityType: facilityType,
+        facilityType: TerminalCommFacility.FacilityType.for(try row["FACILITY_TYPE"]),
         hoursOfOperation: nil,
         operationRegularity: nil,
         masterAirportId: nil,
@@ -66,68 +50,37 @@ actor CSVTerminalCommFacilityParser: CSVParser {
         offAirportRegionCode: nil,
         ASRPosition: nil,
         DFPosition: nil,
-        towerOperator: fields.count > 11
-          ? (fields[11].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[11].trimmingCharacters(in: .whitespaces)) : nil,
+        towerOperator: try row.optional("TWR_OPERATOR_CODE"),
         militaryOperator: nil,
-        primaryApproachOperator: fields.count > 15
-          ? (fields[15].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[15].trimmingCharacters(in: .whitespaces)) : nil,
-        secondaryApproachOperator: fields.count > 18
-          ? (fields[18].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[18].trimmingCharacters(in: .whitespaces)) : nil,
-        primaryDepartureOperator: fields.count > 21
-          ? (fields[21].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[21].trimmingCharacters(in: .whitespaces)) : nil,
-        secondaryDepartureOperator: fields.count > 24
-          ? (fields[24].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[24].trimmingCharacters(in: .whitespaces)) : nil,
-        towerRadioCall: fields.count > 12
-          ? (fields[12].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[12].trimmingCharacters(in: .whitespaces)) : nil,
+        primaryApproachOperator: try row.optional("APCH_P_PROVIDER"),
+        secondaryApproachOperator: try row.optional("APCH_S_PROVIDER"),
+        primaryDepartureOperator: try row.optional("DEP_P_PROVIDER"),
+        secondaryDepartureOperator: try row.optional("DEP_S_PROVIDER"),
+        towerRadioCall: try row.optional("TWR_CALL"),
         militaryRadioCall: nil,
-        primaryApproachRadioCall: fields.count > 14
-          ? (fields[14].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[14].trimmingCharacters(in: .whitespaces)) : nil,
-        secondaryApproachRadioCall: fields.count > 17
-          ? (fields[17].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[17].trimmingCharacters(in: .whitespaces)) : nil,
-        primaryDepartureRadioCall: fields.count > 20
-          ? (fields[20].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[20].trimmingCharacters(in: .whitespaces)) : nil,
-        secondaryDepartureRadioCall: fields.count > 23
-          ? (fields[23].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[23].trimmingCharacters(in: .whitespaces)) : nil,
+        primaryApproachRadioCall: try row.optional("PRIMARY_APCH_RADIO_CALL"),
+        secondaryApproachRadioCall: try row.optional("SECONDARY_APCH_RADIO_CALL"),
+        primaryDepartureRadioCall: try row.optional("PRIMARY_DEP_RADIO_CALL"),
+        secondaryDepartureRadioCall: try row.optional("SECONDARY_DEP_RADIO_CALL"),
         pmsvHours: nil,
         macpHours: nil,
         militaryOperationsHours: nil,
-        primaryApproachHours: fields.count > 28
-          ? (fields[28].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[28].trimmingCharacters(in: .whitespaces)) : nil,
-        secondaryApproachHours: fields.count > 29
-          ? (fields[29].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[29].trimmingCharacters(in: .whitespaces)) : nil,
+        primaryApproachHours: try row.optional("CTL_PRVDING_HRS"),
+        secondaryApproachHours: try row.optional("SECONDARY_CTL_PRVDING_HRS"),
         primaryDepartureHours: nil,
         secondaryDepartureHours: nil,
-        towerHours: fields.count > 13
-          ? (fields[13].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[13].trimmingCharacters(in: .whitespaces)) : nil
+        towerHours: try row.optional("TWR_HRS")
       )
 
       self.facilities[facilityID] = facility
     }
 
     // Parse ATC_SVC.csv for services
-    try await parseCSVFile(filename: "ATC_SVC.csv", expectedFieldCount: 9) { fields in
-      guard fields.count >= 9 else {
-        throw ParserError.truncatedRecord(
-          recordType: "ATC_SVC",
-          expectedMinLength: 9,
-          actualLength: fields.count
-        )
-      }
-
-      let facilityID = fields[5].trimmingCharacters(in: .whitespaces)
+    try await parseCSVFile(
+      filename: "ATC_SVC.csv",
+      requiredColumns: ["FACILITY_ID", "CTL_SVC"]
+    ) { row in
+      let facilityID = try row["FACILITY_ID"]
       guard !facilityID.isEmpty else {
         throw ParserError.missingRequiredField(field: "facilityId", recordType: "ATC_SVC")
       }
@@ -139,7 +92,7 @@ actor CSVTerminalCommFacilityParser: CSVParser {
         )
       }
 
-      let service = fields[8].trimmingCharacters(in: .whitespaces)
+      let service = try row["CTL_SVC"]
       if !service.isEmpty {
         // Append to existing services or set new
         if let existing = self.facilities[facilityID]?.masterAirportServices {
@@ -151,16 +104,11 @@ actor CSVTerminalCommFacilityParser: CSVParser {
     }
 
     // Parse ATC_ATIS.csv for ATIS data
-    try await parseCSVFile(filename: "ATC_ATIS.csv", expectedFieldCount: 12) { fields in
-      guard fields.count >= 11 else {
-        throw ParserError.truncatedRecord(
-          recordType: "ATC_ATIS",
-          expectedMinLength: 11,
-          actualLength: fields.count
-        )
-      }
-
-      let facilityID = fields[5].trimmingCharacters(in: .whitespaces)
+    try await parseCSVFile(
+      filename: "ATC_ATIS.csv",
+      requiredColumns: ["FACILITY_ID", "ATIS_NO"]
+    ) { row in
+      let facilityID = try row["FACILITY_ID"]
       guard !facilityID.isEmpty else {
         throw ParserError.missingRequiredField(field: "facilityId", recordType: "ATC_ATIS")
       }
@@ -172,36 +120,26 @@ actor CSVTerminalCommFacilityParser: CSVParser {
         )
       }
 
-      guard let serialNumber = UInt(fields[8].trimmingCharacters(in: .whitespaces)) else {
+      guard let serialNumber = UInt(try row["ATIS_NO"]) else {
         throw ParserError.missingRequiredField(field: "serialNumber", recordType: "ATC_ATIS")
       }
 
       let atis = TerminalCommFacility.ATIS(
         serialNumber: serialNumber,
-        hours: fields[10].trimmingCharacters(in: .whitespaces).isEmpty
-          ? nil : fields[10].trimmingCharacters(in: .whitespaces),
-        description: fields.count > 9
-          ? (fields[9].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[9].trimmingCharacters(in: .whitespaces)) : nil,
-        phoneNumber: fields.count > 11
-          ? (fields[11].trimmingCharacters(in: .whitespaces).isEmpty
-            ? nil : fields[11].trimmingCharacters(in: .whitespaces)) : nil
+        hours: try row.optional("ATIS_HRS"),
+        description: try row.optional("DESCRIPTION"),
+        phoneNumber: try row.optional("ATIS_PHONE_NO")
       )
 
       self.facilities[facilityID]?.ATISInfo.append(atis)
     }
 
     // Parse ATC_RMK.csv for remarks
-    try await parseCSVFile(filename: "ATC_RMK.csv", expectedFieldCount: 13) { fields in
-      guard fields.count >= 13 else {
-        throw ParserError.truncatedRecord(
-          recordType: "ATC_RMK",
-          expectedMinLength: 13,
-          actualLength: fields.count
-        )
-      }
-
-      let facilityID = fields[5].trimmingCharacters(in: .whitespaces)
+    try await parseCSVFile(
+      filename: "ATC_RMK.csv",
+      requiredColumns: ["FACILITY_ID", "REMARK"]
+    ) { row in
+      let facilityID = try row["FACILITY_ID"]
       guard !facilityID.isEmpty else {
         throw ParserError.missingRequiredField(field: "facilityId", recordType: "ATC_RMK")
       }
@@ -213,7 +151,7 @@ actor CSVTerminalCommFacilityParser: CSVParser {
         )
       }
 
-      let remark = fields[12].trimmingCharacters(in: .whitespaces)
+      let remark = try row["REMARK"]
       if !remark.isEmpty {
         self.facilities[facilityID]?.remarks.append(remark)
       }

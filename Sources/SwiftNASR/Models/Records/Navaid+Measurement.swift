@@ -13,7 +13,7 @@ public extension Navaid {
 
   /// The frequency that this navaid transmits on as a Measurement.
   var frequency: Measurement<UnitFrequency>? {
-    frequencyKHz.map { Measurement(value: Double($0), unit: .kilohertz) }
+    frequencyHz.map { Measurement(value: Double($0), unit: .hertz) }
   }
 }
 

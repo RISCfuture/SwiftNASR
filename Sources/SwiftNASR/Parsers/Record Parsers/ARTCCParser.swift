@@ -18,10 +18,16 @@ public struct ARTCCKey: Hashable {
     type = center.type
   }
 
-  init(values: [Any?]) {
-    ID = values[1] as! String
-    location = values[2] as! String
-    type = values[3] as! ARTCC.FacilityType
+  init(values: FixedWidthTransformedRow) throws {
+    ID = try values[1]
+    location = try values[2]
+    type = try values[3]
+  }
+
+  init(ID: String, location: String, type: ARTCC.FacilityType) {
+    self.ID = ID
+    self.location = location
+    self.type = type
   }
 }
 
@@ -45,7 +51,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     .string(),  //  3 location name
     .string(nullable: .blank),  //  4 cross reference
 
-    .generic { try raw($0, toEnum: ARTCC.FacilityType.self) },  //  5 facility type
+    .recordEnum(ARTCC.FacilityType.self),  //  5 facility type
     .null,  //  6 effective date
     .null,  //  7 state name
     .string(nullable: .blank),  //  8 state PO code
@@ -62,7 +68,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     .recordType,  // 0 record type
     .string(),  // 1 ARTCC ID
     .string(),  // 2 ARTCC location
-    .generic { try raw($0, toEnum: ARTCC.FacilityType.self) },  // 3 facility type
+    .recordEnum(ARTCC.FacilityType.self),  // 3 facility type
     .unsignedInteger(),  // 4 sequence number
     .string(),  // 5 remark
     .null  // 6 blank
@@ -72,10 +78,10 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     .recordType,  //  0 record type
     .string(),  //  1 ARTCC ID
     .string(),  //  2 ARTCC location
-    .generic { try raw($0, toEnum: ARTCC.FacilityType.self) },  //  3 facility type
+    .recordEnum(ARTCC.FacilityType.self),  //  3 facility type
 
     .frequency(),  //  4 frequency
-    .delimitedArray(delimiter: "/") { try raw($0, toEnum: ARTCC.CommFrequency.Altitude.self) },  //  5 altitude
+    .delimitedArray(delimiter: "/") { try ARTCC.CommFrequency.Altitude.require($0) },  //  5 altitude
     .string(nullable: .blank),  //  6 special usage name
     .boolean(nullable: .blank),  //  7 RCAG freq charted flag
 
@@ -94,7 +100,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     .recordType,  // 0 record type
     .string(),  // 1 ARTCC ID
     .string(),  // 2 ARTCC location
-    .generic { try raw($0, toEnum: ARTCC.FacilityType.self) },  // 3 facility type
+    .recordEnum(ARTCC.FacilityType.self),  // 3 facility type
     .frequency(),  // 4 frequency
     .unsignedInteger(),  // 5 sequence number
     .string(),  // 6 remark
@@ -115,24 +121,21 @@ actor FixedWidthARTCCParser: FixedWidthParser {
   }
 
   private func parseGeneralRecord(_ values: [String]) throws {
-    let transformedValues = try generalTransformer.applyTo(values)
+    let t = try generalTransformer.applyTo(values)
 
     var location: Location?
-    if transformedValues[9] != nil && transformedValues[11] != nil {
-      location = Location(
-        latitudeArcsec: transformedValues[9] as! Float,
-        longitudeArcsec: transformedValues[11] as! Float
-      )
+    if let lat: Float = try t[optional: 9], let lon: Float = try t[optional: 11] {
+      location = Location(latitudeArcsec: lat, longitudeArcsec: lon)
     }
 
     let center = ARTCC(
-      code: transformedValues[1] as! String,
-      ICAOID: transformedValues[13] as! String?,
-      type: transformedValues[5] as! ARTCC.FacilityType,
-      name: transformedValues[2] as! String,
-      alternateName: transformedValues[4] as! String?,
-      locationName: transformedValues[3] as! String,
-      stateCode: transformedValues[8] as! String?,
+      code: try t[1],
+      ICAOID: try t[optional: 13],
+      type: try t[5],
+      name: try t[2],
+      alternateName: try t[optional: 4],
+      locationName: try t[3],
+      stateCode: try t[optional: 8],
       location: location
     )
 
@@ -140,48 +143,53 @@ actor FixedWidthARTCCParser: FixedWidthParser {
   }
 
   private func parseRemarks(_ values: [String]) throws {
-    let transformedValues = try remarksTransformer.applyTo(values)
-    try updateARTCC(transformedValues) { center in
-      center.remarks.append(.general(transformedValues[5] as! String))
+    let t = try remarksTransformer.applyTo(values),
+      remarkText: String = try t[5]
+    try updateARTCC(t) { center in
+      center.remarks.append(.general(remarkText))
     }
   }
 
   private func parseFrequency(_ values: [String]) throws {
-    let transformedValues = try frequencyTransformer.applyTo(values)
+    let t = try frequencyTransformer.applyTo(values)
 
-    try updateARTCC(transformedValues) { center in
+    try updateARTCC(t) { center in
       let frequency = ARTCC.CommFrequency(
-        frequencyKHz: transformedValues[4] as! UInt,
-        altitude: transformedValues[5] as! [ARTCC.CommFrequency.Altitude],
-        specialUsageName: transformedValues[6] as! String?,
-        remoteOutletFrequencyCharted: transformedValues[7] as! Bool?,
-        associatedAirportCode: transformedValues[8] as! String?
+        frequencyKHz: try t[4],
+        altitude: try t[5],
+        specialUsageName: try t[optional: 6],
+        remoteOutletFrequencyCharted: try t[optional: 7],
+        associatedAirportCode: try t[optional: 8]
       )
       center.frequencies.append(frequency)
     }
   }
 
   private func parseFrequencyRemarks(_ values: [String]) throws {
-    let transformedValues = try frequencyRemarksTransformer.applyTo(values)
+    let t = try frequencyRemarksTransformer.applyTo(values),
+      freqKHz: UInt = try t[4],
+      remarkText: String = try t[6]
 
-    try updateARTCC(transformedValues) { center in
+    try updateARTCC(t) { center in
       guard
-        let freqIndex = center.frequencies.firstIndex(where: {
-          $0.frequencyKHz == transformedValues[4] as! UInt
-        })
+        let freqIndex = center.frequencies.firstIndex(where: { $0.frequencyKHz == freqKHz })
       else {
-        throw Error.unknownARTCCFrequency(transformedValues[4] as! UInt, ARTCC: center)
+        throw Error.unknownARTCCFrequency(freqKHz, ARTCC: center)
       }
-      center.frequencies[freqIndex].remarks.append(.general(transformedValues[6] as! String))
+      center.frequencies[freqIndex].remarks.append(.general(remarkText))
     }
   }
 
-  private func updateARTCC(_ values: [Any?], process: (inout ARTCC) throws -> Void) throws {
-    guard var center = ARTCCs[ARTCCKey(values: values)] else {
-      throw Error.unknownARTCC(values[1] as! String)
+  private func updateARTCC(
+    _ values: FixedWidthTransformedRow,
+    process: (inout ARTCC) throws -> Void
+  ) throws {
+    let key = try ARTCCKey(values: values)
+    guard var center = ARTCCs[key] else {
+      throw Error.unknownARTCC(key.ID)
     }
 
     try process(&center)
-    ARTCCs[ARTCCKey(values: values)] = center
+    ARTCCs[key] = center
   }
 }

@@ -98,17 +98,18 @@ actor FixedWidthFSSCommFacilityParser: Parser {
       return String(data: data[range], encoding: .isoLatin1) ?? ""
     }
 
-    let transformedValues = try transformer.applyTo(values)
+    let t = try transformer.applyTo(values)
 
-    let outletId = (transformedValues[0] as! String).trimmingCharacters(in: .whitespaces)
+    let rawOutletId: String = try t[0]
+    let outletId = rawOutletId.trimmingCharacters(in: .whitespaces)
     guard !outletId.isEmpty else {
       throw ParserError.missingRequiredField(field: "outletIdentifier", recordType: "COM")
     }
 
-    let outletTypeStr = (transformedValues[1] as? String ?? "").trimmingCharacters(in: .whitespaces)
+    let outletTypeStr: String = (try t[optional: 1] ?? "").trimmingCharacters(in: .whitespaces)
 
     // Parse frequencies (16 x 9 characters)
-    let frequenciesStr = transformedValues[16] as? String ?? ""
+    let frequenciesStr: String = try t[optional: 16] ?? ""
     var frequencies = [FSSCommFacility.Frequency]()
     for i in 0..<16 {
       let start = i * 9
@@ -142,7 +143,7 @@ actor FixedWidthFSSCommFacilityParser: Parser {
     }
 
     // Parse operational hours (3 x 20 characters, joined since lines break mid-word)
-    let hoursStr = transformedValues[21] as? String ?? ""
+    let hoursStr: String = try t[optional: 21] ?? ""
     let opHours: String? = {
       let joined = (0..<3).map { i -> String in
         let start = i * 20
@@ -165,7 +166,7 @@ actor FixedWidthFSSCommFacilityParser: Parser {
     }()
 
     // Parse charts (4 x 2 characters)
-    let chartsStr = transformedValues[26] as? String ?? ""
+    let chartsStr: String = try t[optional: 26] ?? ""
     var charts = [String]()
     for i in 0..<4 {
       let start = i * 2
@@ -189,46 +190,50 @@ actor FixedWidthFSSCommFacilityParser: Parser {
     }
 
     let navaidPosition = try makeLocation(
-      latitude: transformedValues[7] as? Double,
-      longitude: transformedValues[8] as? Double,
+      latitude: try t[optional: 7],
+      longitude: try t[optional: 8],
       context: "FSS comm facility \(outletId) navaid position"
     )
 
     let outletPosition = try makeLocation(
-      latitude: transformedValues[13] as? Double,
-      longitude: transformedValues[14] as? Double,
+      latitude: try t[optional: 13],
+      longitude: try t[optional: 14],
       context: "FSS comm facility \(outletId) outlet position"
     )
+
+    let navaidTypeCode: String? = try t[optional: 3]
+    let tzCode: String? = try t[optional: 27]
+    let statusStr: String? = try t[optional: 28]
 
     let facility = FSSCommFacility(
       outletIdentifier: outletId,
       outletType: FSSCommFacility.OutletType(rawValue: outletTypeStr),
-      navaidIdentifier: transformedValues[2] as? String,
-      navaidType: (transformedValues[3] as? String).flatMap { Navaid.FacilityType.for($0) },
-      navaidCity: transformedValues[4] as? String,
-      navaidState: transformedValues[5] as? String,
-      navaidName: transformedValues[6] as? String,
+      navaidIdentifier: try t[optional: 2],
+      navaidType: navaidTypeCode.flatMap { Navaid.FacilityType.for($0) },
+      navaidCity: try t[optional: 4],
+      navaidState: try t[optional: 5],
+      navaidName: try t[optional: 6],
       navaidPosition: navaidPosition,
-      outletCity: transformedValues[9] as? String,
-      outletState: transformedValues[10] as? String,
-      regionName: transformedValues[11] as? String,
-      regionCode: transformedValues[12] as? String,
+      outletCity: try t[optional: 9],
+      outletState: try t[optional: 10],
+      regionName: try t[optional: 11],
+      regionCode: try t[optional: 12],
       outletPosition: outletPosition,
-      outletCall: transformedValues[15] as? String,
+      outletCall: try t[optional: 15],
       frequencies: frequencies,
-      FSSIdentifier: transformedValues[17] as? String,
-      FSSName: transformedValues[18] as? String,
-      alternateFSSIdentifier: transformedValues[19] as? String,
-      alternateFSSName: transformedValues[20] as? String,
+      FSSIdentifier: try t[optional: 17],
+      FSSName: try t[optional: 18],
+      alternateFSSIdentifier: try t[optional: 19],
+      alternateFSSName: try t[optional: 20],
       operationalHours: opHours,
-      ownerCode: transformedValues[22] as? String,
-      ownerName: transformedValues[23] as? String,
-      operatorCode: transformedValues[24] as? String,
-      operatorName: transformedValues[25] as? String,
+      ownerCode: try t[optional: 22],
+      ownerName: try t[optional: 23],
+      operatorCode: try t[optional: 24],
+      operatorName: try t[optional: 25],
       charts: charts,
-      timeZone: (transformedValues[27] as? String).flatMap { StandardTimeZone(rawValue: $0) },
-      status: (transformedValues[28] as? String).flatMap { FSS.Status(rawValue: $0) },
-      statusDateComponents: transformedValues[29] as? DateComponents
+      timeZone: tzCode.flatMap { StandardTimeZone(rawValue: $0) },
+      status: statusStr.flatMap { FSS.Status(rawValue: $0) },
+      statusDateComponents: try t[optional: 29]
     )
 
     facilities.append(facility)

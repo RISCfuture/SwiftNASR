@@ -1,9 +1,9 @@
 import Foundation
 
 enum LIDRecordIdentifier: String {
-  case usa = "USA"
-  case dod = "DOD"
-  case can = "CAN"
+  case USA = "USA"
+  case DOD = "DOD"
+  case canada = "CAN"
 }
 
 /// Parser for Location Identifier (LID) files.
@@ -16,7 +16,7 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
   typealias RecordIdentifier = LIDRecordIdentifier
 
   static let type = RecordType.locationIdentifiers
-  static let layoutFormatOrder: [LIDRecordIdentifier] = [.usa, .dod, .can]
+  static let layoutFormatOrder: [LIDRecordIdentifier] = [.USA, .DOD, .canada]
 
   var recordTypeRange: Range<UInt> { 1..<4 }
   var formats = [NASRTable]()
@@ -60,18 +60,18 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
 
   func parseValues(_ values: [String], for identifier: LIDRecordIdentifier) throws {
     switch identifier {
-      case .usa:
+      case .USA:
         try parseUSARecord(values)
-      case .dod, .can:
-        // DOD and CAN records have different formats - not implemented
+      case .DOD, .canada:
+        // DOD and Canada records have different formats - not implemented
         break
     }
   }
 
   private func parseUSARecord(_ values: [String]) throws {
-    let transformedValues = try usaTransformer.applyTo(values)
+    let t = try usaTransformer.applyTo(values)
 
-    let identifier = transformedValues[2] as! String
+    let identifier: String = try t[2]
     guard !identifier.isEmpty else {
       throw ParserError.missingRequiredField(field: "identifier", recordType: "USA")
     }
@@ -80,43 +80,43 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
     var navaids = [LocationIdentifier.NavaidInfo]()
     let navaidPairs = [(11, 12), (13, 14), (15, 16), (17, 18)]
     for (nameIdx, typeIdx) in navaidPairs {
-      if let name = transformedValues[nameIdx] as? String, !name.isEmpty {
-        let navTypeStr = transformedValues[typeIdx] as? String ?? ""
+      if let name: String = try t[optional: nameIdx], !name.isEmpty {
+        let navTypeStr: String = try t[optional: typeIdx] ?? ""
         let navType = LocationIdentifier.NavaidFacilityType(rawValue: navTypeStr)
         navaids.append(LocationIdentifier.NavaidInfo(name: name, facilityType: navType))
       }
     }
 
-    let landingTypeStr = transformedValues[9] as? String ?? ""
-    let ILSTypeStr = transformedValues[21] as? String ?? ""
-    let ARTCCTypeStr = transformedValues[27] as? String ?? ""
-    let otherTypeStr = transformedValues[30] as? String ?? ""
+    let landingTypeStr: String = try t[optional: 9] ?? "",
+      ILSTypeStr: String = try t[optional: 21] ?? "",
+      ARTCCTypeStr: String = try t[optional: 27] ?? "",
+      otherTypeStr: String = try t[optional: 30] ?? ""
 
     let record = LocationIdentifier(
       identifier: identifier,
-      groupCode: .usa,
-      FAARegion: transformedValues[3] as? String,
-      stateCode: transformedValues[4] as? String,
-      city: transformedValues[5] as? String,
-      controllingARTCC: transformedValues[6] as? String,
-      controllingARTCCComputerId: transformedValues[7] as? String,
-      landingFacilityName: transformedValues[8] as? String,
+      groupCode: .USA,
+      FAARegion: try t[optional: 3],
+      stateCode: try t[optional: 4],
+      city: try t[optional: 5],
+      controllingARTCC: try t[optional: 6],
+      controllingARTCCComputerId: try t[optional: 7],
+      landingFacilityName: try t[optional: 8],
       landingFacilityType: LocationIdentifier.LandingFacilityType(rawValue: landingTypeStr),
-      landingFacilityFSS: transformedValues[10] as? String,
+      landingFacilityFSS: try t[optional: 10],
       navaids: navaids,
-      navaidFSS: transformedValues[19] as? String,
-      ILSRunwayEnd: transformedValues[20] as? String,
+      navaidFSS: try t[optional: 19],
+      ILSRunwayEnd: try t[optional: 20],
       ilsFacilityType: LocationIdentifier.ILSFacilityType(rawValue: ILSTypeStr),
-      ILSAirportIdentifier: transformedValues[22] as? String,
-      ILSAirportName: transformedValues[23] as? String,
-      ILSFSS: transformedValues[24] as? String,
-      FSSName: transformedValues[25] as? String,
-      ARTCCName: transformedValues[26] as? String,
+      ILSAirportIdentifier: try t[optional: 22],
+      ILSAirportName: try t[optional: 23],
+      ILSFSS: try t[optional: 24],
+      FSSName: try t[optional: 25],
+      ARTCCName: try t[optional: 26],
       artccFacilityType: LocationIdentifier.ARTCCFacilityType(rawValue: ARTCCTypeStr),
-      isFlightWatchStation: transformedValues[28] as? Bool,
-      otherFacilityName: transformedValues[29] as? String,
+      isFlightWatchStation: try t[optional: 28],
+      otherFacilityName: try t[optional: 29],
       otherFacilityType: LocationIdentifier.OtherFacilityType(rawValue: otherTypeStr),
-      effectiveDateComponents: transformedValues[31] as? DateComponents
+      effectiveDateComponents: try t[optional: 31]
     )
 
     identifiers.append(record)

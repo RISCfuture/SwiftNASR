@@ -16,19 +16,14 @@ actor CSVPreferredRouteParser: CSVParser {
 
   func parse(data _: Data) async throws {
     // Parse PFR_BASE.csv
-    // Columns: EFF_DATE(0), ORIGIN_ID(1), ORIGIN_CITY(2), ORIGIN_STATE_CODE(3),
-    // ORIGIN_COUNTRY_CODE(4), DSTN_ID(5), DSTN_CITY(6), DSTN_STATE_CODE(7),
-    // DSTN_COUNTRY_CODE(8), PFR_TYPE_CODE(9), ROUTE_NO(10), SPECIAL_AREA_DESCRIP(11),
-    // ALT_DESCRIP(12), AIRCRAFT(13), HOURS(14), ROUTE_DIR_DESCRIP(15),
-    // DESIGNATOR(16), NAR_TYPE(17), INLAND_FAC_FIX(18), COASTAL_FIX(19),
-    // DESTINATION(20), ROUTE_STRING(21)
-    try await parseCSVFile(filename: "PFR_BASE.csv", expectedFieldCount: 22) { fields in
-      guard fields.count >= 11 else { return }
-
-      let originID = fields[1].trimmingCharacters(in: .whitespaces)
-      let destID = fields[5].trimmingCharacters(in: .whitespaces)
-      let routeTypeCode = fields[9].trimmingCharacters(in: .whitespaces)
-      let routeNoStr = fields[10].trimmingCharacters(in: .whitespaces)
+    try await parseCSVFile(
+      filename: "PFR_BASE.csv",
+      requiredColumns: ["ORIGIN_ID", "DSTN_ID", "PFR_TYPE_CODE", "ROUTE_NO"]
+    ) { row in
+      let originID = try row["ORIGIN_ID"]
+      let destID = try row["DSTN_ID"]
+      let routeTypeCode = try row["PFR_TYPE_CODE"]
+      let routeNoStr = try row["ROUTE_NO"]
 
       guard !originID.isEmpty, !destID.isEmpty, !routeTypeCode.isEmpty else { return }
       guard let routeNo = UInt(routeNoStr) else { return }
@@ -37,11 +32,8 @@ actor CSVPreferredRouteParser: CSVParser {
 
       // Parse effective hours
       var effectiveHoursArray = [String]()
-      if fields.count > 14 {
-        let hours = fields[14].trimmingCharacters(in: .whitespaces)
-        if !hours.isEmpty {
-          effectiveHoursArray.append(hours)
-        }
+      if let hours = try row.optional("HOURS") {
+        effectiveHoursArray.append(hours)
       }
 
       let route = PreferredRoute(
@@ -50,60 +42,46 @@ actor CSVPreferredRouteParser: CSVParser {
         routeType: PreferredRoute.RouteType.for(routeTypeCode),
         sequenceNumber: routeNo,
         routeTypeDescription: nil,  // Not in CSV
-        areaDescription: fields.count > 11
-          ? emptyToNil(fields[11].trimmingCharacters(in: .whitespaces)) : nil,
-        altitudeDescription: fields.count > 12
-          ? emptyToNil(fields[12].trimmingCharacters(in: .whitespaces)) : nil,
-        aircraftDescription: fields.count > 13
-          ? emptyToNil(fields[13].trimmingCharacters(in: .whitespaces)) : nil,
+        areaDescription: try row.optional("SPECIAL_AREA_DESCRIP"),
+        altitudeDescription: try row.optional("ALT_DESCRIP"),
+        aircraftDescription: try row.optional("AIRCRAFT"),
         effectiveHours: effectiveHoursArray,
-        directionLimitations: fields.count > 15
-          ? emptyToNil(fields[15].trimmingCharacters(in: .whitespaces)) : nil,
-        NARType: fields.count > 17
-          ? emptyToNil(fields[17].trimmingCharacters(in: .whitespaces))
-          : nil,
-        designator: fields.count > 16
-          ? emptyToNil(fields[16].trimmingCharacters(in: .whitespaces)) : nil,
-        destinationCity: fields.count > 20
-          ? emptyToNil(fields[20].trimmingCharacters(in: .whitespaces)) : nil
+        directionLimitations: try row.optional("ROUTE_DIR_DESCRIP"),
+        NARType: try row.optional("NAR_TYPE"),
+        designator: try row.optional("DESIGNATOR"),
+        destinationCity: try row.optional("DESTINATION")
       )
 
       self.routes[key] = route
     }
 
     // Parse PFR_SEG.csv for segments
-    // Columns: EFF_DATE(0), ORIGIN_ID(1), DSTN_ID(2), PFR_TYPE_CODE(3), ROUTE_NO(4),
-    // SEGMENT_SEQ(5), SEG_VALUE(6), SEG_TYPE(7), STATE_CODE(8), COUNTRY_CODE(9),
-    // ICAO_REGION_CODE(10), NAV_TYPE(11), NEXT_SEG(12)
-    try await parseCSVFile(filename: "PFR_SEG.csv", expectedFieldCount: 13) { fields in
-      guard fields.count >= 8 else { return }
-
-      let originID = fields[1].trimmingCharacters(in: .whitespaces)
-      let destID = fields[2].trimmingCharacters(in: .whitespaces)
-      let routeTypeCode = fields[3].trimmingCharacters(in: .whitespaces)
-      let routeNoStr = fields[4].trimmingCharacters(in: .whitespaces)
+    try await parseCSVFile(
+      filename: "PFR_SEG.csv",
+      requiredColumns: ["ORIGIN_ID", "DSTN_ID", "PFR_TYPE_CODE", "ROUTE_NO", "SEGMENT_SEQ"]
+    ) { row in
+      let originID = try row["ORIGIN_ID"]
+      let destID = try row["DSTN_ID"]
+      let routeTypeCode = try row["PFR_TYPE_CODE"]
+      let routeNoStr = try row["ROUTE_NO"]
 
       guard let routeNo = UInt(routeNoStr) else { return }
       let key = "\(originID)-\(destID)-\(routeTypeCode)-\(routeNo)"
 
       guard self.routes[key] != nil else { return }
 
-      let segSeqStr = fields[5].trimmingCharacters(in: .whitespaces)
+      let segSeqStr = try row["SEGMENT_SEQ"]
       guard let segSeq = UInt(segSeqStr) else { return }
 
-      let segValue = fields[6].trimmingCharacters(in: .whitespaces)
-      let segTypeStr = fields[7].trimmingCharacters(in: .whitespaces)
+      let segValue = try row.optional("SEG_VALUE") ?? ""
+      let segTypeStr = try row.optional("SEG_TYPE") ?? ""
       let segmentType = PreferredRoute.SegmentType.for(segTypeStr)
 
-      let stateCode =
-        fields.count > 8
-        ? emptyToNil(fields[8].trimmingCharacters(in: .whitespaces)) : nil
-      let ICAORegionCode =
-        fields.count > 10
-        ? emptyToNil(fields[10].trimmingCharacters(in: .whitespaces)) : nil
+      let stateCode = try row.optional("STATE_CODE")
+      let ICAORegionCode = try row.optional("ICAO_REGION_CODE")
 
       // Parse navaid type from NAV_TYPE column
-      let navTypeStr = fields.count > 11 ? fields[11].trimmingCharacters(in: .whitespaces) : ""
+      let navTypeStr = try row.optional("NAV_TYPE") ?? ""
       let navaidType = navTypeStr.isEmpty ? nil : Navaid.FacilityType.for(navTypeStr)
 
       // Parse radial/distance from segment value for FRD and RADIAL types
@@ -153,10 +131,6 @@ actor CSVPreferredRouteParser: CSVParser {
       default:
         return nil
     }
-  }
-
-  private func emptyToNil(_ string: String) -> String? {
-    string.isEmpty ? nil : string
   }
 
   func finish(data: NASRData) async {

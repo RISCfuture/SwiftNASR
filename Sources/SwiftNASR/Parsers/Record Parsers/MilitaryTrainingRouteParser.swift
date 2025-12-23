@@ -52,7 +52,7 @@ actor FixedWidthMilitaryTrainingRouteParser: LayoutDataParser {
       case "MTR6":
         try parseAgency(line, key: routeKey)
       default:
-        break
+        throw ParserError.unknownRecordIdentifier(recordType)
     }
   }
 

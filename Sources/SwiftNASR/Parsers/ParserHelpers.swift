@@ -3,15 +3,6 @@ import Foundation
 /// Common parser helper functions used by both fixed-width and CSV parsers
 enum ParserHelpers {
 
-  // MARK: - Common raw function for enums
-
-  static func raw<T: RecordEnum>(_ rawValue: T.RawValue, toEnum _: T.Type) throws -> T {
-    guard let val = T.for(rawValue) else {
-      throw ParserError.unknownRecordEnumValue(rawValue)
-    }
-    return val
-  }
-
   // MARK: - Navaid-specific parsers
 
   static func parseClassDesignator(_ code: String) throws -> Navaid.NavaidClass {
@@ -107,6 +98,43 @@ enum ParserHelpers {
     return magvar
   }
 
+  // MARK: - Boolean flag parsers
+
+  /// Parses a Y/N flag with strict validation.
+  /// - Returns: `true` for "Y", `false` for "N", `nil` for empty/missing.
+  /// - Throws: `ParserError.invalidValue` for any other value.
+  static func parseYNFlag(_ value: String?, fieldName: String) throws -> Bool? {
+    guard let value, !value.isEmpty else { return nil }
+    switch value.uppercased() {
+      case "Y": return true
+      case "N": return false
+      default: throw ParserError.invalidValue("\(fieldName): \(value)")
+    }
+  }
+
+  /// Parses a Y/N flag with strict validation, defaulting to false for nil/empty.
+  /// - Returns: `true` for "Y", `false` for "N" or nil/empty.
+  /// - Throws: `ParserError.invalidValue` for any other value.
+  static func parseYNFlagRequired(_ value: String?, fieldName: String) throws -> Bool {
+    guard let value, !value.isEmpty else { return false }
+    switch value.uppercased() {
+      case "Y": return true
+      case "N": return false
+      default: throw ParserError.invalidValue("\(fieldName): \(value)")
+    }
+  }
+
+  /// Parses an X/blank flag with strict validation (e.g., for airway gap indicators).
+  /// - Returns: `true` for "X", `false` for nil/empty.
+  /// - Throws: `ParserError.invalidValue` for any other value.
+  static func parseXFlag(_ value: String?, fieldName: String) throws -> Bool {
+    guard let value, !value.isEmpty else { return false }
+    switch value.uppercased() {
+      case "X": return true
+      default: throw ParserError.invalidValue("\(fieldName): \(value)")
+    }
+  }
+
   // MARK: - Airport-specific parsers
 
   static func parseAirportFacilityType(_ code: String) throws -> Airport.FacilityType {
@@ -123,10 +151,6 @@ enum ParserHelpers {
 }
 
 // MARK: - Global convenience functions for backwards compatibility
-
-func raw<T: RecordEnum>(_ rawValue: T.RawValue, toEnum type: T.Type) throws -> T {
-  return try ParserHelpers.raw(rawValue, toEnum: type)
-}
 
 func parseClassDesignator(_ code: String) throws -> Navaid.NavaidClass {
   return try ParserHelpers.parseClassDesignator(code)

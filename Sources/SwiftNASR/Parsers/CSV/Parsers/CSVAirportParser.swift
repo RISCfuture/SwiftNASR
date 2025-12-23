@@ -1,7 +1,7 @@
 import Foundation
 import StreamingCSV
 
-/// CSV Airport Parser using declarative transformers like FixedWidthAirportParser
+/// CSV Airport Parser using header-based field access
 actor CSVAirportParser: CSVParser {
   var distribution: (any Distribution)?
   var progress: Progress?
@@ -21,269 +21,177 @@ actor CSVAirportParser: CSVParser {
   /// Key is the SERVICED_FACILITY (airport ID)
   private var ctafFrequencies = [String: UInt]()
 
-  // MARK: - Transformers (matching FixedWidthAirportParser field types exactly)
+  // MARK: - Transformers
 
-  private let airportTransformer = CSVTransformer([
-    .null,  //   0 effective date (skip for now)
-    .string(),  //   1 site number
-    .generic { try ParserHelpers.parseAirportFacilityType($0) },  //   2 facility type (CSV uses codes)
-    .string(),  //   3 LID (ARPT_ID in CSV)
-    .null,  //   4 skip state code in this position
-
-    .generic(
-      { try raw($0, toEnum: Airport.FAARegion.self) },
-      nullable: .blank
-    ),  //   5 region code
-    .string(nullable: .sentinel(["NONE"])),  //   6 field office code
-    .string(nullable: .blank),  //   7 state post office code
-    .null,  //   8 state name
-    .string(),  //   9 county name
-    .string(),  //  10 county state post office code
-    .string(),  //  11 city
-    .string(),  //  12 airport name
-
-    .generic { try raw($0, toEnum: Airport.Ownership.self) },  //  13 ownership type
-    .boolean(trueValue: "PU"),  //  14 facility use
-    .null,  //  15 owner's name (handled separately)
-    .null,  //  16 owner's address (handled separately)
-    .null,  //  17 owner's city state zip (handled separately)
-    .null,  //  18 owner's phone (handled separately)
-    .null,  //  19 manager's name (handled separately)
-    .null,  //  20 manager's address (handled separately)
-    .null,  //  21 manager's city state zip (handled separately)
-    .null,  //  22 manager's phone (handled separately)
-
-    .null,  //  23 lat - formatted (use decimal instead)
-    .float(),  //  24 lat - decimal
-    .null,  //  25 lon - formatted (use decimal instead)
-    .float(),  //  26 lon - decimal
-    .generic { try raw($0, toEnum: SurveyMethod.self) },  // 27 ARP determination method
-    .float(),  //  28 elevation
-    .generic(
-      { try raw($0, toEnum: SurveyMethod.self) },
-      nullable: .blank
-    ),  //  29 elevation determination method
-    .integer(nullable: .blank),  //  30 magvar (unsigned, sign from hemisphere)
-    .string(nullable: .blank),  //  31 magvar hemisphere (W = negative, E = positive)
-    .dateComponents(format: .yearOnly, nullable: .blank),  //  32 magvar epoch
-    .integer(nullable: .blank),  //  33 TPA
-    .string(nullable: .blank),  //  34 sectional
-    .unsignedInteger(nullable: .blank),  //  35 distance to city
-    .generic(
-      { return try raw($0, toEnum: Direction.self) },
-      nullable: .blank
-    ),  //  36 direction city -> airport
-    .float(nullable: .blank),  //  37 land area
-
-    .string(),  //  38 responsible ARTCC ID
-    .string(),  //  39 boundary ARTCC computer ID
-    .null,  //  40 ARTCC name
-    .boolean(nullable: .blank),  //  41 tie-in FSS on field
-    .string(),  //  42 tie-in FSS ID
-    .null,  //  43 FSS name
-    .null,  //  44 local phone
-    .null,  //  45 toll-free phone
-    .string(nullable: .blank),  //  46 alternate FSS ID
-    .null,  //  47 alternate FSS name
-    .null,  //  48 alternate toll-free number
-    .string(nullable: .blank),  //  49 NOTAM facility ID
-    .boolean(nullable: .blank),  //  50 NOTAM D available
-
-    .dateComponents(format: .yearMonthSlash, nullable: .blank),  //  51 activation date
-    .generic { Airport.Status(rawValue: $0) },  //  52 status code
-    .null,  //  53 FAR 139 type (skip for now)
-    .null,  //  54 FAR 139 carrier service (skip for now)
-    .delimitedArray(
-      delimiter: " ",
-      convert: { $0 },
-      nullable: .compact,
-      emptyPlaceholders: ["BLANK"]
-    ),  //  55 ARFF certification type and date
-    .fixedWidthArray(
-      convert: { try raw($0, toEnum: Airport.FederalAgreement.self) },
-      nullable: .compact,
-      emptyPlaceholders: ["NONE", "BLANK"]
-    ),  //  56 federal agreements code
-    .generic(
-      { try raw($0, toEnum: Airport.AirspaceAnalysisDetermination.self) },
-      nullable: .blank
-    ),  //  57 airspace analysis determination
-    .boolean(nullable: .blank),  //  58 customs airport
-    .boolean(nullable: .blank),  //  59 landing rights
-    .boolean(nullable: .blank),  //  60 joint use
-    .boolean(nullable: .blank),  //  61 military landing rights
-
-    .generic(
-      { try raw($0, toEnum: Airport.InspectionMethod.self) },
-      nullable: .blank
-    ),  //  62 inspection method
-    .generic(
-      { try raw($0, toEnum: Airport.InspectionAgency.self) },
-      nullable: .blank
-    ),  //  63 inspection agency
-    .dateComponents(
-      format: .yearMonthDaySlash,
-      nullable: .blank
-    ),  //  64 last inspection date
-    .dateComponents(
-      format: .yearMonthDaySlash,
-      nullable: .blank
-    ),  //  65 last information request completed date
-
-    .fixedWidthArray(
-      width: 5,
-      convert: { Airport.FuelType(rawValue: $0) },
-      nullable: .compact
-    ),  //  66 available fuel types
-    .generic(
-      { try raw($0, toEnum: Airport.RepairService.self) },
-      nullable: .blank
-    ),  //  67 airframe repair available
-    .generic(
-      { try raw($0, toEnum: Airport.RepairService.self) },
-      nullable: .blank
-    ),  //  68 powerplant repair available
-    .delimitedArray(
-      delimiter: "/",
-      convert: { try raw($0, toEnum: Airport.OxygenPressure.self) },
-      nullable: .compact,
-      emptyPlaceholders: ["NONE"]
-    ),  //  69 bottled oxygen available
-    .delimitedArray(
-      delimiter: "/",
-      convert: { try raw($0, toEnum: Airport.OxygenPressure.self) },
-      nullable: .compact,
-      emptyPlaceholders: ["NONE"]
-    ),  //  70 bulk oxygen available
-
-    .string(nullable: .blank),  //  71 airport lighting schedule
-    .string(nullable: .blank),  //  72 beacon lighting schedule
-    .null,  //  73 control tower (derived from TWR_TYPE_CODE)
-    .generic(
-      { try raw($0, toEnum: Airport.AirportMarker.self) },
-      nullable: .blank
-    ),  //  74 segmented circle
-    .generic(
-      { try raw($0, toEnum: Airport.LensColor.self) },
-      nullable: .blank
-    ),  //  75 beacon color
-    .boolean(nullable: .blank),  //  76 landing fee
-    .boolean(nullable: .blank),  //  77 medical use
-
-    .string(nullable: .blank),  //  78 position source
-    .dateComponents(
-      format: .yearMonthDaySlash,
-      nullable: .blank
-    ),  //  79 position source date
-    .string(nullable: .blank),  //  80 elevation source
-    .dateComponents(
-      format: .yearMonthDaySlash,
-      nullable: .blank
-    ),  //  81 elevation source date
-    .boolean(nullable: .blank),  //  82 contract fuel available
-    .boolean(nullable: .blank),  //  83 transient storage buoy
-    .boolean(nullable: .blank),  //  84 transient storage hangar
-    .boolean(nullable: .blank),  //  85 transient storage tie-down
-    .delimitedArray(
-      delimiter: ",",
-      convert: { try raw($0, toEnum: Airport.Service.self) },
-      nullable: .compact
-    ),  //  86 other services
-    .generic(
-      { try raw($0, toEnum: Airport.AirportMarker.self) },
-      nullable: .blank
-    ),  //  87 wind indicator
-    .string(nullable: .blank),  //  88 ICAO code
-    .boolean(nullable: .blank)  //  89 MON (MIN_OP_NETWORK in CSV)
+  private let baseTransformer = CSVTransformer([
+    .init("SITE_NO", .string()),
+    .init("SITE_TYPE_CODE", .string()),
+    .init("ARPT_ID", .string()),
+    .init("ARPT_NAME", .string()),
+    .init("LAT_DECIMAL", .float(nullable: .blank)),
+    .init("LONG_DECIMAL", .float(nullable: .blank)),
+    .init("ELEV", .float(nullable: .blank)),
+    .init("REGION_CODE", .recordEnum(Airport.FAARegion.self, nullable: .blank)),
+    .init("OWNERSHIP_TYPE_CODE", .recordEnum(Airport.Ownership.self)),
+    .init("FACILITY_USE_CODE", .string(nullable: .blank)),
+    .init("SURVEY_METHOD_CODE", .recordEnum(SurveyMethod.self)),
+    .init("ELEV_METHOD_CODE", .recordEnum(SurveyMethod.self, nullable: .blank)),
+    .init("MAG_VARN", .integer(nullable: .blank)),
+    .init("MAG_HEMIS", .string(nullable: .blank)),
+    .init("MAG_VARN_YEAR", .dateComponents(format: .yearOnly, nullable: .blank)),
+    .init("TPA", .integer(nullable: .blank)),
+    .init("CHART_NAME", .string(nullable: .blank)),
+    .init("DIST_CITY_TO_AIRPORT", .unsignedInteger(nullable: .blank)),
+    .init("DIRECTION_CODE", .recordEnum(Direction.self, nullable: .blank)),
+    .init("ACREAGE", .float(nullable: .blank)),
+    .init("COMPUTER_ID", .string(nullable: .blank)),
+    .init("RESP_ARTCC_ID", .string()),
+    .init("FSS_ON_ARPT_FLAG", .boolean(nullable: .blank)),
+    .init("FSS_ID", .string()),
+    .init("ALT_FSS_ID", .string(nullable: .blank)),
+    .init("NOTAM_ID", .string(nullable: .blank)),
+    .init("NOTAM_FLAG", .boolean(nullable: .blank)),
+    .init("ACTIVATION_DATE", .dateComponents(format: .yearMonthSlash, nullable: .blank)),
+    .init("ARPT_STATUS", .string()),
+    .init("ARFF_CERT_TYPE_DATE", .string(nullable: .blank)),
+    .init("NASP_CODE", .string(nullable: .blank)),
+    .init(
+      "ASP_ANLYS_DTRM_CODE",
+      .recordEnum(Airport.AirspaceAnalysisDetermination.self, nullable: .blank)
+    ),
+    .init("CUST_FLAG", .boolean(nullable: .blank)),
+    .init("LNDG_RIGHTS_FLAG", .boolean(nullable: .blank)),
+    .init("JOINT_USE_FLAG", .boolean(nullable: .blank)),
+    .init("MIL_LNDG_FLAG", .boolean(nullable: .blank)),
+    .init("INSPECT_METHOD_CODE", .recordEnum(Airport.InspectionMethod.self, nullable: .blank)),
+    .init("INSPECTOR_CODE", .recordEnum(Airport.InspectionAgency.self, nullable: .blank)),
+    .init("LAST_INSPECTION", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("LAST_INFO_RESPONSE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("FUEL_TYPES", .string(nullable: .blank)),
+    .init("AIRFRAME_REPAIR_SER_CODE", .recordEnum(Airport.RepairService.self, nullable: .blank)),
+    .init("PWR_PLANT_REPAIR_SER", .recordEnum(Airport.RepairService.self, nullable: .blank)),
+    .init("BOTTLED_OXY_TYPE", .string(nullable: .blank)),
+    .init("BULK_OXY_TYPE", .string(nullable: .blank)),
+    .init("LGT_SKED", .string(nullable: .blank)),
+    .init("BCN_LGT_SKED", .string(nullable: .blank)),
+    .init("TWR_TYPE_CODE", .string(nullable: .blank)),
+    .init("SEG_CIRCLE_MKR_FLAG", .recordEnum(Airport.AirportMarker.self, nullable: .blank)),
+    .init("BCN_LENS_COLOR", .recordEnum(Airport.LensColor.self, nullable: .blank)),
+    .init("LNDG_FEE_FLAG", .boolean(nullable: .blank)),
+    .init("MEDICAL_USE_FLAG", .boolean(nullable: .blank)),
+    .init("OTHER_SERVICES", .string(nullable: .blank)),
+    .init("WIND_INDCR_FLAG", .recordEnum(Airport.AirportMarker.self, nullable: .blank)),
+    .init("ICAO_ID", .string(nullable: .blank)),
+    .init("ADO_CODE", .string(nullable: .blank)),
+    .init("STATE_CODE", .string(nullable: .blank)),
+    .init("COUNTY_NAME", .string()),
+    .init("COUNTY_ASSOC_STATE", .string()),
+    .init("CITY", .string()),
+    .init("TRNS_STRG_BUOY_FLAG", .boolean(nullable: .blank)),
+    .init("TRNS_STRG_HGR_FLAG", .boolean(nullable: .blank)),
+    .init("TRNS_STRG_TIE_FLAG", .boolean(nullable: .blank)),
+    .init("ARPT_PSN_SOURCE", .string(nullable: .blank)),
+    .init("POSITION_SRC_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("ARPT_ELEV_SOURCE", .string(nullable: .blank)),
+    .init("ELEVATION_SRC_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("CONTR_FUEL_AVBL", .boolean(nullable: .blank)),
+    .init("MIN_OP_NETWORK", .boolean(nullable: .blank))
   ])
 
-  // CSV field indices for APT_BASE.csv
-  private let airportFieldIndices = [
-    APTBaseField.EFF_DATE.rawValue,  //  0
-    APTBaseField.SITE_NO.rawValue,  //  1
-    APTBaseField.SITE_TYPE_CODE.rawValue,  //  2
-    APTBaseField.ARPT_ID.rawValue,  //  3
-    -1,  //  4 (no state code in this position)
-    APTBaseField.REGION_CODE.rawValue,  //  5
-    APTBaseField.ADO_CODE.rawValue,  //  6
-    APTBaseField.STATE_CODE.rawValue,  //  7
-    APTBaseField.STATE_NAME.rawValue,  //  8
-    APTBaseField.COUNTY_NAME.rawValue,  //  9
-    APTBaseField.COUNTY_ASSOC_STATE.rawValue,  // 10
-    APTBaseField.CITY.rawValue,  // 11
-    APTBaseField.ARPT_NAME.rawValue,  // 12
-    APTBaseField.OWNERSHIP_TYPE_CODE.rawValue,  // 13
-    APTBaseField.FACILITY_USE_CODE.rawValue,  // 14
-    -1, -1, -1, -1,  // 15-18 owner fields (handled separately)
-    -1, -1, -1, -1,  // 19-22 manager fields (handled separately)
-    -1,  // 23 lat formatted (skip)
-    APTBaseField.LAT_DECIMAL.rawValue,  // 24
-    -1,  // 25 lon formatted (skip)
-    APTBaseField.LONG_DECIMAL.rawValue,  // 26
-    APTBaseField.SURVEY_METHOD_CODE.rawValue,  // 27
-    APTBaseField.ELEV.rawValue,  // 28
-    APTBaseField.ELEV_METHOD_CODE.rawValue,  // 29
-    APTBaseField.MAG_VARN.rawValue,  // 30
-    APTBaseField.MAG_HEMIS.rawValue,  // 31
-    APTBaseField.MAG_VARN_YEAR.rawValue,  // 32
-    APTBaseField.TPA.rawValue,  // 33
-    APTBaseField.CHART_NAME.rawValue,  // 34
-    APTBaseField.DIST_CITY_TO_AIRPORT.rawValue,  // 35
-    APTBaseField.DIRECTION_CODE.rawValue,  // 36
-    APTBaseField.ACREAGE.rawValue,  // 37
-    APTBaseField.RESP_ARTCC_ID.rawValue,  // 38
-    APTBaseField.COMPUTER_ID.rawValue,  // 39
-    APTBaseField.ARTCC_NAME.rawValue,  // 40
-    APTBaseField.FSS_ON_ARPT_FLAG.rawValue,  // 41
-    APTBaseField.FSS_ID.rawValue,  // 42
-    APTBaseField.FSS_NAME.rawValue,  // 43
-    APTBaseField.PHONE_NO.rawValue,  // 44
-    APTBaseField.TOLL_FREE_NO.rawValue,  // 45
-    APTBaseField.ALT_FSS_ID.rawValue,  // 46
-    APTBaseField.ALT_FSS_NAME.rawValue,  // 47
-    APTBaseField.ALT_TOLL_FREE_NO.rawValue,  // 48
-    APTBaseField.NOTAM_ID.rawValue,  // 49
-    APTBaseField.NOTAM_FLAG.rawValue,  // 50
-    APTBaseField.ACTIVATION_DATE.rawValue,  // 51
-    APTBaseField.ARPT_STATUS.rawValue,  // 52
-    APTBaseField.FAR_139_TYPE_CODE.rawValue,  // 53
-    APTBaseField.FAR_139_CARRIER_SER_CODE.rawValue,  // 54
-    APTBaseField.ARFF_CERT_TYPE_DATE.rawValue,  // 55
-    APTBaseField.NASP_CODE.rawValue,  // 56
-    APTBaseField.ASP_ANLYS_DTRM_CODE.rawValue,  // 57
-    APTBaseField.CUST_FLAG.rawValue,  // 58
-    APTBaseField.LNDG_RIGHTS_FLAG.rawValue,  // 59
-    APTBaseField.JOINT_USE_FLAG.rawValue,  // 60
-    APTBaseField.MIL_LNDG_FLAG.rawValue,  // 61
-    APTBaseField.INSPECT_METHOD_CODE.rawValue,  // 62
-    APTBaseField.INSPECTOR_CODE.rawValue,  // 63
-    APTBaseField.LAST_INSPECTION.rawValue,  // 64
-    APTBaseField.LAST_INFO_RESPONSE.rawValue,  // 65
-    APTBaseField.FUEL_TYPES.rawValue,  // 66
-    APTBaseField.AIRFRAME_REPAIR_SER_CODE.rawValue,  // 67
-    APTBaseField.PWR_PLANT_REPAIR_SER.rawValue,  // 68
-    APTBaseField.BOTTLED_OXY_TYPE.rawValue,  // 69
-    APTBaseField.BULK_OXY_TYPE.rawValue,  // 70
-    APTBaseField.LGT_SKED.rawValue,  // 71
-    APTBaseField.BCN_LGT_SKED.rawValue,  // 72
-    APTBaseField.TWR_TYPE_CODE.rawValue,  // 73 (used to determine control tower)
-    APTBaseField.SEG_CIRCLE_MKR_FLAG.rawValue,  // 74
-    APTBaseField.BCN_LENS_COLOR.rawValue,  // 75
-    APTBaseField.LNDG_FEE_FLAG.rawValue,  // 76
-    APTBaseField.MEDICAL_USE_FLAG.rawValue,  // 77
-    APTBaseField.ARPT_PSN_SOURCE.rawValue,  // 78
-    APTBaseField.POSITION_SRC_DATE.rawValue,  // 79
-    APTBaseField.ARPT_ELEV_SOURCE.rawValue,  // 80
-    APTBaseField.ELEVATION_SRC_DATE.rawValue,  // 81
-    APTBaseField.CONTR_FUEL_AVBL.rawValue,  // 82
-    APTBaseField.TRNS_STRG_BUOY_FLAG.rawValue,  // 83
-    APTBaseField.TRNS_STRG_HGR_FLAG.rawValue,  // 84
-    APTBaseField.TRNS_STRG_TIE_FLAG.rawValue,  // 85
-    APTBaseField.OTHER_SERVICES.rawValue,  // 86
-    APTBaseField.WIND_INDCR_FLAG.rawValue,  // 87
-    APTBaseField.ICAO_ID.rawValue,  // 88
-    APTBaseField.MIN_OP_NETWORK.rawValue  // 89 (MIN_OP_NETWORK field)
-  ]
+  private let runwayTransformer = CSVTransformer([
+    .init("SITE_NO", .string()),
+    .init("SITE_TYPE_CODE", .string()),
+    .init("RWY_ID", .string()),
+    .init("RWY_LEN", .unsignedInteger(nullable: .blank)),
+    .init("RWY_WIDTH", .unsignedInteger(nullable: .blank)),
+    .init("SURFACE_TYPE_CODE", .string(nullable: .blank)),
+    .init("COND", .string(nullable: .blank)),
+    .init("TREATMENT_CODE", .string(nullable: .blank)),
+    .init("RWY_LGT_CODE", .string(nullable: .blank)),
+    .init("RWY_LEN_SOURCE", .string(nullable: .blank)),
+    .init("LENGTH_SOURCE_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("GROSS_WT_SW", .float(nullable: .blank)),
+    .init("GROSS_WT_DW", .float(nullable: .blank)),
+    .init("GROSS_WT_DTW", .float(nullable: .blank)),
+    .init("GROSS_WT_DDTW", .float(nullable: .blank)),
+    .init("PCN", .integer(nullable: .blank)),
+    .init("PAVEMENT_TYPE_CODE", .string(nullable: .blank)),
+    .init("SUBGRADE_STRENGTH_CODE", .string(nullable: .blank)),
+    .init("TIRE_PRES_CODE", .string(nullable: .blank)),
+    .init("DTRM_METHOD_CODE", .string(nullable: .blank))
+  ])
+
+  private let runwayEndTransformer = CSVTransformer([
+    .init("SITE_NO", .string()),
+    .init("SITE_TYPE_CODE", .string()),
+    .init("RWY_ID", .string()),
+    .init("RWY_END_ID", .string()),
+    .init("TRUE_ALIGNMENT", .integer(nullable: .blank)),
+    .init("ILS_TYPE", .string(nullable: .blank)),
+    .init("RIGHT_HAND_TRAFFIC_PAT_FLAG", .string(nullable: .blank)),
+    .init("RWY_MARKING_TYPE_CODE", .string(nullable: .blank)),
+    .init("RWY_MARKING_COND", .string(nullable: .blank)),
+    .init("LAT_DECIMAL", .float(nullable: .blank)),
+    .init("LONG_DECIMAL", .float(nullable: .blank)),
+    .init("RWY_END_ELEV", .float(nullable: .blank)),
+    .init("THR_CROSSING_HGT", .unsignedInteger(nullable: .blank)),
+    .init("VISUAL_GLIDE_PATH_ANGLE", .float(nullable: .blank)),
+    .init("LAT_DISPLACED_THR_DECIMAL", .float(nullable: .blank)),
+    .init("LONG_DISPLACED_THR_DECIMAL", .float(nullable: .blank)),
+    .init("DISPLACED_THR_ELEV", .float(nullable: .blank)),
+    .init("DISPLACED_THR_LEN", .unsignedInteger(nullable: .blank)),
+    .init("TDZ_ELEV", .float(nullable: .blank)),
+    .init("VGSI_CODE", .string(nullable: .blank)),
+    .init("RWY_VISUAL_RANGE_EQUIP_CODE", .string(nullable: .blank)),
+    .init("RWY_VSBY_VALUE_EQUIP_FLAG", .string(nullable: .blank)),
+    .init("APCH_LGT_SYSTEM_CODE", .string(nullable: .blank)),
+    .init("RWY_END_LGTS_FLAG", .string(nullable: .blank)),
+    .init("CNTRLN_LGTS_AVBL_FLAG", .string(nullable: .blank)),
+    .init("TDZ_LGT_AVBL_FLAG", .string(nullable: .blank)),
+    .init("RWY_GRAD", .float(nullable: .blank)),
+    .init("RWY_GRAD_DIRECTION", .string(nullable: .blank)),
+    .init("TKOF_RUN_AVBL", .unsignedInteger(nullable: .blank)),
+    .init("TKOF_DIST_AVBL", .unsignedInteger(nullable: .blank)),
+    .init("ACLT_STOP_DIST_AVBL", .unsignedInteger(nullable: .blank)),
+    .init("LNDG_DIST_AVBL", .unsignedInteger(nullable: .blank)),
+    .init("LAHSO_ALD", .unsignedInteger(nullable: .blank)),
+    .init("RWY_END_INTERSECT_LAHSO", .string(nullable: .blank)),
+    .init("LAHSO_DESC", .string(nullable: .blank)),
+    .init("LAT_LAHSO_DECIMAL", .float(nullable: .blank)),
+    .init("LONG_LAHSO_DECIMAL", .float(nullable: .blank)),
+    .init("LAHSO_PSN_SOURCE", .string(nullable: .blank)),
+    .init("RWY_END_LAHSO_PSN_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("RWY_END_PSN_SOURCE", .string(nullable: .blank)),
+    .init("RWY_END_PSN_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("RWY_END_ELEV_SOURCE", .string(nullable: .blank)),
+    .init("RWY_END_ELEV_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("DSPL_THR_PSN_SOURCE", .string(nullable: .blank)),
+    .init(
+      "RWY_END_DSPL_THR_PSN_DATE",
+      .dateComponents(format: .yearMonthDaySlash, nullable: .blank)
+    ),
+    .init("DSPL_THR_ELEV_SOURCE", .string(nullable: .blank)),
+    .init(
+      "RWY_END_DSPL_THR_ELEV_DATE",
+      .dateComponents(format: .yearMonthDaySlash, nullable: .blank)
+    ),
+    .init("TDZ_ELEV_SOURCE", .string(nullable: .blank)),
+    .init("RWY_END_TDZ_ELEV_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("OBSTN_TYPE", .string(nullable: .blank)),
+    .init("OBSTN_MRKD_CODE", .string(nullable: .blank)),
+    .init("FAR_PART_77_CODE", .string(nullable: .blank)),
+    .init("OBSTN_CLNC_SLOPE", .unsignedInteger(nullable: .blank)),
+    .init("OBSTN_HGT", .unsignedInteger(nullable: .blank)),
+    .init("DIST_FROM_THR", .unsignedInteger(nullable: .blank)),
+    .init("CNTRLN_OFFSET", .unsignedInteger(nullable: .blank)),
+    .init("CNTRLN_DIR_CODE", .string(nullable: .blank))
+  ])
+
+  private let frequencyTransformer = CSVTransformer([
+    .init("SERVICED_FACILITY", .string(nullable: .blank)),
+    .init("FREQ", .string(nullable: .blank)),
+    .init("FREQ_USE", .string(nullable: .blank))
+  ])
 
   // MARK: - Protocol Methods
 
@@ -293,43 +201,67 @@ actor CSVAirportParser: CSVParser {
 
   func parse(data _: Data) async throws {
     // 0. Parse frequencies first (need UNICOM/CTAF before creating airports)
-    try await parseCSVFile(filename: "FRQ.csv", expectedFieldCount: 21) { fields in
-      self.parseFrequencyRecord(fields)
+    try await parseCSVFile(
+      filename: "FRQ.csv",
+      requiredColumns: ["SERVICED_FACILITY", "FREQ", "FREQ_USE"]
+    ) { row in
+      self.parseFrequencyRecord(row)
     }
 
     // 1. Parse base airport records
-    try await parseCSVFile(filename: "APT_BASE.csv", expectedFieldCount: 90) { fields in
-      try self.parseAirportRecord(fields)
+    try await parseCSVFile(
+      filename: "APT_BASE.csv",
+      requiredColumns: ["SITE_NO", "SITE_TYPE_CODE", "ARPT_ID", "ARPT_NAME"]
+    ) { row in
+      try self.parseAirportRecord(row)
     }
 
     // 2. Parse contacts (owner/manager info - must come before remarks)
-    try await parseCSVFile(filename: "APT_CON.csv", expectedFieldCount: 16) { fields in
-      try self.parseContactRecord(fields)
+    try await parseCSVFile(
+      filename: "APT_CON.csv",
+      requiredColumns: ["SITE_NO", "SITE_TYPE_CODE", "TITLE", "NAME"]
+    ) { row in
+      try self.parseContactRecord(row)
     }
 
     // 3. Parse runways
-    try await parseCSVFile(filename: "APT_RWY.csv", expectedFieldCount: 25) { fields in
-      try self.parseRunwayRecord(fields)
+    try await parseCSVFile(
+      filename: "APT_RWY.csv",
+      requiredColumns: ["SITE_NO", "SITE_TYPE_CODE", "RWY_ID"]
+    ) { row in
+      try self.parseRunwayRecord(row)
     }
 
     // 4. Parse runway ends
-    try await parseCSVFile(filename: "APT_RWY_END.csv", expectedFieldCount: 80) { fields in
-      try self.parseRunwayEndRecord(fields)
+    try await parseCSVFile(
+      filename: "APT_RWY_END.csv",
+      requiredColumns: ["SITE_NO", "SITE_TYPE_CODE", "RWY_ID", "RWY_END_ID"]
+    ) { row in
+      try self.parseRunwayEndRecord(row)
     }
 
     // 5. Parse arresting systems (requires runway ends to exist)
-    try await parseCSVFile(filename: "APT_ARS.csv", expectedFieldCount: 10) { fields in
-      try self.parseArrestingSystemRecord(fields)
+    try await parseCSVFile(
+      filename: "APT_ARS.csv",
+      requiredColumns: ["SITE_NO", "SITE_TYPE_CODE", "RWY_ID", "RWY_END_ID"]
+    ) { row in
+      try self.parseArrestingSystemRecord(row)
     }
 
     // 6. Parse attendance schedules
-    try await parseCSVFile(filename: "APT_ATT.csv", expectedFieldCount: 11) { fields in
-      try self.parseAttendanceRecord(fields)
+    try await parseCSVFile(
+      filename: "APT_ATT.csv",
+      requiredColumns: ["SITE_NO", "SITE_TYPE_CODE"]
+    ) { row in
+      try self.parseAttendanceRecord(row)
     }
 
     // 7. Parse remarks last (references runways/ends that must exist)
-    try await parseCSVFile(filename: "APT_RMK.csv", expectedFieldCount: 13) { fields in
-      try self.parseRemarkRecord(fields)
+    try await parseCSVFile(
+      filename: "APT_RMK.csv",
+      requiredColumns: ["SITE_NO", "SITE_TYPE_CODE", "REMARK"]
+    ) { row in
+      try self.parseRemarkRecord(row)
     }
   }
 
@@ -339,29 +271,22 @@ actor CSVAirportParser: CSVParser {
 
   // MARK: - Parsing Methods
 
-  private func parseAirportRecord(_ values: [String]) throws {
+  private func parseAirportRecord(_ row: CSVRow) throws {
+    let t = try baseTransformer.applyTo(row)
+
     // Skip non-airport site types if needed
     let validSiteTypes = ["A", "H", "C", "B", "G", "U"]
-    guard values.count > APTBaseField.SITE_TYPE_CODE.rawValue else {
-      throw ParserError.truncatedRecord(
-        recordType: "APT_BASE",
-        expectedMinLength: APTBaseField.SITE_TYPE_CODE.rawValue + 1,
-        actualLength: values.count
-      )
-    }
-
-    let siteType = values[APTBaseField.SITE_TYPE_CODE.rawValue]
+    let siteType: String = try t["SITE_TYPE_CODE"]
     guard validSiteTypes.contains(siteType) else {
       return  // Skip non-airport record types (intentional filter)
     }
 
-    let transformedValues = try airportTransformer.applyTo(values, indices: airportFieldIndices)
-    let siteNumber = transformedValues[1] as! String
+    let siteNumber: String = try t["SITE_NO"]
 
-    // Handle special cases
-    let latDecimal = values.doubleAt(APTBaseField.LAT_DECIMAL.rawValue).map { Float($0) }
-    let lonDecimal = values.doubleAt(APTBaseField.LONG_DECIMAL.rawValue).map { Float($0) }
-    let elevation = transformedValues[28] as? Float
+    // Handle location
+    let latDecimal: Float? = try t[optional: "LAT_DECIMAL"]
+    let lonDecimal: Float? = try t[optional: "LONG_DECIMAL"]
+    let elevation: Float? = try t[optional: "ELEV"]
 
     guard
       let location = try makeLocation(
@@ -374,99 +299,189 @@ actor CSVAirportParser: CSVParser {
       throw ParserError.missingRequiredField(field: "position", recordType: "APT_BASE")
     }
 
-    // Parse ARFF if present
-    let ARFFCapability = try parseARFFCapability(transformedValues[55] as? [String])
+    // Parse facility type
+    let facilityType = try ParserHelpers.parseAirportFacilityType(siteType)
 
-    // Handle control tower based on TWR_TYPE_CODE
-    // NON-ATCT means no control tower
-    let towerCode =
-      values.count > APTBaseField.TWR_TYPE_CODE.rawValue
-      ? values[APTBaseField.TWR_TYPE_CODE.rawValue]
-      : ""
-    let controlTower = !towerCode.isEmpty && !towerCode.hasPrefix("NON")
+    // Parse region code
+    let faaRegion: Airport.FAARegion? = try t[optional: "REGION_CODE"]
 
-    // Compute magnetic variation with correct sign based on hemisphere
-    // W (West) = negative, E (East) = positive
+    // Parse ownership type
+    let ownership: Airport.Ownership = try t["OWNERSHIP_TYPE_CODE"]
+
+    // Parse facility use with strict validation
+    let facilityUseCode: String? = try t[optional: "FACILITY_USE_CODE"]
+    let publicUse: Bool
+    switch facilityUseCode {
+      case "PU": publicUse = true
+      case "PR", nil, "": publicUse = false
+      default:
+        throw CSVParserError.invalidValueInColumn(facilityUseCode!, column: "FACILITY_USE_CODE")
+    }
+
+    // Parse survey method
+    let surveyMethod: SurveyMethod = try t["SURVEY_METHOD_CODE"]
+
+    // Parse elevation determination method
+    let elevationMethod: SurveyMethod? = try t[optional: "ELEV_METHOD_CODE"]
+
+    // Parse magnetic variation
     let magneticVariation: Int? = {
-      guard let magVar = transformedValues[30] as? Int else { return nil }
-      let hemisphere = transformedValues[31] as? String ?? ""
+      guard let magVar: Int = try? t[optional: "MAG_VARN"] else { return nil }
+      let hemisphere: String = (try? t[optional: "MAG_HEMIS"]) ?? ""
       return hemisphere == "W" ? -magVar : magVar
     }()
 
+    // Parse direction city to airport
+    let direction: Direction? = try t[optional: "DIRECTION_CODE"]
+
+    // Parse ARFF capability
+    let ARFFString: String? = try t[optional: "ARFF_CERT_TYPE_DATE"]
+    let ARFFCapability = try parseARFFCapability(ARFFString)
+
+    // Parse federal agreements
+    let agreementCodes: String = (try? t[optional: "NASP_CODE"]) ?? ""
+    let agreements: [Airport.FederalAgreement] = agreementCodes.compactMap {
+      Airport.FederalAgreement(rawValue: String($0))
+    }
+
+    // Parse airspace analysis determination
+    let airspaceDetermination: Airport.AirspaceAnalysisDetermination? = try t[
+      optional: "ASP_ANLYS_DTRM_CODE"
+    ]
+
+    // Parse inspection method and agency
+    let inspectionMethod: Airport.InspectionMethod? = try t[optional: "INSPECT_METHOD_CODE"]
+    let inspectionAgency: Airport.InspectionAgency? = try t[optional: "INSPECTOR_CODE"]
+
+    // Parse fuel types
+    let fuelTypesStr: String = (try? t[optional: "FUEL_TYPES"]) ?? ""
+    var fuelsAvailable = [Airport.FuelType]()
+    var index = fuelTypesStr.startIndex
+    while index < fuelTypesStr.endIndex {
+      let endIndex =
+        fuelTypesStr.index(index, offsetBy: 5, limitedBy: fuelTypesStr.endIndex)
+        ?? fuelTypesStr
+        .endIndex
+      let fuelCode = String(fuelTypesStr[index..<endIndex]).trimmingCharacters(in: .whitespaces)
+      if let fuelType = Airport.FuelType(rawValue: fuelCode) {
+        fuelsAvailable.append(fuelType)
+      }
+      index = endIndex
+    }
+
+    // Parse repair services
+    let airframeRepair: Airport.RepairService? = try t[optional: "AIRFRAME_REPAIR_SER_CODE"]
+    let powerplantRepair: Airport.RepairService? = try t[optional: "PWR_PLANT_REPAIR_SER"]
+
+    // Parse oxygen availability
+    let bottledOxyStr: String = (try? t[optional: "BOTTLED_OXY_TYPE"]) ?? ""
+    let bottledOxygen: [Airport.OxygenPressure] = bottledOxyStr.split(separator: "/").compactMap {
+      let code = String($0).trimmingCharacters(in: .whitespaces)
+      return code == "NONE" ? nil : Airport.OxygenPressure.for(code)
+    }
+
+    let bulkOxyStr: String = (try? t[optional: "BULK_OXY_TYPE"]) ?? ""
+    let bulkOxygen: [Airport.OxygenPressure] = bulkOxyStr.split(separator: "/").compactMap {
+      let code = String($0).trimmingCharacters(in: .whitespaces)
+      return code == "NONE" ? nil : Airport.OxygenPressure.for(code)
+    }
+
+    // Parse segmented circle and beacon color
+    let segmentedCircle: Airport.AirportMarker? = try t[optional: "SEG_CIRCLE_MKR_FLAG"]
+    let beaconColor: Airport.LensColor? = try t[optional: "BCN_LENS_COLOR"]
+
+    // Parse other services
+    let servicesStr: String = (try? t[optional: "OTHER_SERVICES"]) ?? ""
+    let otherServices: [Airport.Service] = servicesStr.split(separator: ",").compactMap {
+      let code = String($0).trimmingCharacters(in: .whitespaces)
+      return Airport.Service.for(code)
+    }
+
+    // Parse wind indicator
+    let windIndicator: Airport.AirportMarker? = try t[optional: "WIND_INDCR_FLAG"]
+
+    // Handle control tower based on TWR_TYPE_CODE
+    let towerCode: String = (try? t[optional: "TWR_TYPE_CODE"]) ?? ""
+    let controlTower = !towerCode.isEmpty && !towerCode.hasPrefix("NON")
+
     // Parse transient storage facilities
     var transientStorageFacilities: [Airport.StorageFacility] = []
-    if transformedValues[83] as? Bool == true {
+    if (try? t[optional: "TRNS_STRG_BUOY_FLAG"]) == true {
       transientStorageFacilities.append(.buoys)
     }
-    if transformedValues[84] as? Bool == true {
+    if (try? t[optional: "TRNS_STRG_HGR_FLAG"]) == true {
       transientStorageFacilities.append(.hangars)
     }
-    if transformedValues[85] as? Bool == true {
+    if (try? t[optional: "TRNS_STRG_TIE_FLAG"]) == true {
       transientStorageFacilities.append(.tiedowns)
     }
 
+    // Parse status
+    let statusCode: String = try t["ARPT_STATUS"]
+    let status = Airport.Status(rawValue: statusCode)!
+
+    let airportId: String = try t["ARPT_ID"]
+
     let airport = Airport(
-      id: transformedValues[1] as! String,
-      name: transformedValues[12] as! String,
-      LID: transformedValues[3] as! String,
-      ICAOIdentifier: transformedValues[88] as? String,
-      facilityType: transformedValues[2] as! Airport.FacilityType,
-      faaRegion: transformedValues[5] as? Airport.FAARegion,
-      FAAFieldOfficeCode: transformedValues[6] as? String,
-      stateCode: transformedValues[7] as? String,
-      county: transformedValues[9] as! String,
-      countyStateCode: transformedValues[10] as! String,
-      city: transformedValues[11] as! String,
-      ownership: transformedValues[13] as! Airport.Ownership,
-      publicUse: transformedValues[14] as! Bool,
+      id: siteNumber,
+      name: try t["ARPT_NAME"],
+      LID: airportId,
+      ICAOIdentifier: try t[optional: "ICAO_ID"],
+      facilityType: facilityType,
+      faaRegion: faaRegion,
+      FAAFieldOfficeCode: try t[optional: "ADO_CODE"],
+      stateCode: try t[optional: "STATE_CODE"],
+      county: try t["COUNTY_NAME"],
+      countyStateCode: try t["COUNTY_ASSOC_STATE"],
+      city: try t["CITY"],
+      ownership: ownership,
+      publicUse: publicUse,
       owner: nil,  // Parsed from APT_CON.csv after base record creation
       manager: nil,  // Parsed from APT_CON.csv after base record creation
       referencePoint: location,
-      referencePointDeterminationMethod: transformedValues[27]
-        as! SurveyMethod,
-      elevationDeterminationMethod: transformedValues[29] as? SurveyMethod,
+      referencePointDeterminationMethod: surveyMethod,
+      elevationDeterminationMethod: elevationMethod,
       magneticVariationDeg: magneticVariation,
-      magneticVariationEpochComponents: transformedValues[32] as? DateComponents,
-      trafficPatternAltitudeFtAGL: transformedValues[33] as? Int,
-      sectionalChart: transformedValues[34] as? String,
-      distanceCityToAirportNM: transformedValues[35] as? UInt,
-      directionCityToAirport: transformedValues[36] as? Direction,
-      landAreaAcres: transformedValues[37] as? Float,
-      boundaryARTCCId: transformedValues[39] as? String,
-      responsibleARTCCId: transformedValues[38] as! String,
-      tieInFSSOnStation: transformedValues[41] as? Bool,
-      tieInFSSId: transformedValues[42] as! String,
-      alternateFSSId: transformedValues[46] as? String,
-      NOTAMIssuerId: transformedValues[49] as? String,
-      NOTAMDAvailable: transformedValues[50] as? Bool,
-      activationDateComponents: transformedValues[51] as? DateComponents,
-      status: transformedValues[52] as! Airport.Status,
+      magneticVariationEpochComponents: try t[optional: "MAG_VARN_YEAR"],
+      trafficPatternAltitudeFtAGL: try t[optional: "TPA"],
+      sectionalChart: try t[optional: "CHART_NAME"],
+      distanceCityToAirportNM: try t[optional: "DIST_CITY_TO_AIRPORT"],
+      directionCityToAirport: direction,
+      landAreaAcres: try t[optional: "ACREAGE"],
+      boundaryARTCCId: try t[optional: "COMPUTER_ID"],
+      responsibleARTCCId: try t["RESP_ARTCC_ID"],
+      tieInFSSOnStation: try t[optional: "FSS_ON_ARPT_FLAG"],
+      tieInFSSId: try t["FSS_ID"],
+      alternateFSSId: try t[optional: "ALT_FSS_ID"],
+      NOTAMIssuerId: try t[optional: "NOTAM_ID"],
+      NOTAMDAvailable: try t[optional: "NOTAM_FLAG"],
+      activationDateComponents: try t[optional: "ACTIVATION_DATE"],
+      status: status,
       arffCapability: ARFFCapability,
-      agreements: (transformedValues[56] as? [Airport.FederalAgreement]) ?? [],
-      airspaceAnalysisDetermination: transformedValues[57]
-        as? Airport.AirspaceAnalysisDetermination,
-      customsEntryAirport: transformedValues[58] as? Bool,
-      customsLandingRightsAirport: transformedValues[59] as? Bool,
-      jointUseAgreement: transformedValues[60] as? Bool,
-      militaryLandingRights: transformedValues[61] as? Bool,
-      inspectionMethod: transformedValues[62] as? Airport.InspectionMethod,
-      inspectionAgency: transformedValues[63] as? Airport.InspectionAgency,
-      lastPhysicalInspectionDateComponents: transformedValues[64] as? DateComponents,
-      lastInformationRequestCompletedDateComponents: transformedValues[65] as? DateComponents,
-      fuelsAvailable: (transformedValues[66] as? [Airport.FuelType]) ?? [],
-      airframeRepairAvailable: transformedValues[67] as? Airport.RepairService,
-      powerplantRepairAvailable: transformedValues[68] as? Airport.RepairService,
-      bottledOxygenAvailable: (transformedValues[69] as? [Airport.OxygenPressure]) ?? [],
-      bulkOxygenAvailable: (transformedValues[70] as? [Airport.OxygenPressure]) ?? [],
-      airportLightingSchedule: transformedValues[71] as? String,
-      beaconLightingSchedule: transformedValues[72] as? String,
+      agreements: agreements,
+      airspaceAnalysisDetermination: airspaceDetermination,
+      customsEntryAirport: try t[optional: "CUST_FLAG"],
+      customsLandingRightsAirport: try t[optional: "LNDG_RIGHTS_FLAG"],
+      jointUseAgreement: try t[optional: "JOINT_USE_FLAG"],
+      militaryLandingRights: try t[optional: "MIL_LNDG_FLAG"],
+      inspectionMethod: inspectionMethod,
+      inspectionAgency: inspectionAgency,
+      lastPhysicalInspectionDateComponents: try t[optional: "LAST_INSPECTION"],
+      lastInformationRequestCompletedDateComponents: try t[optional: "LAST_INFO_RESPONSE"],
+      fuelsAvailable: fuelsAvailable,
+      airframeRepairAvailable: airframeRepair,
+      powerplantRepairAvailable: powerplantRepair,
+      bottledOxygenAvailable: bottledOxygen,
+      bulkOxygenAvailable: bulkOxygen,
+      airportLightingSchedule: try t[optional: "LGT_SKED"],
+      beaconLightingSchedule: try t[optional: "BCN_LGT_SKED"],
       controlTower: controlTower,
-      UNICOMFrequencyKHz: unicomFrequencies[transformedValues[3] as! String],
-      CTAFKHz: ctafFrequencies[transformedValues[3] as! String],
-      segmentedCircle: transformedValues[74] as? Airport.AirportMarker,
-      beaconColor: transformedValues[75] as? Airport.LensColor,
-      hasLandingFee: transformedValues[76] as? Bool,
-      medicalUse: transformedValues[77] as? Bool,
+      UNICOMFrequencyKHz: unicomFrequencies[airportId],
+      CTAFKHz: ctafFrequencies[airportId],
+      segmentedCircle: segmentedCircle,
+      beaconColor: beaconColor,
+      hasLandingFee: try t[optional: "LNDG_FEE_FLAG"],
+      medicalUse: try t[optional: "MEDICAL_USE_FLAG"],
       basedSingleEngineGA: nil,  // Not in CSV distribution (TXT-only)
       basedMultiEngineGA: nil,  // Not in CSV distribution (TXT-only)
       basedJetGA: nil,  // Not in CSV distribution (TXT-only)
@@ -481,65 +496,67 @@ actor CSVAirportParser: CSVParser {
       annualTransientGAOps: nil,  // Not in CSV distribution (TXT-only)
       annualMilitaryOps: nil,  // Not in CSV distribution (TXT-only)
       annualPeriodEndDateComponents: nil,  // Not in CSV distribution (TXT-only)
-      positionSource: transformedValues[78] as? String,
-      positionSourceDateComponents: transformedValues[79] as? DateComponents,
-      elevationSource: transformedValues[80] as? String,
-      elevationSourceDateComponents: transformedValues[81] as? DateComponents,
-      contractFuelAvailable: transformedValues[82] as? Bool,
+      positionSource: try t[optional: "ARPT_PSN_SOURCE"],
+      positionSourceDateComponents: try t[optional: "POSITION_SRC_DATE"],
+      elevationSource: try t[optional: "ARPT_ELEV_SOURCE"],
+      elevationSourceDateComponents: try t[optional: "ELEVATION_SRC_DATE"],
+      contractFuelAvailable: try t[optional: "CONTR_FUEL_AVBL"],
       transientStorageFacilities: transientStorageFacilities.presence,
-      otherServices: (transformedValues[86] as? [Airport.Service]) ?? [],
-      windIndicator: transformedValues[87] as? Airport.AirportMarker,
-      minimumOperationalNetwork: (transformedValues[89] as? Bool) ?? false
+      otherServices: otherServices,
+      windIndicator: windIndicator,
+      minimumOperationalNetwork: (try? t[optional: "MIN_OP_NETWORK"]) ?? false
     )
 
     // Use composite key of SITE_NO + SITE_TYPE_CODE to match TXT format
-    // (TXT uses "23747.31*A" while CSV has separate fields)
-    let siteTypeCode = values[APTBaseField.SITE_TYPE_CODE.rawValue]
-    let compositeId = "\(airport.id)*\(siteTypeCode)"
+    let compositeId = "\(airport.id)*\(siteType)"
     airports[compositeId] = airport
   }
 
   /// Parse FRQ.csv to extract UNICOM and CTAF frequencies
-  /// FRQ.csv fields (0-based):
-  /// 7: SERVICED_FACILITY (airport ID)
-  /// 17: FREQ (frequency string like "122.9")
-  /// 19: FREQ_USE ("CTAF" or "UNICOM")
-  private func parseFrequencyRecord(_ values: [String]) {
-    guard values.count > 19 else { return }
+  private func parseFrequencyRecord(_ row: CSVRow) {
+    guard let t = try? frequencyTransformer.applyTo(row) else { return }
 
-    let airportId = values[7].trimmingCharacters(in: .whitespaces)
-    guard !airportId.isEmpty else { return }
+    guard let airportId: String = try? t[optional: "SERVICED_FACILITY"],
+      !airportId.isEmpty
+    else { return }
 
-    let freqString = values[17].trimmingCharacters(in: .whitespaces)
-    let freqUse = values[19].trimmingCharacters(in: .whitespaces).uppercased()
+    guard let freqString: String = try? t[optional: "FREQ"],
+      let freqUse: String = try? t[optional: "FREQ_USE"]
+    else { return }
 
     // Parse frequency using the same method as TXT parser
     guard let frequency = FixedWidthTransformer.parseFrequency(freqString) else { return }
 
-    switch freqUse {
+    // FRQ.csv contains many frequency types (navaids, AWOS stations, etc.)
+    // We only extract UNICOM and CTAF for airport records
+    switch freqUse.uppercased() {
       case "UNICOM":
         unicomFrequencies[airportId] = frequency
       case "CTAF":
         ctafFrequencies[airportId] = frequency
       default:
-        break
+        break  // Skip other frequency types (not errors, just not needed for airports)
     }
   }
 
-  private func parseARFFCapability(_ ARFFString: [String]?) throws -> Airport.ARFFCapability? {
-    guard let ARFFString, ARFFString.count >= 4 else { return nil }
+  private func parseARFFCapability(_ ARFFString: String?) throws -> Airport.ARFFCapability? {
+    guard let ARFFString, !ARFFString.isEmpty else { return nil }
 
-    guard let ARFFClass = Airport.ARFFCapability.Class(rawValue: ARFFString[0]) else {
-      throw CSVParserError.invalidValue(ARFFString[0], at: 55)
+    // Parse space-separated ARFF string: "CLASS INDEX SERVICE MM/YYYY"
+    let parts = ARFFString.split(separator: " ").map { String($0) }
+    guard parts.count >= 4 else { return nil }
+
+    guard let ARFFClass = Airport.ARFFCapability.Class(rawValue: parts[0]) else {
+      throw CSVParserError.invalidValueInColumn(parts[0], column: "ARFF_CERT_TYPE_DATE")
     }
-    guard let ARFFIndex = Airport.ARFFCapability.Index(rawValue: ARFFString[1]) else {
-      throw CSVParserError.invalidValue(ARFFString[1], at: 55)
+    guard let ARFFIndex = Airport.ARFFCapability.Index(rawValue: parts[1]) else {
+      throw CSVParserError.invalidValueInColumn(parts[1], column: "ARFF_CERT_TYPE_DATE")
     }
-    guard let ARFFService = Airport.ARFFCapability.AirService(rawValue: ARFFString[2]) else {
-      throw CSVParserError.invalidValue(ARFFString[2], at: 55)
+    guard let ARFFService = Airport.ARFFCapability.AirService(rawValue: parts[2]) else {
+      throw CSVParserError.invalidValueInColumn(parts[2], column: "ARFF_CERT_TYPE_DATE")
     }
-    guard let ARFFDateComponents = DateFormat.monthYear.parse(ARFFString[3]) else {
-      throw CSVParserError.invalidValue(ARFFString[3], at: 55)
+    guard let ARFFDateComponents = DateFormat.monthYear.parse(parts[3]) else {
+      throw CSVParserError.invalidValueInColumn(parts[3], column: "ARFF_CERT_TYPE_DATE")
     }
 
     return Airport.ARFFCapability(
@@ -552,24 +569,26 @@ actor CSVAirportParser: CSVParser {
 
   // MARK: - Runway Parsing
 
-  private func parseRunwayRecord(_ values: [String]) throws {
-    let siteNo = values[APTRunwayField.SITE_NO.rawValue]
-    let siteTypeCode = values[APTRunwayField.SITE_TYPE_CODE.rawValue]
+  private func parseRunwayRecord(_ row: CSVRow) throws {
+    let t = try runwayTransformer.applyTo(row)
+
+    let siteNo: String = try t["SITE_NO"]
+    let siteTypeCode: String = try t["SITE_TYPE_CODE"]
     let compositeId = "\(siteNo)*\(siteTypeCode)"
 
     guard airports[compositeId] != nil else { return }
 
-    let runwayId = values[APTRunwayField.RWY_ID.rawValue]
-    let length = values.intAt(APTRunwayField.RWY_LEN.rawValue).map { UInt($0) }
-    let width = values.intAt(APTRunwayField.RWY_WIDTH.rawValue).map { UInt($0) }
+    let runwayId: String = try t["RWY_ID"]
+    let length: UInt? = try t[optional: "RWY_LEN"]
+    let width: UInt? = try t[optional: "RWY_WIDTH"]
 
     // Parse surface type and condition
-    let surfaceCode = values.stringAt(APTRunwayField.SURFACE_TYPE_CODE.rawValue) ?? ""
-    let conditionCode = values.stringAt(APTRunwayField.COND.rawValue)
+    let surfaceCode: String = (try? t[optional: "SURFACE_TYPE_CODE"]) ?? ""
+    let conditionCode: String? = try t[optional: "COND"]
     let (materials, condition) = parseRunwaySurface(surfaceCode, conditionCode: conditionCode)
 
     // Parse treatment
-    let treatmentCode = values.stringAt(APTRunwayField.TREATMENT_CODE.rawValue)
+    let treatmentCode: String? = try t[optional: "TREATMENT_CODE"]
     let treatment: Runway.Treatment? =
       if let code = treatmentCode, code != "NONE" {
         Runway.Treatment(rawValue: code)
@@ -578,10 +597,10 @@ actor CSVAirportParser: CSVParser {
       }
 
     // Parse pavement classification
-    let pavementClassification = try parsePavementClassification(values)
+    let pavementClassification = try parsePavementClassification(t)
 
     // Parse edge lights
-    let edgeLightCode = values.stringAt(APTRunwayField.RWY_LGT_CODE.rawValue)
+    let edgeLightCode: String? = try t[optional: "RWY_LGT_CODE"]
     let edgeLightsIntensity: Runway.EdgeLightIntensity? =
       if let code = edgeLightCode {
         Runway.EdgeLightIntensity.for(code)
@@ -590,23 +609,23 @@ actor CSVAirportParser: CSVParser {
       }
 
     // Parse length source info
-    let lengthSource = values.stringAt(APTRunwayField.RWY_LEN_SOURCE.rawValue)
-    let lengthSourceDateComponents: DateComponents? =
-      values
-      .stringAt(APTRunwayField.LENGTH_SOURCE_DATE.rawValue)
-      .flatMap { DateFormat.yearMonthDaySlash.parse($0) }
+    let lengthSource: String? = try t[optional: "RWY_LEN_SOURCE"]
+    let lengthSourceDateComponents: DateComponents? = try t[optional: "LENGTH_SOURCE_DATE"]
 
     // Parse weight bearing capacities (values are in thousands of lbs, may be decimal like 12.5)
-    let singleWheelWeightKlb = values.doubleAt(APTRunwayField.GROSS_WT_SW.rawValue).map {
-      UInt($0 * 1000)
+    let singleWheelWeightKlb: UInt? = (try? t[optional: "GROSS_WT_SW"] as Double?).flatMap {
+      $0.map { UInt($0 * 1000) }
     }
-    let dualWheelWeightKlb = values.doubleAt(APTRunwayField.GROSS_WT_DW.rawValue).map {
-      UInt($0 * 1000)
+    let dualWheelWeightKlb: UInt? = (try? t[optional: "GROSS_WT_DW"] as Double?).flatMap {
+      $0.map { UInt($0 * 1000) }
     }
-    let tandemDualWheelWeightKlb =
-      values.doubleAt(APTRunwayField.GROSS_WT_DTW.rawValue).map { UInt($0 * 1000) }
-    let doubleTandemDualWheelWeightKlb =
-      values.doubleAt(APTRunwayField.GROSS_WT_DDTW.rawValue).map { UInt($0 * 1000) }
+    let tandemDualWheelWeightKlb: UInt? = (try? t[optional: "GROSS_WT_DTW"] as Double?).flatMap {
+      $0.map { UInt($0 * 1000) }
+    }
+    let doubleTandemDualWheelWeightKlb: UInt? =
+      (try? t[optional: "GROSS_WT_DDTW"] as Double?).flatMap {
+        $0.map { UInt($0 * 1000) }
+      }
 
     // Create a placeholder RunwayEnd - will be populated later from APT_RWY_END.csv
     let placeholderEnd = RunwayEnd(
@@ -693,28 +712,28 @@ actor CSVAirportParser: CSVParser {
     return (materials, condition)
   }
 
-  private func parsePavementClassification(_ values: [String]) throws
+  private func parsePavementClassification(_ t: TransformedRow) throws
     -> Runway.PavementClassification?
   {
-    guard let pcnNumber = values.intAt(APTRunwayField.PCN.rawValue) else { return nil }
+    guard let pcnNumber: Int = try t[optional: "PCN"] else { return nil }
 
     guard
-      let typeCode = values.stringAt(APTRunwayField.PAVEMENT_TYPE_CODE.rawValue),
+      let typeCode: String = try t[optional: "PAVEMENT_TYPE_CODE"],
       let type = Runway.PavementClassification.Classification(rawValue: typeCode)
     else { return nil }
 
     guard
-      let strengthCode = values.stringAt(APTRunwayField.SUBGRADE_STRENGTH_CODE.rawValue),
+      let strengthCode: String = try t[optional: "SUBGRADE_STRENGTH_CODE"],
       let strength = Runway.PavementClassification.SubgradeStrengthCategory(rawValue: strengthCode)
     else { return nil }
 
     guard
-      let tirePressureCode = values.stringAt(APTRunwayField.TIRE_PRES_CODE.rawValue),
+      let tirePressureCode: String = try t[optional: "TIRE_PRES_CODE"],
       let tirePressure = Runway.PavementClassification.TirePressureLimit(rawValue: tirePressureCode)
     else { return nil }
 
     guard
-      let determinationCode = values.stringAt(APTRunwayField.DTRM_METHOD_CODE.rawValue),
+      let determinationCode: String = try t[optional: "DTRM_METHOD_CODE"],
       let determination = Runway.PavementClassification.DeterminationMethod(
         rawValue: determinationCode
       )
@@ -731,15 +750,17 @@ actor CSVAirportParser: CSVParser {
 
   // MARK: - Runway End Parsing
 
-  private func parseRunwayEndRecord(_ values: [String]) throws {
-    let siteNo = values[APTRunwayEndField.SITE_NO.rawValue]
-    let siteTypeCode = values[APTRunwayEndField.SITE_TYPE_CODE.rawValue]
+  private func parseRunwayEndRecord(_ row: CSVRow) throws {
+    let t = try runwayEndTransformer.applyTo(row)
+
+    let siteNo: String = try t["SITE_NO"]
+    let siteTypeCode: String = try t["SITE_TYPE_CODE"]
     let compositeId = "\(siteNo)*\(siteTypeCode)"
 
     guard let airport = airports[compositeId] else { return }
 
-    let runwayId = values[APTRunwayEndField.RWY_ID.rawValue]
-    let runwayEndId = values[APTRunwayEndField.RWY_END_ID.rawValue]
+    let runwayId: String = try t["RWY_ID"]
+    let runwayEndId: String = try t["RWY_END_ID"]
 
     // Find the runway for this end
     guard
@@ -749,7 +770,7 @@ actor CSVAirportParser: CSVParser {
     else { return }
 
     let runwayEnd = try buildRunwayEnd(
-      from: values,
+      from: t,
       magneticVariation: airport.magneticVariationDeg
     )
 
@@ -765,16 +786,17 @@ actor CSVAirportParser: CSVParser {
     }
   }
 
-  private func buildRunwayEnd(from values: [String], magneticVariation: Int?) throws -> RunwayEnd {
-    let endId = values[APTRunwayEndField.RWY_END_ID.rawValue]
+  private func buildRunwayEnd(from t: TransformedRow, magneticVariation: Int?) throws -> RunwayEnd {
+    let endId: String = try t["RWY_END_ID"]
 
     // Convert true heading to Bearing<UInt>
-    let heading = values.intAt(APTRunwayEndField.TRUE_ALIGNMENT.rawValue).map { value in
-      Bearing(UInt(value), reference: .true, magneticVariationDeg: magneticVariation ?? 0)
-    }
+    let heading: Bearing<UInt>? = {
+      guard let value: Int = try? t[optional: "TRUE_ALIGNMENT"] else { return nil }
+      return Bearing(UInt(value), reference: .true, magneticVariationDeg: magneticVariation ?? 0)
+    }()
 
     // Parse ILS type
-    let ILSCode = values.stringAt(APTRunwayEndField.ILS_TYPE.rawValue)
+    let ILSCode: String? = try t[optional: "ILS_TYPE"]
     let instrumentLandingSystem: RunwayEnd.InstrumentLandingSystem? =
       if let code = ILSCode {
         RunwayEnd.InstrumentLandingSystem.for(code)
@@ -783,16 +805,10 @@ actor CSVAirportParser: CSVParser {
       }
 
     // Parse right traffic
-    let rightTrafficFlag = values.stringAt(APTRunwayEndField.RIGHT_HAND_TRAFFIC_PAT_FLAG.rawValue)
-    let rightTraffic: Bool? =
-      if let flag = rightTrafficFlag {
-        flag == "Y"
-      } else {
-        nil
-      }
+    let rightTraffic = try parseYNFlag("RIGHT_HAND_TRAFFIC_PAT_FLAG", from: t)
 
     // Parse marking and condition
-    let markingCode = values.stringAt(APTRunwayEndField.RWY_MARKING_TYPE_CODE.rawValue)
+    let markingCode: String? = try t[optional: "RWY_MARKING_TYPE_CODE"]
     let marking: RunwayEnd.Marking? =
       if let code = markingCode, code != "NONE" {
         RunwayEnd.Marking(rawValue: code)
@@ -800,7 +816,7 @@ actor CSVAirportParser: CSVParser {
         nil
       }
 
-    let markingCondCode = values.stringAt(APTRunwayEndField.RWY_MARKING_COND.rawValue)
+    let markingCondCode: String? = try t[optional: "RWY_MARKING_COND"]
     let markingCondition: RunwayEnd.MarkingCondition? =
       if let code = markingCondCode {
         RunwayEnd.MarkingCondition.for(code)
@@ -809,29 +825,25 @@ actor CSVAirportParser: CSVParser {
       }
 
     // Parse threshold location
-    let threshold = parseThresholdLocation(values)
+    let threshold = try parseThresholdLocation(t)
 
     // Parse threshold crossing height
-    let thresholdCrossingHeight =
-      values.intAt(APTRunwayEndField.THR_CROSSING_HGT.rawValue).map { UInt($0) }
+    let thresholdCrossingHeight: UInt? = try t[optional: "THR_CROSSING_HGT"]
 
     // Parse visual glidepath angle
-    let visualGlidepath =
-      values.doubleAt(APTRunwayEndField.VISUAL_GLIDE_PATH_ANGLE.rawValue).map { Float($0) }
+    let visualGlidepath: Float? = try t[optional: "VISUAL_GLIDE_PATH_ANGLE"]
 
     // Parse displaced threshold
-    let displacedThreshold = parseDisplacedThresholdLocation(values)
+    let displacedThreshold = try parseDisplacedThresholdLocation(t)
 
     // Parse threshold displacement distance
-    let thresholdDisplacement =
-      values.intAt(APTRunwayEndField.DISPLACED_THR_LEN.rawValue).map { UInt($0) }
+    let thresholdDisplacement: UInt? = try t[optional: "DISPLACED_THR_LEN"]
 
     // Parse TDZE
-    let touchdownZoneElevation =
-      values.doubleAt(APTRunwayEndField.TDZ_ELEV.rawValue).map { Float($0) }
+    let touchdownZoneElevation: Float? = try t[optional: "TDZ_ELEV"]
 
     // Parse VGSI
-    let vgsiCode = values.stringAt(APTRunwayEndField.VGSI_CODE.rawValue)
+    let vgsiCode: String? = try t[optional: "VGSI_CODE"]
     let visualGlideslopeIndicator: RunwayEnd.VisualGlideslopeIndicator? =
       if let code = vgsiCode {
         try parseVGSI(code)
@@ -840,20 +852,14 @@ actor CSVAirportParser: CSVParser {
       }
 
     // Parse RVR sensors
-    let rvrCode = values.stringAt(APTRunwayEndField.RWY_VISUAL_RANGE_EQUIP_CODE.rawValue) ?? ""
+    let rvrCode: String = (try? t[optional: "RWY_VISUAL_RANGE_EQUIP_CODE"]) ?? ""
     let RVRSensors = parseRVRSensors(rvrCode)
 
     // Parse RVV
-    let hasRVVFlag = values.stringAt(APTRunwayEndField.RWY_VSBY_VALUE_EQUIP_FLAG.rawValue)
-    let hasRVV: Bool? =
-      if let flag = hasRVVFlag {
-        flag == "Y"
-      } else {
-        nil
-      }
+    let hasRVV = try parseYNFlag("RWY_VSBY_VALUE_EQUIP_FLAG", from: t)
 
     // Parse approach lighting
-    let approachLightCode = values.stringAt(APTRunwayEndField.APCH_LGT_SYSTEM_CODE.rawValue)
+    let approachLightCode: String? = try t[optional: "APCH_LGT_SYSTEM_CODE"]
     let approachLighting: RunwayEnd.ApproachLighting? =
       if let code = approachLightCode, code != "NONE" {
         RunwayEnd.ApproachLighting(rawValue: code)
@@ -862,80 +868,50 @@ actor CSVAirportParser: CSVParser {
       }
 
     // Parse REIL
-    let hasREILFlag = values.stringAt(APTRunwayEndField.RWY_END_LGTS_FLAG.rawValue)
-    let hasREIL: Bool? =
-      if let flag = hasREILFlag {
-        flag == "Y"
-      } else {
-        nil
-      }
+    let hasREIL = try parseYNFlag("RWY_END_LGTS_FLAG", from: t)
 
     // Parse centerline lighting
-    let hasCLFlag = values.stringAt(APTRunwayEndField.CNTRLN_LGTS_AVBL_FLAG.rawValue)
-    let hasCenterlineLighting: Bool? =
-      if let flag = hasCLFlag {
-        flag == "Y"
-      } else {
-        nil
-      }
+    let hasCenterlineLighting = try parseYNFlag("CNTRLN_LGTS_AVBL_FLAG", from: t)
 
     // Parse TDZ lighting
-    let hasTDZFlag = values.stringAt(APTRunwayEndField.TDZ_LGT_AVBL_FLAG.rawValue)
-    let hasEndTouchdownLighting: Bool? =
-      if let flag = hasTDZFlag {
-        flag == "Y"
-      } else {
-        nil
-      }
+    let hasEndTouchdownLighting = try parseYNFlag("TDZ_LGT_AVBL_FLAG", from: t)
 
     // Parse controlling object
-    let controllingObject = parseControllingObject(values)
+    let controllingObject = try parseControllingObject(t)
 
     // Parse gradient
-    let gradient = parseGradient(values)
+    let gradient = try parseGradient(t)
 
     // Parse TORA/TODA/ASDA/LDA
-    let TORA = values.intAt(APTRunwayEndField.TKOF_RUN_AVBL.rawValue).map { UInt($0) }
-    let TODA = values.intAt(APTRunwayEndField.TKOF_DIST_AVBL.rawValue).map { UInt($0) }
-    let ASDA = values.intAt(APTRunwayEndField.ACLT_STOP_DIST_AVBL.rawValue).map { UInt($0) }
-    let LDA = values.intAt(APTRunwayEndField.LNDG_DIST_AVBL.rawValue).map { UInt($0) }
+    let TORA: UInt? = try t[optional: "TKOF_RUN_AVBL"]
+    let TODA: UInt? = try t[optional: "TKOF_DIST_AVBL"]
+    let ASDA: UInt? = try t[optional: "ACLT_STOP_DIST_AVBL"]
+    let LDA: UInt? = try t[optional: "LNDG_DIST_AVBL"]
 
     // Parse LAHSO
-    let LAHSO = parseLAHSO(values)
+    let LAHSO = try parseLAHSO(t)
 
     // Parse source info
-    let positionSource = values.stringAt(APTRunwayEndField.RWY_END_PSN_SOURCE.rawValue)
-    let positionSourceDateComponents: DateComponents? =
-      values.stringAt(APTRunwayEndField.RWY_END_PSN_DATE.rawValue).flatMap {
-        DateFormat.yearMonthDaySlash.parse($0)
-      }
+    let positionSource: String? = try t[optional: "RWY_END_PSN_SOURCE"]
+    let positionSourceDateComponents: DateComponents? = try t[optional: "RWY_END_PSN_DATE"]
 
-    let elevationSource = values.stringAt(APTRunwayEndField.RWY_END_ELEV_SOURCE.rawValue)
-    let elevationSourceDateComponents: DateComponents? =
-      values.stringAt(APTRunwayEndField.RWY_END_ELEV_DATE.rawValue).flatMap {
-        DateFormat.yearMonthDaySlash.parse($0)
-      }
+    let elevationSource: String? = try t[optional: "RWY_END_ELEV_SOURCE"]
+    let elevationSourceDateComponents: DateComponents? = try t[optional: "RWY_END_ELEV_DATE"]
 
-    let displacedThresholdPositionSource =
-      values.stringAt(APTRunwayEndField.DSPL_THR_PSN_SOURCE.rawValue)
-    let displacedThresholdPositionSourceDateComponents: DateComponents? =
-      values.stringAt(APTRunwayEndField.RWY_END_DSPL_THR_PSN_DATE.rawValue).flatMap {
-        DateFormat.yearMonthDaySlash.parse($0)
-      }
+    let displacedThresholdPositionSource: String? = try t[optional: "DSPL_THR_PSN_SOURCE"]
+    let displacedThresholdPositionSourceDateComponents: DateComponents? = try t[
+      optional: "RWY_END_DSPL_THR_PSN_DATE"
+    ]
 
-    let displacedThresholdElevationSource =
-      values.stringAt(APTRunwayEndField.DSPL_THR_ELEV_SOURCE.rawValue)
-    let displacedThresholdElevationSourceDateComponents: DateComponents? =
-      values.stringAt(APTRunwayEndField.RWY_END_DSPL_THR_ELEV_DATE.rawValue).flatMap {
-        DateFormat.yearMonthDaySlash.parse($0)
-      }
+    let displacedThresholdElevationSource: String? = try t[optional: "DSPL_THR_ELEV_SOURCE"]
+    let displacedThresholdElevationSourceDateComponents: DateComponents? = try t[
+      optional: "RWY_END_DSPL_THR_ELEV_DATE"
+    ]
 
-    let touchdownZoneElevationSource =
-      values.stringAt(APTRunwayEndField.TDZ_ELEV_SOURCE.rawValue)
-    let touchdownZoneElevationSourceDateComponents: DateComponents? =
-      values.stringAt(APTRunwayEndField.RWY_END_TDZ_ELEV_DATE.rawValue).flatMap {
-        DateFormat.yearMonthDaySlash.parse($0)
-      }
+    let touchdownZoneElevationSource: String? = try t[optional: "TDZ_ELEV_SOURCE"]
+    let touchdownZoneElevationSourceDateComponents: DateComponents? = try t[
+      optional: "RWY_END_TDZ_ELEV_DATE"
+    ]
 
     return RunwayEnd(
       id: endId,
@@ -979,15 +955,15 @@ actor CSVAirportParser: CSVParser {
     )
   }
 
-  private func parseThresholdLocation(_ values: [String]) -> Location? {
-    guard let latDecimal = values.doubleAt(APTRunwayEndField.LAT_DECIMAL.rawValue),
-      let longDecimal = values.doubleAt(APTRunwayEndField.LONG_DECIMAL.rawValue)
+  private func parseThresholdLocation(_ t: TransformedRow) throws -> Location? {
+    guard let latDecimal: Float = try t[optional: "LAT_DECIMAL"],
+      let longDecimal: Float = try t[optional: "LONG_DECIMAL"]
     else { return nil }
 
     // Convert decimal degrees to arc-seconds for Location
-    let latArcSec = Float(latDecimal * 3600)
-    let longArcSec = Float(longDecimal * 3600)
-    let elevation = values.doubleAt(APTRunwayEndField.RWY_END_ELEV.rawValue).map { Float($0) }
+    let latArcSec = latDecimal * 3600
+    let longArcSec = longDecimal * 3600
+    let elevation: Float? = try t[optional: "RWY_END_ELEV"]
 
     return Location(
       latitudeArcsec: latArcSec,
@@ -996,16 +972,16 @@ actor CSVAirportParser: CSVParser {
     )
   }
 
-  private func parseDisplacedThresholdLocation(_ values: [String]) -> Location? {
+  private func parseDisplacedThresholdLocation(_ t: TransformedRow) throws -> Location? {
     guard
-      let latDecimal = values.doubleAt(APTRunwayEndField.LAT_DISPLACED_THR_DECIMAL.rawValue),
-      let longDecimal = values.doubleAt(APTRunwayEndField.LONG_DISPLACED_THR_DECIMAL.rawValue)
+      let latDecimal: Float = try t[optional: "LAT_DISPLACED_THR_DECIMAL"],
+      let longDecimal: Float = try t[optional: "LONG_DISPLACED_THR_DECIMAL"]
     else { return nil }
 
     // Convert decimal degrees to arc-seconds for Location
-    let latArcSec = Float(latDecimal * 3600)
-    let longArcSec = Float(longDecimal * 3600)
-    let elevation = values.doubleAt(APTRunwayEndField.DISPLACED_THR_ELEV.rawValue).map { Float($0) }
+    let latArcSec = latDecimal * 3600
+    let longArcSec = longDecimal * 3600
+    let elevation: Float? = try t[optional: "DISPLACED_THR_ELEV"]
 
     return Location(
       latitudeArcsec: latArcSec,
@@ -1085,8 +1061,8 @@ actor CSVAirportParser: CSVParser {
     return sensors
   }
 
-  private func parseControllingObject(_ values: [String]) -> RunwayEnd.ControllingObject? {
-    guard let categoryCode = values.stringAt(APTRunwayEndField.OBSTN_TYPE.rawValue) else {
+  private func parseControllingObject(_ t: TransformedRow) throws -> RunwayEnd.ControllingObject? {
+    guard let categoryCode: String = try t[optional: "OBSTN_TYPE"] else {
       return nil
     }
 
@@ -1094,7 +1070,7 @@ actor CSVAirportParser: CSVParser {
 
     // Parse markings
     var markings = [RunwayEnd.ControllingObject.Marking]()
-    if let markingCode = values.stringAt(APTRunwayEndField.OBSTN_MRKD_CODE.rawValue) {
+    if let markingCode: String = try t[optional: "OBSTN_MRKD_CODE"] {
       for char in markingCode {
         if let marking = RunwayEnd.ControllingObject.Marking(rawValue: String(char)) {
           markings.append(marking)
@@ -1102,13 +1078,13 @@ actor CSVAirportParser: CSVParser {
       }
     }
 
-    let runwayCategory = values.stringAt(APTRunwayEndField.FAR_PART_77_CODE.rawValue)
-    let clearanceSlope = values.intAt(APTRunwayEndField.OBSTN_CLNC_SLOPE.rawValue).map { UInt($0) }
-    let heightAboveRunway = values.intAt(APTRunwayEndField.OBSTN_HGT.rawValue).map { UInt($0) }
-    let distanceFromRunway = values.intAt(APTRunwayEndField.DIST_FROM_THR.rawValue).map { UInt($0) }
+    let runwayCategory: String? = try t[optional: "FAR_PART_77_CODE"]
+    let clearanceSlope: UInt? = try t[optional: "OBSTN_CLNC_SLOPE"]
+    let heightAboveRunway: UInt? = try t[optional: "OBSTN_HGT"]
+    let distanceFromRunway: UInt? = try t[optional: "DIST_FROM_THR"]
 
     // Parse offset
-    let offsetFromCenterline = parseOffset(values)
+    let offsetFromCenterline = try parseOffset(t)
 
     return RunwayEnd.ControllingObject(
       category: category,
@@ -1121,9 +1097,9 @@ actor CSVAirportParser: CSVParser {
     )
   }
 
-  private func parseOffset(_ values: [String]) -> Offset? {
-    guard let distance = values.intAt(APTRunwayEndField.CNTRLN_OFFSET.rawValue) else { return nil }
-    let directionCode = values.stringAt(APTRunwayEndField.CNTRLN_DIR_CODE.rawValue)
+  private func parseOffset(_ t: TransformedRow) throws -> Offset? {
+    guard let distance: UInt = try t[optional: "CNTRLN_OFFSET"] else { return nil }
+    let directionCode: String? = try t[optional: "CNTRLN_DIR_CODE"]
 
     let direction: Offset.Direction =
       if let code = directionCode, let dir = Offset.Direction.from(string: code) {
@@ -1132,16 +1108,16 @@ actor CSVAirportParser: CSVParser {
         .left  // Default fallback
       }
 
-    return Offset(distanceFt: UInt(distance), direction: direction)
+    return Offset(distanceFt: distance, direction: direction)
   }
 
-  private func parseGradient(_ values: [String]) -> Float? {
-    guard let gradientValue = values.doubleAt(APTRunwayEndField.RWY_GRAD.rawValue) else {
+  private func parseGradient(_ t: TransformedRow) throws -> Float? {
+    guard let gradientValue: Float = try t[optional: "RWY_GRAD"] else {
       return nil
     }
 
-    var gradient = Float(gradientValue)
-    let directionCode = values.stringAt(APTRunwayEndField.RWY_GRAD_DIRECTION.rawValue)
+    var gradient = gradientValue
+    let directionCode: String? = try t[optional: "RWY_GRAD_DIRECTION"]
     if directionCode == "DOWN" {
       gradient *= -1
     }
@@ -1149,22 +1125,21 @@ actor CSVAirportParser: CSVParser {
     return gradient
   }
 
-  private func parseLAHSO(_ values: [String]) -> RunwayEnd.LAHSOPoint? {
-    guard let availableDistance = values.intAt(APTRunwayEndField.LAHSO_ALD.rawValue) else {
+  private func parseLAHSO(_ t: TransformedRow) throws -> RunwayEnd.LAHSOPoint? {
+    guard let availableDistance: UInt = try t[optional: "LAHSO_ALD"] else {
       return nil
     }
 
-    let intersectingRunwayId =
-      values.stringAt(APTRunwayEndField.RWY_END_INTERSECT_LAHSO.rawValue)
-    let definingEntity = values.stringAt(APTRunwayEndField.LAHSO_DESC.rawValue)
+    let intersectingRunwayId: String? = try t[optional: "RWY_END_INTERSECT_LAHSO"]
+    let definingEntity: String? = try t[optional: "LAHSO_DESC"]
 
     // Parse LAHSO position
     var position: Location?
-    if let latDecimal = values.doubleAt(APTRunwayEndField.LAT_LAHSO_DECIMAL.rawValue),
-      let longDecimal = values.doubleAt(APTRunwayEndField.LONG_LAHSO_DECIMAL.rawValue)
+    if let latDecimal: Float = try t[optional: "LAT_LAHSO_DECIMAL"],
+      let longDecimal: Float = try t[optional: "LONG_LAHSO_DECIMAL"]
     {
-      let latArcSec = Float(latDecimal * 3600)
-      let longArcSec = Float(longDecimal * 3600)
+      let latArcSec = latDecimal * 3600
+      let longArcSec = longDecimal * 3600
       position = Location(
         latitudeArcsec: latArcSec,
         longitudeArcsec: longArcSec,
@@ -1172,14 +1147,11 @@ actor CSVAirportParser: CSVParser {
       )
     }
 
-    let positionSource = values.stringAt(APTRunwayEndField.LAHSO_PSN_SOURCE.rawValue)
-    let positionSourceDate =
-      values.stringAt(APTRunwayEndField.RWY_END_LAHSO_PSN_DATE.rawValue).flatMap {
-        DateFormat.yearMonthDaySlash.parse($0)
-      }
+    let positionSource: String? = try t[optional: "LAHSO_PSN_SOURCE"]
+    let positionSourceDate: DateComponents? = try t[optional: "RWY_END_LAHSO_PSN_DATE"]
 
     return RunwayEnd.LAHSOPoint(
-      availableDistanceFt: UInt(availableDistance),
+      availableDistanceFt: availableDistance,
       intersectingRunwayId: intersectingRunwayId,
       definingEntity: definingEntity,
       position: position,
@@ -1190,16 +1162,16 @@ actor CSVAirportParser: CSVParser {
 
   // MARK: - Attendance Schedule Parsing
 
-  private func parseAttendanceRecord(_ values: [String]) throws {
-    let siteNo = values[APTAttendanceField.SITE_NO.rawValue]
-    let siteTypeCode = values[APTAttendanceField.SITE_TYPE_CODE.rawValue]
+  private func parseAttendanceRecord(_ row: CSVRow) throws {
+    let siteNo = try row["SITE_NO"]
+    let siteTypeCode = try row["SITE_TYPE_CODE"]
     let compositeId = "\(siteNo)*\(siteTypeCode)"
 
     guard airports[compositeId] != nil else { return }
 
-    let month = values.stringAt(APTAttendanceField.MONTH.rawValue) ?? ""
-    let day = values.stringAt(APTAttendanceField.DAY.rawValue) ?? ""
-    let hour = values.stringAt(APTAttendanceField.HOUR.rawValue) ?? ""
+    let month = row[ifExists: "MONTH"] ?? ""
+    let day = row[ifExists: "DAY"] ?? ""
+    let hour = row[ifExists: "HOUR"] ?? ""
 
     // Handle unattended entries as custom schedules (like TXT parser does)
     let schedule: AttendanceSchedule
@@ -1219,25 +1191,25 @@ actor CSVAirportParser: CSVParser {
 
   // MARK: - Remarks Parsing
 
-  private func parseRemarkRecord(_ values: [String]) throws {
-    let siteNo = values[APTRemarkField.SITE_NO.rawValue]
-    let siteTypeCode = values[APTRemarkField.SITE_TYPE_CODE.rawValue]
+  private func parseRemarkRecord(_ row: CSVRow) throws {
+    let siteNo = try row["SITE_NO"]
+    let siteTypeCode = try row["SITE_TYPE_CODE"]
     let compositeId = "\(siteNo)*\(siteTypeCode)"
 
     guard airports[compositeId] != nil else { return }
 
-    let tabName = values.stringAt(APTRemarkField.TAB_NAME.rawValue) ?? ""
-    let element = values.stringAt(APTRemarkField.ELEMENT.rawValue) ?? ""
-    let remark = values.stringAt(APTRemarkField.REMARK.rawValue) ?? ""
+    let tabName = row[ifExists: "TAB_NAME"] ?? ""
+    let element = row[ifExists: "ELEMENT"] ?? ""
+    let remark = try row["REMARK"]
 
     if remark.isEmpty { return }
 
     switch tabName {
-      case "AIRPORT":
+      case "AIRPORT", "AIRPORT_ATTEND_SCHED", "AIRPORT_SERVICE", "ARRESTING_DEVICE":
         // Airport-level remarks
         airports[compositeId]!.remarks.append(.general(remark))
 
-      case "RUNWAY":
+      case "RUNWAY", "RUNWAY_SURFACE_TYPE":
         // Runway-specific remarks
         if let runwayIndex = airports[compositeId]!.runways.firstIndex(where: {
           $0.identification == element
@@ -1245,8 +1217,8 @@ actor CSVAirportParser: CSVParser {
           airports[compositeId]!.runways[runwayIndex].remarks.append(.general(remark))
         }
 
-      case "RUNWAY_END":
-        // Runway end-specific remarks
+      case "RUNWAY_END", "RUNWAY_END_OBSTN":
+        // Runway end-specific remarks (including obstruction remarks)
         updateRunwayEnd(element, inAirport: &airports[compositeId]!) { end in
           end.remarks.append(.general(remark))
         }
@@ -1268,8 +1240,13 @@ actor CSVAirportParser: CSVParser {
         }
 
       default:
-        // Unknown tab, add as general remark
-        airports[compositeId]!.remarks.append(.general(remark))
+        // Legacy element number codes (A110-*, A17-M2, A18, A52-H1, A81-APT, E111)
+        // are added as general remarks
+        if tabName.hasPrefix("A") || tabName.hasPrefix("E") {
+          airports[compositeId]!.remarks.append(.general(remark))
+        } else {
+          throw ParserError.unknownRecordEnumValue(tabName)
+        }
     }
   }
 
@@ -1298,16 +1275,16 @@ actor CSVAirportParser: CSVParser {
 
   // MARK: - Arresting Systems Parsing
 
-  private func parseArrestingSystemRecord(_ values: [String]) throws {
-    let siteNo = values[APTArrestingSystemField.SITE_NO.rawValue]
-    let siteTypeCode = values[APTArrestingSystemField.SITE_TYPE_CODE.rawValue]
+  private func parseArrestingSystemRecord(_ row: CSVRow) throws {
+    let siteNo = try row["SITE_NO"]
+    let siteTypeCode = try row["SITE_TYPE_CODE"]
     let compositeId = "\(siteNo)*\(siteTypeCode)"
 
     guard airports[compositeId] != nil else { return }
 
-    let runwayId = values[APTArrestingSystemField.RWY_ID.rawValue]
-    let runwayEndId = values[APTArrestingSystemField.RWY_END_ID.rawValue]
-    let deviceCode = values.stringAt(APTArrestingSystemField.ARREST_DEVICE_CODE.rawValue) ?? ""
+    let runwayId = try row["RWY_ID"]
+    let runwayEndId = try row["RWY_END_ID"]
+    let deviceCode = row[ifExists: "ARREST_DEVICE_CODE"] ?? ""
 
     if deviceCode.isEmpty { return }
 
@@ -1330,24 +1307,25 @@ actor CSVAirportParser: CSVParser {
 
   // MARK: - Contacts Parsing
 
-  private func parseContactRecord(_ values: [String]) throws {
-    let siteNo = values[APTContactField.SITE_NO.rawValue]
-    let siteTypeCode = values[APTContactField.SITE_TYPE_CODE.rawValue]
+  private func parseContactRecord(_ row: CSVRow) throws {
+    let siteNo = try row["SITE_NO"]
+    let siteTypeCode = try row["SITE_TYPE_CODE"]
     let compositeId = "\(siteNo)*\(siteTypeCode)"
 
     guard airports[compositeId] != nil else { return }
 
-    let title = values.stringAt(APTContactField.TITLE.rawValue) ?? ""
-    let name = values.stringAt(APTContactField.NAME.rawValue) ?? ""
-    let address1 = values.stringAt(APTContactField.ADDRESS1.rawValue)
-    let address2 = values.stringAt(APTContactField.ADDRESS2.rawValue)
-    let city = values.stringAt(APTContactField.TITLE_CITY.rawValue) ?? ""
-    let state = values.stringAt(APTContactField.STATE.rawValue) ?? ""
-    let zipCode = values.stringAt(APTContactField.ZIP_CODE.rawValue) ?? ""
-    let zipPlusFour = values.stringAt(APTContactField.ZIP_PLUS_FOUR.rawValue)
-    let phone = values.stringAt(APTContactField.PHONE_NO.rawValue)
+    let title = try row["TITLE"]
+    let name = try row["NAME"]
 
     if name.isEmpty { return }
+
+    let address1 = row[ifExists: "ADDRESS1"]
+    let address2 = row[ifExists: "ADDRESS2"]
+    let city = row[ifExists: "TITLE_CITY"] ?? ""
+    let state = row[ifExists: "STATE"] ?? ""
+    let zipCode = row[ifExists: "ZIP_CODE"] ?? ""
+    let zipPlusFour = row[ifExists: "ZIP_PLUS_FOUR"]
+    let phone = row[ifExists: "PHONE_NO"]
 
     // Build full address2 with city, state, zip
     var fullAddress2: String? = address2
@@ -1410,5 +1388,11 @@ actor CSVAirportParser: CSVParser {
           context: context
         )
     }
+  }
+
+  /// Parses a Y/N flag from a TransformedRow column with strict validation.
+  private func parseYNFlag(_ column: String, from t: TransformedRow) throws -> Bool? {
+    let value: String? = try t[optional: column]
+    return try ParserHelpers.parseYNFlag(value, fieldName: column)
   }
 }

@@ -14,9 +14,9 @@ struct WeatherStationKey: Hashable {
     type = station.type
   }
 
-  init(values: [Any?]) {
-    stationId = (values[1] as! String).trimmingCharacters(in: .whitespaces)
-    type = values[2] as! WeatherStation.StationType
+  init(values: FixedWidthTransformedRow) throws {
+    stationId = try (values[1] as String).trimmingCharacters(in: .whitespaces)
+    type = try values[2]
   }
 }
 
@@ -57,14 +57,14 @@ actor FixedWidthWeatherStationParser: FixedWidthParser {
   private let basicTransformer = FixedWidthTransformer([
     .recordType,  //  0 record type
     .string(),  //  1 station ID
-    .generic { try raw($0, toEnum: WeatherStation.StationType.self) },  //  2 type
+    .recordEnum(WeatherStation.StationType.self),  //  2 type
     .boolean(),  //  3 commissioning status
     .dateComponents(format: .monthDayYearSlash, nullable: .blank),  //  4 commission date
     .boolean(),  //  5 navaid flag
     .DDMMSS(nullable: .blank),  //  6 latitude
     .DDMMSS(nullable: .blank),  //  7 longitude
     .float(nullable: .blank),  //  8 elevation
-    .generic({ try raw($0, toEnum: SurveyMethod.self) }, nullable: .blank),  //  9 survey method
+    .recordEnum(SurveyMethod.self, nullable: .blank),  //  9 survey method
     .frequency(nullable: .blank),  // 10 primary frequency
     .frequency(nullable: .blank),  // 11 secondary frequency
     .string(nullable: .blank),  // 12 phone number
@@ -80,7 +80,7 @@ actor FixedWidthWeatherStationParser: FixedWidthParser {
   private let remarkTransformer = FixedWidthTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 station ID
-    .generic { try raw($0, toEnum: WeatherStation.StationType.self) },  // 2 type
+    .recordEnum(WeatherStation.StationType.self),  // 2 type
     .string(nullable: .blank)  // 3 remark text
   ])
 
@@ -96,56 +96,59 @@ actor FixedWidthWeatherStationParser: FixedWidthParser {
   }
 
   private func parseBasicRecord(_ values: [String]) throws {
-    let transformedValues = try basicTransformer.applyTo(values)
+    let t = try basicTransformer.applyTo(values)
 
     let position: Location?
-    if let lat = transformedValues[6] as? Float, let lon = transformedValues[7] as? Float {
+    if let lat: Float = try t[optional: 6], let lon: Float = try t[optional: 7] {
       position = Location(
         latitudeArcsec: lat,
         longitudeArcsec: lon,
-        elevationFtMSL: transformedValues[8] as? Float
+        elevationFtMSL: try t[optional: 8]
       )
     } else {
       position = nil
     }
 
     let station = WeatherStation(
-      stationId: transformedValues[1] as! String,
-      type: transformedValues[2] as! WeatherStation.StationType,
-      stateCode: transformedValues[16] as? String,
-      city: transformedValues[15] as? String,
+      stationId: try t[1],
+      type: try t[2],
+      stateCode: try t[optional: 16],
+      city: try t[optional: 15],
       country: nil,  // Not in TXT format
-      isCommissioned: transformedValues[3] as! Bool,
-      commissionDateComponents: transformedValues[4] as? DateComponents,
-      isNavaidAssociated: transformedValues[5] as? Bool,
+      isCommissioned: try t[3],
+      commissionDateComponents: try t[optional: 4],
+      isNavaidAssociated: try t[optional: 5],
       position: position,
-      surveyMethod: transformedValues[9] as? SurveyMethod,
-      frequencyKHz: transformedValues[10] as? UInt,
-      secondaryFrequencyKHz: transformedValues[11] as? UInt,
-      phoneNumber: transformedValues[12] as? String,
-      secondaryPhoneNumber: transformedValues[13] as? String,
-      airportSiteNumber: transformedValues[14] as? String
+      surveyMethod: try t[optional: 9],
+      frequencyKHz: try t[optional: 10],
+      secondaryFrequencyKHz: try t[optional: 11],
+      phoneNumber: try t[optional: 12],
+      secondaryPhoneNumber: try t[optional: 13],
+      airportSiteNumber: try t[optional: 14]
     )
 
     stations[WeatherStationKey(station: station)] = station
   }
 
   private func parseRemark(_ values: [String]) throws {
-    let transformedValues = try remarkTransformer.applyTo(values)
+    let t = try remarkTransformer.applyTo(values)
 
-    guard let remarkText = transformedValues[3] as? String, !remarkText.isEmpty else {
+    guard let remarkText: String = try t[optional: 3], !remarkText.isEmpty else {
       return
     }
 
-    try updateStation(transformedValues) { station in
+    try updateStation(t) { station in
       station.remarks.append(remarkText)
     }
   }
 
-  private func updateStation(_ values: [Any?], process: (inout WeatherStation) throws -> Void)
+  private func updateStation(
+    _ values: FixedWidthTransformedRow,
+    process: (inout WeatherStation) throws -> Void
+  )
     throws
   {
-    let key = WeatherStationKey(values: values)
+    let key = try WeatherStationKey(values: values)
     guard var station = stations[key] else {
       throw ParserError.unknownParentRecord(
         parentType: "WeatherStation",

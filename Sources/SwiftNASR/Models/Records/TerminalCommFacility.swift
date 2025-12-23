@@ -261,13 +261,13 @@ public struct TerminalCommFacility: ParentRecord {
     case UHF = "UHF"
 
     /// VHF and UHF direction finding.
-    case VHFUHF = "VHF/UHF"
+    case VHF_UHF = "VHF/UHF"
 
     /// Doppler VHF direction finding.
     case dopplerVHF = "DOPPLER VHF"
 
     /// Doppler VHF and UHF direction finding.
-    case dopplerVHFUHF = "DOPPLER VHF/UHF"
+    case dopplerVHF_UHF = "DOPPLER VHF/UHF"
   }
 
   /// Radar service types.

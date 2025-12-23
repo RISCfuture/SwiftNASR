@@ -162,11 +162,76 @@ extension FixedWidthAirportParser {
     }
   }
 
-  func parseRunwayEnd(_ values: [Any?], offset1: Int, offset2: Int, airport: Airport) throws
+  func parseRunwayEnd(_ t: FixedWidthTransformedRow, offset1: Int, offset2: Int, airport: Airport)
+    throws
     -> RunwayEnd
   {
+    // Extract values from offset1 block
+    let runwayId: String = try t[offset1],
+      headingValue: UInt? = try t[optional: offset1 + 1],
+      ILS: RunwayEnd.InstrumentLandingSystem? = try t[optional: offset1 + 2],
+      rightTraffic: Bool? = try t[optional: offset1 + 3],
+      marking: RunwayEnd.Marking? = try t[optional: offset1 + 4],
+      markingCondition: RunwayEnd.MarkingCondition? = try t[optional: offset1 + 5],
+      thresholdLat: Float? = try t[optional: offset1 + 6],
+      thresholdLon: Float? = try t[optional: offset1 + 8],
+      thresholdElev: Float? = try t[optional: offset1 + 10],
+      thresholdCrossingHeightFtAGL: UInt? = try t[optional: offset1 + 11],
+      visualGlidepathHundredthsDeg: Float? = try t[optional: offset1 + 12],
+      displacedThresholdLat: Float? = try t[optional: offset1 + 13],
+      displacedThresholdLon: Float? = try t[optional: offset1 + 15],
+      displacedThresholdElev: Float? = try t[optional: offset1 + 17],
+      thresholdDisplacementFt: UInt? = try t[optional: offset1 + 18],
+      touchdownZoneElevationFtMSL: Float? = try t[optional: offset1 + 19],
+      VGSIStr: String? = try t[optional: offset1 + 20],
+      RVRSensors: [RunwayEnd.RVRSensor] = try t[offset1 + 21],
+      hasRVV: Bool? = try t[optional: offset1 + 22],
+      approachLighting: RunwayEnd.ApproachLighting? = try t[optional: offset1 + 23],
+      hasREIL: Bool? = try t[optional: offset1 + 24],
+      hasCenterlineLighting: Bool? = try t[optional: offset1 + 25],
+      hasEndTouchdownLighting: Bool? = try t[optional: offset1 + 26],
+      controllingObjectCategory: RunwayEnd.ControllingObject.Category? = try t[
+        optional: offset1 + 27
+      ],
+      controllingObjectMarkings: [RunwayEnd.ControllingObject.Marking] = try t[offset1 + 28],
+      controllingObjectRunwayCategory: String? = try t[optional: offset1 + 29],
+      controllingObjectClearanceSlopeRatio: UInt? = try t[optional: offset1 + 30],
+      controllingObjectHeightAboveRunwayFtAGL: UInt? = try t[optional: offset1 + 31],
+      controllingObjectDistanceFromRunwayFt: UInt? = try t[optional: offset1 + 32],
+      controllingObjectOffsetFromCenterline: Offset? = try t[optional: offset1 + 33]
+
+    // Extract values from offset2 block
+    let gradientValue: Float? = try t[optional: offset2],
+      gradientDirection: String? = try t[optional: offset2 + 1],
+      positionSource: String? = try t[optional: offset2 + 2],
+      positionSourceDateComponents: DateComponents? = try t[optional: offset2 + 3],
+      elevationSource: String? = try t[optional: offset2 + 4],
+      elevationSourceDateComponents: DateComponents? = try t[optional: offset2 + 5],
+      displacedThresholdPositionSource: String? = try t[optional: offset2 + 6],
+      displacedThresholdPositionSourceDateComponents: DateComponents? = try t[
+        optional: offset2 + 7
+      ],
+      displacedThresholdElevationSource: String? = try t[optional: offset2 + 8],
+      displacedThresholdElevationSourceDateComponents: DateComponents? = try t[
+        optional: offset2 + 9
+      ],
+      touchdownZoneElevationSource: String? = try t[optional: offset2 + 10],
+      touchdownZoneElevationSourceDateComponents: DateComponents? = try t[optional: offset2 + 11],
+      TORAFt: UInt? = try t[optional: offset2 + 12],
+      TODAFt: UInt? = try t[optional: offset2 + 13],
+      ASDAFt: UInt? = try t[optional: offset2 + 14],
+      LDAFt: UInt? = try t[optional: offset2 + 15],
+      LAHSOAvailableDistanceFt: UInt? = try t[optional: offset2 + 16],
+      LAHSOIntersectingRunwayId: String? = try t[optional: offset2 + 17],
+      LAHSODefiningEntity: String? = try t[optional: offset2 + 18],
+      LAHSOLat: Float? = try t[optional: offset2 + 19],
+      LAHSOLon: Float? = try t[optional: offset2 + 21],
+      LAHSOPositionSource: String? = try t[optional: offset2 + 23],
+      LAHSOPositionSourceDateComponents: DateComponents? = try t[optional: offset2 + 24]
+
+    // Parse VGSI
     let VGSI: RunwayEnd.VisualGlideslopeIndicator?
-    if let str = values[offset1 + 20] as? String {
+    if let str = VGSIStr {
       do {
         VGSI = try parseVGSI(str)
       } catch {
@@ -176,109 +241,108 @@ extension FixedWidthAirportParser {
       VGSI = nil
     }
 
-    let threshold = zipOptionals(values[offset1 + 6], values[offset1 + 8]).map { lat, lon in
-      Location(
-        latitudeArcsec: lat as! Float,
-        longitudeArcsec: lon as! Float,
-        elevationFtMSL: values[offset1 + 10] as! Float?
-      )
-    }
-    let displacedThreshold = zipOptionals(values[offset1 + 13], values[offset1 + 15]).map {
-      lat,
-      lon in
-      Location(
-        latitudeArcsec: lat as! Float,
-        longitudeArcsec: lon as! Float,
-        elevationFtMSL: values[offset1 + 17] as! Float?
-      )
+    // Build threshold location
+    let threshold = zipOptionals(thresholdLat, thresholdLon).map { lat, lon in
+      Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: thresholdElev)
     }
 
+    // Build displaced threshold location
+    let displacedThreshold = zipOptionals(displacedThresholdLat, displacedThresholdLon).map {
+      lat,
+      lon in
+      Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: displacedThresholdElev)
+    }
+
+    // Parse gradient
     let gradient: Float?
-    if let gradValue = values[offset2] as? Float {
+    if let gradValue = gradientValue {
       var grad = gradValue
-      let direction = values[offset2 + 1] as! String
-      switch direction {
-        case "UP": break
-        case "DOWN": grad *= -1
-        default: throw FixedWidthParserError.invalidValue(String(grad), at: offset2)
+      if let direction = gradientDirection {
+        switch direction {
+          case "UP": break
+          case "DOWN": grad *= -1
+          default: throw FixedWidthParserError.invalidValue(String(grad), at: offset2)
+        }
       }
       gradient = grad
     } else {
       gradient = nil
     }
 
-    let location = zipOptionals(values[offset2 + 19], values[offset2 + 21]).map { lat, lon in
-      Location(
-        latitudeArcsec: lat as! Float,
-        longitudeArcsec: lon as! Float
-      )
+    // Build LAHSO location
+    let LAHSOLocation = zipOptionals(LAHSOLat, LAHSOLon).map { lat, lon in
+      Location(latitudeArcsec: lat, longitudeArcsec: lon)
     }
 
-    let LAHSO = values[offset2 + 16].map { dist in
+    // Build LAHSO
+    let LAHSO = LAHSOAvailableDistanceFt.map { dist in
       RunwayEnd.LAHSOPoint(
-        availableDistanceFt: dist as! UInt,
-        intersectingRunwayId: values[offset2 + 17] as! String?,
-        definingEntity: values[offset2 + 18] as! String?,
-        position: location,
-        positionSource: values[offset2 + 23] as! String?,
-        positionSourceDateComponents: values[offset2 + 24] as! DateComponents?
+        availableDistanceFt: dist,
+        intersectingRunwayId: LAHSOIntersectingRunwayId,
+        definingEntity: LAHSODefiningEntity,
+        position: LAHSOLocation,
+        positionSource: LAHSOPositionSource,
+        positionSourceDateComponents: LAHSOPositionSourceDateComponents
       )
     }
 
-    let controllingObject = values[offset1 + 27].map { cat in
+    // Build controlling object
+    let controllingObject = controllingObjectCategory.map { cat in
       RunwayEnd.ControllingObject(
-        category: cat as! RunwayEnd.ControllingObject.Category,
-        markings: values[offset1 + 28] as! [RunwayEnd.ControllingObject.Marking],
-        runwayCategory: values[offset1 + 29] as! String?,
-        clearanceSlopeRatio: values[offset1 + 30] as! UInt?,
-        heightAboveRunwayFtAGL: values[offset1 + 31] as! UInt?,
-        distanceFromRunwayFt: values[offset1 + 32] as! UInt?,
-        offsetFromCenterline: values[offset1 + 33] as! Offset?
+        category: cat,
+        markings: controllingObjectMarkings,
+        runwayCategory: controllingObjectRunwayCategory,
+        clearanceSlopeRatio: controllingObjectClearanceSlopeRatio,
+        heightAboveRunwayFtAGL: controllingObjectHeightAboveRunwayFtAGL,
+        distanceFromRunwayFt: controllingObjectDistanceFromRunwayFt,
+        offsetFromCenterline: controllingObjectOffsetFromCenterline
       )
     }
 
     // Convert true heading to Bearing<UInt>
-    let heading = (values[offset1 + 1] as! UInt?).map { value in
+    let heading = headingValue.map { value in
       Bearing(value, reference: .true, magneticVariationDeg: airport.magneticVariationDeg ?? 0)
     }
 
     return RunwayEnd(
-      id: values[offset1] as! String,
+      id: runwayId,
       heading: heading,
-      instrumentLandingSystem: values[offset1 + 2] as! RunwayEnd.InstrumentLandingSystem?,
-      rightTraffic: values[offset1 + 3] as! Bool?,
-      marking: values[offset1 + 4] as! RunwayEnd.Marking?,
-      markingCondition: values[offset1 + 5] as! RunwayEnd.MarkingCondition?,
+      instrumentLandingSystem: ILS,
+      rightTraffic: rightTraffic,
+      marking: marking,
+      markingCondition: markingCondition,
       threshold: threshold,
-      thresholdCrossingHeightFtAGL: values[offset1 + 11] as! UInt?,
-      visualGlidepathHundredthsDeg: values[offset1 + 12] as! Float?,
+      thresholdCrossingHeightFtAGL: thresholdCrossingHeightFtAGL,
+      visualGlidepathHundredthsDeg: visualGlidepathHundredthsDeg,
       displacedThreshold: displacedThreshold,
-      thresholdDisplacementFt: values[offset1 + 18] as! UInt?,
-      touchdownZoneElevationFtMSL: values[offset1 + 19] as! Float?,
+      thresholdDisplacementFt: thresholdDisplacementFt,
+      touchdownZoneElevationFtMSL: touchdownZoneElevationFtMSL,
       gradientPct: gradient,
-      TORAFt: values[offset2 + 12] as! UInt?,
-      TODAFt: values[offset2 + 13] as! UInt?,
-      ASDAFt: values[offset2 + 14] as! UInt?,
-      LDAFt: values[offset2 + 15] as! UInt?,
+      TORAFt: TORAFt,
+      TODAFt: TODAFt,
+      ASDAFt: ASDAFt,
+      LDAFt: LDAFt,
       LAHSO: LAHSO,
       visualGlideslopeIndicator: VGSI,
-      RVRSensors: values[offset1 + 21] as! [RunwayEnd.RVRSensor],
-      hasRVV: values[offset1 + 22] as! Bool?,
-      approachLighting: values[offset1 + 23] as! RunwayEnd.ApproachLighting?,
-      hasREIL: values[offset1 + 24] as! Bool?,
-      hasCenterlineLighting: values[offset1 + 25] as! Bool?,
-      hasEndTouchdownLighting: values[offset1 + 26] as! Bool?,
+      RVRSensors: RVRSensors,
+      hasRVV: hasRVV,
+      approachLighting: approachLighting,
+      hasREIL: hasREIL,
+      hasCenterlineLighting: hasCenterlineLighting,
+      hasEndTouchdownLighting: hasEndTouchdownLighting,
       controllingObject: controllingObject,
-      positionSource: values[offset2 + 2] as! String?,
-      positionSourceDateComponents: values[offset2 + 3] as! DateComponents?,
-      elevationSource: values[offset2 + 4] as! String?,
-      elevationSourceDateComponents: values[offset2 + 5] as! DateComponents?,
-      displacedThresholdPositionSource: values[offset2 + 6] as! String?,
-      displacedThresholdPositionSourceDateComponents: values[offset2 + 7] as! DateComponents?,
-      displacedThresholdElevationSource: values[offset2 + 8] as! String?,
-      displacedThresholdElevationSourceDateComponents: values[offset2 + 9] as! DateComponents?,
-      touchdownZoneElevationSource: values[offset2 + 10] as! String?,
-      touchdownZoneElevationSourceDateComponents: values[offset2 + 11] as! DateComponents?
+      positionSource: positionSource,
+      positionSourceDateComponents: positionSourceDateComponents,
+      elevationSource: elevationSource,
+      elevationSourceDateComponents: elevationSourceDateComponents,
+      displacedThresholdPositionSource: displacedThresholdPositionSource,
+      displacedThresholdPositionSourceDateComponents:
+        displacedThresholdPositionSourceDateComponents,
+      displacedThresholdElevationSource: displacedThresholdElevationSource,
+      displacedThresholdElevationSourceDateComponents:
+        displacedThresholdElevationSourceDateComponents,
+      touchdownZoneElevationSource: touchdownZoneElevationSource,
+      touchdownZoneElevationSourceDateComponents: touchdownZoneElevationSourceDateComponents
     )
   }
 }

@@ -12,19 +12,18 @@ extension FixedWidthAirportParser {
   }
 
   func parseArrestingSystemRecord(_ values: [String]) throws {
-    let transformedValues = try arrestingSystemTransformer.applyTo(values)
+    let t = try arrestingSystemTransformer.applyTo(values)
 
-    let airportID = transformedValues[1] as! String
+    let airportID: String = try t[1]
     guard let airport = airports[airportID] else { return }
 
+    let runwayId: String = try t[3]
     guard
-      let runwayIndex = airport.runways.firstIndex(where: {
-        $0.identification == transformedValues[3] as! String
-      })
+      let runwayIndex = airport.runways.firstIndex(where: { $0.identification == runwayId })
     else { return }
     let runway = airport.runways[runwayIndex]
 
-    let runwayEndIdentifier = transformedValues[4] as! String
+    let runwayEndIdentifier: String = try t[4]
     let runwayEnd: RunwayEndType =
       if runway.baseEnd.id == runwayEndIdentifier {
         .base
@@ -32,7 +31,7 @@ extension FixedWidthAirportParser {
         throw FixedWidthParserError.invalidValue(runwayEndIdentifier, at: 4)
       }
 
-    let type = transformedValues[5] as! String
+    let type: String = try t[5]
 
     switch runwayEnd {
       case .base:

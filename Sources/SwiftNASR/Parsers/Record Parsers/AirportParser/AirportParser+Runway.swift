@@ -13,31 +13,16 @@ extension FixedWidthAirportParser {
       .unsignedInteger(nullable: .blank),  //   4 length
       .unsignedInteger(nullable: .blank),  //   5 width
       .string(nullable: .blank),  //   6 surface type and condition
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: Runway.Treatment.self) },
-        nullable: .sentinel(["", "NONE"])
-      ),  //   7 surface treament
+      .recordEnum(Runway.Treatment.self, nullable: .sentinel(["", "NONE"])),  //   7 surface treament
       .string(nullable: .blank),  //   8 pavement classification
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: Runway.EdgeLightIntensity.self) },
-        nullable: .sentinel(["", "NONE"])
-      ),  //   9 edge light intensity
+      .recordEnum(Runway.EdgeLightIntensity.self, nullable: .sentinel(["", "NONE"])),  //   9 edge light intensity
 
       .string(),  //  10 base end: identifier
       .unsignedInteger(nullable: .blank),  //  11 base end: true heading
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: RunwayEnd.InstrumentLandingSystem.self) },
-        nullable: .blank
-      ),  //  12 base end: ILS
+      .recordEnum(RunwayEnd.InstrumentLandingSystem.self, nullable: .blank),  //  12 base end: ILS
       .boolean(nullable: .blank),  //  13 base end: right pattern
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: RunwayEnd.Marking.self) },
-        nullable: .sentinel(["", "NONE"])
-      ),  //  14 base end: markings
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: RunwayEnd.MarkingCondition.self) },
-        nullable: .blank
-      ),  //  15 base end: marking condition
+      .recordEnum(RunwayEnd.Marking.self, nullable: .sentinel(["", "NONE"])),  //  14 base end: markings
+      .recordEnum(RunwayEnd.MarkingCondition.self, nullable: .blank),  //  15 base end: marking condition
       .DDMMSS(nullable: .blank),  //  16 base end: latitude
       .null,  //  17 base end: latitude
       .DDMMSS(nullable: .blank),  //  18 base end: longitude
@@ -56,26 +41,20 @@ extension FixedWidthAirportParser {
       .string(nullable: .sentinel(["", "NONE", "N"])),  //  30 base end: VGSI
       .fixedWidthArray(
         width: 1,
-        convert: { try SwiftNASR.raw($0, toEnum: RunwayEnd.RVRSensor.self) },
+        convert: { try RunwayEnd.RVRSensor.require($0) },
         nullable: .compact,
         emptyPlaceholders: ["N"]
       ),  //  31 base end: RVR
       .boolean(nullable: .blank),  //  32 base end: has RVV
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: RunwayEnd.ApproachLighting.self) },
-        nullable: .sentinel(["", "NONE"])
-      ),  //  33 base end: approach lighting
+      .recordEnum(RunwayEnd.ApproachLighting.self, nullable: .sentinel(["", "NONE"])),  //  33 base end: approach lighting
       .boolean(nullable: .blank),  //  34 base end: REILs
       .boolean(nullable: .blank),  //  35 base end: CL
       .boolean(nullable: .blank),  //  36 base end: TDZL
 
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: RunwayEnd.ControllingObject.Category.self) },
-        nullable: .blank
-      ),  //  37 base end: controlling object
+      .recordEnum(RunwayEnd.ControllingObject.Category.self, nullable: .blank),  //  37 base end: controlling object
       .fixedWidthArray(
         width: 1,
-        convert: { try SwiftNASR.raw($0, toEnum: RunwayEnd.ControllingObject.Marking.self) },
+        convert: { try RunwayEnd.ControllingObject.Marking.require($0) },
         nullable: .compact,
         emptyPlaceholders: ["", "NONE", "NL"]
       ),  //  38 base end: controlling object marking
@@ -87,19 +66,10 @@ extension FixedWidthAirportParser {
 
       .string(nullable: .blank),  //  44 reciprocal end: identifier
       .unsignedInteger(nullable: .blank),  //  45 reciprocal end: true heading
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: RunwayEnd.InstrumentLandingSystem.self) },
-        nullable: .blank
-      ),  //  46 reciprocal end: ILS
+      .recordEnum(RunwayEnd.InstrumentLandingSystem.self, nullable: .blank),  //  46 reciprocal end: ILS
       .boolean(nullable: .blank),  //  47 reciprocal end: right pattern
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: RunwayEnd.Marking.self) },
-        nullable: .sentinel(["", "NONE"])
-      ),  //  48 reciprocal end: markings
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: RunwayEnd.MarkingCondition.self) },
-        nullable: .blank
-      ),  //  49 reciprocal end: marking condition
+      .recordEnum(RunwayEnd.Marking.self, nullable: .sentinel(["", "NONE"])),  //  48 reciprocal end: markings
+      .recordEnum(RunwayEnd.MarkingCondition.self, nullable: .blank),  //  49 reciprocal end: marking condition
       .DDMMSS(nullable: .blank),  //  50 reciprocal end: latitude
       .null,  //  51 reciprocal end: latitude
       .DDMMSS(nullable: .blank),  //  52 reciprocal end: longitude
@@ -118,26 +88,20 @@ extension FixedWidthAirportParser {
       .string(nullable: .sentinel(["", "NONE", "N"])),  //  64 reciprocal end: VGSI
       .fixedWidthArray(
         width: 1,
-        convert: { try SwiftNASR.raw($0, toEnum: RunwayEnd.RVRSensor.self) },
+        convert: { try RunwayEnd.RVRSensor.require($0) },
         nullable: .compact,
         emptyPlaceholders: ["N"]
       ),  //  65 reciprocal end: RVR
       .boolean(nullable: .blank),  //  66 reciprocal end: has RVV
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: RunwayEnd.ApproachLighting.self) },
-        nullable: .sentinel(["", "NONE"])
-      ),  //  67 reciprocal end: approach lighting
+      .recordEnum(RunwayEnd.ApproachLighting.self, nullable: .sentinel(["", "NONE"])),  //  67 reciprocal end: approach lighting
       .boolean(nullable: .blank),  //  68 reciprocal end: REILs
       .boolean(nullable: .blank),  //  69 reciprocal end: CL
       .boolean(nullable: .blank),  //  70 reciprocal end: TDZL
 
-      .generic(
-        { try SwiftNASR.raw($0, toEnum: RunwayEnd.ControllingObject.Category.self) },
-        nullable: .blank
-      ),  //  71 reciprocal end: controlling object
+      .recordEnum(RunwayEnd.ControllingObject.Category.self, nullable: .blank),  //  71 reciprocal end: controlling object
       .fixedWidthArray(
         width: 1,
-        convert: { try SwiftNASR.raw($0, toEnum: RunwayEnd.ControllingObject.Marking.self) },
+        convert: { try RunwayEnd.ControllingObject.Marking.require($0) },
         nullable: .compact,
         emptyPlaceholders: ["", "NONE", "NL"]
       ),  //  72 reciprocal end: controlling object marking
@@ -253,10 +217,10 @@ extension FixedWidthAirportParser {
     let airportIndex: String = values[1].trimmingCharacters(in: .whitespaces)
     guard let airport = airports[airportIndex] else { return }
 
-    let transformedValues = try runwayTransformer.applyTo(values)
+    let t = try runwayTransformer.applyTo(values)
 
     let (materials, condition): (Set<Runway.Material>, Runway.Condition?)
-    if let condStr = transformedValues[6] as? String {
+    if let condStr: String = try t[optional: 6] {
       do {
         (materials, condition) = try parseRunwaySurface(condStr)
       } catch {
@@ -267,7 +231,7 @@ extension FixedWidthAirportParser {
     }
 
     let pavementClassification: Runway.PavementClassification?
-    if let classStr = transformedValues[8] as? String {
+    if let classStr: String = try t[optional: 8] {
       do {
         pavementClassification = try parsePavementClassification(classStr)
       } catch {
@@ -277,43 +241,35 @@ extension FixedWidthAirportParser {
       pavementClassification = nil
     }
 
-    let base = try parseRunwayEnd(transformedValues, offset1: 10, offset2: 84, airport: airport)
+    let base = try parseRunwayEnd(t, offset1: 10, offset2: 84, airport: airport)
     let reciprocal: RunwayEnd?
-    if transformedValues[44] != nil {
-      reciprocal = try parseRunwayEnd(
-        transformedValues,
-        offset1: 44,
-        offset2: 109,
-        airport: airport
-      )
+    if t[raw: 44] != nil {
+      reciprocal = try parseRunwayEnd(t, offset1: 44, offset2: 109, airport: airport)
     } else {
       reciprocal = nil
     }
 
-    let singleWheelWeightBearingCapacityKlb = transformedValues[80].map { capacity in
-      UInt((capacity as! Float) * 1000)
-    }
-    let dualWheelWeightBearingCapacityKlb = transformedValues[81].map { capacity in
-      UInt((capacity as! Float) * 1000)
-    }
-    let tandemDualWheelWeightBearingCapacityKlb = transformedValues[82].map { capacity in
-      UInt((capacity as! Float) * 1000)
-    }
-    let doubleTandemDualWheelWeightBearingCapacityKlb = transformedValues[83].map { capacity in
-      UInt((capacity as! Float) * 1000)
-    }
+    let swCapacity: Float? = try t[optional: 80]
+    let dwCapacity: Float? = try t[optional: 81]
+    let tdwCapacity: Float? = try t[optional: 82]
+    let dtdwCapacity: Float? = try t[optional: 83]
+
+    let singleWheelWeightBearingCapacityKlb = swCapacity.map { UInt($0 * 1000) }
+    let dualWheelWeightBearingCapacityKlb = dwCapacity.map { UInt($0 * 1000) }
+    let tandemDualWheelWeightBearingCapacityKlb = tdwCapacity.map { UInt($0 * 1000) }
+    let doubleTandemDualWheelWeightBearingCapacityKlb = dtdwCapacity.map { UInt($0 * 1000) }
 
     let runway = Runway(
-      identification: transformedValues[3] as! String,
-      lengthFt: transformedValues[4] as! UInt?,
-      widthFt: transformedValues[5] as! UInt?,
-      lengthSource: transformedValues[78] as! String?,
-      lengthSourceDateComponents: transformedValues[79] as! DateComponents?,
+      identification: try t[3],
+      lengthFt: try t[optional: 4],
+      widthFt: try t[optional: 5],
+      lengthSource: try t[optional: 78],
+      lengthSourceDateComponents: try t[optional: 79],
       materials: materials,
       condition: condition,
-      treatment: transformedValues[7] as! Runway.Treatment?,
+      treatment: try t[optional: 7],
       pavementClassification: pavementClassification,
-      edgeLightsIntensity: transformedValues[9] as! Runway.EdgeLightIntensity?,
+      edgeLightsIntensity: try t[optional: 9],
       baseEnd: base,
       reciprocalEnd: reciprocal,
       singleWheelWeightBearingCapacityKlb: singleWheelWeightBearingCapacityKlb,
@@ -348,21 +304,15 @@ extension FixedWidthAirportParser {
     let components = value.split(separator: "/")
     let numberStr = String(components[0]).trimmingCharacters(in: .whitespaces)
     guard let number = UInt(numberStr) else { throw Error.invalidPavementClassification(value) }
-    let type = try SwiftNASR.raw(
-      String(components[1]),
-      toEnum: Runway.PavementClassification.Classification.self
+    let type = try Runway.PavementClassification.Classification.require(String(components[1]))
+    let strength = try Runway.PavementClassification.SubgradeStrengthCategory.require(
+      String(components[2])
     )
-    let strength = try SwiftNASR.raw(
-      String(components[2]),
-      toEnum: Runway.PavementClassification.SubgradeStrengthCategory.self
+    let tirePressure = try Runway.PavementClassification.TirePressureLimit.require(
+      String(components[3])
     )
-    let tirePressure = try SwiftNASR.raw(
-      String(components[3]),
-      toEnum: Runway.PavementClassification.TirePressureLimit.self
-    )
-    let determination = try SwiftNASR.raw(
-      String(components[4]),
-      toEnum: Runway.PavementClassification.DeterminationMethod.self
+    let determination = try Runway.PavementClassification.DeterminationMethod.require(
+      String(components[4])
     )
 
     return Runway.PavementClassification(

@@ -25,13 +25,12 @@ actor CSVDepartureArrivalProcedureParser: CSVParser {
 
   func parse(data _: Data) async throws {
     // Parse DP_BASE.csv
-    // Columns: EFF_DATE(0), DP_NAME(1), AMENDMENT_NO(2), ARTCC(3), DP_AMEND_EFF_DATE(4),
-    // RNAV_FLAG(5), DP_COMPUTER_CODE(6), GRAPHICAL_DP_TYPE(7), SERVED_ARPT(8)
-    try await parseCSVFile(filename: "DP_BASE.csv", expectedFieldCount: 9) { fields in
-      guard fields.count >= 7 else { return }
-
-      let name = fields[1].trimmingCharacters(in: .whitespaces)
-      let computerCode = fields[6].trimmingCharacters(in: .whitespaces)
+    try await parseCSVFile(
+      filename: "DP_BASE.csv",
+      requiredColumns: ["DP_NAME", "DP_COMPUTER_CODE"]
+    ) { row in
+      let name = try row["DP_NAME"]
+      let computerCode = try row["DP_COMPUTER_CODE"]
       guard !computerCode.isEmpty else { return }
 
       let key = "D-\(computerCode)"
@@ -51,13 +50,12 @@ actor CSVDepartureArrivalProcedureParser: CSVParser {
     }
 
     // Parse STAR_BASE.csv
-    // Columns: EFF_DATE(0), ARRIVAL_NAME(1), AMENDMENT_NO(2), ARTCC(3), STAR_AMEND_EFF_DATE(4),
-    // RNAV_FLAG(5), STAR_COMPUTER_CODE(6), SERVED_ARPT(7)
-    try await parseCSVFile(filename: "STAR_BASE.csv", expectedFieldCount: 8) { fields in
-      guard fields.count >= 7 else { return }
-
-      let name = fields[1].trimmingCharacters(in: .whitespaces)
-      let computerCode = fields[6].trimmingCharacters(in: .whitespaces)
+    try await parseCSVFile(
+      filename: "STAR_BASE.csv",
+      requiredColumns: ["ARRIVAL_NAME", "STAR_COMPUTER_CODE"]
+    ) { row in
+      let name = try row["ARRIVAL_NAME"]
+      let computerCode = try row["STAR_COMPUTER_CODE"]
       guard !computerCode.isEmpty else { return }
 
       let key = "S-\(computerCode)"
@@ -77,14 +75,13 @@ actor CSVDepartureArrivalProcedureParser: CSVParser {
     }
 
     // Parse DP_APT.csv for adapted airports
-    // Columns: EFF_DATE(0), DP_NAME(1), ARTCC(2), DP_COMPUTER_CODE(3), BODY_NAME(4),
-    // BODY_SEQ(5), ARPT_ID(6), RWY_END_ID(7)
-    try await parseCSVFile(filename: "DP_APT.csv", expectedFieldCount: 8) { fields in
-      guard fields.count >= 7 else { return }
-
-      let computerCode = fields[3].trimmingCharacters(in: .whitespaces)
-      let airportId = fields[6].trimmingCharacters(in: .whitespaces)
-      let runwayEndId = fields.count > 7 ? fields[7].trimmingCharacters(in: .whitespaces) : ""
+    try await parseCSVFile(
+      filename: "DP_APT.csv",
+      requiredColumns: ["DP_COMPUTER_CODE", "ARPT_ID"]
+    ) { row in
+      let computerCode = try row["DP_COMPUTER_CODE"]
+      let airportId = try row["ARPT_ID"]
+      let runwayEndId = row[ifExists: "RWY_END_ID"]
 
       guard !computerCode.isEmpty, !airportId.isEmpty else { return }
       let key = "D-\(computerCode)"
@@ -93,28 +90,27 @@ actor CSVDepartureArrivalProcedureParser: CSVParser {
       // Check if this airport/runway combo already exists
       let existingAirports = self.procedures[key]!.adaptedAirports
       let alreadyExists = existingAirports.contains { apt in
-        apt.identifier == airportId && apt.runwayEndID == (runwayEndId.isEmpty ? nil : runwayEndId)
+        apt.identifier == airportId && apt.runwayEndID == runwayEndId
       }
       guard !alreadyExists else { return }
 
       let airport = DepartureArrivalProcedure.AdaptedAirport(
         position: nil,
         identifier: airportId,
-        runwayEndID: runwayEndId.isEmpty ? nil : runwayEndId
+        runwayEndID: runwayEndId
       )
 
       self.procedures[key]?.adaptedAirports.append(airport)
     }
 
     // Parse STAR_APT.csv for adapted airports
-    // Columns: EFF_DATE(0), STAR_COMPUTER_CODE(1), ARTCC(2), BODY_NAME(3),
-    // BODY_SEQ(4), ARPT_ID(5), RWY_END_ID(6)
-    try await parseCSVFile(filename: "STAR_APT.csv", expectedFieldCount: 7) { fields in
-      guard fields.count >= 6 else { return }
-
-      let computerCode = fields[1].trimmingCharacters(in: .whitespaces)
-      let airportId = fields[5].trimmingCharacters(in: .whitespaces)
-      let runwayEndId = fields.count > 6 ? fields[6].trimmingCharacters(in: .whitespaces) : ""
+    try await parseCSVFile(
+      filename: "STAR_APT.csv",
+      requiredColumns: ["STAR_COMPUTER_CODE", "ARPT_ID"]
+    ) { row in
+      let computerCode = try row["STAR_COMPUTER_CODE"]
+      let airportId = try row["ARPT_ID"]
+      let runwayEndId = row[ifExists: "RWY_END_ID"]
 
       guard !computerCode.isEmpty, !airportId.isEmpty else { return }
       let key = "S-\(computerCode)"
@@ -123,34 +119,32 @@ actor CSVDepartureArrivalProcedureParser: CSVParser {
       // Check if this airport/runway combo already exists
       let existingAirports = self.procedures[key]!.adaptedAirports
       let alreadyExists = existingAirports.contains { apt in
-        apt.identifier == airportId && apt.runwayEndID == (runwayEndId.isEmpty ? nil : runwayEndId)
+        apt.identifier == airportId && apt.runwayEndID == runwayEndId
       }
       guard !alreadyExists else { return }
 
       let airport = DepartureArrivalProcedure.AdaptedAirport(
         position: nil,
         identifier: airportId,
-        runwayEndID: runwayEndId.isEmpty ? nil : runwayEndId
+        runwayEndID: runwayEndId
       )
 
       self.procedures[key]?.adaptedAirports.append(airport)
     }
 
     // Parse DP_RTE.csv for route points
-    // Columns: EFF_DATE(0), DP_NAME(1), ARTCC(2), DP_COMPUTER_CODE(3), ROUTE_PORTION_TYPE(4),
-    // ROUTE_NAME(5), BODY_SEQ(6), TRANSITION_COMPUTER_CODE(7), POINT_SEQ(8), POINT(9),
-    // ICAO_REGION_CODE(10), POINT_TYPE(11), NEXT_POINT(12), ARPT_RWY_ASSOC(13)
-    try await parseCSVFile(filename: "DP_RTE.csv", expectedFieldCount: 14) { fields in
-      guard fields.count >= 12 else { return }
-
-      let computerCode = fields[3].trimmingCharacters(in: .whitespaces)
-      let routePortionType = fields[4].trimmingCharacters(in: .whitespaces)
-      let routeName = fields[5].trimmingCharacters(in: .whitespaces)
-      let transitionCode = fields.count > 7 ? fields[7].trimmingCharacters(in: .whitespaces) : ""
-      let pointSeq = fields[8].trimmingCharacters(in: .whitespaces)
-      let point = fields[9].trimmingCharacters(in: .whitespaces)
-      let ICAORegionCode = fields[10].trimmingCharacters(in: .whitespaces)
-      let pointType = fields[11].trimmingCharacters(in: .whitespaces)
+    try await parseCSVFile(
+      filename: "DP_RTE.csv",
+      requiredColumns: ["DP_COMPUTER_CODE", "ROUTE_PORTION_TYPE", "POINT", "POINT_TYPE"]
+    ) { row in
+      let computerCode = try row["DP_COMPUTER_CODE"]
+      let routePortionType = try row["ROUTE_PORTION_TYPE"]
+      let routeName = row[ifExists: "ROUTE_NAME"] ?? ""
+      let transitionCode = row[ifExists: "TRANSITION_COMPUTER_CODE"] ?? ""
+      let pointSeq = row[ifExists: "POINT_SEQ"] ?? ""
+      let point = try row["POINT"]
+      let ICAORegionCode = row[ifExists: "ICAO_REGION_CODE"] ?? ""
+      let pointType = try row["POINT_TYPE"]
 
       guard !computerCode.isEmpty, !point.isEmpty else { return }
       let key = "D-\(computerCode)"
@@ -181,20 +175,18 @@ actor CSVDepartureArrivalProcedureParser: CSVParser {
     }
 
     // Parse STAR_RTE.csv for route points
-    // Columns: EFF_DATE(0), STAR_COMPUTER_CODE(1), ARTCC(2), ROUTE_PORTION_TYPE(3),
-    // ROUTE_NAME(4), BODY_SEQ(5), TRANSITION_COMPUTER_CODE(6), POINT_SEQ(7), POINT(8),
-    // ICAO_REGION_CODE(9), POINT_TYPE(10), NEXT_POINT(11), ARPT_RWY_ASSOC(12)
-    try await parseCSVFile(filename: "STAR_RTE.csv", expectedFieldCount: 13) { fields in
-      guard fields.count >= 11 else { return }
-
-      let computerCode = fields[1].trimmingCharacters(in: .whitespaces)
-      let routePortionType = fields[3].trimmingCharacters(in: .whitespaces)
-      let routeName = fields[4].trimmingCharacters(in: .whitespaces)
-      let transitionCode = fields.count > 6 ? fields[6].trimmingCharacters(in: .whitespaces) : ""
-      let pointSeq = fields[7].trimmingCharacters(in: .whitespaces)
-      let point = fields[8].trimmingCharacters(in: .whitespaces)
-      let ICAORegionCode = fields[9].trimmingCharacters(in: .whitespaces)
-      let pointType = fields[10].trimmingCharacters(in: .whitespaces)
+    try await parseCSVFile(
+      filename: "STAR_RTE.csv",
+      requiredColumns: ["STAR_COMPUTER_CODE", "ROUTE_PORTION_TYPE", "POINT", "POINT_TYPE"]
+    ) { row in
+      let computerCode = try row["STAR_COMPUTER_CODE"]
+      let routePortionType = try row["ROUTE_PORTION_TYPE"]
+      let routeName = row[ifExists: "ROUTE_NAME"] ?? ""
+      let transitionCode = row[ifExists: "TRANSITION_COMPUTER_CODE"] ?? ""
+      let pointSeq = row[ifExists: "POINT_SEQ"] ?? ""
+      let point = try row["POINT"]
+      let ICAORegionCode = row[ifExists: "ICAO_REGION_CODE"] ?? ""
+      let pointType = try row["POINT_TYPE"]
 
       guard !computerCode.isEmpty, !point.isEmpty else { return }
       let key = "S-\(computerCode)"
@@ -264,7 +256,7 @@ actor CSVDepartureArrivalProcedureParser: CSVParser {
       case "RP": return .reportingPoint
       case "CN": return .computerNavigationFix
       case "VORTAC": return .navaidVORTAC
-      case "VOR/DME": return .navaidVORDME
+      case "VOR/DME": return .navaidVOR_DME
       case "VOR": return .navaidVOR
       case "NDB": return .navaidRBN
       case "NDB/DME": return .navaidRBN  // Closest match

@@ -87,7 +87,7 @@ public struct WeatherReportingLocation: Record, Identifiable {
     case SPECI = "SPECI"
 
     /// Transcribed Weather Broadcast Synopses
-    case TWBSynopses = "SYNS"
+    case TWEBSynopses = "SYNS"
 
     /// Aviation Terminal Forecast (ICAO)
     case TAF = "TAF"

@@ -81,9 +81,9 @@ public struct ATSAirway: Record, Identifiable {
   public enum PointType: String, RecordEnum, CaseIterable, Equatable, Hashable, Codable, Sendable {
     case waypoint = "WAY-PT"
     case reportingPoint = "REP-PT"
-    case VORDME = "VOR/DME"
+    case VOR_DME = "VOR/DME"
     case VORTAC = "VORTAC"
-    case NDBDME = "NDB/DME"
+    case NDB_DME = "NDB/DME"
     case NDB = "NDB"
     case VOR = "VOR"
     case DME = "DME"
@@ -93,9 +93,9 @@ public struct ATSAirway: Record, Identifiable {
       switch self {
         case .waypoint: return "Waypoint"
         case .reportingPoint: return "Reporting Point"
-        case .VORDME: return "VOR/DME"
+        case .VOR_DME: return "VOR/DME"
         case .VORTAC: return "VORTAC"
-        case .NDBDME: return "NDB/DME"
+        case .NDB_DME: return "NDB/DME"
         case .NDB: return "NDB"
         case .VOR: return "VOR"
         case .DME: return "DME"

@@ -108,19 +108,51 @@ public struct LocationIdentifier: Record, Identifiable {
   /// The group code for location identifiers.
   public enum GroupCode: String, RecordEnum, CaseIterable, Equatable, Hashable, Codable, Sendable {
     /// United States locations
-    case usa = "USA"
+    case USA = "USA"
 
     /// Department of Defense overseas locations
-    case dod = "DOD"
+    case DOD = "DOD"
 
     /// Canadian locations
-    case can = "CAN"
+    case canada = "CAN"
+
+    /// Marshall Islands locations
+    case marshallIslands = "MH"
+
+    /// Palau locations
+    case palau = "PW"
+
+    /// Bermuda locations
+    case bermuda = "BM"
+
+    /// Bahamas locations
+    case bahamas = "BS"
+
+    /// Turks and Caicos Islands locations
+    case turksAndCaicos = "TC"
+
+    /// Federated States of Micronesia locations
+    case micronesia = "FM"
+
+    /// US Minor Outlying Islands (Johnston Atoll, etc.)
+    case USMinorOutlyingIslands = "TQ"
+
+    /// Azores/Portugal DOD facilities
+    case azores = "PO"
 
     public var description: String {
       switch self {
-        case .usa: return "United States"
-        case .dod: return "DOD Overseas"
-        case .can: return "Canada"
+        case .USA: return "United States"
+        case .DOD: return "DOD Overseas"
+        case .canada: return "Canada"
+        case .marshallIslands: return "Marshall Islands"
+        case .palau: return "Palau"
+        case .bermuda: return "Bermuda"
+        case .bahamas: return "Bahamas"
+        case .turksAndCaicos: return "Turks and Caicos Islands"
+        case .micronesia: return "Federated States of Micronesia"
+        case .USMinorOutlyingIslands: return "US Minor Outlying Islands"
+        case .azores: return "Azores"
       }
     }
   }
@@ -164,6 +196,9 @@ public struct LocationIdentifier: Record, Identifiable {
 
     /// Combined Center/Radar Approach Control
     case CERAP = "CERAP"
+
+    /// Military Base Operations
+    case baseOps = "BASE OPS"
 
     public var description: String { rawValue }
   }

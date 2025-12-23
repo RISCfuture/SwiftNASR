@@ -82,7 +82,7 @@ public struct DepartureArrivalProcedure: Record, Identifiable {
     case navaidAirport = "NA"
 
     /// Navaid - VOR with DME
-    case navaidVORDME = "ND"
+    case navaidVOR_DME = "ND"
 
     /// Navaid - DME only
     case navaidDMEOnly = "NO"
@@ -105,11 +105,11 @@ public struct DepartureArrivalProcedure: Record, Identifiable {
     /// Navaid - LFR
     case navaidLFR = "N7"
 
-    /// Navaid - VHFRBN
-    case navaidVHFRBN1 = "N8"
+    /// Navaid - VHF RBN
+    case navaidVHF_RBN1 = "N8"
 
-    /// Navaid - VHFRBN (alternate)
-    case navaidVHFRBN2 = "N9"
+    /// Navaid - VHF RBN (alternate)
+    case navaidVHF_RBN2 = "N9"
 
     /// Waypoint
     case waypoint = "P"

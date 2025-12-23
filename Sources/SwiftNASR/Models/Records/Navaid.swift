@@ -88,8 +88,8 @@ public struct Navaid: ParentRecord {
   /// The channel and band for the TACAN transmitter, if applicable.
   public let tacanChannel: TACANChannel?
 
-  /// The frequency that this navaid transmits on, if applicable (kHz).
-  public let frequencyKHz: UInt?
+  /// The frequency that this navaid transmits on, if applicable (Hz).
+  public let frequencyHz: UInt?
 
   /// The beacon identifier for a fan marker or marine radio beacon, described
   /// in human-readable Morse code (e.g., "DOT DASH DOT").
@@ -180,7 +180,7 @@ public struct Navaid: ParentRecord {
 
   /// True if this navaid is a VOR, VOR/DME, or VORTAC.
   public var isVOR: Bool {
-    type == .VOR || type == .VORDME || type == .VORTAC
+    type == .VOR || type == .VOR_DME || type == .VORTAC
   }
 
   /**
@@ -190,7 +190,7 @@ public struct Navaid: ParentRecord {
    automatic direction finder (ADF) set.
    */
   public var isNDB: Bool {
-    type == .NDB || type == .NDBDME
+    type == .NDB || type == .NDB_DME
   }
 
   init(
@@ -220,7 +220,7 @@ public struct Navaid: ParentRecord {
     monitoringCategory: Self.MonitoringCategory?,
     radioVoiceCall: String?,
     tacanChannel: Self.TACANChannel?,
-    frequencyKHz: UInt?,
+    frequencyHz: UInt?,
     beaconIdentifier: String?,
     fanMarkerType: Self.FanMarkerType?,
     fanMarkerMajorBearing: Bearing<UInt>?,
@@ -272,7 +272,7 @@ public struct Navaid: ParentRecord {
     self.monitoringCategory = monitoringCategory
     self.radioVoiceCall = radioVoiceCall
     self.tacanChannel = tacanChannel
-    self.frequencyKHz = frequencyKHz
+    self.frequencyHz = frequencyHz
     self.beaconIdentifier = beaconIdentifier
     self.fanMarkerType = fanMarkerType
     self.fanMarkerMajorBearing = fanMarkerMajorBearing
@@ -304,12 +304,12 @@ public struct Navaid: ParentRecord {
       commonSystemUsage, publicUse, navaidClass, hoursOfOperation, highAltitudeARTCCCode,
       lowAltitudeARTCCCode, position, TACANPosition, surveyAccuracy, magneticVariationDeg,
       simultaneousVoice, powerOutputW, automaticVoiceId, monitoringCategory,
-      radioVoiceCall, tacanChannel, frequencyKHz, beaconIdentifier, fanMarkerType,
+      radioVoiceCall, tacanChannel, beaconIdentifier, fanMarkerType,
       fanMarkerMajorBearing, VORServiceVolume, DMEServiceVolume, lowAltitudeInHighStructure,
       ZMarkerAvailable, TWEBHours, TWEBPhone, controllingFSSCode, NOTAMAccountabilityCode, LFRLegs,
       status, isPitchPoint, isCatchPoint, isAssociatedWithSUA, hasRestriction, broadcastsHIWAS,
       hasTWEBRestriction,
-      remarks, associatedFixNames, associatedHoldingPatterns, fanMarkers, checkpoints
+      frequencyHz, remarks, associatedFixNames, associatedHoldingPatterns, fanMarkers, checkpoints
     case magneticVariationEpochComponents = "magneticVariationEpoch"
   }
 
@@ -320,7 +320,7 @@ public struct Navaid: ParentRecord {
     case VORTAC = "VORTAC"
 
     /// A VOR and associated DME facility.
-    case VORDME = "VOR/DME"
+    case VOR_DME = "VOR/DME"
 
     /// A localizer marker beacon with an elongated reception cone.
     case fanMarker = "FAN MARKER"
@@ -333,7 +333,7 @@ public struct Navaid: ParentRecord {
     case marineNDB = "MARINE NDB"
 
     /// An NDB/DME for marine use.
-    case marineNDBDME = "MARINE NDB/DME"
+    case marineNDB_DME = "MARINE NDB/DME"
 
     /// A VOR operational test facility. This is a VOR that transmits a
     /// fixed bearing signal of 180 TO, for purposes of testing receivers.
@@ -343,14 +343,14 @@ public struct Navaid: ParentRecord {
     case NDB = "NDB"
 
     /// An NDB and associated DME facility.
-    case NDBDME = "NDB/DME"
+    case NDB_DME = "NDB/DME"
 
     /// A tactical air navigation facility, similar to a VOR but
     /// transmitting on UHF frequencies and intended for military use.
     case TACAN = "TACAN"
 
     /// An NDB that transmits on UHF frequencies.
-    case UHFNDB = "UHF/NDB"
+    case UHF_NDB = "UHF/NDB"
 
     /// A VHF omnidirectional range; a facility that transmits two phased
     /// signals for accurately determining bearing.
@@ -367,18 +367,18 @@ public struct Navaid: ParentRecord {
     // Single-character codes used in some NASR files (HPF, FSS, FIX, etc.)
     public static let synonyms: [String: Self] = [
       "C": .VORTAC,
-      "D": .VORDME,
+      "D": .VOR_DME,
       "F": .fanMarker,
       "K": .consolan,
       "L": .LFR,
       "M": .marineNDB,
-      "MD": .marineNDBDME,
+      "MD": .marineNDB_DME,
       "O": .VOT,
       "OD": .DME,
       "R": .NDB,
-      "RD": .NDBDME,
+      "RD": .NDB_DME,
       "T": .TACAN,
-      "U": .UHFNDB,
+      "U": .UHF_NDB,
       "V": .VOR
     ]
   }

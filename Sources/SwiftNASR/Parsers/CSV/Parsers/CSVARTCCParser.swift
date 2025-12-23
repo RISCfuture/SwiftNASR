@@ -10,66 +10,34 @@ actor CSVARTCCParser: CSVParser {
 
   var ARTCCs = [ARTCCKey: ARTCC]()
 
-  // Matching FixedWidthARTCCParser transformer field types
-  private let generalTransformer = CSVTransformer([
-    .null,  //  0 effective date
-    .string(),  //  1 identifier (FACILITY_ID)
-    .string(),  //  2 name (FACILITY_NAME)
-    .string(),  //  3 location name (CITY)
-    .string(nullable: .blank),  //  4 cross reference
-    .string(),  //  5 facility type (parsed separately)
-    .null,  //  6 effective date (duplicate)
-    .null,  //  7 state name
-    .string(nullable: .blank),  //  8 state PO code
-    .null,  //  9 latitude - formatted (not in CSV)
-    .null,  // 10 latitude - decimal (not in CSV)
-    .null,  // 11 longitude - formatted (not in CSV)
-    .null,  // 12 longitude - decimal (not in CSV)
-    .string(nullable: .blank),  // 13 ICAO ID
-    .null  // 14 blank
-  ])
-
   func prepare(distribution: Distribution) throws {
     self.distribution = distribution
   }
 
   func parse(data _: Data) async throws {
     // Parse ATC_BASE.csv
-    try await parseCSVFile(filename: "ATC_BASE.csv", expectedFieldCount: 30) { fields in
-      guard fields.count >= 10 else { return }
+    try await parseCSVFile(
+      filename: "ATC_BASE.csv",
+      requiredColumns: ["FACILITY_ID", "FACILITY_NAME", "FACILITY_TYPE", "CITY"]
+    ) { row in
+      let facilityID = try row["FACILITY_ID"]
+      let facilityName = try row["FACILITY_NAME"]
+      let facilityTypeStr = try row["FACILITY_TYPE"]
+      let city = try row["CITY"]
+      let stateCode = row[ifExists: "STATE_CODE"]
+      let ICAOID = row[ifExists: "ICAO_ID"]
 
-      // Map CSV fields to transformer indices
-      let indices = [
-        0,  // EFF_DATE -> 0
-        5,  // FACILITY_ID -> 1
-        9,  // FACILITY_NAME -> 2
-        6,  // CITY -> 3
-        -1,  // No cross reference in CSV
-        3,  // FACILITY_TYPE -> 5
-        0,  // EFF_DATE again -> 6
-        -1,  // STATE_NAME not in CSV
-        4,  // STATE_CODE -> 8
-        -1,  // No lat formatted
-        -1,  // No lat decimal
-        -1,  // No lon formatted
-        -1,  // No lon decimal
-        8,  // ICAO_ID -> 13
-        -1  // blank
-      ]
-
-      let transformedValues = try self.generalTransformer.applyTo(fields, indices: indices)
-
-      // Use custom parser for facility type instead of the transformed value
-      let facilityType = self.parseFacilityType(fields[3])
+      // Parse facility type - skip non-ARTCC records (terminal comm facilities)
+      guard let facilityType = try self.parseFacilityType(facilityTypeStr) else { return }
 
       let center = ARTCC(
-        code: transformedValues[1] as! String,
-        ICAOID: transformedValues[13] as? String,
+        code: facilityID,
+        ICAOID: ICAOID,
         type: facilityType,
-        name: transformedValues[2] as! String,
+        name: facilityName,
         alternateName: nil,
-        locationName: transformedValues[3] as! String,
-        stateCode: transformedValues[8] as? String,
+        locationName: city,
+        stateCode: stateCode,
         location: nil  // Would need to parse lat/lon if available
       )
 
@@ -78,23 +46,21 @@ actor CSVARTCCParser: CSVParser {
     }
 
     // Parse ATC_RMK.csv for remarks
-    try await parseCSVFile(filename: "ATC_RMK.csv", expectedFieldCount: 13) { fields in
-      guard fields.count >= 13 else { return }
+    try await parseCSVFile(
+      filename: "ATC_RMK.csv",
+      requiredColumns: ["FACILITY_TYPE", "FACILITY_ID", "CITY", "REMARK"]
+    ) { row in
+      let facilityTypeStr = try row["FACILITY_TYPE"]
+      let facilityID = try row["FACILITY_ID"]
+      let city = try row["CITY"]
+      let remark = try row["REMARK"]
 
-      // Only process remarks for ARTCC facility types
-      let facilityType = self.parseFacilityType(fields[3])
-      guard
-        facilityType == .ARTCC || facilityType == .CERAP || facilityType == .RCAG
-          || facilityType == .SECRA || facilityType == .ARSR
-      else { return }
-
-      let facilityID = fields[5].trimmingCharacters(in: .whitespaces)
-      let city = fields[6].trimmingCharacters(in: .whitespaces)
-      let remark = fields[12].trimmingCharacters(in: .whitespaces)
+      // Only process remarks for ARTCC facility types (skip terminal comm facilities)
+      guard let facilityType = try self.parseFacilityType(facilityTypeStr) else { return }
 
       guard !facilityID.isEmpty, !remark.isEmpty else { return }
 
-      let key = ARTCCKey(values: [nil, facilityID, city, facilityType])
+      let key = ARTCCKey(ID: facilityID, location: city, type: facilityType)
       if var center = self.ARTCCs[key] {
         center.remarks.append(.general(remark))
         self.ARTCCs[key] = center
@@ -102,23 +68,21 @@ actor CSVARTCCParser: CSVParser {
     }
 
     // Parse ATC_SVC.csv for services
-    try await parseCSVFile(filename: "ATC_SVC.csv", expectedFieldCount: 9) { fields in
-      guard fields.count >= 9 else { return }
+    try await parseCSVFile(
+      filename: "ATC_SVC.csv",
+      requiredColumns: ["FACILITY_TYPE", "FACILITY_ID", "CITY", "CTL_SVC"]
+    ) { row in
+      let facilityTypeStr = try row["FACILITY_TYPE"],
+        facilityID = try row["FACILITY_ID"],
+        city = try row["CITY"],
+        service = try row["CTL_SVC"]
 
-      // Only process services for ARTCC facility types
-      let facilityType = self.parseFacilityType(fields[3])
-      guard
-        facilityType == .ARTCC || facilityType == .CERAP || facilityType == .RCAG
-          || facilityType == .SECRA || facilityType == .ARSR
-      else { return }
-
-      let facilityID = fields[5].trimmingCharacters(in: .whitespaces)
-      let city = fields[6].trimmingCharacters(in: .whitespaces)
-      let service = fields[8].trimmingCharacters(in: .whitespaces)
+      // Only process services for ARTCC facility types (skip terminal comm facilities)
+      guard let facilityType = try self.parseFacilityType(facilityTypeStr) else { return }
 
       guard !facilityID.isEmpty, !service.isEmpty else { return }
 
-      let key = ARTCCKey(values: [nil, facilityID, city, facilityType])
+      let key = ARTCCKey(ID: facilityID, location: city, type: facilityType)
       if var center = self.ARTCCs[key] {
         center.services.append(service)
         self.ARTCCs[key] = center
@@ -133,7 +97,18 @@ actor CSVARTCCParser: CSVParser {
     await data.finishParsing(ARTCCs: Array(ARTCCs.values))
   }
 
-  private func parseFacilityType(_ type: String) -> ARTCC.FacilityType {
+  /// Parses ARTCC facility type from the CSV facility type string.
+  ///
+  /// Per aff_rf.txt layout, valid ARTCC facility types are:
+  /// - ARTCC: Air Route Traffic Control Center
+  /// - CERAP: Center Radar Approach Control Facility
+  /// - RCAG: Remote Communications Air/Ground
+  /// - ARSR: Air Route Surveillance Radar (removed from distribution as of 12/29/2022)
+  /// - SECRA: Secondary Radar (removed from distribution as of 12/29/2022)
+  ///
+  /// Returns nil for terminal communication facility types (TRACON, ATCT, etc.)
+  /// which should be handled by CSVTerminalCommFacilityParser instead.
+  private func parseFacilityType(_ type: String) throws -> ARTCC.FacilityType? {
     let upperType = type.uppercased().trimmingCharacters(in: .whitespaces).replacingOccurrences(
       of: "\"",
       with: ""
@@ -150,14 +125,12 @@ actor CSVARTCCParser: CSVParser {
         return .SECRA
       case "ARSR":
         return .ARSR
-      // Map TRACON and ATCT facilities to CERAP (Center Radar Approach Control)
-      // since they provide similar approach control services
+      // Terminal communication facilities - not ARTCC types, skip these records
       case "TRACON", "ATCT", "NON-ATCT", "ATCT-TRACON", "ATCT-A/C",
-        "ATCT-RAPCON", "ATCT-RATCF":
-        return .CERAP
+        "ATCT-RAPCON", "ATCT-RATCF", "ATCT-TRACAB", "TRACAB":
+        return nil
       default:
-        // Default to ARTCC for unknown types
-        return .ARTCC
+        throw ParserError.unknownRecordEnumValue(type)
     }
   }
 }

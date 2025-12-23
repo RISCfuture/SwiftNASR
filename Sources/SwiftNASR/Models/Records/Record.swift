@@ -30,5 +30,15 @@ extension RecordEnum {
   }
 }
 
+extension RecordEnum where RawValue == String {
+  /// Returns the enum value for the raw string, throwing if not found.
+  static func require(_ raw: String) throws -> Self {
+    guard let value = Self.for(raw) else {
+      throw ParserError.unknownRecordEnumValue(raw)
+    }
+    return value
+  }
+}
+
 /// Protocol representing fields that remarks can be applied to.
 public protocol RemarkField: Codable, Sendable, CaseIterable, Hashable {}

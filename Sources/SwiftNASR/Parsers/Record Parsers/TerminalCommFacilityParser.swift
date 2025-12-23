@@ -41,18 +41,12 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     .null,  // 12: airport longitude seconds [00194-00204]
     .string(nullable: .blank),  // 13: tie-in FSS ID [00205-00208]
     .string(nullable: .blank),  // 14: tie-in FSS name [00209-00238]
-    .generic({ try raw($0, toEnum: TerminalCommFacility.FacilityType.self) }, nullable: .blank),  // 15: facility type [00239-00250]
+    .recordEnum(TerminalCommFacility.FacilityType.self, nullable: .blank),  // 15: facility type [00239-00250]
     .string(nullable: .blank),  // 16: hours of operation [00251-00252]
-    .generic(
-      { try raw($0, toEnum: TerminalCommFacility.OperationRegularity.self) },
-      nullable: .blank
-    ),  // 17: operation regularity [00253-00255]
+    .recordEnum(TerminalCommFacility.OperationRegularity.self, nullable: .blank),  // 17: operation regularity [00253-00255]
     .string(nullable: .blank),  // 18: master airport ID [00256-00259]
     .string(nullable: .blank),  // 19: master airport name [00260-00309]
-    .generic(
-      { try raw($0, toEnum: TerminalCommFacility.DirectionFindingEquipmentType.self) },
-      nullable: .blank
-    ),  // 20: DF equipment [00310-00324]
+    .recordEnum(TerminalCommFacility.DirectionFindingEquipmentType.self, nullable: .blank),  // 20: DF equipment [00310-00324]
     .string(nullable: .blank),  // 21: off-airport facility name [00325-00374]
     .string(nullable: .blank),  // 22: off-airport city [00375-00414]
     .string(nullable: .blank),  // 23: off-airport state [00415-00434]
@@ -142,10 +136,10 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   private let radarTransformer = FixedWidthTransformer([
     .recordType,  //  0: record type (TWR5)
     .string(),  //  1: facility ID [00005-00008]
-    .generic({ try raw($0, toEnum: TerminalCommFacility.RadarType.self) }, nullable: .blank),  //  2: primary approach radar [00009-00017]
-    .generic({ try raw($0, toEnum: TerminalCommFacility.RadarType.self) }, nullable: .blank),  //  3: secondary approach radar [00018-00026]
-    .generic({ try raw($0, toEnum: TerminalCommFacility.RadarType.self) }, nullable: .blank),  //  4: primary departure radar [00027-00035]
-    .generic({ try raw($0, toEnum: TerminalCommFacility.RadarType.self) }, nullable: .blank),  //  5: secondary departure radar [00036-00044]
+    .recordEnum(TerminalCommFacility.RadarType.self, nullable: .blank),  //  2: primary approach radar [00009-00017]
+    .recordEnum(TerminalCommFacility.RadarType.self, nullable: .blank),  //  3: secondary approach radar [00018-00026]
+    .recordEnum(TerminalCommFacility.RadarType.self, nullable: .blank),  //  4: primary departure radar [00027-00035]
+    .recordEnum(TerminalCommFacility.RadarType.self, nullable: .blank),  //  5: secondary departure radar [00036-00044]
     .string(nullable: .blank),  //  6: radar type 1 [00045-00054]
     .string(nullable: .blank),  //  7: radar hours 1 [00055-00254]
     .string(nullable: .blank),  //  8: radar type 2 [00255-00264]
@@ -257,75 +251,121 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   }
 
   private func parseBaseRecord(_ values: [String]) throws {
-    let transformedValues = try baseTransformer.applyTo(values)
-
-    let facilityID = (transformedValues[1] as! String).trimmingCharacters(in: .whitespaces)
+    let t = try baseTransformer.applyTo(values),
+      facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
+      airportSiteNumber: String? = try t[optional: 3],
+      effectiveDateComponents: DateComponents? = try t[optional: 2],
+      regionCode: String? = try t[optional: 4],
+      stateName: String? = try t[optional: 5],
+      stateCode: String? = try t[optional: 6],
+      city: String? = try t[optional: 7],
+      airportName: String? = try t[optional: 8],
+      airportLat: Float? = try t[optional: 9],
+      airportLon: Float? = try t[optional: 11],
+      tieInFSSId: String? = try t[optional: 13],
+      tieInFSSName: String? = try t[optional: 14],
+      facilityType: TerminalCommFacility.FacilityType? = try t[optional: 15],
+      hoursOfOperation: String? = try t[optional: 16],
+      operationRegularity: TerminalCommFacility.OperationRegularity? = try t[optional: 17],
+      masterAirportId: String? = try t[optional: 18],
+      masterAirportName: String? = try t[optional: 19],
+      directionFindingEquipment: TerminalCommFacility.DirectionFindingEquipmentType? = try t[
+        optional: 20
+      ],
+      offAirportFacilityName: String? = try t[optional: 21],
+      offAirportCity: String? = try t[optional: 22],
+      offAirportState: String? = try t[optional: 23],
+      offAirportStateCode: String? = try t[optional: 25],
+      offAirportRegionCode: String? = try t[optional: 26],
+      ASRLat: Float? = try t[optional: 27],
+      ASRLon: Float? = try t[optional: 29],
+      DFLat: Float? = try t[optional: 31],
+      DFLon: Float? = try t[optional: 33],
+      towerOperator: String? = try t[optional: 35],
+      militaryOperator: String? = try t[optional: 36],
+      primaryApproachOperator: String? = try t[optional: 37],
+      secondaryApproachOperator: String? = try t[optional: 38],
+      primaryDepartureOperator: String? = try t[optional: 39],
+      secondaryDepartureOperator: String? = try t[optional: 40],
+      towerRadioCall: String? = try t[optional: 41],
+      militaryRadioCall: String? = try t[optional: 42],
+      primaryApproachRadioCall: String? = try t[optional: 43],
+      secondaryApproachRadioCall: String? = try t[optional: 44],
+      primaryDepartureRadioCall: String? = try t[optional: 45],
+      secondaryDepartureRadioCall: String? = try t[optional: 46]
 
     let position = try makeLocation(
-      latitude: transformedValues[9] as? Float,
-      longitude: transformedValues[11] as? Float,
+      latitude: airportLat,
+      longitude: airportLon,
       context: "terminal comm facility \(facilityID) airport position"
     )
 
-    let asrPosition = try makeLocation(
-      latitude: transformedValues[27] as? Float,
-      longitude: transformedValues[29] as? Float,
+    let ASRPosition = try makeLocation(
+      latitude: ASRLat,
+      longitude: ASRLon,
       context: "terminal comm facility \(facilityID) ASR position"
     )
 
-    let dfPosition = try makeLocation(
-      latitude: transformedValues[31] as? Float,
-      longitude: transformedValues[33] as? Float,
+    let DFPosition = try makeLocation(
+      latitude: DFLat,
+      longitude: DFLon,
       context: "terminal comm facility \(facilityID) DF position"
     )
 
     let facility = TerminalCommFacility(
       facilityId: facilityID,
-      airportSiteNumber: transformedValues[3] as? String,
-      effectiveDateComponents: transformedValues[2] as? DateComponents,
-      regionCode: transformedValues[4] as? String,
-      stateName: transformedValues[5] as? String,
-      stateCode: transformedValues[6] as? String,
-      city: transformedValues[7] as? String,
-      airportName: transformedValues[8] as? String,
+      airportSiteNumber: airportSiteNumber,
+      effectiveDateComponents: effectiveDateComponents,
+      regionCode: regionCode,
+      stateName: stateName,
+      stateCode: stateCode,
+      city: city,
+      airportName: airportName,
       position: position,
-      tieInFSSId: transformedValues[13] as? String,
-      tieInFSSName: transformedValues[14] as? String,
-      facilityType: transformedValues[15] as? TerminalCommFacility.FacilityType,
-      hoursOfOperation: transformedValues[16] as? String,
-      operationRegularity: transformedValues[17] as? TerminalCommFacility.OperationRegularity,
-      masterAirportId: transformedValues[18] as? String,
-      masterAirportName: transformedValues[19] as? String,
-      directionFindingEquipment: transformedValues[20]
-        as? TerminalCommFacility.DirectionFindingEquipmentType,
-      offAirportFacilityName: transformedValues[21] as? String,
-      offAirportCity: transformedValues[22] as? String,
-      offAirportState: transformedValues[23] as? String,
-      offAirportStateCode: transformedValues[25] as? String,
-      offAirportRegionCode: transformedValues[26] as? String,
-      ASRPosition: asrPosition,
-      DFPosition: dfPosition,
-      towerOperator: transformedValues[35] as? String,
-      militaryOperator: transformedValues[36] as? String,
-      primaryApproachOperator: transformedValues[37] as? String,
-      secondaryApproachOperator: transformedValues[38] as? String,
-      primaryDepartureOperator: transformedValues[39] as? String,
-      secondaryDepartureOperator: transformedValues[40] as? String,
-      towerRadioCall: transformedValues[41] as? String,
-      militaryRadioCall: transformedValues[42] as? String,
-      primaryApproachRadioCall: transformedValues[43] as? String,
-      secondaryApproachRadioCall: transformedValues[44] as? String,
-      primaryDepartureRadioCall: transformedValues[45] as? String,
-      secondaryDepartureRadioCall: transformedValues[46] as? String
+      tieInFSSId: tieInFSSId,
+      tieInFSSName: tieInFSSName,
+      facilityType: facilityType,
+      hoursOfOperation: hoursOfOperation,
+      operationRegularity: operationRegularity,
+      masterAirportId: masterAirportId,
+      masterAirportName: masterAirportName,
+      directionFindingEquipment: directionFindingEquipment,
+      offAirportFacilityName: offAirportFacilityName,
+      offAirportCity: offAirportCity,
+      offAirportState: offAirportState,
+      offAirportStateCode: offAirportStateCode,
+      offAirportRegionCode: offAirportRegionCode,
+      ASRPosition: ASRPosition,
+      DFPosition: DFPosition,
+      towerOperator: towerOperator,
+      militaryOperator: militaryOperator,
+      primaryApproachOperator: primaryApproachOperator,
+      secondaryApproachOperator: secondaryApproachOperator,
+      primaryDepartureOperator: primaryDepartureOperator,
+      secondaryDepartureOperator: secondaryDepartureOperator,
+      towerRadioCall: towerRadioCall,
+      militaryRadioCall: militaryRadioCall,
+      primaryApproachRadioCall: primaryApproachRadioCall,
+      secondaryApproachRadioCall: secondaryApproachRadioCall,
+      primaryDepartureRadioCall: primaryDepartureRadioCall,
+      secondaryDepartureRadioCall: secondaryDepartureRadioCall
     )
 
     facilities[facilityID] = facility
   }
 
   private func parseHoursRecord(_ values: [String]) throws {
-    let transformedValues = try hoursTransformer.applyTo(values)
+    let t = try hoursTransformer.applyTo(values),
+      facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
+      pmsvHours: String? = try t[optional: 2],
+      macpHours: String? = try t[optional: 3],
+      militaryOperationsHours: String? = try t[optional: 4],
+      primaryApproachHours: String? = try t[optional: 5],
+      secondaryApproachHours: String? = try t[optional: 6],
+      primaryDepartureHours: String? = try t[optional: 7],
+      secondaryDepartureHours: String? = try t[optional: 8],
+      towerHours: String? = try t[optional: 9]
 
-    let facilityID = (transformedValues[1] as! String).trimmingCharacters(in: .whitespaces)
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
         parentType: "TerminalCommFacility",
@@ -334,20 +374,20 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
       )
     }
 
-    facilities[facilityID]?.pmsvHours = transformedValues[2] as? String
-    facilities[facilityID]?.macpHours = transformedValues[3] as? String
-    facilities[facilityID]?.militaryOperationsHours = transformedValues[4] as? String
-    facilities[facilityID]?.primaryApproachHours = transformedValues[5] as? String
-    facilities[facilityID]?.secondaryApproachHours = transformedValues[6] as? String
-    facilities[facilityID]?.primaryDepartureHours = transformedValues[7] as? String
-    facilities[facilityID]?.secondaryDepartureHours = transformedValues[8] as? String
-    facilities[facilityID]?.towerHours = transformedValues[9] as? String
+    facilities[facilityID]?.pmsvHours = pmsvHours
+    facilities[facilityID]?.macpHours = macpHours
+    facilities[facilityID]?.militaryOperationsHours = militaryOperationsHours
+    facilities[facilityID]?.primaryApproachHours = primaryApproachHours
+    facilities[facilityID]?.secondaryApproachHours = secondaryApproachHours
+    facilities[facilityID]?.primaryDepartureHours = primaryDepartureHours
+    facilities[facilityID]?.secondaryDepartureHours = secondaryDepartureHours
+    facilities[facilityID]?.towerHours = towerHours
   }
 
   private func parseFrequenciesRecord(_ values: [String]) throws {
-    let transformedValues = try frequenciesTransformer.applyTo(values)
+    let t = try frequenciesTransformer.applyTo(values),
+      facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces)
 
-    let facilityID = (transformedValues[1] as! String).trimmingCharacters(in: .whitespaces)
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
         parentType: "TerminalCommFacility",
@@ -358,15 +398,17 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     // Parse up to 9 frequency pairs
     for i in 0..<9 {
-      let freqIndex = 2 + (i * 2)
-      let useIndex = 3 + (i * 2)
+      let freqIndex = 2 + (i * 2),
+        useIndex = 3 + (i * 2),
+        freqString: String? = try t[optional: freqIndex],
+        use: String? = try t[optional: useIndex]
 
-      if let freqString = transformedValues[freqIndex] as? String, !freqString.isEmpty,
+      if let freqString, !freqString.isEmpty,
         let freqKHz = FixedWidthTransformer.parseFrequency(freqString)
       {
         let frequency = TerminalCommFacility.Frequency(
           frequencyKHz: freqKHz,
-          use: transformedValues[useIndex] as? String,
+          use: use,
           sectorization: nil
         )
         facilities[facilityID]?.frequencies.append(frequency)
@@ -375,9 +417,10 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   }
 
   private func parseServicesRecord(_ values: [String]) throws {
-    let transformedValues = try servicesTransformer.applyTo(values)
+    let t = try servicesTransformer.applyTo(values),
+      facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
+      masterAirportServices: String? = try t[optional: 2]
 
-    let facilityID = (transformedValues[1] as! String).trimmingCharacters(in: .whitespaces)
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
         parentType: "TerminalCommFacility",
@@ -386,13 +429,17 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
       )
     }
 
-    facilities[facilityID]?.masterAirportServices = transformedValues[2] as? String
+    facilities[facilityID]?.masterAirportServices = masterAirportServices
   }
 
   private func parseRadarRecord(_ values: [String]) throws {
-    let transformedValues = try radarTransformer.applyTo(values)
+    let t = try radarTransformer.applyTo(values),
+      facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
+      primaryApproachRadar: TerminalCommFacility.RadarType? = try t[optional: 2],
+      secondaryApproachRadar: TerminalCommFacility.RadarType? = try t[optional: 3],
+      primaryDepartureRadar: TerminalCommFacility.RadarType? = try t[optional: 4],
+      secondaryDepartureRadar: TerminalCommFacility.RadarType? = try t[optional: 5]
 
-    let facilityID = (transformedValues[1] as! String).trimmingCharacters(in: .whitespaces)
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
         parentType: "TerminalCommFacility",
@@ -405,23 +452,25 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     // Parse up to 4 radar equipment entries
     for i in 0..<4 {
-      let typeIndex = 6 + (i * 2)
-      let hoursIndex = 7 + (i * 2)
+      let typeIndex = 6 + (i * 2),
+        hoursIndex = 7 + (i * 2),
+        radarType: String? = try t[optional: typeIndex],
+        hours: String? = try t[optional: hoursIndex]
 
-      if let radarType = transformedValues[typeIndex] as? String, !radarType.isEmpty {
+      if let radarType, !radarType.isEmpty {
         let eq = TerminalCommFacility.Radar.RadarEquipment(
           radarType: radarType,
-          hours: transformedValues[hoursIndex] as? String
+          hours: hours
         )
         equipment.append(eq)
       }
     }
 
     var radar = TerminalCommFacility.Radar(
-      primaryApproachRadar: transformedValues[2] as? TerminalCommFacility.RadarType,
-      secondaryApproachRadar: transformedValues[3] as? TerminalCommFacility.RadarType,
-      primaryDepartureRadar: transformedValues[4] as? TerminalCommFacility.RadarType,
-      secondaryDepartureRadar: transformedValues[5] as? TerminalCommFacility.RadarType
+      primaryApproachRadar: primaryApproachRadar,
+      secondaryApproachRadar: secondaryApproachRadar,
+      primaryDepartureRadar: primaryDepartureRadar,
+      secondaryDepartureRadar: secondaryDepartureRadar
     )
     radar.equipment = equipment
 
@@ -429,9 +478,10 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   }
 
   private func parseRemarkRecord(_ values: [String]) throws {
-    let transformedValues = try remarkTransformer.applyTo(values)
+    let t = try remarkTransformer.applyTo(values),
+      facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
+      remark: String? = try t[optional: 3]
 
-    let facilityID = (transformedValues[1] as! String).trimmingCharacters(in: .whitespaces)
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
         parentType: "TerminalCommFacility",
@@ -440,15 +490,35 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
       )
     }
 
-    if let remark = transformedValues[3] as? String, !remark.isEmpty {
+    if let remark, !remark.isEmpty {
       facilities[facilityID]?.remarks.append(remark)
     }
   }
 
   private func parseSatelliteRecord(_ values: [String]) throws {
-    let transformedValues = try satelliteTransformer.applyTo(values)
+    let t = try satelliteTransformer.applyTo(values),
+      facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
+      truncatedFrequency: String? = try t[optional: 2],
+      frequencyUse: String? = try t[optional: 3],
+      airportSiteNumber: String? = try t[optional: 4],
+      airportId: String? = try t[optional: 5],
+      regionCode: String? = try t[optional: 6],
+      stateName: String? = try t[optional: 7],
+      stateCode: String? = try t[optional: 8],
+      city: String? = try t[optional: 9],
+      airportName: String? = try t[optional: 10],
+      satLat: Float? = try t[optional: 11],
+      satLon: Float? = try t[optional: 13],
+      FSSId: String? = try t[optional: 15],
+      FSSName: String? = try t[optional: 16],
+      masterAirportSiteNumber: String? = try t[optional: 17],
+      masterAirportRegionCode: String? = try t[optional: 18],
+      masterAirportStateName: String? = try t[optional: 19],
+      masterAirportStateCode: String? = try t[optional: 20],
+      masterAirportCity: String? = try t[optional: 21],
+      masterAirportName: String? = try t[optional: 22],
+      extendedFrequency: String? = try t[optional: 23]
 
-    let facilityID = (transformedValues[1] as! String).trimmingCharacters(in: .whitespaces)
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
         parentType: "TerminalCommFacility",
@@ -459,46 +529,49 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     // Use extended frequency if available, otherwise use truncated
     let frequencyString =
-      (transformedValues[23] as? String)?.isEmpty == false
-      ? transformedValues[23] as? String
-      : transformedValues[2] as? String
+      extendedFrequency?.isEmpty == false ? extendedFrequency : truncatedFrequency
     let frequencyKHz: UInt? =
       if let frequencyString { FixedWidthTransformer.parseFrequency(frequencyString) } else { nil }
 
     let satPosition = try makeLocation(
-      latitude: transformedValues[11] as? Float,
-      longitude: transformedValues[13] as? Float,
+      latitude: satLat,
+      longitude: satLon,
       context: "terminal comm facility \(facilityID) satellite airport position"
     )
 
     let satellite = TerminalCommFacility.SatelliteAirport(
       frequencyKHz: frequencyKHz,
-      frequencyUse: transformedValues[3] as? String,
-      airportSiteNumber: transformedValues[4] as? String,
-      airportId: transformedValues[5] as? String,
-      regionCode: transformedValues[6] as? String,
-      stateName: transformedValues[7] as? String,
-      stateCode: transformedValues[8] as? String,
-      city: transformedValues[9] as? String,
-      airportName: transformedValues[10] as? String,
+      frequencyUse: frequencyUse,
+      airportSiteNumber: airportSiteNumber,
+      airportId: airportId,
+      regionCode: regionCode,
+      stateName: stateName,
+      stateCode: stateCode,
+      city: city,
+      airportName: airportName,
       position: satPosition,
-      FSSId: transformedValues[15] as? String,
-      FSSName: transformedValues[16] as? String,
-      masterAirportSiteNumber: transformedValues[17] as? String,
-      masterAirportRegionCode: transformedValues[18] as? String,
-      masterAirportStateName: transformedValues[19] as? String,
-      masterAirportStateCode: transformedValues[20] as? String,
-      masterAirportCity: transformedValues[21] as? String,
-      masterAirportName: transformedValues[22] as? String
+      FSSId: FSSId,
+      FSSName: FSSName,
+      masterAirportSiteNumber: masterAirportSiteNumber,
+      masterAirportRegionCode: masterAirportRegionCode,
+      masterAirportStateName: masterAirportStateName,
+      masterAirportStateCode: masterAirportStateCode,
+      masterAirportCity: masterAirportCity,
+      masterAirportName: masterAirportName
     )
 
     facilities[facilityID]?.satelliteAirports.append(satellite)
   }
 
   private func parseAirspaceRecord(_ values: [String]) throws {
-    let transformedValues = try airspaceTransformer.applyTo(values)
+    let t = try airspaceTransformer.applyTo(values),
+      facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
+      classBStr: String? = try t[optional: 2],
+      classCStr: String? = try t[optional: 3],
+      classDStr: String? = try t[optional: 4],
+      classEStr: String? = try t[optional: 5],
+      hours: String? = try t[optional: 6]
 
-    let facilityID = (transformedValues[1] as! String).trimmingCharacters(in: .whitespaces)
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
         parentType: "TerminalCommFacility",
@@ -507,26 +580,29 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
       )
     }
 
-    let classB = (transformedValues[2] as? String)?.uppercased() == "Y"
-    let classC = (transformedValues[3] as? String)?.uppercased() == "Y"
-    let classD = (transformedValues[4] as? String)?.uppercased() == "Y"
-    let classE = (transformedValues[5] as? String)?.uppercased() == "Y"
+    let classB = try ParserHelpers.parseYNFlagRequired(classBStr, fieldName: "classB"),
+      classC = try ParserHelpers.parseYNFlagRequired(classCStr, fieldName: "classC"),
+      classD = try ParserHelpers.parseYNFlagRequired(classDStr, fieldName: "classD"),
+      classE = try ParserHelpers.parseYNFlagRequired(classEStr, fieldName: "classE")
 
     let airspace = TerminalCommFacility.Airspace(
       classB: classB,
       classC: classC,
       classD: classD,
       classE: classE,
-      hours: transformedValues[6] as? String
+      hours: hours
     )
 
     facilities[facilityID]?.airspace = airspace
   }
 
   private func parseATISRecord(_ values: [String]) throws {
-    let transformedValues = try ATISTransformer.applyTo(values)
+    let t = try ATISTransformer.applyTo(values),
+      facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
+      hours: String? = try t[optional: 3],
+      description: String? = try t[optional: 4],
+      phoneNumber: String? = try t[optional: 5]
 
-    let facilityID = (transformedValues[1] as! String).trimmingCharacters(in: .whitespaces)
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
         parentType: "TerminalCommFacility",
@@ -535,15 +611,15 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
       )
     }
 
-    guard let serialNumber = transformedValues[2] as? UInt else {
+    guard let serialNumber: UInt = try t[optional: 2] else {
       throw ParserError.missingRequiredField(field: "serialNumber", recordType: "TWR9")
     }
 
     let atis = TerminalCommFacility.ATIS(
       serialNumber: serialNumber,
-      hours: transformedValues[3] as? String,
-      description: transformedValues[4] as? String,
-      phoneNumber: transformedValues[5] as? String
+      hours: hours,
+      description: description,
+      phoneNumber: phoneNumber
     )
 
     facilities[facilityID]?.ATISInfo.append(atis)

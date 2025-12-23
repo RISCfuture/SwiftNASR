@@ -17,7 +17,7 @@ extension FixedWidthParser {
 
   func format(forRecordIdentifier identifier: RecordIdentifier) -> NASRTable {
     guard let index = Self.layoutFormatOrder.firstIndex(of: identifier) else {
-      preconditionFailure("No configured layout format for '\(identifier.rawValue)'")
+      preconditionFailure("No configured layout format for ‘\(identifier.rawValue)’")
     }
     guard index < formats.count else {
       preconditionFailure(
@@ -47,7 +47,7 @@ extension FixedWidthParser {
       throw ParserError.badData("Invalid ISO-Latin1 character")
     }
     guard let identifier = RecordIdentifier(rawValue: identifierString) else {
-      throw ParserError.badData("Invalid record identifier '\(identifierString)'")
+      throw ParserError.badData("Invalid record identifier ‘\(identifierString)’")
     }
 
     return identifier
@@ -62,23 +62,31 @@ enum FixedWidthParserError: Swift.Error, CustomStringConvertible {
   case invalidGeodesic(_ value: String, at: Int)
   case conversionError(_ value: String, error: Swift.Error, at: Int)
   case invalidValue(_ value: String, at: Int)
+  case typeMismatch(at: Int, expected: Any.Type, actual: Any.Type)
 
   var description: String {
     switch self {
       case let .required(field):
-        return "Field #\(field) is required"
+        return String(localized: "Field #\(field) is required")
       case let .invalidNumber(value, field):
-        return "Field #\(field) contains invalid number '\(value)'"
+        return String(localized: "Field #\(field) contains invalid number ‘\(value)’")
       case let .invalidDate(value, field):
-        return "Field #\(field) contains invalid date '\(value)'"
+        return String(localized: "Field #\(field) contains invalid date ‘\(value)’")
       case let .invalidFrequency(value, field):
-        return "Field #\(field) contains invalid frequency '\(value)'"
+        return String(localized: "Field #\(field) contains invalid frequency ‘\(value)’")
       case let .invalidGeodesic(value, field):
-        return "Field #\(field) contains invalid geodesic '\(value)'"
+        return String(localized: "Field #\(field) contains invalid geodesic ‘\(value)’")
       case let .conversionError(_, error, field):
-        return "Field #\(field) contains invalid value: \(error)"
+        return String(
+          localized: "Field #\(field) contains invalid value: \(String(describing: error))"
+        )
       case let .invalidValue(value, field):
-        return "Field #\(field) contains invalid value '\(value)'"
+        return String(localized: "Field #\(field) contains invalid value ‘\(value)’")
+      case let .typeMismatch(field, expected, actual):
+        return String(
+          localized:
+            "Field #\(field) type mismatch: expected \(String(describing: expected)), got \(String(describing: actual))"
+        )
     }
   }
 }

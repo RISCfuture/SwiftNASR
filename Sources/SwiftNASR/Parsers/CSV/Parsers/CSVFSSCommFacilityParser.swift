@@ -14,42 +14,27 @@ actor CSVFSSCommFacilityParser: CSVParser {
 
   var facilities = [FSSCommFacility]()
 
-  // CSV field indices from COM_CSV_DATA_STRUCTURE.csv:
-  // 0: EFF_DATE, 1: COMM_LOC_ID, 2: COMM_TYPE, 3: NAV_ID, 4: NAV_TYPE,
-  // 5: CITY, 6: STATE_CODE, 7: REGION_CODE, 8: COUNTRY_CODE, 9: COMM_OUTLET_NAME,
-  // 10-14: LAT (DEG/MIN/SEC/HEMIS/DECIMAL), 15-19: LONG (DEG/MIN/SEC/HEMIS/DECIMAL),
-  // 20: FACILITY_ID, 21: FACILITY_NAME, 22: ALT_FSS_ID, 23: ALT_FSS_NAME,
-  // 24: OPR_HRS, 25: COMM_STATUS_CODE, 26: COMM_STATUS_DATE, 27: REMARK
-
   private let transformer = CSVTransformer([
-    .dateComponents(format: .yearMonthDaySlash, nullable: .blank),  // 0: EFF_DATE
-    .string(nullable: .blank),  // 1: COMM_LOC_ID
-    .string(nullable: .blank),  // 2: COMM_TYPE
-    .string(nullable: .blank),  // 3: NAV_ID
-    .string(nullable: .blank),  // 4: NAV_TYPE
-    .string(nullable: .blank),  // 5: CITY
-    .string(nullable: .blank),  // 6: STATE_CODE
-    .string(nullable: .blank),  // 7: REGION_CODE
-    .string(nullable: .blank),  // 8: COUNTRY_CODE
-    .string(nullable: .blank),  // 9: COMM_OUTLET_NAME
-    .unsignedInteger(nullable: .blank),  // 10: LAT_DEG
-    .unsignedInteger(nullable: .blank),  // 11: LAT_MIN
-    .float(nullable: .blank),  // 12: LAT_SEC
-    .string(nullable: .blank),  // 13: LAT_HEMIS
-    .float(nullable: .blank),  // 14: LAT_DECIMAL
-    .unsignedInteger(nullable: .blank),  // 15: LONG_DEG
-    .unsignedInteger(nullable: .blank),  // 16: LONG_MIN
-    .float(nullable: .blank),  // 17: LONG_SEC
-    .string(nullable: .blank),  // 18: LONG_HEMIS
-    .float(nullable: .blank),  // 19: LONG_DECIMAL
-    .string(nullable: .blank),  // 20: FACILITY_ID
-    .string(nullable: .blank),  // 21: FACILITY_NAME
-    .string(nullable: .blank),  // 22: ALT_FSS_ID
-    .string(nullable: .blank),  // 23: ALT_FSS_NAME
-    .string(nullable: .blank),  // 24: OPR_HRS
-    .string(nullable: .blank),  // 25: COMM_STATUS_CODE
-    .dateComponents(format: .yearMonthDaySlash, nullable: .blank),  // 26: COMM_STATUS_DATE
-    .string(nullable: .blank)  // 27: REMARK
+    .init("EFF_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("COMM_LOC_ID", .string(nullable: .blank)),
+    .init("COMM_TYPE", .string(nullable: .blank)),
+    .init("NAV_ID", .string(nullable: .blank)),
+    .init("NAV_TYPE", .string(nullable: .blank)),
+    .init("CITY", .string(nullable: .blank)),
+    .init("STATE_CODE", .string(nullable: .blank)),
+    .init("REGION_CODE", .string(nullable: .blank)),
+    .init("COUNTRY_CODE", .string(nullable: .blank)),
+    .init("COMM_OUTLET_NAME", .string(nullable: .blank)),
+    .init("LAT_DECIMAL", .float(nullable: .blank)),
+    .init("LONG_DECIMAL", .float(nullable: .blank)),
+    .init("FACILITY_ID", .string(nullable: .blank)),
+    .init("FACILITY_NAME", .string(nullable: .blank)),
+    .init("ALT_FSS_ID", .string(nullable: .blank)),
+    .init("ALT_FSS_NAME", .string(nullable: .blank)),
+    .init("OPR_HRS", .string(nullable: .blank)),
+    .init("COMM_STATUS_CODE", .string(nullable: .blank)),
+    .init("COMM_STATUS_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("REMARK", .string(nullable: .blank))
   ])
 
   func prepare(distribution: Distribution) throws {
@@ -57,22 +42,23 @@ actor CSVFSSCommFacilityParser: CSVParser {
   }
 
   func parse(data _: Data) async throws {
-    try await parseCSVFile(filename: "COM.csv", expectedFieldCount: 28) { fields in
-      guard fields.count >= 20 else { return }
+    try await parseCSVFile(
+      filename: "COM.csv",
+      requiredColumns: ["COMM_LOC_ID"]
+    ) { row in
+      let t = try self.transformer.applyTo(row)
 
-      let transformedValues = try self.transformer.applyTo(fields, indices: Array(0..<28))
-
-      let outletID = (transformedValues[1] as? String ?? "").trimmingCharacters(in: .whitespaces)
+      let outletID = (try t[optional: "COMM_LOC_ID"] ?? "").trimmingCharacters(in: .whitespaces)
       guard !outletID.isEmpty else { return }
 
       // Parse outlet type
-      let outletTypeStr = (transformedValues[2] as? String ?? "").trimmingCharacters(
+      let outletTypeStr: String = (try t[optional: "COMM_TYPE"] ?? "").trimmingCharacters(
         in: .whitespaces
       )
       let outletType = FSSCommFacility.OutletType(rawValue: outletTypeStr)
 
       // Parse navaid type from full name (CSV has full name like "VOR/DME" not short code)
-      let navaidTypeStr = (transformedValues[4] as? String ?? "").trimmingCharacters(
+      let navaidTypeStr: String = (try t[optional: "NAV_TYPE"] ?? "").trimmingCharacters(
         in: .whitespaces
       )
       let navaidType: Navaid.FacilityType? =
@@ -84,9 +70,9 @@ actor CSVFSSCommFacilityParser: CSVParser {
 
       // Parse outlet position from decimal degrees
       let outletPosition: Location? = {
-        if let lat = transformedValues[14] as? Float,
-          let lon = transformedValues[19] as? Float
-        {
+        let lat: Float? = try? t[optional: "LAT_DECIMAL"]
+        let lon: Float? = try? t[optional: "LONG_DECIMAL"]
+        if let lat, let lon {
           // Convert decimal degrees to arc-seconds
           return Location(
             latitudeArcsec: lat * 3600,
@@ -98,7 +84,9 @@ actor CSVFSSCommFacilityParser: CSVParser {
       }()
 
       // Parse status - CSV uses single character code
-      let statusCode = (transformedValues[25] as? String ?? "").trimmingCharacters(in: .whitespaces)
+      let statusCode: String = (try t[optional: "COMM_STATUS_CODE"] ?? "").trimmingCharacters(
+        in: .whitespaces
+      )
       let status: FSS.Status? =
         switch statusCode {
           case "A": .operationalIFR
@@ -108,24 +96,24 @@ actor CSVFSSCommFacilityParser: CSVParser {
       let facility = FSSCommFacility(
         outletIdentifier: outletID,
         outletType: outletType,
-        navaidIdentifier: transformedValues[3] as? String,
+        navaidIdentifier: try t[optional: "NAV_ID"],
         navaidType: navaidType,
         navaidCity: nil,  // Not in CSV format
         navaidState: nil,  // Not in CSV format
         navaidName: nil,  // Not in CSV format
         navaidPosition: nil,  // Not in CSV format
-        outletCity: transformedValues[5] as? String,
-        outletState: transformedValues[6] as? String,
+        outletCity: try t[optional: "CITY"],
+        outletState: try t[optional: "STATE_CODE"],
         regionName: nil,  // Not in CSV format
-        regionCode: transformedValues[7] as? String,
+        regionCode: try t[optional: "REGION_CODE"],
         outletPosition: outletPosition,
-        outletCall: transformedValues[9] as? String,
+        outletCall: try t[optional: "COMM_OUTLET_NAME"],
         frequencies: [],  // Not in CSV format
-        FSSIdentifier: transformedValues[20] as? String,
-        FSSName: transformedValues[21] as? String,
-        alternateFSSIdentifier: transformedValues[22] as? String,
-        alternateFSSName: transformedValues[23] as? String,
-        operationalHours: transformedValues[24] as? String,
+        FSSIdentifier: try t[optional: "FACILITY_ID"],
+        FSSName: try t[optional: "FACILITY_NAME"],
+        alternateFSSIdentifier: try t[optional: "ALT_FSS_ID"],
+        alternateFSSName: try t[optional: "ALT_FSS_NAME"],
+        operationalHours: try t[optional: "OPR_HRS"],
         ownerCode: nil,  // Not in CSV format
         ownerName: nil,  // Not in CSV format
         operatorCode: nil,  // Not in CSV format
@@ -133,7 +121,7 @@ actor CSVFSSCommFacilityParser: CSVParser {
         charts: [],  // Not in CSV format
         timeZone: nil,  // Not in CSV format
         status: status,
-        statusDateComponents: transformedValues[26] as? DateComponents
+        statusDateComponents: try t[optional: "COMM_STATUS_DATE"]
       )
 
       self.facilities.append(facility)

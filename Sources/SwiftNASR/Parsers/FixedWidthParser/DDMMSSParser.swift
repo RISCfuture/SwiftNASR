@@ -40,7 +40,16 @@ final class DDMMSSParser: Sendable {
     let quadrant = match[quadrantRef]
     let seconds = match[secondsRef]
 
-    let sign: Double = (quadrant == "S" || quadrant == "W") ? -1 : 1
+    // Determine sign based on quadrant (N/E positive, S/W negative)
+    let sign: Double
+    switch quadrant {
+      case "N", "E": sign = 1
+      case "S", "W": sign = -1
+      default:
+        // The regex already constrains to NESW, but be defensive
+        throw ParserError.invalidValue("coordinate quadrant: \(quadrant)")
+    }
+
     // Convert DMS to arc-seconds: degrees*3600 + minutes*60 + seconds
     let arcSeconds = Double(degrees) * 3600.0 + Double(minutes) * 60.0 + seconds
 

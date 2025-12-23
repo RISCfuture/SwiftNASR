@@ -47,10 +47,11 @@ actor FixedWidthAirwayParser: FixedWidthParser {
 
   // AWY1 - Basic and MEA data
   // Layout positions based on awy_rf.txt
+  // Note: Per awy_rf.txt, airway type field uses "A" = Alaska, "H" = Hawaii, "BLANK" = U.S. Federal Airway
   private let basicTransformer = FixedWidthTransformer([
     .recordType,  //  0 record type (AWY1)
     .string(),  //  1 airway designation
-    .generic({ try raw($0, toEnum: Airway.AirwayType.self) }, nullable: .blank),  //  2 airway type
+    .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type (blank = federal per layout)
     .unsignedInteger(),  //  3 point sequence number
     .null,  //  4 effective date
     .string(nullable: .blank),  //  5 track angle outbound (RNAV)
@@ -97,7 +98,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   private let pointTransformer = FixedWidthTransformer([
     .recordType,  //  0 record type (AWY2)
     .string(),  //  1 airway designation
-    .generic({ try raw($0, toEnum: Airway.AirwayType.self) }, nullable: .blank),  //  2 airway type
+    .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type
     .unsignedInteger(),  //  3 point sequence number
     .string(nullable: .blank),  //  4 navaid/fix name
     .string(nullable: .blank),  //  5 navaid/fix type
@@ -117,7 +118,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   private let changeoverTransformer = FixedWidthTransformer([
     .recordType,  //  0 record type (AWY3)
     .string(),  //  1 airway designation
-    .generic({ try raw($0, toEnum: Airway.AirwayType.self) }, nullable: .blank),  //  2 airway type
+    .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type
     .unsignedInteger(),  //  3 point sequence number
     .string(nullable: .blank),  //  4 navaid name
     .string(nullable: .blank),  //  5 navaid type
@@ -132,7 +133,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   private let pointRemarkTransformer = FixedWidthTransformer([
     .recordType,  //  0 record type (AWY4)
     .string(),  //  1 airway designation
-    .generic({ try raw($0, toEnum: Airway.AirwayType.self) }, nullable: .blank),  //  2 airway type
+    .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type
     .unsignedInteger(),  //  3 point sequence number
     .string(nullable: .blank),  //  4 remark text
     .null,  //  5 blanks
@@ -143,7 +144,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   private let changeoverExceptionTransformer = FixedWidthTransformer([
     .recordType,  //  0 record type (AWY5)
     .string(),  //  1 airway designation
-    .generic({ try raw($0, toEnum: Airway.AirwayType.self) }, nullable: .blank),  //  2 airway type
+    .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type
     .unsignedInteger(),  //  3 point sequence number
     .string(nullable: .blank),  //  4 exception text
     .null,  //  5 blanks
@@ -154,7 +155,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   private let airwayRemarkTransformer = FixedWidthTransformer([
     .recordType,  //  0 record type (RMK )
     .string(),  //  1 airway designation
-    .generic({ try raw($0, toEnum: Airway.AirwayType.self) }, nullable: .blank),  //  2 airway type
+    .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type
     .null,  //  3 remark sequence number
     .string(nullable: .blank),  //  4 remark reference
     .string(nullable: .blank),  //  5 remark text
@@ -209,14 +210,13 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   }
 
   private func parseBasicRecord(_ values: [String]) throws {
-    let transformedValues = try basicTransformer.applyTo(values)
-
-    let designation = transformedValues[1] as! String
-    let type = transformedValues[2] as? Airway.AirwayType ?? .federal
-    let sequenceNumber = transformedValues[3] as! UInt
-
-    let airwayKey = AirwayKey(designation: designation, type: type)
-    let segmentKey = SegmentKey(airwayKey: airwayKey, sequenceNumber: sequenceNumber)
+    let t = try basicTransformer.applyTo(values),
+      designation: String = try t[1],
+      // Blank = U.S. Federal Airway per awy_rf.txt layout
+      type: Airway.AirwayType = try t[optional: 2] ?? .federal,
+      sequenceNumber: UInt = try t[3],
+      airwayKey = AirwayKey(designation: designation, type: type),
+      segmentKey = SegmentKey(airwayKey: airwayKey, sequenceNumber: sequenceNumber)
 
     // Create or get the airway
     if airways[airwayKey] == nil {
@@ -224,26 +224,34 @@ actor FixedWidthAirwayParser: FixedWidthParser {
     }
 
     // Create altitude info
-    let altitudes = Airway.SegmentAltitudes(
-      MEAFt: transformedValues[13] as? UInt,
-      MEADirection: try parseBoundDirection(transformedValues[14] as? String),
-      MEAOppositeFt: transformedValues[15] as? UInt,
-      MEAOppositeDirection: try parseBoundDirection(transformedValues[16] as? String),
-      MAAFt: transformedValues[17] as? UInt,
-      MOCAFt: transformedValues[18] as? UInt,
-      MCAFt: transformedValues[21] as? UInt,
-      MCADirection: try parseBoundDirection(transformedValues[22] as? String),
-      MCAOppositeFt: transformedValues[23] as? UInt,
-      MCAOppositeDirection: try parseBoundDirection(transformedValues[24] as? String),
-      GNSS_MEAFt: transformedValues[31] as? UInt,
-      GNSS_MEADirection: try parseBoundDirection(transformedValues[32] as? String),
-      GNSS_MEAOppositeFt: transformedValues[33] as? UInt,
-      GNSS_MEAOppositeDirection: try parseBoundDirection(transformedValues[34] as? String),
-      DME_MEAFt: transformedValues[36] as? UInt,
-      DME_MEADirection: try parseBoundDirection(transformedValues[37] as? String),
-      DME_MEAOppositeFt: transformedValues[38] as? UInt,
-      DME_MEAOppositeDirection: try parseBoundDirection(transformedValues[39] as? String)
-    )
+    let MEADir: String? = try t[optional: 14],
+      MEAOppDir: String? = try t[optional: 16],
+      MCADir: String? = try t[optional: 22],
+      MCAOppDir: String? = try t[optional: 24],
+      GNSS_MEADir: String? = try t[optional: 32],
+      GNSS_MEAOppDir: String? = try t[optional: 34],
+      DME_MEADir: String? = try t[optional: 37],
+      DME_MEAOppDir: String? = try t[optional: 39],
+      altitudes = Airway.SegmentAltitudes(
+        MEAFt: try t[optional: 13],
+        MEADirection: try parseBoundDirection(MEADir),
+        MEAOppositeFt: try t[optional: 15],
+        MEAOppositeDirection: try parseBoundDirection(MEAOppDir),
+        MAAFt: try t[optional: 17],
+        MOCAFt: try t[optional: 18],
+        MCAFt: try t[optional: 21],
+        MCADirection: try parseBoundDirection(MCADir),
+        MCAOppositeFt: try t[optional: 23],
+        MCAOppositeDirection: try parseBoundDirection(MCAOppDir),
+        GNSS_MEAFt: try t[optional: 31],
+        GNSS_MEADirection: try parseBoundDirection(GNSS_MEADir),
+        GNSS_MEAOppositeFt: try t[optional: 33],
+        GNSS_MEAOppositeDirection: try parseBoundDirection(GNSS_MEAOppDir),
+        DME_MEAFt: try t[optional: 36],
+        DME_MEADirection: try parseBoundDirection(DME_MEADir),
+        DME_MEAOppositeFt: try t[optional: 38],
+        DME_MEAOppositeDirection: try parseBoundDirection(DME_MEAOppDir)
+      )
 
     // Create placeholder point (will be populated by AWY2)
     let point =
@@ -261,59 +269,58 @@ actor FixedWidthAirwayParser: FixedWidthParser {
 
     // Create segment
     // Field 12 is "distance to next point in segment", field 8 is RNAV-specific
-    let segment = Airway.Segment(
-      sequenceNumber: sequenceNumber,
-      point: point,
-      changeoverPoint: changeoverPoints[segmentKey],
-      altitudes: altitudes,
-      distanceToNextNM: transformedValues[12] as? Float,
-      magneticCourseDeg: transformedValues[10] as? Float,
-      magneticCourseOppositeDeg: transformedValues[11] as? Float,
-      trackAngleOutbound: try (transformedValues[5] as? String).map {
-        try TrackAnglePair(parsing: $0)
-      },
-      trackAngleInbound: try (transformedValues[7] as? String).map {
-        try TrackAnglePair(parsing: $0)
-      },
-      hasSignalCoverageGap: transformedValues[25] as? Bool,
-      isUSAirspaceOnly: transformedValues[26] as? Bool,
-      isAirwayGap: transformedValues[19] as? Bool,
-      isDogleg: transformedValues[40] as? Bool,
-      ARTCCID: transformedValues[28] as? String
-    )
+    let trackOutbound: String? = try t[optional: 5],
+      trackInbound: String? = try t[optional: 7],
+      segment = Airway.Segment(
+        sequenceNumber: sequenceNumber,
+        point: point,
+        changeoverPoint: changeoverPoints[segmentKey],
+        altitudes: altitudes,
+        distanceToNextNM: try t[optional: 12],
+        magneticCourseDeg: try t[optional: 10],
+        magneticCourseOppositeDeg: try t[optional: 11],
+        trackAngleOutbound: try trackOutbound.map { try TrackAnglePair(parsing: $0) },
+        trackAngleInbound: try trackInbound.map { try TrackAnglePair(parsing: $0) },
+        hasSignalCoverageGap: try t[optional: 25],
+        isUSAirspaceOnly: try t[optional: 26],
+        isAirwayGap: try t[optional: 19],
+        isDogleg: try t[optional: 40],
+        ARTCCID: try t[optional: 28]
+      )
 
     segments[segmentKey] = segment
   }
 
   private func parsePointRecord(_ values: [String]) throws {
-    let transformedValues = try pointTransformer.applyTo(values)
+    let t = try pointTransformer.applyTo(values),
+      designation: String = try t[1],
+      // Blank = U.S. Federal Airway per awy_rf.txt layout
+      type: Airway.AirwayType = try t[optional: 2] ?? .federal,
+      sequenceNumber: UInt = try t[3],
+      airwayKey = AirwayKey(designation: designation, type: type),
+      segmentKey = SegmentKey(airwayKey: airwayKey, sequenceNumber: sequenceNumber)
 
-    let designation = transformedValues[1] as! String
-    let type = transformedValues[2] as? Airway.AirwayType ?? .federal
-    let sequenceNumber = transformedValues[3] as! UInt
+    let lat: Float? = try t[optional: 9],
+      lon: Float? = try t[optional: 10],
+      ptPosition = try makeLocation(
+        latitude: lat,
+        longitude: lon,
+        context: "airway \(designation) point \(sequenceNumber)"
+      )
 
-    let airwayKey = AirwayKey(designation: designation, type: type)
-    let segmentKey = SegmentKey(airwayKey: airwayKey, sequenceNumber: sequenceNumber)
-
-    let ptPosition = try makeLocation(
-      latitude: transformedValues[9] as? Float,
-      longitude: transformedValues[10] as? Float,
-      context: "airway \(designation) point \(sequenceNumber)"
-    )
-
-    let pointName = transformedValues[4] as? String
-    let pointTypeStr = transformedValues[5] as? String
-    let pointType = pointTypeStr.flatMap { Airway.PointType(rawValue: $0) }
-    let point = Airway.Point(
-      sequenceNumber: sequenceNumber,
-      name: pointName,
-      pointType: pointType,
-      position: ptPosition,
-      stateCode: transformedValues[7] as? String,
-      ICAORegionCode: transformedValues[8] as? String,
-      navaidId: transformedValues[12] as? String,
-      minimumReceptionAltitudeFt: transformedValues[11] as? UInt
-    )
+    let pointName: String? = try t[optional: 4],
+      pointTypeStr: String? = try t[optional: 5],
+      pointType = pointTypeStr.flatMap { Airway.PointType(rawValue: $0) },
+      point = Airway.Point(
+        sequenceNumber: sequenceNumber,
+        name: pointName,
+        pointType: pointType,
+        position: ptPosition,
+        stateCode: try t[optional: 7],
+        ICAORegionCode: try t[optional: 8],
+        navaidId: try t[optional: 12],
+        minimumReceptionAltitudeFt: try t[optional: 11]
+      )
 
     points[segmentKey] = point
 
@@ -341,27 +348,28 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   }
 
   private func parseChangeoverRecord(_ values: [String]) throws {
-    let transformedValues = try changeoverTransformer.applyTo(values)
+    let t = try changeoverTransformer.applyTo(values),
+      designation: String = try t[1],
+      // Blank = U.S. Federal Airway per awy_rf.txt layout
+      type: Airway.AirwayType = try t[optional: 2] ?? .federal,
+      sequenceNumber: UInt = try t[3],
+      airwayKey = AirwayKey(designation: designation, type: type),
+      segmentKey = SegmentKey(airwayKey: airwayKey, sequenceNumber: sequenceNumber)
 
-    let designation = transformedValues[1] as! String
-    let type = transformedValues[2] as? Airway.AirwayType ?? .federal
-    let sequenceNumber = transformedValues[3] as! UInt
-
-    let airwayKey = AirwayKey(designation: designation, type: type)
-    let segmentKey = SegmentKey(airwayKey: airwayKey, sequenceNumber: sequenceNumber)
-
-    let copPosition = try makeLocation(
-      latitude: transformedValues[7] as? Float,
-      longitude: transformedValues[8] as? Float,
-      context: "airway \(designation) changeover point \(sequenceNumber)"
-    )
+    let lat: Float? = try t[optional: 7],
+      lon: Float? = try t[optional: 8],
+      copPosition = try makeLocation(
+        latitude: lat,
+        longitude: lon,
+        context: "airway \(designation) changeover point \(sequenceNumber)"
+      )
 
     let changeoverPoint = Airway.ChangeoverPoint(
       distanceNM: nil,  // Distance comes from AWY1 record
-      navaidName: transformedValues[4] as? String,
-      navaidType: transformedValues[5] as? String,
+      navaidName: try t[optional: 4],
+      navaidType: try t[optional: 5],
       position: copPosition,
-      stateCode: transformedValues[6] as? String
+      stateCode: try t[optional: 6]
     )
 
     changeoverPoints[segmentKey] = changeoverPoint
@@ -390,18 +398,18 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   }
 
   private func parsePointRemark(_ values: [String]) throws {
-    let transformedValues = try pointRemarkTransformer.applyTo(values)
+    let t = try pointRemarkTransformer.applyTo(values),
+      designation: String = try t[1],
+      // Blank = U.S. Federal Airway per awy_rf.txt layout
+      type: Airway.AirwayType = try t[optional: 2] ?? .federal,
+      sequenceNumber: UInt = try t[3]
 
-    let designation = transformedValues[1] as! String
-    let type = transformedValues[2] as? Airway.AirwayType ?? .federal
-    let sequenceNumber = transformedValues[3] as! UInt
-
-    guard let remarkText = transformedValues[4] as? String, !remarkText.isEmpty else {
+    guard let remarkText: String = try t[optional: 4], !remarkText.isEmpty else {
       return
     }
 
-    let airwayKey = AirwayKey(designation: designation, type: type)
-    let segmentKey = SegmentKey(airwayKey: airwayKey, sequenceNumber: sequenceNumber)
+    let airwayKey = AirwayKey(designation: designation, type: type),
+      segmentKey = SegmentKey(airwayKey: airwayKey, sequenceNumber: sequenceNumber)
 
     // Update point remarks
     if var point = points[segmentKey] {
@@ -411,18 +419,18 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   }
 
   private func parseChangeoverException(_ values: [String]) throws {
-    let transformedValues = try changeoverExceptionTransformer.applyTo(values)
+    let t = try changeoverExceptionTransformer.applyTo(values),
+      designation: String = try t[1],
+      // Blank = U.S. Federal Airway per awy_rf.txt layout
+      type: Airway.AirwayType = try t[optional: 2] ?? .federal,
+      sequenceNumber: UInt = try t[3]
 
-    let designation = transformedValues[1] as! String
-    let type = transformedValues[2] as? Airway.AirwayType ?? .federal
-    let sequenceNumber = transformedValues[3] as! UInt
-
-    guard let exceptionText = transformedValues[4] as? String, !exceptionText.isEmpty else {
+    guard let exceptionText: String = try t[optional: 4], !exceptionText.isEmpty else {
       return
     }
 
-    let airwayKey = AirwayKey(designation: designation, type: type)
-    let segmentKey = SegmentKey(airwayKey: airwayKey, sequenceNumber: sequenceNumber)
+    let airwayKey = AirwayKey(designation: designation, type: type),
+      segmentKey = SegmentKey(airwayKey: airwayKey, sequenceNumber: sequenceNumber)
 
     // Update segment changeover exceptions
     if var segment = segments[segmentKey] {
@@ -432,12 +440,12 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   }
 
   private func parseAirwayRemark(_ values: [String]) throws {
-    let transformedValues = try airwayRemarkTransformer.applyTo(values)
+    let t = try airwayRemarkTransformer.applyTo(values),
+      designation: String = try t[1],
+      // Blank = U.S. Federal Airway per awy_rf.txt layout
+      type: Airway.AirwayType = try t[optional: 2] ?? .federal
 
-    let designation = transformedValues[1] as! String
-    let type = transformedValues[2] as? Airway.AirwayType ?? .federal
-
-    guard let remarkText = transformedValues[5] as? String, !remarkText.isEmpty else {
+    guard let remarkText: String = try t[optional: 5], !remarkText.isEmpty else {
       return
     }
 

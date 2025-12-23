@@ -42,7 +42,7 @@ actor FixedWidthParachuteJumpAreaParser: LayoutDataParser {
       case "PJA5":
         try parseRemarks(line, PJAId: PJAId)
       default:
-        break
+        throw ParserError.unknownRecordIdentifier(recordType)
     }
   }
 
@@ -126,8 +126,8 @@ actor FixedWidthParachuteJumpAreaParser: LayoutDataParser {
       dropZoneName: dropZone.isEmpty ? nil : dropZone,
       maxAltitude: maxAlt.isEmpty ? nil : try Altitude(parsing: maxAlt),
       radiusNM: Double(radiusStr),
-      sectionalChartingRequired: parseYesNo(sectionalStr),
-      publishedInAFD: parseYesNo(afdStr),
+      sectionalChartingRequired: try parseYesNo(sectionalStr),
+      publishedInAFD: try parseYesNo(afdStr),
       additionalDescription: additionalDesc.isEmpty ? nil : additionalDesc,
       FSSIdentifier: FSSIdent.isEmpty ? nil : FSSIdent,
       FSSName: FSSName.isEmpty ? nil : FSSName,
@@ -233,9 +233,15 @@ actor FixedWidthParachuteJumpAreaParser: LayoutDataParser {
       facilityName: facilityName.isEmpty ? nil : facilityName,
       relatedLocationId: relatedLocID.isEmpty ? nil : relatedLocID,
       commercialFrequencyKHz: Double(commFreqStr).map { UInt($0 * 1000) },
-      commercialCharted: commChartFlag == "Y",
+      commercialCharted: try ParserHelpers.parseYNFlagRequired(
+        commChartFlag,
+        fieldName: "commercialCharted"
+      ),
       militaryFrequencyKHz: Double(milFreqStr).map { UInt($0 * 1000) },
-      militaryCharted: milChartFlag == "Y",
+      militaryCharted: try ParserHelpers.parseYNFlagRequired(
+        milChartFlag,
+        fieldName: "militaryCharted"
+      ),
       sector: sector.isEmpty ? nil : sector,
       altitude: altitude.isEmpty ? nil : altitude
     )
@@ -342,11 +348,12 @@ actor FixedWidthParachuteJumpAreaParser: LayoutDataParser {
   }
 
   /// Parse YES/NO string to Bool
-  private func parseYesNo(_ str: String) -> Bool? {
+  private func parseYesNo(_ str: String) throws -> Bool? {
     switch str.uppercased() {
+      case "": return nil
       case "YES", "Y": return true
       case "NO", "N": return false
-      default: return nil
+      default: throw ParserError.unknownRecordEnumValue(str)
     }
   }
 }

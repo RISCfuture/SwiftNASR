@@ -14,11 +14,13 @@ extension FixedWidthAirportParser {
 
   func parseRemarkRecord(_ values: [String]) throws {
     if values[4].trimmingCharacters(in: .whitespaces).isEmpty { return }
-    let transformedValues = try remarkTransformer.applyTo(values)
+    let t = try remarkTransformer.applyTo(values)
 
-    guard var airport = airports[transformedValues[1] as! String] else { return }
-    let fieldID = String((transformedValues[3] as! String).split(separator: Character(" "))[0])
-    let remark = transformedValues[4] as! String
+    let airportID: String = try t[1]
+    guard var airport = airports[airportID] else { return }
+    let dataElement: String = try t[3]
+    let fieldID = String(dataElement.split(separator: Character(" "))[0])
+    let remark: String = try t[4]
 
     var remarkParsed = false
     if try tryAirportGeneralRemark(remark, &airport, fieldID) {
@@ -36,7 +38,7 @@ extension FixedWidthAirportParser {
     }
     if !remarkParsed { throw AirportRemarksError.unknownFieldID(fieldID, airport: airport) }
 
-    airports[transformedValues[1] as! String] = airport
+    airports[airportID] = airport
   }
 
   private func tryAirportGeneralRemark(
@@ -393,17 +395,19 @@ enum AirportRemarksError: Swift.Error, CustomStringConvertible {
   var description: String {
     switch self {
       case let .invalidGeneralRemarkSequence(airport, fieldID):
-        return "Invalid general remarks sequence for field '\(fieldID)' at '\(airport.LID)'"
+        return String(
+          localized: "Invalid general remarks sequence for field ‘\(fieldID)’ at ‘\(airport.LID)’"
+        )
       case let .unknownFieldID(fieldID, airport):
-        return "Unknown field ID '\(fieldID)' at '\(airport.LID)'"
+        return String(localized: "Unknown field ID ‘\(fieldID)’ at ‘\(airport.LID)’")
       case let .invalidFieldID(fieldID, airport):
-        return "Invalid field ID '\(fieldID)' at '\(airport.LID)'"
+        return String(localized: "Invalid field ID ‘\(fieldID)’ at ‘\(airport.LID)’")
       case let .unknownRunway(runwayID, airport):
-        return "Unknown runway '\(runwayID)' at '\(airport.LID)'"
+        return String(localized: "Unknown runway ‘\(runwayID)’ at ‘\(airport.LID)’")
       case let .unknownRunwayEnd(endID, airport):
-        return "Unknown runway end '\(endID)' at '\(airport.LID)'"
+        return String(localized: "Unknown runway end ‘\(endID)’ at ‘\(airport.LID)’")
       case let .unknownFuelType(fuelType, airport):
-        return "Unknown fuel type '\(fuelType)' at '\(airport.LID)'"
+        return String(localized: "Unknown fuel type ‘\(fuelType)’ at ‘\(airport.LID)’")
     }
   }
 }

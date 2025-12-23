@@ -68,25 +68,30 @@ enum ParserError: Swift.Error, CustomStringConvertible {
   var description: String {
     switch self {
       case .badData(let reason):
-        return "Invalid data: \(reason)"
+        return String(localized: "Invalid data: \(reason)")
       case .unknownRecordIdentifier(let identifier):
-        return "Unknown record identifier '\(identifier)'"
+        return String(localized: "Unknown record identifier ‘\(identifier)’")
       case .unknownRecordEnumValue(let value):
-        return "Unknown record value '\(value)'"
+        return String(localized: "Unknown record value ‘\(String(describing: value))’")
       case .invalidValue(let value):
-        return "Invalid value '\(value)'"
+        return String(localized: "Invalid value ‘\(String(describing: value))’")
       case let .truncatedRecord(recordType, expected, actual):
-        return
-          "Truncated \(recordType) record: expected at least \(expected) characters, got \(actual)"
+        return String(
+          localized:
+            "Truncated \(recordType) record: expected at least \(expected) characters, got \(actual)"
+        )
       case let .missingRequiredField(field, recordType):
-        return "Missing required field '\(field)' in \(recordType) record"
+        return String(localized: "Missing required field ‘\(field)’ in \(recordType) record")
       case let .invalidLocation(latitude, longitude, context):
-        return
-          "Invalid location (lat: \(latitude.map { String($0) } ?? "nil"), lon: \(longitude.map { String($0) } ?? "nil")) in \(context)"
+        let latStr = latitude.map { String($0) } ?? "nil"
+        let lonStr = longitude.map { String($0) } ?? "nil"
+        return String(localized: "Invalid location (lat: \(latStr), lon: \(lonStr)) in \(context)")
       case let .unknownParentRecord(parentType, parentID, childType):
-        return "\(childType) record references unknown \(parentType) '\(parentID)'"
+        return String(
+          localized: "\(childType) record references unknown \(parentType) ‘\(parentID)’"
+        )
       case let .invalidSequenceNumber(value, recordType):
-        return "Invalid sequence number '\(value)' in \(recordType) record"
+        return String(localized: "Invalid sequence number ‘\(value)’ in \(recordType) record")
     }
   }
 }

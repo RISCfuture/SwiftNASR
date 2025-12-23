@@ -31,51 +31,53 @@ extension CSVParser {
     return prog
   }
 
-  /// Helper method to parse a CSV file using raw string arrays.
-  /// Streams data directly from the distribution using true streaming (no buffering).
+  /// Parse a CSV file with header-based row access.
+  ///
+  /// This method reads the header row to build a column name to index mapping,
+  /// then provides each data row as a `CSVRow` with named field access.
+  ///
+  /// - Parameters:
+  ///   - filename: The CSV file to parse.
+  ///   - requiredColumns: Column names that must exist (validated before parsing rows).
+  ///   - handler: Closure receiving each data row as a `CSVRow`.
+  /// - Throws: `CSVParserError.missingRequiredColumns` if required columns are missing.
   func parseCSVFile(
     filename: String,
-    expectedFieldCount: Int,
-    handler: ([String]) async throws -> Void
+    requiredColumns: [String] = [],
+    handler: (CSVRow) async throws -> Void
   ) async throws {
     guard let distribution else {
       throw ParserError.badData("Distribution not set for CSV parser")
     }
 
     let dataStream = await distribution.readFileRaw(path: filename) { _ in }
+    // FAA data files use Latin-1 (ISO-8859-1) encoding for special characters like degree symbols
+    let rowStream = StreamingCSVReader.stream(from: dataStream, encoding: .isoLatin1)
 
-    // Use true streaming - rows are parsed as data arrives
-    let rowStream = StreamingCSVReader.stream(from: dataStream)
+    var headerMap: CSVHeaderMap?
 
-    var isFirstRow = true
     for try await rowBytes in rowStream {
-      // Skip header row
-      if isFirstRow {
-        isFirstRow = false
-        continue
-      }
-
       let row = rowBytes.stringFields
 
-      // More flexible field count validation
-      // Allow rows with fewer fields if they're mostly empty at the end
-      // or rows with slightly more fields (might have extra commas)
-      if row.count < expectedFieldCount - 5 || row.count > expectedFieldCount + 5 {
-        // Skip rows with field count mismatches
+      // First row is the header
+      if headerMap == nil {
+        headerMap = CSVHeaderMap(headerRow: row)
+        try headerMap!.validate(requiredColumns: requiredColumns)
         continue
       }
 
-      // Pad or trim the row to expected field count
-      var adjustedRow = row
-      if row.count < expectedFieldCount {
-        // Pad with empty strings
-        adjustedRow.append(contentsOf: Array(repeating: "", count: expectedFieldCount - row.count))
-      } else if row.count > expectedFieldCount {
-        // Trim extra fields
-        adjustedRow = Array(row.prefix(expectedFieldCount))
+      // Skip empty rows (e.g., trailing blank lines)
+      if row.isEmpty || (row.count == 1 && row[0].isEmpty) {
+        continue
       }
 
-      try await handler(adjustedRow)
+      // Skip rows with fewer fields than the header (truncated rows)
+      if row.count < headerMap!.columnNames.count {
+        continue
+      }
+
+      let csvRow = CSVRow(headerMap: headerMap!, values: row)
+      try await handler(csvRow)
     }
   }
 }

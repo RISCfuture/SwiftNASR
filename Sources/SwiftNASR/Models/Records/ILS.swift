@@ -107,19 +107,19 @@ public struct ILS: ParentRecord {
     case LDA = "LDA"
 
     /// ILS with Distance Measuring Equipment.
-    case ILSDME = "ILS/DME"
+    case ILS_DME = "ILS/DME"
 
     /// SDF with Distance Measuring Equipment.
-    case SDFDME = "SDF/DME"
+    case SDF_DME = "SDF/DME"
 
     /// Localizer with Distance Measuring Equipment.
-    case LOCDME = "LOC/DME"
+    case LOC_DME = "LOC/DME"
 
     /// Localizer with Glide Slope.
-    case LOCGS = "LOC/GS"
+    case LOC_GS = "LOC/GS"
 
     /// LDA with Distance Measuring Equipment.
-    case LDADME = "LDA/DME"
+    case LDA_DME = "LDA/DME"
 
     /// Local Area Augmentation System (GBAS).
     case LAAS = "LAAS"
@@ -128,10 +128,13 @@ public struct ILS: ParentRecord {
       [
         "LS": .ILS,
         "LD": .LDA,
-        "LG": .LOCGS,
-        "LE": .ILSDME,
+        "LG": .LOC_GS,
+        "LE": .ILS_DME,
         "SD": .SDF,
-        "LC": .localizer
+        "SF": .SDF,  // Alternative CSV code for SDF
+        "LC": .localizer,
+        "DD": .LOC_DME,  // CSV code for LOC/DME
+        "LA": .LAAS  // CSV code for LAAS/GBAS
       ]
     }
   }

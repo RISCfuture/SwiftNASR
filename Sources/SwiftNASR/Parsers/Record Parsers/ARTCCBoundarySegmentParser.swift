@@ -53,18 +53,18 @@ actor FixedWidthARTCCBoundarySegmentParser: Parser {
       return String(data: data[range], encoding: .isoLatin1) ?? ""
     }
 
-    let transformedValues = try transformer.applyTo(values)
-
-    let recordId = (transformedValues[0] as! String).trimmingCharacters(in: .whitespaces)
+    let t = try transformer.applyTo(values),
+      rawRecordId: String = try t[0],
+      recordId = rawRecordId.trimmingCharacters(in: .whitespaces)
     guard !recordId.isEmpty else {
       throw ParserError.missingRequiredField(field: "recordIdentifier", recordType: "ARB")
     }
 
     // Parse the record identifier components
     // Format: ARTCC ID (3) + Altitude code (1) + Point designator (8)
-    let ARTCCId = String(recordId.prefix(3)).trimmingCharacters(in: .whitespaces)
-    let altitudeCode: String
-    let pointDesignator: String
+    let ARTCCId = String(recordId.prefix(3)).trimmingCharacters(in: .whitespaces),
+      altitudeCode: String,
+      pointDesignator: String
     if recordId.count >= 4 {
       altitudeCode = String(recordId[recordId.index(recordId.startIndex, offsetBy: 3)])
       pointDesignator =
@@ -75,21 +75,21 @@ actor FixedWidthARTCCBoundarySegmentParser: Parser {
       pointDesignator = ""
     }
 
-    let lat = transformedValues[3] as! Double
-    let lon = transformedValues[4] as! Double
-    let position = Location(latitudeDeg: lat, longitudeDeg: lon)
+    let lat: Double = try t[3],
+      lon: Double = try t[4],
+      position = Location(latitudeDeg: lat, longitudeDeg: lon)
 
     let segment = ARTCCBoundarySegment(
       recordIdentifier: recordId,
       ARTCCIdentifier: ARTCCId,
       altitudeStructure: ARTCCBoundarySegment.AltitudeStructure(rawValue: altitudeCode),
       pointDesignator: pointDesignator,
-      centerName: transformedValues[1] as! String,
-      altitudeStructureName: transformedValues[2] as! String,
+      centerName: try t[1],
+      altitudeStructureName: try t[2],
       position: position,
-      boundaryDescription: transformedValues[5] as! String,
-      sequenceNumber: transformedValues[6] as! UInt,
-      NASDescriptionOnly: transformedValues[7] as? Bool
+      boundaryDescription: try t[5],
+      sequenceNumber: try t[6],
+      NASDescriptionOnly: try t[optional: 7]
     )
 
     segments.append(segment)

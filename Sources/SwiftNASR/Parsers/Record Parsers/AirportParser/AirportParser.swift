@@ -24,14 +24,11 @@ actor FixedWidthAirportParser: FixedWidthParser {
   private let airportTransformer = FixedWidthTransformer([
     .recordType,  //   0 record type
     .string(),  //   1 site number
-    .generic { try raw($0, toEnum: Airport.FacilityType.self) },  //   2 facility type
+    .recordEnum(Airport.FacilityType.self),  //   2 facility type
     .string(),  //   3 LID
     .null,  //   4 effective date
 
-    .generic(
-      { try raw($0, toEnum: Airport.FAARegion.self) },
-      nullable: .blank
-    ),  //   5 region code
+    .recordEnum(Airport.FAARegion.self, nullable: .blank),  //   5 region code
     .string(nullable: .sentinel(["NONE"])),  //   6 field office code
     .string(nullable: .blank),  //   7 state post office code
     .null,  //   8 state name
@@ -40,7 +37,7 @@ actor FixedWidthAirportParser: FixedWidthParser {
     .string(),  //  11 city
     .string(),  //  12 airport name
 
-    .generic { try raw($0, toEnum: Airport.Ownership.self) },  //  13 ownership type
+    .recordEnum(Airport.Ownership.self),  //  13 ownership type
     .boolean(trueValue: "PU"),  //  14 facility use
     .string(nullable: .blank),  //  15 owner's name
     .string(nullable: .blank),  //  16 owner's address
@@ -55,21 +52,15 @@ actor FixedWidthAirportParser: FixedWidthParser {
     .null,  //  24 lat - decimal
     .DDMMSS(),  //  25 lon - formatted
     .null,  //  26 lon - decimal
-    .generic { try raw($0, toEnum: SurveyMethod.self) },  // 27 ARP determination method
+    .recordEnum(SurveyMethod.self),  // 27 ARP determination method
     .float(),  //  28 elevation
-    .generic(
-      { try raw($0, toEnum: SurveyMethod.self) },
-      nullable: .blank
-    ),  //  29 elevation determination method
+    .recordEnum(SurveyMethod.self, nullable: .blank),  //  29 elevation determination method
     .generic({ try parseMagVar($0, fieldIndex: 30) }, nullable: .blank),  //  30 magvar
     .dateComponents(format: .yearOnly, nullable: .blank),  //  31 magvar epoch
     .integer(nullable: .blank),  //  32 TPA
     .string(nullable: .blank),  //  33 sectional
     .unsignedInteger(nullable: .blank),  //  34 distance to city
-    .generic(
-      { return try raw($0, toEnum: Direction.self) },
-      nullable: .blank
-    ),  //  35 direction city -> airport
+    .recordEnum(Direction.self, nullable: .blank),  //  35 direction city -> airport
     .float(nullable: .blank),  //  36 land area
 
     .string(),  //  37 ARTCC ID
@@ -98,27 +89,18 @@ actor FixedWidthAirportParser: FixedWidthParser {
       emptyPlaceholders: ["BLANK"]
     ),  //  55 ARFF certification type and date
     .fixedWidthArray(
-      convert: { try raw($0, toEnum: Airport.FederalAgreement.self) },
+      convert: { try Airport.FederalAgreement.require($0) },
       nullable: .compact,
       emptyPlaceholders: ["NONE", "BLANK"]
     ),  //  56 federal agreements code
-    .generic(
-      { try raw($0, toEnum: Airport.AirspaceAnalysisDetermination.self) },
-      nullable: .blank
-    ),  //  57 airspace analysis determination
+    .recordEnum(Airport.AirspaceAnalysisDetermination.self, nullable: .blank),  //  57 airspace analysis determination
     .boolean(nullable: .blank),  //  58 airport of entry
     .boolean(nullable: .blank),  //  59 customs airport
     .boolean(nullable: .blank),  //  60 joint use
     .boolean(nullable: .blank),  //  61 military landing rights
 
-    .generic(
-      { try raw($0, toEnum: Airport.InspectionMethod.self) },
-      nullable: .blank
-    ),  //  62 inspection method
-    .generic(
-      { try raw($0, toEnum: Airport.InspectionAgency.self) },
-      nullable: .blank
-    ),  //  63 inspection agency
+    .recordEnum(Airport.InspectionMethod.self, nullable: .blank),  //  62 inspection method
+    .recordEnum(Airport.InspectionAgency.self, nullable: .blank),  //  63 inspection agency
     .dateComponents(
       format: .monthDayYear,
       nullable: .blank
@@ -133,23 +115,17 @@ actor FixedWidthAirportParser: FixedWidthParser {
       convert: { Airport.FuelType(rawValue: $0) },
       nullable: .compact
     ),  //  66 available fuel types
-    .generic(
-      { try raw($0, toEnum: Airport.RepairService.self) },
-      nullable: .blank
-    ),  //  67 airframe repair available
-    .generic(
-      { try raw($0, toEnum: Airport.RepairService.self) },
-      nullable: .blank
-    ),  //  68 powerplant repair available
+    .recordEnum(Airport.RepairService.self, nullable: .blank),  //  67 airframe repair available
+    .recordEnum(Airport.RepairService.self, nullable: .blank),  //  68 powerplant repair available
     .delimitedArray(
       delimiter: "/",
-      convert: { try raw($0, toEnum: Airport.OxygenPressure.self) },
+      convert: { try Airport.OxygenPressure.require($0) },
       nullable: .compact,
       emptyPlaceholders: ["NONE"]
     ),  //  69 bottled oxygen available
     .delimitedArray(
       delimiter: "/",
-      convert: { try raw($0, toEnum: Airport.OxygenPressure.self) },
+      convert: { try Airport.OxygenPressure.require($0) },
       nullable: .compact,
       emptyPlaceholders: ["NONE"]
     ),  //  70 bulk oxygen available
@@ -162,14 +138,11 @@ actor FixedWidthAirportParser: FixedWidthParser {
     .generic(
       { segCir in
         segCir == "NONE"
-          ? Airport.AirportMarker.none : try raw(segCir, toEnum: Airport.AirportMarker.self)
+          ? Airport.AirportMarker.none : try Airport.AirportMarker.require(segCir)
       },
       nullable: .blank
     ),  //  76 segmented circle
-    .generic(
-      { try raw($0, toEnum: Airport.LensColor.self) },
-      nullable: .blank
-    ),  //  77 beacon color
+    .recordEnum(Airport.LensColor.self, nullable: .blank),  //  77 beacon color
     .boolean(nullable: .blank),  //  78 landing fee
     .boolean(nullable: .blank),  //  79 medical use
 
@@ -205,18 +178,15 @@ actor FixedWidthAirportParser: FixedWidthParser {
     .boolean(nullable: .blank),  //  98 contract fuel available
     .delimitedArray(
       delimiter: ",",
-      convert: { try raw($0, toEnum: Airport.StorageFacility.self) },
+      convert: { try Airport.StorageFacility.require($0) },
       nullable: .compact
     ),  // 99 transient storage facilities
     .delimitedArray(
       delimiter: ",",
-      convert: { try raw($0, toEnum: Airport.Service.self) },
+      convert: { try Airport.Service.require($0) },
       nullable: .compact
     ),  // 100 other services
-    .generic(
-      { try raw($0, toEnum: Airport.AirportMarker.self) },
-      nullable: .blank
-    ),  // 101 wind indicator
+    .recordEnum(Airport.AirportMarker.self, nullable: .blank),  // 101 wind indicator
     .string(nullable: .blank),  // 102 ICAO code
     .boolean(),  // 103 MON
     .null  // 104 blank
@@ -240,123 +210,121 @@ actor FixedWidthAirportParser: FixedWidthParser {
   }
 
   private func parseAirportRecord(_ values: [String]) throws {
-    let transformedValues = try airportTransformer.applyTo(values)
+    let t = try airportTransformer.applyTo(values)
 
-    let owner = parsePerson(values: transformedValues[15...18])
-    let manager = parsePerson(values: transformedValues[19...22])
+    let owner = try parsePerson(t: t, startIndex: 15),
+      manager = try parsePerson(t: t, startIndex: 19)
 
-    let ARFFCapability = try (transformedValues[55] as! [String]).presence.map { ARFFString in
-      guard let ARFFClass = Airport.ARFFCapability.Class(rawValue: ARFFString[0]) else {
-        throw FixedWidthParserError.invalidValue(ARFFString[0], at: 55)
+    let ARFFStrings: [String] = try t[55],
+      ARFFCapability = try ARFFStrings.presence.map { ARFFString in
+        guard let ARFFClass = Airport.ARFFCapability.Class(rawValue: ARFFString[0]) else {
+          throw FixedWidthParserError.invalidValue(ARFFString[0], at: 55)
+        }
+        guard let ARFFIndex = Airport.ARFFCapability.Index(rawValue: ARFFString[1]) else {
+          throw FixedWidthParserError.invalidValue(ARFFString[1], at: 55)
+        }
+        guard let ARFFService = Airport.ARFFCapability.AirService(rawValue: ARFFString[2]) else {
+          throw FixedWidthParserError.invalidValue(ARFFString[2], at: 55)
+        }
+        guard let ARFFDateComponents = DateFormat.monthYear.parse(ARFFString[3]) else {
+          throw FixedWidthParserError.invalidValue(ARFFString[3], at: 55)
+        }
+        return Airport.ARFFCapability(
+          class: ARFFClass,
+          index: ARFFIndex,
+          airService: ARFFService,
+          certificationDateComponents: ARFFDateComponents
+        )
       }
-      guard let ARFFIndex = Airport.ARFFCapability.Index(rawValue: ARFFString[1]) else {
-        throw FixedWidthParserError.invalidValue(ARFFString[1], at: 55)
-      }
-      guard let ARFFService = Airport.ARFFCapability.AirService(rawValue: ARFFString[2]) else {
-        throw FixedWidthParserError.invalidValue(ARFFString[2], at: 55)
-      }
-      guard let ARFFDateComponents = DateFormat.monthYear.parse(ARFFString[3]) else {
-        throw FixedWidthParserError.invalidValue(ARFFString[3], at: 55)
-      }
-      return Airport.ARFFCapability(
-        class: ARFFClass,
-        index: ARFFIndex,
-        airService: ARFFService,
-        certificationDateComponents: ARFFDateComponents
-      )
-    }
 
-    let location = Location(
-      latitudeArcsec: transformedValues[23] as! Float,
-      longitudeArcsec: transformedValues[25] as! Float,
-      elevationFtMSL: (transformedValues[28] as! Float)
-    )
+    let lat: Float = try t[23],
+      lon: Float = try t[25],
+      elev: Float = try t[28],
+      location = Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: elev)
 
     let airport = Airport(
-      id: transformedValues[1] as! String,
-      name: transformedValues[12] as! String,
-      LID: transformedValues[3] as! String,
-      ICAOIdentifier: transformedValues[102] as! String?,
-      facilityType: transformedValues[2] as! Airport.FacilityType,
-      faaRegion: transformedValues[5] as! Airport.FAARegion?,
-      FAAFieldOfficeCode: transformedValues[6] as! String?,
-      stateCode: transformedValues[7] as! String?,
-      county: transformedValues[9] as! String,
-      countyStateCode: transformedValues[10] as! String,
-      city: transformedValues[11] as! String,
-      ownership: transformedValues[13] as! Airport.Ownership,
-      publicUse: transformedValues[14] as! Bool,
+      id: try t[1],
+      name: try t[12],
+      LID: try t[3],
+      ICAOIdentifier: try t[optional: 102],
+      facilityType: try t[2],
+      faaRegion: try t[optional: 5],
+      FAAFieldOfficeCode: try t[optional: 6],
+      stateCode: try t[optional: 7],
+      county: try t[9],
+      countyStateCode: try t[10],
+      city: try t[11],
+      ownership: try t[13],
+      publicUse: try t[14],
       owner: owner,
       manager: manager,
       referencePoint: location,
-      referencePointDeterminationMethod: transformedValues[27]
-        as! SurveyMethod,
-      elevationDeterminationMethod: transformedValues[29] as? SurveyMethod,
-      magneticVariationDeg: transformedValues[30] as! Int?,
-      magneticVariationEpochComponents: transformedValues[31] as! DateComponents?,
-      trafficPatternAltitudeFtAGL: transformedValues[32] as! Int?,
-      sectionalChart: transformedValues[33] as! String?,
-      distanceCityToAirportNM: transformedValues[34] as! UInt?,
-      directionCityToAirport: transformedValues[35] as! Direction?,
-      landAreaAcres: transformedValues[36] as! Float?,
-      boundaryARTCCId: transformedValues[37] as? String,
-      responsibleARTCCId: transformedValues[40] as! String,
-      tieInFSSOnStation: transformedValues[43] as! Bool?,
-      tieInFSSId: transformedValues[44] as! String,
-      alternateFSSId: transformedValues[48] as! String?,
-      NOTAMIssuerId: transformedValues[51] as! String?,
-      NOTAMDAvailable: transformedValues[52] as! Bool?,
-      activationDateComponents: transformedValues[53] as! DateComponents?,
-      status: transformedValues[54] as! Airport.Status,
+      referencePointDeterminationMethod: try t[27],
+      elevationDeterminationMethod: try t[optional: 29],
+      magneticVariationDeg: try t[optional: 30],
+      magneticVariationEpochComponents: try t[optional: 31],
+      trafficPatternAltitudeFtAGL: try t[optional: 32],
+      sectionalChart: try t[optional: 33],
+      distanceCityToAirportNM: try t[optional: 34],
+      directionCityToAirport: try t[optional: 35],
+      landAreaAcres: try t[optional: 36],
+      boundaryARTCCId: try t[optional: 37],
+      responsibleARTCCId: try t[40],
+      tieInFSSOnStation: try t[optional: 43],
+      tieInFSSId: try t[44],
+      alternateFSSId: try t[optional: 48],
+      NOTAMIssuerId: try t[optional: 51],
+      NOTAMDAvailable: try t[optional: 52],
+      activationDateComponents: try t[optional: 53],
+      status: try t[54],
       arffCapability: ARFFCapability,
-      agreements: transformedValues[56] as! [Airport.FederalAgreement],
-      airspaceAnalysisDetermination: transformedValues[57]
-        as! Airport.AirspaceAnalysisDetermination?,
-      customsEntryAirport: transformedValues[58] as! Bool?,
-      customsLandingRightsAirport: transformedValues[59] as! Bool?,
-      jointUseAgreement: transformedValues[60] as! Bool?,
-      militaryLandingRights: transformedValues[61] as! Bool?,
-      inspectionMethod: transformedValues[62] as! Airport.InspectionMethod?,
-      inspectionAgency: transformedValues[63] as! Airport.InspectionAgency?,
-      lastPhysicalInspectionDateComponents: transformedValues[64] as! DateComponents?,
-      lastInformationRequestCompletedDateComponents: transformedValues[65] as! DateComponents?,
-      fuelsAvailable: transformedValues[66] as! [Airport.FuelType],
-      airframeRepairAvailable: transformedValues[67] as! Airport.RepairService?,
-      powerplantRepairAvailable: transformedValues[68] as! Airport.RepairService?,
-      bottledOxygenAvailable: transformedValues[69] as! [Airport.OxygenPressure],
-      bulkOxygenAvailable: transformedValues[70] as! [Airport.OxygenPressure],
-      airportLightingSchedule: transformedValues[71] as? String,
-      beaconLightingSchedule: transformedValues[72] as? String,
-      controlTower: transformedValues[73] as! Bool,
-      UNICOMFrequencyKHz: transformedValues[74] as! UInt?,
-      CTAFKHz: transformedValues[75] as! UInt?,
-      segmentedCircle: transformedValues[76] as! Airport.AirportMarker?,
-      beaconColor: transformedValues[77] as! Airport.LensColor?,
-      hasLandingFee: transformedValues[78] as! Bool?,
-      medicalUse: transformedValues[79] as! Bool?,
-      basedSingleEngineGA: transformedValues[80] as! UInt?,
-      basedMultiEngineGA: transformedValues[81] as! UInt?,
-      basedJetGA: transformedValues[82] as! UInt?,
-      basedHelicopterGA: transformedValues[83] as! UInt?,
-      basedOperationalGliders: transformedValues[84] as! UInt?,
-      basedOperationalMilitary: transformedValues[85] as! UInt?,
-      basedUltralights: transformedValues[86] as! UInt?,
-      annualCommercialOps: transformedValues[87] as! UInt?,
-      annualCommuterOps: transformedValues[88] as! UInt?,
-      annualAirTaxiOps: transformedValues[89] as! UInt?,
-      annualLocalGAOps: transformedValues[90] as! UInt?,
-      annualTransientGAOps: transformedValues[91] as! UInt?,
-      annualMilitaryOps: transformedValues[92] as! UInt?,
-      annualPeriodEndDateComponents: transformedValues[93] as! DateComponents?,
-      positionSource: transformedValues[94] as! String?,
-      positionSourceDateComponents: transformedValues[95] as! DateComponents?,
-      elevationSource: transformedValues[96] as! String?,
-      elevationSourceDateComponents: transformedValues[97] as! DateComponents?,
-      contractFuelAvailable: transformedValues[98] as! Bool?,
-      transientStorageFacilities: transformedValues[99] as! [Airport.StorageFacility]?,
-      otherServices: transformedValues[100] as! [Airport.Service],
-      windIndicator: transformedValues[101] as! Airport.AirportMarker?,
-      minimumOperationalNetwork: transformedValues[103] as! Bool
+      agreements: try t[56],
+      airspaceAnalysisDetermination: try t[optional: 57],
+      customsEntryAirport: try t[optional: 58],
+      customsLandingRightsAirport: try t[optional: 59],
+      jointUseAgreement: try t[optional: 60],
+      militaryLandingRights: try t[optional: 61],
+      inspectionMethod: try t[optional: 62],
+      inspectionAgency: try t[optional: 63],
+      lastPhysicalInspectionDateComponents: try t[optional: 64],
+      lastInformationRequestCompletedDateComponents: try t[optional: 65],
+      fuelsAvailable: try t[66],
+      airframeRepairAvailable: try t[optional: 67],
+      powerplantRepairAvailable: try t[optional: 68],
+      bottledOxygenAvailable: try t[69],
+      bulkOxygenAvailable: try t[70],
+      airportLightingSchedule: try t[optional: 71],
+      beaconLightingSchedule: try t[optional: 72],
+      controlTower: try t[73],
+      UNICOMFrequencyKHz: try t[optional: 74],
+      CTAFKHz: try t[optional: 75],
+      segmentedCircle: try t[optional: 76],
+      beaconColor: try t[optional: 77],
+      hasLandingFee: try t[optional: 78],
+      medicalUse: try t[optional: 79],
+      basedSingleEngineGA: try t[optional: 80],
+      basedMultiEngineGA: try t[optional: 81],
+      basedJetGA: try t[optional: 82],
+      basedHelicopterGA: try t[optional: 83],
+      basedOperationalGliders: try t[optional: 84],
+      basedOperationalMilitary: try t[optional: 85],
+      basedUltralights: try t[optional: 86],
+      annualCommercialOps: try t[optional: 87],
+      annualCommuterOps: try t[optional: 88],
+      annualAirTaxiOps: try t[optional: 89],
+      annualLocalGAOps: try t[optional: 90],
+      annualTransientGAOps: try t[optional: 91],
+      annualMilitaryOps: try t[optional: 92],
+      annualPeriodEndDateComponents: try t[optional: 93],
+      positionSource: try t[optional: 94],
+      positionSourceDateComponents: try t[optional: 95],
+      elevationSource: try t[optional: 96],
+      elevationSourceDateComponents: try t[optional: 97],
+      contractFuelAvailable: try t[optional: 98],
+      transientStorageFacilities: try t[optional: 99],
+      otherServices: try t[100],
+      windIndicator: try t[optional: 101],
+      minimumOperationalNetwork: try t[103]
     )
 
     airports[airport.id] = airport
@@ -368,14 +336,14 @@ actor FixedWidthAirportParser: FixedWidthParser {
 
   // MARK: - Support Methods
 
-  private func parsePerson(values: ArraySlice<Any?>) -> Airport.Person? {
-    guard let name = values[values.startIndex] as? String else {
+  private func parsePerson(t: FixedWidthTransformedRow, startIndex: Int) throws -> Airport.Person? {
+    guard let name: String = try t[optional: startIndex] else {
       return nil
     }
-    let address1 = values[values.index(values.startIndex, offsetBy: 1)] as? String
-    let address2 = values[values.index(values.startIndex, offsetBy: 2)] as? String
+    let address1: String? = try t[optional: startIndex + 1],
+      address2: String? = try t[optional: startIndex + 2]
 
-    var phone = values[values.index(values.startIndex, offsetBy: 3)] as? String
+    var phone: String? = try t[optional: startIndex + 3]
     if phone != nil {
       if phone!.starts(with: "1-") {
         phone = "1-800-\(phone![phone!.index(phone!.startIndex, offsetBy: 2)...])"

@@ -65,66 +65,71 @@ actor FixedWidthPreferredRouteParser: FixedWidthParser {
   }
 
   private func parseBaseRecord(_ values: [String]) throws {
-    let transformedValues = try baseTransformer.applyTo(values)
-
-    let originID = transformedValues[1] as! String
-    let destID = transformedValues[2] as! String
-    let routeTypeCode = transformedValues[3] as! String
-    guard let seqNum = transformedValues[4] as? UInt else {
+    let t = try baseTransformer.applyTo(values),
+      originID: String = try t[1],
+      destID: String = try t[2],
+      routeTypeCode: String = try t[3]
+    guard let seqNum: UInt = try t[optional: 4] else {
       throw ParserError.missingRequiredField(field: "sequenceNumber", recordType: "PFR1")
     }
 
     let routeKey = "\(originID)-\(destID)-\(routeTypeCode)-\(seqNum)"
 
     var effectiveHoursArray = [String]()
-    if let h1 = transformedValues[9] as? String, !h1.isEmpty { effectiveHoursArray.append(h1) }
-    if let h2 = transformedValues[10] as? String, !h2.isEmpty { effectiveHoursArray.append(h2) }
-    if let h3 = transformedValues[11] as? String, !h3.isEmpty { effectiveHoursArray.append(h3) }
+    if let h1: String = try t[optional: 9], !h1.isEmpty { effectiveHoursArray.append(h1) }
+    if let h2: String = try t[optional: 10], !h2.isEmpty { effectiveHoursArray.append(h2) }
+    if let h3: String = try t[optional: 11], !h3.isEmpty { effectiveHoursArray.append(h3) }
 
     let route = PreferredRoute(
       originIdentifier: originID,
       destinationIdentifier: destID,
       routeType: PreferredRoute.RouteType.for(routeTypeCode),
       sequenceNumber: seqNum,
-      routeTypeDescription: transformedValues[5] as? String,
-      areaDescription: transformedValues[6] as? String,
-      altitudeDescription: transformedValues[7] as? String,
-      aircraftDescription: transformedValues[8] as? String,
+      routeTypeDescription: try t[optional: 5],
+      areaDescription: try t[optional: 6],
+      altitudeDescription: try t[optional: 7],
+      aircraftDescription: try t[optional: 8],
       effectiveHours: effectiveHoursArray,
-      directionLimitations: transformedValues[12] as? String,
-      NARType: transformedValues[13] as? String,
-      designator: transformedValues[14] as? String,
-      destinationCity: transformedValues[15] as? String
+      directionLimitations: try t[optional: 12],
+      NARType: try t[optional: 13],
+      designator: try t[optional: 14],
+      destinationCity: try t[optional: 15]
     )
 
     routes[routeKey] = route
   }
 
   private func parseSegmentRecord(_ values: [String]) throws {
-    let transformedValues = try segmentTransformer.applyTo(values)
-
-    let originID = (transformedValues[1] as! String).trimmingCharacters(in: .whitespaces)
-    let destID = (transformedValues[2] as! String).trimmingCharacters(in: .whitespaces)
-    let routeTypeCode = (transformedValues[3] as! String).trimmingCharacters(in: .whitespaces)
-    guard let routeSeqNum = transformedValues[4] as? UInt else {
+    let t = try segmentTransformer.applyTo(values),
+      originID: String = try t[1],
+      destID: String = try t[2],
+      routeTypeCode: String = try t[3],
+      originTrimmed = originID.trimmingCharacters(in: .whitespaces),
+      destTrimmed = destID.trimmingCharacters(in: .whitespaces),
+      routeTypeTrimmed = routeTypeCode.trimmingCharacters(in: .whitespaces)
+    guard let routeSeqNum: UInt = try t[optional: 4] else {
       throw ParserError.missingRequiredField(field: "routeSequenceNumber", recordType: "PFR2")
     }
 
-    let routeKey = "\(originID)-\(destID)-\(routeTypeCode)-\(routeSeqNum)"
+    let routeKey = "\(originTrimmed)-\(destTrimmed)-\(routeTypeTrimmed)-\(routeSeqNum)"
 
-    guard let segSeq = transformedValues[5] as? UInt else {
+    guard let segSeq: UInt = try t[optional: 5] else {
       throw ParserError.missingRequiredField(field: "segmentSequenceNumber", recordType: "PFR2")
     }
 
+    let segmentType: String? = try t[optional: 7],
+      navaidTypeCode: String? = try t[optional: 10],
+      radialDistValue: String? = try t[optional: 12]
+
     let segment = PreferredRoute.Segment(
       sequenceNumber: segSeq,
-      identifier: transformedValues[6] as? String,
-      segmentType: (transformedValues[7] as? String).flatMap { PreferredRoute.SegmentType.for($0) },
-      fixStateCode: transformedValues[8] as? String,
-      ICAORegionCode: transformedValues[9] as? String,
-      navaidType: (transformedValues[10] as? String).flatMap { Navaid.FacilityType.for($0) },
-      navaidTypeDescription: transformedValues[11] as? String,
-      radialDistance: parseRadialDistance(transformedValues[12] as? String)
+      identifier: try t[optional: 6],
+      segmentType: segmentType.flatMap { PreferredRoute.SegmentType.for($0) },
+      fixStateCode: try t[optional: 8],
+      ICAORegionCode: try t[optional: 9],
+      navaidType: navaidTypeCode.flatMap { Navaid.FacilityType.for($0) },
+      navaidTypeDescription: try t[optional: 11],
+      radialDistance: parseRadialDistance(radialDistValue)
     )
 
     guard routes[routeKey] != nil else {

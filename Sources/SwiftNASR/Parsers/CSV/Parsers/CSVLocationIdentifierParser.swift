@@ -14,24 +14,19 @@ actor CSVLocationIdentifierParser: CSVParser {
 
   var identifiers = [LocationIdentifier]()
 
-  // CSV field indices (0-based):
-  // 0: EFF_DATE, 1: COUNTRY_CODE, 2: LOC_ID, 3: REGION_CODE, 4: STATE,
-  // 5: CITY, 6: LID_GROUP, 7: FAC_TYPE, 8: FAC_NAME,
-  // 9: RESP_ARTCC_ID, 10: ARTCC_COMPUTER_ID, 11: FSS_ID
-
   private let transformer = CSVTransformer([
-    .dateComponents(format: .yearMonthDaySlash, nullable: .blank),  // 0: EFF_DATE
-    .string(),  // 1: COUNTRY_CODE
-    .string(),  // 2: LOC_ID
-    .string(nullable: .blank),  // 3: REGION_CODE
-    .string(nullable: .blank),  // 4: STATE (2-letter code)
-    .string(nullable: .blank),  // 5: CITY
-    .string(),  // 6: LID_GROUP
-    .string(nullable: .blank),  // 7: FAC_TYPE
-    .string(nullable: .blank),  // 8: FAC_NAME
-    .string(nullable: .blank),  // 9: RESP_ARTCC_ID
-    .string(nullable: .blank),  // 10: ARTCC_COMPUTER_ID
-    .string(nullable: .blank)  // 11: FSS_ID
+    .init("EFF_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("COUNTRY_CODE", .string()),
+    .init("LOC_ID", .string()),
+    .init("REGION_CODE", .string(nullable: .blank)),
+    .init("STATE", .string(nullable: .blank)),
+    .init("CITY", .string(nullable: .blank)),
+    .init("LID_GROUP", .string()),
+    .init("FAC_TYPE", .string(nullable: .blank)),
+    .init("FAC_NAME", .string(nullable: .blank)),
+    .init("RESP_ARTCC_ID", .string(nullable: .blank)),
+    .init("ARTCC_COMPUTER_ID", .string(nullable: .blank)),
+    .init("FSS_ID", .string(nullable: .blank))
   ])
 
   func prepare(distribution: Distribution) throws {
@@ -39,22 +34,23 @@ actor CSVLocationIdentifierParser: CSVParser {
   }
 
   func parse(data _: Data) async throws {
-    try await parseCSVFile(filename: "LID.csv", expectedFieldCount: 12) { fields in
-      guard fields.count >= 12 else { return }
+    try await parseCSVFile(
+      filename: "LID.csv",
+      requiredColumns: ["LOC_ID", "COUNTRY_CODE", "LID_GROUP"]
+    ) { row in
+      let t = try self.transformer.applyTo(row)
 
-      let transformedValues = try self.transformer.applyTo(fields, indices: Array(0..<12))
-
-      let locID = transformedValues[2] as! String
+      let locID: String = try t["LOC_ID"]
       guard !locID.isEmpty else { return }
 
-      let countryCode = transformedValues[1] as! String
-      let lidGroup = transformedValues[6] as! String
-      let facType = transformedValues[7] as? String ?? ""
-      let facName = transformedValues[8] as? String
-      let fssID = transformedValues[11] as? String
+      let countryCode: String = try t["COUNTRY_CODE"]
+      let lidGroup: String = try t["LID_GROUP"]
+      let facType: String = try t[optional: "FAC_TYPE"] ?? ""
+      let facName: String? = try t[optional: "FAC_NAME"]
+      let fssID: String? = try t[optional: "FSS_ID"]
 
       // Determine group code from country code
-      let groupCode = parseGroupCode(countryCode, lidGroup: lidGroup)
+      let groupCode = try parseGroupCode(countryCode, lidGroup: lidGroup)
 
       // Initialize all facility-specific fields as nil
       var landingFacilityName: String?
@@ -78,18 +74,18 @@ actor CSVLocationIdentifierParser: CSVParser {
       switch lidGroup {
         case "LANDING FACILITY":
           landingFacilityName = facName
-          landingFacilityType = parseLandingFacilityType(facType)
+          landingFacilityType = try parseLandingFacilityType(facType)
           landingFacilityFSS = fssID
 
         case "NAVIGATION AID":
           if let facName {
-            let navType = parseNavaidFacilityType(facType)
+            let navType = try parseNavaidFacilityType(facType)
             navaids.append(LocationIdentifier.NavaidInfo(name: facName, facilityType: navType))
           }
           navaidFSS = fssID
 
         case "INSTRUMENT LANDING SYSTEM":
-          ilsFacilityType = parseILSFacilityType(facType)
+          ilsFacilityType = try parseILSFacilityType(facType)
           ILSFSS = fssID
           // Parse runway end and airport info from FAC_NAME if available
           if let facName {
@@ -100,7 +96,7 @@ actor CSVLocationIdentifierParser: CSVParser {
           }
 
         case "CONTROL FACILITY":
-          artccFacilityType = parseARTCCFacilityType(facType)
+          artccFacilityType = try parseARTCCFacilityType(facType)
           ARTCCName = facName
 
         case "FLIGHT SERVICE STATION", "REMOTE COMMUNICATION OUTLET":
@@ -111,35 +107,36 @@ actor CSVLocationIdentifierParser: CSVParser {
           otherFacilityName = facName
 
         case "SPECIAL USE RESOURCE":
-          otherFacilityType = parseOtherFacilityType(facType)
+          otherFacilityType = try parseOtherFacilityType(facType)
           otherFacilityName = facName
 
         case "DOD OVERSEA FACILITY":
-          // DOD overseas can be various facility types
-          if let parsedLanding = parseLandingFacilityType(facType) {
+          // DOD overseas can be various facility types - try each type until one matches
+          if let parsedLanding = tryParseLandingFacilityType(facType) {
             landingFacilityName = facName
             landingFacilityType = parsedLanding
             landingFacilityFSS = fssID
-          } else if let navType = parseNavaidFacilityType(facType) {
+          } else if let navType = tryParseNavaidFacilityType(facType) {
             if let facName {
               navaids.append(LocationIdentifier.NavaidInfo(name: facName, facilityType: navType))
             }
             navaidFSS = fssID
+          } else {
+            throw ParserError.unknownRecordEnumValue(facType)
           }
 
         default:
-          // Unknown LID_GROUP, store as other facility
-          otherFacilityName = facName
+          throw ParserError.unknownRecordEnumValue(lidGroup)
       }
 
       let record = LocationIdentifier(
         identifier: locID,
         groupCode: groupCode,
-        FAARegion: transformedValues[3] as? String,
-        stateCode: transformedValues[4] as? String,
-        city: transformedValues[5] as? String,
-        controllingARTCC: transformedValues[9] as? String,
-        controllingARTCCComputerId: transformedValues[10] as? String,
+        FAARegion: try t[optional: "REGION_CODE"],
+        stateCode: try t[optional: "STATE"],
+        city: try t[optional: "CITY"],
+        controllingARTCC: try t[optional: "RESP_ARTCC_ID"],
+        controllingARTCCComputerId: try t[optional: "ARTCC_COMPUTER_ID"],
         landingFacilityName: landingFacilityName,
         landingFacilityType: landingFacilityType,
         landingFacilityFSS: landingFacilityFSS,
@@ -156,7 +153,7 @@ actor CSVLocationIdentifierParser: CSVParser {
         isFlightWatchStation: isFlightWatchStation,
         otherFacilityName: otherFacilityName,
         otherFacilityType: otherFacilityType,
-        effectiveDateComponents: transformedValues[0] as? DateComponents
+        effectiveDateComponents: try t[optional: "EFF_DATE"]
       )
 
       self.identifiers.append(record)
@@ -169,20 +166,46 @@ actor CSVLocationIdentifierParser: CSVParser {
 
   // MARK: - Private Helpers
 
-  private func parseGroupCode(_ countryCode: String, lidGroup: String) -> LocationIdentifier
-    .GroupCode?
+  private func parseGroupCode(_ countryCode: String, lidGroup: String) throws
+    -> LocationIdentifier
+    .GroupCode
   {
     if lidGroup == "DOD OVERSEA FACILITY" {
-      return .dod
+      return .DOD
     }
     switch countryCode.uppercased() {
-      case "US": return .usa
-      case "CA": return .can
-      default: return .usa  // Default to USA for unknown codes
+      case "US": return .USA
+      case "CA": return .canada
+      case "MH": return .marshallIslands
+      case "PW": return .palau
+      case "BM": return .bermuda
+      case "BS": return .bahamas
+      case "TC": return .turksAndCaicos
+      case "FM": return .micronesia
+      case "TQ": return .USMinorOutlyingIslands
+      case "PO": return .azores
+      default:
+        throw ParserError.unknownRecordEnumValue(countryCode)
     }
   }
 
-  private func parseLandingFacilityType(_ facType: String) -> LocationIdentifier
+  private func parseLandingFacilityType(_ facType: String) throws
+    -> LocationIdentifier
+    .LandingFacilityType
+  {
+    switch facType.uppercased() {
+      case "A", "AIRPORT": return .airport
+      case "B", "BALLOONPORT": return .balloonport
+      case "C", "STOLPORT": return .stolport
+      case "G", "GLIDERPORT": return .gliderport
+      case "H", "HELIPORT": return .heliport
+      case "S", "SEAPLANE BASE": return .seaplaneBase
+      case "U", "ULTRALIGHT": return .ultralight
+      default: throw ParserError.unknownRecordEnumValue(facType)
+    }
+  }
+
+  private func tryParseLandingFacilityType(_ facType: String) -> LocationIdentifier
     .LandingFacilityType?
   {
     switch facType.uppercased() {
@@ -197,7 +220,26 @@ actor CSVLocationIdentifierParser: CSVParser {
     }
   }
 
-  private func parseNavaidFacilityType(_ facType: String) -> LocationIdentifier.NavaidFacilityType?
+  private func parseNavaidFacilityType(_ facType: String) throws
+    -> LocationIdentifier
+    .NavaidFacilityType
+  {
+    switch facType.uppercased() {
+      case "DME": return .DME
+      case "FAN MARKER": return .fanMarker
+      case "NDB", "MARINE NDB": return .NDB
+      case "NDB/DME": return .NDB_DME
+      case "TACAN": return .TACAN
+      case "VOR": return .VOR
+      case "VOR/DME": return .VOR_DME
+      case "VORTAC": return .VORTAC
+      case "VOT": return .VOT
+      default: throw ParserError.unknownRecordEnumValue(facType)
+    }
+  }
+
+  private func tryParseNavaidFacilityType(_ facType: String) -> LocationIdentifier
+    .NavaidFacilityType?
   {
     switch facType.uppercased() {
       case "DME": return .DME
@@ -213,7 +255,8 @@ actor CSVLocationIdentifierParser: CSVParser {
     }
   }
 
-  private func parseILSFacilityType(_ facType: String) -> LocationIdentifier.ILSFacilityType? {
+  private func parseILSFacilityType(_ facType: String) throws -> LocationIdentifier.ILSFacilityType
+  {
     switch facType.uppercased() {
       case "LS", "ILS": return .ILS
       case "LD", "ILS/DME": return .ILS_DME
@@ -224,26 +267,35 @@ actor CSVLocationIdentifierParser: CSVParser {
       case "SD", "SDF": return .SDF
       case "SF", "SDF/DME", "SF/DME": return .SDF_DME
       case "DD", "LOC/DME": return .LOC_DME
-      default: return nil
+      default: throw ParserError.unknownRecordEnumValue(facType)
     }
   }
 
-  private func parseARTCCFacilityType(_ facType: String) -> LocationIdentifier.ARTCCFacilityType? {
+  private func parseARTCCFacilityType(_ facType: String) throws -> LocationIdentifier
+    .ARTCCFacilityType?
+  {
     switch facType.uppercased() {
       case "ARTCC": return .ARTCC
       case "CERAP": return .CERAP
-      // TRACON and BASE OPS are not in the enum
-      default: return nil
+      case "BASE OPS": return .baseOps
+      // Terminal facility types are valid control facilities but not ARTCCs
+      case "TRACON", "ATCT", "NON-ATCT", "ATCT-TRACON", "ATCT-A/C",
+        "ATCT-RAPCON", "ATCT-RATCF", "ATCT-TRACAB", "TRACAB":
+        return nil
+      default: throw ParserError.unknownRecordEnumValue(facType)
     }
   }
 
-  private func parseOtherFacilityType(_ facType: String) -> LocationIdentifier.OtherFacilityType? {
+  private func parseOtherFacilityType(_ facType: String) throws
+    -> LocationIdentifier
+    .OtherFacilityType
+  {
     switch facType.uppercased() {
       case "ADMINISTRATIVE SERVICES", "ADMINISTRATIVE SERVICES(2)": return .administrative
       case "GEOGRAPHIC REFERENCE POINT", "GEOREF": return .georef
       case "SPECIAL USAGE", "SPECIAL USE": return .specialUse
       case "WEATHER STATION", "WEATHER STATION(2)", "WEATHER SERVICE OFFICE": return .weatherStation
-      default: return nil
+      default: throw ParserError.unknownRecordEnumValue(facType)
     }
   }
 

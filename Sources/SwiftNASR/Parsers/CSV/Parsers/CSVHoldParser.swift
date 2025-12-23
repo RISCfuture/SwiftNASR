@@ -1,5 +1,4 @@
 import Foundation
-import StreamingCSV
 
 /// CSV Hold Parser for HPF (Holding Pattern) files.
 ///
@@ -13,24 +12,27 @@ actor CSVHoldParser: CSVParser {
 
   var holds = [String: Hold]()
 
-  // Transformer for base fields
+  // Transformer for base fields using named columns
   private let baseTransformer = CSVTransformer([
-    .dateComponents(format: .yearMonthDaySlash, nullable: .blank),  // 0: EFF_DATE
-    .string(),  // 1: HP_NAME
-    .unsignedInteger(nullable: .blank),  // 2: HP_NO
-    .string(nullable: .blank),  // 3: STATE_CODE
-    .string(nullable: .blank),  // 4: COUNTRY_CODE
-    .string(nullable: .blank),  // 5: FIX_ID
-    .string(nullable: .blank),  // 6: ICAO_REGION_CODE
-    .string(nullable: .blank),  // 7: NAV_ID
-    .string(nullable: .blank),  // 8: NAV_TYPE (raw string for later parsing)
-    .generic({ CardinalDirection.for($0) }, nullable: .blank),  // 9: HOLD_DIRECTION
-    // 10: HOLD_DEG_OR_CRS - some records have cardinal directions instead of numbers (data entry errors)
-    .unsignedInteger(nullable: .sentinel(["", "N", "S", "E", "W", "NE", "NW", "SE", "SW"])),
-    .generic({ Hold.AzimuthType.for($0) }, nullable: .blank),  // 11: AZIMUTH
-    .unsignedInteger(nullable: .blank),  // 12: COURSE_INBOUND_DEG
-    .generic({ parseTurnDirection($0) }, nullable: .blank),  // 13: TURN_DIRECTION
-    .unsignedInteger(nullable: .blank)  // 14: LEG_LENGTH_DIST
+    .init("EFF_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
+    .init("HP_NAME", .string()),
+    .init("HP_NO", .unsignedInteger(nullable: .blank)),
+    .init("STATE_CODE", .string(nullable: .blank)),
+    .init("COUNTRY_CODE", .string(nullable: .blank)),
+    .init("FIX_ID", .string(nullable: .blank)),
+    .init("ICAO_REGION_CODE", .string(nullable: .blank)),
+    .init("NAV_ID", .string(nullable: .blank)),
+    .init("NAV_TYPE", .string(nullable: .blank)),
+    .init("HOLD_DIRECTION", .generic({ CardinalDirection.for($0) }, nullable: .blank)),
+    // Some records have cardinal directions instead of numbers (data entry errors)
+    .init(
+      "HOLD_DEG_OR_CRS",
+      .unsignedInteger(nullable: .sentinel(["", "N", "S", "E", "W", "NE", "NW", "SE", "SW"]))
+    ),
+    .init("AZIMUTH", .generic({ Hold.AzimuthType.for($0) }, nullable: .blank)),
+    .init("COURSE_INBOUND_DEG", .unsignedInteger(nullable: .blank)),
+    .init("TURN_DIRECTION", .generic({ try parseTurnDirection($0) }, nullable: .blank)),
+    .init("LEG_LENGTH_DIST", .unsignedInteger(nullable: .blank))
   ])
 
   func prepare(distribution: Distribution) throws {
@@ -39,18 +41,19 @@ actor CSVHoldParser: CSVParser {
 
   func parse(data _: Data) async throws {
     // Parse HPF_BASE.csv - base holding pattern data
-    try await parseCSVFile(filename: "HPF_BASE.csv", expectedFieldCount: 15) { fields in
-      guard fields.count >= 13 else { return }
+    try await parseCSVFile(
+      filename: "HPF_BASE.csv",
+      requiredColumns: ["HP_NAME", "HP_NO"]
+    ) { row in
+      let t = try self.baseTransformer.applyTo(row)
 
-      let transformedValues = try self.baseTransformer.applyTo(fields, indices: Array(0..<15))
-
-      let name = transformedValues[1] as! String
-      guard let patternNumber = transformedValues[2] as? UInt else { return }
+      let name: String = try t["HP_NAME"]
+      guard let patternNumber: UInt = try t[optional: "HP_NO"] else { return }
 
       let holdKey = "\(name)-\(patternNumber)"
 
       // Parse navaid facility type from raw string
-      let navaidTypeStr = fields[8].trimmingCharacters(in: .whitespaces)
+      let navaidTypeStr: String = try t[optional: "NAV_TYPE"] ?? ""
       let navaidFacilityType: Navaid.FacilityType? =
         if navaidTypeStr.isEmpty {
           nil
@@ -58,23 +61,29 @@ actor CSVHoldParser: CSVParser {
           Navaid.FacilityType.for(navaidTypeStr)
         }
 
+      // Get optional string values
+      let navaidId: String? = try t[optional: "NAV_ID"]
+      let fixId: String? = try t[optional: "FIX_ID"]
+      let stateCode: String? = try t[optional: "STATE_CODE"]
+      let icaoRegion: String? = try t[optional: "ICAO_REGION_CODE"]
+      let legDistance: UInt? = try t[optional: "LEG_LENGTH_DIST"]
+
       // Create hold with base data
       // CSV format doesn't include position data, so fixPosition and navaidPosition are nil
       let hold = Hold(
         name: name,
         patternNumber: patternNumber,
-        effectiveDateComponents: transformedValues[0] as? DateComponents,
-        holdingDirection: transformedValues[9] as? CardinalDirection,
-        magneticBearingDeg: transformedValues[10] as? UInt,
-        azimuthType: transformedValues[11] as? Hold.AzimuthType,
+        effectiveDateComponents: try t[optional: "EFF_DATE"],
+        holdingDirection: try t[optional: "HOLD_DIRECTION"],
+        magneticBearingDeg: try t[optional: "HOLD_DEG_OR_CRS"],
+        azimuthType: try t[optional: "AZIMUTH"],
         ILSFacilityIdentifier: nil,  // Not in CSV format
         ilsFacilityType: nil,  // Not in CSV format
-        navaidIdentifier: (transformedValues[7] as? String)?.isEmpty == false
-          ? transformedValues[7] as? String : nil,
+        navaidIdentifier: navaidId?.isEmpty == false ? navaidId : nil,
         navaidFacilityType: navaidFacilityType,
         additionalFacility: nil,  // Not in CSV format
-        inboundCourseDeg: transformedValues[12] as? UInt,
-        turnDirection: transformedValues[13] as? LateralDirection,
+        inboundCourseDeg: try t[optional: "COURSE_INBOUND_DEG"],
+        turnDirection: try t[optional: "TURN_DIRECTION"],
         altitudes: try HoldingAltitudes(
           allAircraft: nil,
           speed170to175kt: nil,
@@ -83,37 +92,34 @@ actor CSVHoldParser: CSVParser {
           speed280kt: nil,
           speed310kt: nil
         ),
-        fixIdentifier: (transformedValues[5] as? String)?.isEmpty == false
-          ? transformedValues[5] as? String : nil,
-        fixStateCode: (transformedValues[3] as? String)?.isEmpty == false
-          ? transformedValues[3] as? String : nil,
-        fixICAORegion: (transformedValues[6] as? String)?.isEmpty == false
-          ? transformedValues[6] as? String : nil,
+        fixIdentifier: fixId?.isEmpty == false ? fixId : nil,
+        fixStateCode: stateCode?.isEmpty == false ? stateCode : nil,
+        fixICAORegion: icaoRegion?.isEmpty == false ? icaoRegion : nil,
         fixARTCC: nil,  // Not in CSV format
         fixPosition: nil,  // Not in CSV format
         navaidHighRouteARTCC: nil,  // Not in CSV format
         navaidLowRouteARTCC: nil,  // Not in CSV format
         navaidPosition: nil,  // Not in CSV format
         legTimeMin: nil,  // CSV only has distance
-        legDistanceNM: (transformedValues[14] as? UInt).map { Double($0) }
+        legDistanceNM: legDistance.map { Double($0) }
       )
 
       self.holds[holdKey] = hold
     }
 
     // Parse HPF_CHRT.csv - charting information
-    try await parseCSVFile(filename: "HPF_CHRT.csv", expectedFieldCount: 6) { fields in
-      guard fields.count >= 6 else { return }
-
-      let name = fields[1].trimmingCharacters(in: .whitespaces)
-      guard let patternNumber = UInt(fields[2].trimmingCharacters(in: .whitespaces)) else { return }
+    try await parseCSVFile(
+      filename: "HPF_CHRT.csv",
+      requiredColumns: ["HP_NAME", "HP_NO"]
+    ) { row in
+      let name = try row["HP_NAME"]
+      guard let patternNumber = UInt(try row["HP_NO"]) else { return }
 
       let holdKey = "\(name)-\(patternNumber)"
 
       guard self.holds[holdKey] != nil else { return }
 
-      let chartingType = fields[5].trimmingCharacters(in: .whitespaces)
-      if !chartingType.isEmpty {
+      if let chartingType = row[ifExists: "CHARTING_TYPE_DESC"], !chartingType.isEmpty {
         self.holds[holdKey]?.chartingInfo.append(chartingType)
       }
     }
@@ -122,18 +128,19 @@ actor CSVHoldParser: CSVParser {
     // Collect altitude data by hold key, then update holds after
     var altitudesByHold = [String: [String: String]]()  // holdKey -> speedRange -> altitude
 
-    try await parseCSVFile(filename: "HPF_SPD_ALT.csv", expectedFieldCount: 7) { fields in
-      guard fields.count >= 7 else { return }
-
-      let name = fields[1].trimmingCharacters(in: .whitespaces)
-      guard let patternNumber = UInt(fields[2].trimmingCharacters(in: .whitespaces)) else { return }
+    try await parseCSVFile(
+      filename: "HPF_SPD_ALT.csv",
+      requiredColumns: ["HP_NAME", "HP_NO"]
+    ) { row in
+      let name = try row["HP_NAME"]
+      guard let patternNumber = UInt(try row["HP_NO"]) else { return }
 
       let holdKey = "\(name)-\(patternNumber)"
 
       guard self.holds[holdKey] != nil else { return }
 
-      let speedRange = fields[5].trimmingCharacters(in: .whitespaces)
-      let altitude = fields[6].trimmingCharacters(in: .whitespaces)
+      let speedRange = row[ifExists: "SPEED_RANGE"] ?? ""
+      let altitude = row[ifExists: "ALTITUDE"] ?? ""
 
       if !speedRange.isEmpty && !altitude.isEmpty {
         if altitudesByHold[holdKey] == nil {
@@ -206,18 +213,19 @@ actor CSVHoldParser: CSVParser {
     }
 
     // Parse HPF_RMK.csv - remarks
-    try await parseCSVFile(filename: "HPF_RMK.csv", expectedFieldCount: 9) { fields in
-      guard fields.count >= 9 else { return }
-
-      let name = fields[1].trimmingCharacters(in: .whitespaces)
-      guard let patternNumber = UInt(fields[2].trimmingCharacters(in: .whitespaces)) else { return }
+    try await parseCSVFile(
+      filename: "HPF_RMK.csv",
+      requiredColumns: ["HP_NAME", "HP_NO"]
+    ) { row in
+      let name = try row["HP_NAME"]
+      guard let patternNumber = UInt(try row["HP_NO"]) else { return }
 
       let holdKey = "\(name)-\(patternNumber)"
 
       guard self.holds[holdKey] != nil else { return }
 
-      let fieldLabel = fields[6].trimmingCharacters(in: .whitespaces)  // REF_COL_NAME
-      let remarkText = fields[8].trimmingCharacters(in: .whitespaces)  // REMARK
+      let fieldLabel = row[ifExists: "REF_COL_NAME"] ?? ""
+      let remarkText = row[ifExists: "REMARK"] ?? ""
 
       if !remarkText.isEmpty {
         let remark = FieldRemark(fieldLabel: fieldLabel, text: remarkText)
@@ -232,10 +240,10 @@ actor CSVHoldParser: CSVParser {
 }
 
 /// Parses turn direction from string (L/R).
-private func parseTurnDirection(_ str: String) -> LateralDirection? {
+private func parseTurnDirection(_ str: String) throws -> LateralDirection {
   switch str.uppercased() {
     case "L": return .left
     case "R": return .right
-    default: return nil
+    default: throw ParserError.unknownRecordEnumValue(str)
   }
 }

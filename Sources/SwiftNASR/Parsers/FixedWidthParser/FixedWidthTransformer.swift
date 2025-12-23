@@ -1,6 +1,87 @@
 import Foundation
 @preconcurrency import RegexBuilder
 
+/// Type-safe wrapper around transformed values from fixed-width parsing.
+///
+/// Provides typed subscript access to avoid unsafe `as!` casts throughout parser code.
+struct FixedWidthTransformedRow {
+  private let values: [Any?]
+
+  /// Returns the number of values in this row.
+  var count: Int { values.count }
+
+  // MARK: - Initializer
+
+  init(_ values: [Any?]) {
+    self.values = values
+  }
+
+  // MARK: - Methods
+
+  /// Provides backward-compatible access for code using `as!` casts during migration.
+  ///
+  /// Example: `transformedValues.value(at: 55) as! [String]`
+  ///
+  /// Prefer using typed subscripts for new code:
+  /// - `let x: String = try t[1]` for required values
+  /// - `let x: String? = try t[optional: 1]` for optional values
+  func value(at index: Int) -> Any? {
+    return values[index]
+  }
+
+  // MARK: - Subscripts
+
+  /// Returns the value at the specified index, throwing if nil or type mismatch.
+  subscript<T>(_ index: Int) -> T {
+    get throws {
+      guard let anyValue = values[index] else {
+        throw FixedWidthParserError.required(at: index)
+      }
+      guard let value = anyValue as? T else {
+        throw FixedWidthParserError.typeMismatch(
+          at: index,
+          expected: T.self,
+          actual: type(of: anyValue)
+        )
+      }
+      return value
+    }
+  }
+
+  /// Returns the optional value at the specified index, throwing only on type mismatch.
+  subscript<T>(optional index: Int) -> T? {
+    get throws {
+      guard let anyValue = values[index] else { return nil }
+      guard let value = anyValue as? T else {
+        throw FixedWidthParserError.typeMismatch(
+          at: index,
+          expected: T.self,
+          actual: type(of: anyValue)
+        )
+      }
+      return value
+    }
+  }
+
+  /// Returns the raw Any? value at the specified index for legacy code or advanced use.
+  ///
+  /// Use this when you need the raw value during migration. New code should prefer
+  /// the typed subscripts `t[index]` or `t[optional: index]`.
+  subscript(raw index: Int) -> Any? {
+    return values[index]
+  }
+
+  /// Returns a slice of raw values for the specified range.
+  subscript(_ range: ClosedRange<Int>) -> ArraySlice<Any?> {
+    return values[range]
+  }
+
+  /// Returns a slice of raw values for the specified range.
+  subscript(_ range: Range<Int>) -> ArraySlice<Any?> {
+    return values[range]
+  }
+}
+
 enum Nullable {
   case notNull
   case blank
@@ -112,6 +193,30 @@ enum FixedWidthField {
     emptyPlaceholders: [String]? = nil
   )
   case generic(_ convert: (String) throws -> Any?, nullable: Nullable = .notNull, trim: Bool = true)
+
+  /// Creates a field that converts a string to a RecordEnum using its `for(_:)` method.
+  ///
+  /// This is a convenience factory that creates a `.generic` field with proper error handling
+  /// for RecordEnum types, throwing `ParserError.unknownRecordEnumValue` for invalid values.
+  ///
+  /// - Parameters:
+  ///   - type: The RecordEnum type to convert to.
+  ///   - nullable: How to handle null/empty values.
+  /// - Returns: A `.generic` field configured for the RecordEnum type.
+  static func recordEnum<T: RecordEnum>(
+    _: T.Type,
+    nullable: Nullable = .notNull
+  ) -> Self where T.RawValue == String {
+    return .generic(
+      { rawValue in
+        guard let value = T.for(rawValue) else {
+          throw ParserError.unknownRecordEnumValue(rawValue)
+        }
+        return value
+      },
+      nullable: nullable
+    )
+  }
 }
 
 struct FixedWidthTransformer {
@@ -178,8 +283,8 @@ struct FixedWidthTransformer {
     return MHz * 1000
   }
 
-  func applyTo(_ values: [String]) throws -> [Any?] {
-    return try values.enumerated().map { index, value in
+  func applyTo(_ values: [String]) throws -> FixedWidthTransformedRow {
+    let transformedValues = try values.enumerated().map { index, value -> Any? in
       switch fields[index] {
         case .recordType: return nil
         case .null: return nil
@@ -294,6 +399,7 @@ struct FixedWidthTransformer {
           }
       }
     }
+    return FixedWidthTransformedRow(transformedValues)
   }
 
   private func transform(

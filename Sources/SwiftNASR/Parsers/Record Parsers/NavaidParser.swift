@@ -1,5 +1,41 @@
 import Foundation
 
+/// Converts a navaid frequency string to Hz based on the navaid type.
+///
+/// NDB-type navaids (NDB, NDB/DME, Marine NDB, Marine NDB/DME, UHF/NDB) store
+/// frequencies in kHz (e.g., "365" = 365 kHz = 365,000 Hz).
+///
+/// VOR-type navaids (VOR, VOR/DME, VORTAC, TACAN, VOT, DME, etc.) store
+/// frequencies in MHz with decimals (e.g., "113.00" = 113 MHz = 113,000,000 Hz).
+///
+/// - Parameters:
+///   - frequencyString: The raw frequency string from the data file.
+///   - navaidType: The type of navaid to determine the input unit.
+/// - Returns: The frequency in Hz, or nil if the string is empty or unparseable.
+func parseNavaidFrequencyToHz(_ frequencyString: String?, navaidType: Navaid.FacilityType) -> UInt?
+{
+  guard let frequencyString, !frequencyString.isEmpty else { return nil }
+
+  // NDB-type navaids use kHz (whole numbers like "365")
+  // All others use MHz (decimals like "113.00" or "117.8")
+  let usesKHz: Bool
+  switch navaidType {
+    case .NDB, .NDB_DME, .marineNDB, .marineNDB_DME, .UHF_NDB, .LFR:
+      usesKHz = true
+    default:
+      usesKHz = false
+  }
+
+  if usesKHz {
+    // Input is in kHz (e.g., "365"), output in Hz
+    guard let kHz = UInt(frequencyString) else { return nil }
+    return kHz * 1000
+  }
+// Input is in MHz (e.g., "113.00"), output in Hz
+guard let MHz = Double(frequencyString) else { return nil }
+return UInt(MHz * 1_000_000)
+}
+
 enum NavaidRecordIdentifier: String {
   case basicInfo = "NAV1"
   case remark = "NAV2"
@@ -24,10 +60,16 @@ struct NavaidKey: Hashable {
   /// These records don't include city, so we use an empty string.
   /// This means lookups will only work correctly if there's only one navaid
   /// with the given (ID, type) combination.
-  init(values: [Any?]) {
-    ID = values[1] as! String
-    type = values[2] as! Navaid.FacilityType
+  init(values: FixedWidthTransformedRow) throws {
+    ID = try values[1]
+    type = try values[2]
     city = ""  // NAV2-NAV6 records don't include city
+  }
+
+  init(ID: String, type: Navaid.FacilityType, city: String) {
+    self.ID = ID
+    self.type = type
+    self.city = city
   }
 }
 
@@ -46,7 +88,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   private let basicTransformer = FixedWidthTransformer([
     .recordType,  //  0 record type
     .string(),  //  1 identifier
-    .generic { try raw($0, toEnum: Navaid.FacilityType.self) },  //  2 facility type
+    .recordEnum(Navaid.FacilityType.self),  //  2 facility type
     .null,  //  3 identifier
 
     .null,  //  4 effective date
@@ -84,12 +126,12 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     .boolean(nullable: .blank),  // 34 simul voice output
     .unsignedInteger(nullable: .blank),  // 35 power output
     .boolean(nullable: .blank),  // 36 auto voice ident
-    .generic({ try raw($0, toEnum: Navaid.MonitoringCategory.self) }, nullable: .blank),  // 37 monitoring category
+    .recordEnum(Navaid.MonitoringCategory.self, nullable: .blank),  // 37 monitoring category
     .string(nullable: .sentinel(["", "NONE"])),  // 38 radio voice call
     .generic({ try parseTACAN($0, fieldIndex: 39) }, nullable: .blank),  // 39 TACAN channel
-    .frequency(nullable: .blank),  // 40 freq
+    .string(nullable: .blank),  // 40 freq (raw string - converted to Hz in parseBasicRecord based on navaid type)
     .string(nullable: .blank),  // 41 fan marker ident
-    .generic({ try raw($0, toEnum: Navaid.FanMarkerType.self) }, nullable: .blank),  // 42 fan marker type
+    .recordEnum(Navaid.FanMarkerType.self, nullable: .blank),  // 42 fan marker type
     .unsignedInteger(nullable: .blank),  // 43 fan marker major axis
     .generic({ try parseServiceVolume($0) }, nullable: .blank),  // 44 VOR service volume
     .generic({ try parseServiceVolume($0) }, nullable: .blank),  // 45 DME service volume
@@ -104,7 +146,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
 
     .generic({ try parseLFRLegs($0, fieldIndex: 54) }, nullable: .blank),  // 54 quadrant identification and range leg bearing
 
-    .generic { try raw($0, toEnum: OperationalStatus.self) },  // 55 status
+    .recordEnum(OperationalStatus.self),  // 55 status
 
     .boolean(),  // 56 pitch flag
     .boolean(),  // 57 catch flag
@@ -117,7 +159,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   private let remarkTransformer = FixedWidthTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 id
-    .generic { try raw($0, toEnum: Navaid.FacilityType.self) },  // 2 facility type
+    .recordEnum(Navaid.FacilityType.self),  // 2 facility type
 
     .string(),  // 3 remark
     .null  // 4 filler
@@ -126,7 +168,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   private let fixTransformer = FixedWidthTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 id
-    .generic { try raw($0, toEnum: Navaid.FacilityType.self) },  // 2 facility type
+    .recordEnum(Navaid.FacilityType.self),  // 2 facility type
 
     .generic { $0.split(separator: "*").first },  // 3 first fix
     .fixedWidthArray(width: 36, convert: { $0.split(separator: "*").first }, nullable: .blank),  // 4 other fixes
@@ -136,7 +178,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   private let holdingPatternTransformer = FixedWidthTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 id
-    .generic { try raw($0, toEnum: Navaid.FacilityType.self) },  // 2 facility type
+    .recordEnum(Navaid.FacilityType.self),  // 2 facility type
 
     .string(),  // 3 first pattern name
     .unsignedInteger(),  // 4 first pattern number
@@ -151,7 +193,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   private let fanMarkerTransformer = FixedWidthTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 id
-    .generic { try raw($0, toEnum: Navaid.FacilityType.self) },  // 2 facility type
+    .recordEnum(Navaid.FacilityType.self),  // 2 facility type
 
     .string(),  // 3 first fan marker
     .fixedWidthArray(width: 30, nullable: .blank),  // 4 other fan markers
@@ -161,9 +203,9 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   private let checkpointTransformer = FixedWidthTransformer([
     .recordType,  //  0 record type
     .string(),  //  1 id
-    .generic { try raw($0, toEnum: Navaid.FacilityType.self) },  //  2 facility type
+    .recordEnum(Navaid.FacilityType.self),  //  2 facility type
 
-    .generic { try raw($0, toEnum: VORCheckpoint.CheckpointType.self) },  //  3 A/G code
+    .recordEnum(VORCheckpoint.CheckpointType.self),  //  3 A/G code
     .unsignedInteger(),  //  4 bearing
     .integer(nullable: .blank),  //  5 altitude
     .string(nullable: .blank),  //  6 airport code
@@ -189,26 +231,31 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   }
 
   private func parseBasicRecord(_ values: [String]) throws {
-    let transformedValues = try basicTransformer.applyTo(values)
+    let t = try basicTransformer.applyTo(values),
+      lat: Float = try t[22],
+      lon: Float = try t[24],
+      elev: Float? = try t[optional: 31],
+      position = Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: elev),
+      TACANLat: Float? = try t[optional: 27],
+      TACANLon: Float? = try t[optional: 29],
+      TACANPosition = zipOptionals(TACANLat, TACANLon).map { lat, lon in
+        Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: nil)
+      },
+      magneticVariationDeg: Int? = try t[optional: 32],
+      // Convert fan marker bearing to Bearing<UInt>
+      fanMarkerMajorBearingValue: UInt? = try t[optional: 43],
+      fanMarkerMajorBearing = fanMarkerMajorBearingValue.map { value in
+        Bearing(value, reference: .magnetic, magneticVariationDeg: magneticVariationDeg ?? 0)
+      },
+      // Convert LFR leg bearings to Bearing<UInt>
+      rawLFRLegs: [(LFRLeg.Quadrant, UInt)]? = try t[optional: 54],
+      navaidType: Navaid.FacilityType = try t[2],
+      rawFreq: String? = try t[optional: 40]
 
-    let position = Location(
-      latitudeArcsec: transformedValues[22] as! Float,
-      longitudeArcsec: transformedValues[24] as! Float,
-      elevationFtMSL: transformedValues[31] as! Float?
-    )
-    let TACANPosition = zipOptionals(transformedValues[27], transformedValues[29]).map { lat, lon in
-      Location(latitudeArcsec: lat as! Float, longitudeArcsec: lon as! Float, elevationFtMSL: nil)
-    }
+    // Convert frequency to Hz based on navaid type
+    // NDB/Marine NDB/UHF NDB use kHz, all others use MHz
+    let frequencyHz = parseNavaidFrequencyToHz(rawFreq, navaidType: navaidType)
 
-    let magneticVariationDeg = transformedValues[32] as! Int?
-
-    // Convert fan marker bearing to Bearing<UInt>
-    let fanMarkerMajorBearing = (transformedValues[43] as! UInt?).map { value in
-      Bearing(value, reference: .magnetic, magneticVariationDeg: magneticVariationDeg ?? 0)
-    }
-
-    // Convert LFR leg bearings to Bearing<UInt>
-    let rawLFRLegs = transformedValues[54] as! [(LFRLeg.Quadrant, UInt)]?
     let LFRLegs = rawLFRLegs?.map { quadrant, bearing in
       LFRLeg(
         quadrant: quadrant,
@@ -221,68 +268,72 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     }
 
     let navaid = Navaid(
-      id: transformedValues[1] as! String,
-      name: transformedValues[5] as! String,
-      type: transformedValues[2] as! Navaid.FacilityType,
-      city: transformedValues[6] as! String,
-      stateName: transformedValues[7] as! String?,
-      FAARegion: transformedValues[9] as! String,
-      country: transformedValues[10] as! String?,
-      ownerName: transformedValues[12] as! String?,
-      operatorName: transformedValues[13] as! String?,
-      commonSystemUsage: transformedValues[14] as! Bool,
-      publicUse: transformedValues[15] as! Bool,
-      navaidClass: transformedValues[16] as! Navaid.NavaidClass?,
-      hoursOfOperation: transformedValues[17] as! String?,
-      highAltitudeARTCCCode: transformedValues[18] as! String?,
-      lowAltitudeARTCCCode: transformedValues[20] as! String?,
+      id: try t[1],
+      name: try t[5],
+      type: try t[2],
+      city: try t[6],
+      stateName: try t[optional: 7],
+      FAARegion: try t[9],
+      country: try t[optional: 10],
+      ownerName: try t[optional: 12],
+      operatorName: try t[optional: 13],
+      commonSystemUsage: try t[14],
+      publicUse: try t[15],
+      navaidClass: try t[optional: 16],
+      hoursOfOperation: try t[optional: 17],
+      highAltitudeARTCCCode: try t[optional: 18],
+      lowAltitudeARTCCCode: try t[optional: 20],
       position: position,
       TACANPosition: TACANPosition,
-      surveyAccuracy: transformedValues[26] as! Navaid.SurveyAccuracy?,
+      surveyAccuracy: try t[optional: 26],
       magneticVariationDeg: magneticVariationDeg,
-      magneticVariationEpochComponents: transformedValues[33] as! DateComponents?,
-      simultaneousVoice: transformedValues[34] as! Bool?,
-      powerOutputW: transformedValues[35] as! UInt?,
-      automaticVoiceId: transformedValues[36] as! Bool?,
-      monitoringCategory: transformedValues[37] as! Navaid.MonitoringCategory?,
-      radioVoiceCall: transformedValues[38] as! String?,
-      tacanChannel: transformedValues[39] as! Navaid.TACANChannel?,
-      frequencyKHz: transformedValues[40] as! UInt?,
-      beaconIdentifier: transformedValues[41] as! String?,
-      fanMarkerType: transformedValues[42] as! Navaid.FanMarkerType?,
+      magneticVariationEpochComponents: try t[optional: 33],
+      simultaneousVoice: try t[optional: 34],
+      powerOutputW: try t[optional: 35],
+      automaticVoiceId: try t[optional: 36],
+      monitoringCategory: try t[optional: 37],
+      radioVoiceCall: try t[optional: 38],
+      tacanChannel: try t[optional: 39],
+      frequencyHz: frequencyHz,
+      beaconIdentifier: try t[optional: 41],
+      fanMarkerType: try t[optional: 42],
       fanMarkerMajorBearing: fanMarkerMajorBearing,
-      VORServiceVolume: transformedValues[44] as! Navaid.ServiceVolume?,
-      DMEServiceVolume: transformedValues[45] as! Navaid.ServiceVolume?,
-      lowAltitudeInHighStructure: transformedValues[46] as! Bool?,
-      ZMarkerAvailable: transformedValues[47] as! Bool?,
-      TWEBHours: transformedValues[48] as! String?,
-      TWEBPhone: transformedValues[49] as! String?,
-      controllingFSSCode: transformedValues[50] as! String?,
-      NOTAMAccountabilityCode: transformedValues[53] as! String?,
+      VORServiceVolume: try t[optional: 44],
+      DMEServiceVolume: try t[optional: 45],
+      lowAltitudeInHighStructure: try t[optional: 46],
+      ZMarkerAvailable: try t[optional: 47],
+      TWEBHours: try t[optional: 48],
+      TWEBPhone: try t[optional: 49],
+      controllingFSSCode: try t[optional: 50],
+      NOTAMAccountabilityCode: try t[optional: 53],
       LFRLegs: LFRLegs,
-      status: transformedValues[55] as! OperationalStatus,
-      isPitchPoint: transformedValues[56] as? Bool,
-      isCatchPoint: transformedValues[57] as? Bool,
-      isAssociatedWithSUA: transformedValues[58] as? Bool,
-      hasRestriction: transformedValues[59] as! Bool?,
-      broadcastsHIWAS: transformedValues[60] as! Bool?,
-      hasTWEBRestriction: transformedValues[61] as! Bool?
+      status: try t[55],
+      isPitchPoint: try t[optional: 56],
+      isCatchPoint: try t[optional: 57],
+      isAssociatedWithSUA: try t[optional: 58],
+      hasRestriction: try t[optional: 59],
+      broadcastsHIWAS: try t[optional: 60],
+      hasTWEBRestriction: try t[optional: 61]
     )
     navaids[NavaidKey(navaid: navaid)] = navaid
   }
 
   private func parseRemark(_ values: [String]) throws {
-    let transformedValues = try remarkTransformer.applyTo(values)
-    try updateNavaid(transformedValues) { navaid in
-      navaid.remarks.append(transformedValues[3] as! String)
+    let t = try remarkTransformer.applyTo(values),
+      remarkText: String = try t[3]
+    try updateNavaid(t) { navaid in
+      navaid.remarks.append(remarkText)
     }
   }
 
   private func parseFixes(_ values: [String]) throws {
-    let transformedValues = try fixTransformer.applyTo(values)
-    try updateNavaid(transformedValues) { navaid in
-      navaid.associatedFixNames.insert(String(transformedValues[3] as! Substring))
-      if let otherFixes = transformedValues[4] as? [Substring] {
+    let t = try fixTransformer.applyTo(values),
+      firstFix: Substring = try t[3],
+      // Array types need raw access and manual casting due to [Any?] covariance
+      otherFixes = (t[raw: 4] as? [Any?])?.compactMap { $0 as? Substring }
+    try updateNavaid(t) { navaid in
+      navaid.associatedFixNames.insert(String(firstFix))
+      if let otherFixes {
         for fix in otherFixes {
           navaid.associatedFixNames.insert(String(fix))
         }
@@ -291,15 +342,16 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   }
 
   private func parseHoldingPatterns(_ values: [String]) throws {
-    let transformedValues = try holdingPatternTransformer.applyTo(values)
-    try updateNavaid(transformedValues) { navaid in
-      let pattern = HoldingPatternId(
-        name: transformedValues[3] as! String,
-        number: transformedValues[4] as! UInt
-      )
+    let t = try holdingPatternTransformer.applyTo(values),
+      patternName: String = try t[3],
+      patternNumber: UInt = try t[4],
+      // Array types need raw access and manual casting due to [Any?] covariance
+      otherPatterns = (t[raw: 5] as? [Any?])?.compactMap { $0 as? HoldingPatternId }
+    try updateNavaid(t) { navaid in
+      let pattern = HoldingPatternId(name: patternName, number: patternNumber)
       navaid.associatedHoldingPatterns.insert(pattern)
 
-      if let otherPatterns = transformedValues[5] as? [HoldingPatternId] {
+      if let otherPatterns {
         for pattern in otherPatterns {
           navaid.associatedHoldingPatterns.insert(pattern)
         }
@@ -308,10 +360,13 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   }
 
   private func parseFanMarkers(_ values: [String]) throws {
-    let transformedValues = try fanMarkerTransformer.applyTo(values)
-    try updateNavaid(transformedValues) { navaid in
-      navaid.fanMarkers.insert(transformedValues[3] as! String)
-      if let otherMarkers = transformedValues[4] as? [String] {
+    let t = try fanMarkerTransformer.applyTo(values),
+      firstMarker: String = try t[3],
+      // Array types need raw access and manual casting due to [Any?] covariance
+      otherMarkers = (t[raw: 4] as? [Any?])?.compactMap { $0 as? String }
+    try updateNavaid(t) { navaid in
+      navaid.fanMarkers.insert(firstMarker)
+      if let otherMarkers {
         for fanMarker in otherMarkers {
           navaid.fanMarkers.insert(fanMarker)
         }
@@ -320,31 +375,32 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   }
 
   private func parseCheckpoint(_ values: [String]) throws {
-    let transformedValues = try checkpointTransformer.applyTo(values)
-    try updateNavaid(transformedValues) { navaid in
+    let t = try checkpointTransformer.applyTo(values),
+      bearingValue: UInt = try t[4]
+    try updateNavaid(t) { navaid in
       let bearing = Bearing(
-        transformedValues[4] as! UInt,
+        bearingValue,
         reference: .magnetic,
         magneticVariationDeg: navaid.magneticVariationDeg ?? 0
       )
       let checkpoint = VORCheckpoint(
-        type: transformedValues[3] as! VORCheckpoint.CheckpointType,
+        type: try t[3],
         bearing: bearing,
-        altitudeFtMSL: transformedValues[5] as! Int?,
-        airportId: transformedValues[6] as! String?,
-        stateCode: transformedValues[7] as! String,
-        airDescription: transformedValues[8] as! String?,
-        groundDescription: transformedValues[9] as! String?
+        altitudeFtMSL: try t[optional: 5],
+        airportId: try t[optional: 6],
+        stateCode: try t[7],
+        airDescription: try t[optional: 8],
+        groundDescription: try t[optional: 9]
       )
       navaid.checkpoints.append(checkpoint)
     }
   }
 
-  private func updateNavaid(_ transformedValues: [Any?], process: (inout Navaid) throws -> Void)
+  private func updateNavaid(_ t: FixedWidthTransformedRow, process: (inout Navaid) throws -> Void)
     throws
   {
-    let navaidID = transformedValues[1] as! String
-    let navaidType = transformedValues[2] as! Navaid.FacilityType
+    let navaidID: String = try t[1]
+    let navaidType: Navaid.FacilityType = try t[2]
 
     // Find matching navaid by ID and type (NAV2-NAV6 records don't include city)
     // If there are multiple navaids with same (ID, type), we take the first match.

@@ -205,7 +205,7 @@ actor FixedWidthHoldParser: LayoutDataParser {
         }
 
       default:
-        break
+        throw ParserError.unknownRecordIdentifier(recordType)
     }
   }
 

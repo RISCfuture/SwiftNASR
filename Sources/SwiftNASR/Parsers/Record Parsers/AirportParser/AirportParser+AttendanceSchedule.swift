@@ -12,11 +12,12 @@ extension FixedWidthAirportParser {
 
   func parseAttendanceRecord(_ values: [String]) throws {
     if values[4].trimmingCharacters(in: .whitespaces).isEmpty { return }
-    let transformedValues = try attendanceTransformer.applyTo(values)
+    let t = try attendanceTransformer.applyTo(values)
 
-    let airportID = transformedValues[1] as! String
+    let airportID: String = try t[1]
     guard var airport = airports[airportID] else { return }
-    airport.attendanceSchedule.append(parseAttendanceSchedule(transformedValues[4] as! String))
+    let schedule: String = try t[4]
+    airport.attendanceSchedule.append(parseAttendanceSchedule(schedule))
     airports[airportID] = airport
   }
 
