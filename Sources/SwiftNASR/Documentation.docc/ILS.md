@@ -49,5 +49,8 @@
 - ``LocalizerServiceCode``
 - ``Localizer``
 - ``GlideSlope``
+- ``GlideSlope/GlidePathType``
 - ``DME``
 - ``MarkerBeacon``
+- ``MarkerBeacon/MarkerType``
+- ``MarkerBeacon/MarkerFacilityType``

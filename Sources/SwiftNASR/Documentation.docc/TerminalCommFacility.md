@@ -106,6 +106,7 @@
 - ``RadarType``
 - ``Frequency``
 - ``Radar``
+- ``Radar/RadarEquipment``
 - ``Airspace``
 - ``ATIS``
 - ``SatelliteAirport``

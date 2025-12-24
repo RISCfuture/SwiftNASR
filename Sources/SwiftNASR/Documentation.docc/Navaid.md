@@ -44,7 +44,7 @@
 - ``powerOutputW``
 - ``automaticVoiceId``
 - ``radioVoiceCall``
-- ``frequencyKHz``
+- ``frequencyHz``
 - ``beaconIdentifier``
 - ``broadcastsHIWAS``
 
@@ -106,4 +106,3 @@
 - ``VORCheckpoint``
 - ``HoldingPatternId``
 - ``LFRLeg``
-- ``NavaidFacilityType``

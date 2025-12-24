@@ -2,15 +2,13 @@
 
 ## Topics
 
-### Properties
+### Identification
 
-- ``id``
+- ``code``
 - ``ICAOID``
 - ``type``
 - ``name``
 - ``alternateName``
-- ``remarks``
-- ``frequencies``
 
 ### Location
 
@@ -19,7 +17,14 @@
 - ``state``
 - ``location``
 
+### Communications
+
+- ``frequencies``
+- ``services``
+- ``remarks``
+
 ### Associated Types
 
 - ``FacilityType``
 - ``CommFrequency``
+- ``CommFrequency/Altitude``

@@ -152,7 +152,6 @@
 - ``OxygenPressure``
 - ``StorageFacility``
 - ``Service``
-- ``LightingSchedule``
 - ``AirportMarker``
 - ``LensColor``
 - ``ARFFCapability-swift.struct``

@@ -38,9 +38,28 @@ itself (type safety, compile-time checks, etc.).
 
 - <doc:Records>
 - ``Airport``
+- ``Airway``
 - ``ARTCC``
+- ``ARTCCBoundarySegment``
+- ``ATSAirway``
+- ``CodedDepartureRoute``
+- ``DepartureArrivalProcedure``
+- ``Fix``
 - ``FSS``
+- ``FSSCommFacility``
+- ``Hold``
+- ``HoldingAltitudes``
+- ``ILS``
+- ``LocationIdentifier``
+- ``MilitaryTrainingRoute``
+- ``MiscActivityArea``
 - ``Navaid``
+- ``ParachuteJumpArea``
+- ``PreferredRoute``
+- ``State``
+- ``TerminalCommFacility``
+- ``WeatherReportingLocation``
+- ``WeatherStation``
 
 ### Distributions
 

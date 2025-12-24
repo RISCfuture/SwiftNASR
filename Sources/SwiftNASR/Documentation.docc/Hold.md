@@ -54,3 +54,4 @@
 
 - ``AzimuthType``
 - ``HoldingAltitudes``
+- ``HoldingAltitudes/Entry``
