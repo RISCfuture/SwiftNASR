@@ -49,8 +49,6 @@ let nasr = NASR.fromInternetToMemory(format: .csv)
 let nasr = NASR.fromLocalDirectory(myURL, format: .txt)
 ```
 
-CSV format currently supports parsing airports, ARTCCs, FSSs, and navaids.
-
 You can, however, provide your own ``Distribution`` subclass to ``NASR`` if you
 need to customize distribution parsing behavior.
 
@@ -63,7 +61,7 @@ a `Coder`).
 ## Creating your own Distribution subclass
 
 If needed, you can create your own ``Distribution`` subclass to parse NASR
-distributions in a nonstandard format. See the ``Distribution`` docuemntation
+distributions in a nonstandard format. See the ``Distribution`` documentation
 for more information.
 
 ## Topics

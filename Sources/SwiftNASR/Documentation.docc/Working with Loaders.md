@@ -44,7 +44,7 @@ need to customize distribution downloading behavior, using
 
 If needed, you can create your own ``Loader`` subclass to parse NASR
 distributions in a nonstandard format. See the ``Loader`` and ``Downloader``
-docuemntation for more information.
+documentation for more information.
 
 ## Topics
 

@@ -7,10 +7,11 @@ States, covering the airports, navaids, airspace, routes, ATC facilities, and mo
 make up the National Airspace System.
 
 SwiftNASR can download NASR distributions directly from the FAA website, or load
-prior-downloaded distributions from disk or memory. It parses this data into classes and
-structs that are easy to use and take advantage of common Swift paradigms. These
-classes are all `Codable` and can be exported to file, and imported using the `Coder` of
-your choice.
+prior-downloaded distributions from disk or memory. NASR distributions are available in both
+TXT (fixed-width) and CSV formats, and SwiftNASR can parse either. It parses this data into
+classes and structs that are easy to use and take advantage of common Swift paradigms.
+These classes are all `Codable` and can be exported to file, and imported using the `Coder`
+of your choice.
 
 The design goal of SwiftNASR is _domain-restricted data as much as possible_. Wherever
 possible, SwiftNASR avoids representing data as open-ended types such as strings.
@@ -22,31 +23,29 @@ of the Swift language itself (type safety, compile-time checks, etc.).
 
 ### What records can I parse with this?
 
-SwiftNASR is a work in progress. Here's what's currently ready:
+SwiftNASR parses all record types in a NASR distribution:
 
-- [x] Airports
-- [x] ARTCCs
-- [x] FSSes
-- [x] Navaids
-- [ ] ARTCC boundary segments
-- [ ] Airways
-- [ ] AWOSes
-- [ ] Coded departure routes
-- [ ] FSS comm facilities
-  - The FSS data includes comm facilities, but there is also a separate file for FSS comm
-    facilities; haven't checked yet if they contain the same data
-- [ ] High altitude route fixes
-- [ ] Published holds
-- [ ] ILSes
-- [ ] Location identifiers
-- [ ] Miscellaneous activity areas
-- [ ] Military training routes
-- [ ] Enroute fixes
-- [ ] Preferred routes
-- [ ] Parachute jump activity areas
-- [ ] DPs and STARs
-- [ ] ATCTs and TRACONs
-- [ ] Weather reporting locations
+- Airports
+- ARTCCs
+- ARTCC Boundary Segments
+- ATS Airways
+- AWOSes
+- Airways
+- Coded Departure Routes
+- DPs and STARs
+- FSS Comm Facilities
+- FSSes
+- Holds
+- ILSes
+- Location Identifiers
+- Military Training Routes
+- Miscellaneous Activity Areas
+- Navaids
+- Parachute Jump Areas
+- Preferred Routes
+- Reporting Points/Fixes
+- Terminal Comm Facilities (ATCTs and TRACONs)
+- Weather Reporting Locations
 
 ## Installation
 
@@ -168,4 +167,3 @@ A `SwiftNASR_E2E` target is also available to do an end-to-end test. This will d
 distribution (or load one from file, if already downloaded) and load all data from the
 distribution, then write it out to a `.json.zip` file. The whole process takes some time, but
 if it completes successfully without error, that's a pretty good sign the code hasn't broken.
-```

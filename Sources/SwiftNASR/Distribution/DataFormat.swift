@@ -27,8 +27,6 @@ import Foundation
  let nasr = NASR.fromLocalDirectory(myURL, format: .txt)
  ```
 
- - Note: Not all record types are available in both formats. CSV format
-   currently supports airports, ARTCCs, FSSs, and navaids.
  */
 public enum DataFormat: String, Codable, Sendable {
 
