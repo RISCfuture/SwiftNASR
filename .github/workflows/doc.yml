@@ -34,6 +34,24 @@ jobs:
            --disable-indexing \
            --transform-for-static-hosting \
            --hosting-base-path SwiftNASR
+      - name: Create root redirect
+        run: |
+          cat > ./docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta http-equiv="refresh" content="0; url=/SwiftNASR/documentation/swiftnasr/">
+              <title>SwiftNASR Documentation</title>
+              <script>
+                  window.location.replace("/SwiftNASR/documentation/swiftnasr/");
+              </script>
+          </head>
+          <body>
+              <p>Redirecting to <a href="/SwiftNASR/documentation/swiftnasr/">SwiftNASR Documentation</a>...</p>
+          </body>
+          </html>
+          EOF
       - name: Upload
         uses: actions/upload-pages-artifact@v3
         with:
