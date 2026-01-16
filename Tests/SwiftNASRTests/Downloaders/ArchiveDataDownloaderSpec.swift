@@ -31,19 +31,22 @@ class ArchiveDataDownloaderSpec: AsyncSpec {
 
     describe("load") {
       context("2xx response") {
+        var capturedMockData: Data!
+
         beforeEach {
+          capturedMockData = try mockData
           let mockResponse = HTTPURLResponse(
             url: mockURL,
             statusCode: 200,
             httpVersion: "1.1",
             headerFields: [:]
           )
-          MockURLProtocol.nextResponse = try .init(data: mockData, response: mockResponse)
+          MockURLProtocol.nextResponse = .init(data: capturedMockData, response: mockResponse)
         }
 
         it("calls back with the data") {
           let distribution = try await downloader.load() as! ArchiveDataDistribution
-          try expect(distribution.data).to(equal(mockData))
+          expect(distribution.data).to(equal(capturedMockData))
           expect(MockURLProtocol.lastURL!.absoluteString)
             .to(
               equal(
