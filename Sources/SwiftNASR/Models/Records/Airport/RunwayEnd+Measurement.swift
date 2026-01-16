@@ -8,7 +8,7 @@ public extension RunwayEnd {
 
   /// The glidepath angle for a visual approach as a Measurement.
   var visualGlidepath: Measurement<UnitAngle>? {
-    visualGlidepathHundredthsDeg.map { Measurement(value: Double($0) / 100.0, unit: .degrees) }
+    visualGlidepathDeg.map { Measurement(value: Double($0), unit: .degrees) }
   }
 
   /// The distance between the runway end and displaced threshold as a Measurement.

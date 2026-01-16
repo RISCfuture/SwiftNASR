@@ -35,8 +35,8 @@ public struct RunwayEnd: Record {
   /// The height of the visual glidepath above the runway threshold (feet AGL).
   public let thresholdCrossingHeightFtAGL: UInt?
 
-  /// The glidepath angle for a visual approach (hundredths of degrees).
-  public let visualGlidepathHundredthsDeg: Float?
+  /// The glidepath angle for a visual approach (degrees).
+  public let visualGlidepathDeg: Float?
 
   /// The location and elevation of the displaced threshold, which is the
   /// start of the landing portion of the runway.
@@ -144,7 +144,7 @@ public struct RunwayEnd: Record {
     markingCondition: Self.MarkingCondition?,
     threshold: Location?,
     thresholdCrossingHeightFtAGL: UInt?,
-    visualGlidepathHundredthsDeg: Float?,
+    visualGlidepathDeg: Float?,
     displacedThreshold: Location?,
     thresholdDisplacementFt: UInt?,
     touchdownZoneElevationFtMSL: Float?,
@@ -181,7 +181,7 @@ public struct RunwayEnd: Record {
     self.markingCondition = markingCondition
     self.threshold = threshold
     self.thresholdCrossingHeightFtAGL = thresholdCrossingHeightFtAGL
-    self.visualGlidepathHundredthsDeg = visualGlidepathHundredthsDeg
+    self.visualGlidepathDeg = visualGlidepathDeg
     self.displacedThreshold = displacedThreshold
     self.thresholdDisplacementFt = thresholdDisplacementFt
     self.touchdownZoneElevationFtMSL = touchdownZoneElevationFtMSL
@@ -703,7 +703,7 @@ public struct RunwayEnd: Record {
   /// Fields that per-field remarks can be associated with.
   public enum Field: String, RemarkField {
     case id, heading, instrumentLandingSystem, rightTraffic, marking, markingCondition,
-      threshold, thresholdCrossingHeightFtAGL, visualGlidepathHundredthsDeg, displacedThreshold,
+      threshold, thresholdCrossingHeightFtAGL, visualGlidepathDeg, displacedThreshold,
       thresholdDisplacementFt, touchdownZoneElevationFtMSL, gradientPct, TORAFt, TODAFt, ASDAFt,
       LDAFt, LAHSO,
       visualGlideslopeIndicator, RVRSensors, hasRVV, approachLighting, hasREIL,
@@ -721,7 +721,7 @@ public struct RunwayEnd: Record {
         order.append(contentsOf: [
           .id, .heading, .instrumentLandingSystem, .rightTraffic, .marking, .markingCondition,
           .threshold, .threshold, .threshold, .threshold, .threshold, .thresholdCrossingHeightFtAGL,
-          .visualGlidepathHundredthsDeg, .displacedThreshold, .displacedThreshold,
+          .visualGlidepathDeg, .displacedThreshold, .displacedThreshold,
           .displacedThreshold,
           .displacedThreshold, .displacedThreshold, .thresholdDisplacementFt,
           .touchdownZoneElevationFtMSL,
@@ -750,7 +750,7 @@ public struct RunwayEnd: Record {
 
   private enum CodingKeys: String, CodingKey {
     case id, heading, instrumentLandingSystem, rightTraffic, marking, markingCondition,
-      threshold, thresholdCrossingHeightFtAGL, visualGlidepathHundredthsDeg, displacedThreshold,
+      threshold, thresholdCrossingHeightFtAGL, visualGlidepathDeg, displacedThreshold,
       thresholdDisplacementFt, touchdownZoneElevationFtMSL, visualGlideslopeIndicator, RVRSensors,
       hasRVV,
       approachLighting, hasREIL, hasCenterlineLighting, hasEndTouchdownLighting, controllingObject,

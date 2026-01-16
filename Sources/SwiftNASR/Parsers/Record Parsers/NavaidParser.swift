@@ -31,9 +31,9 @@ func parseNavaidFrequencyToHz(_ frequencyString: String?, navaidType: Navaid.Fac
     guard let kHz = UInt(frequencyString) else { return nil }
     return kHz * 1000
   }
-// Input is in MHz (e.g., "113.00"), output in Hz
-guard let MHz = Double(frequencyString) else { return nil }
-return UInt(MHz * 1_000_000)
+  // Input is in MHz (e.g., "113.00"), output in Hz
+  guard let MHz = Double(frequencyString) else { return nil }
+  return UInt(MHz * 1_000_000)
 }
 
 enum NavaidRecordIdentifier: String {

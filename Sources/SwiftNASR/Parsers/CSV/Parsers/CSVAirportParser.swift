@@ -637,7 +637,7 @@ actor CSVAirportParser: CSVParser {
       markingCondition: nil,
       threshold: nil,
       thresholdCrossingHeightFtAGL: nil,
-      visualGlidepathHundredthsDeg: nil,
+      visualGlidepathDeg: nil,
       displacedThreshold: nil,
       thresholdDisplacementFt: nil,
       touchdownZoneElevationFtMSL: nil,
@@ -830,7 +830,7 @@ actor CSVAirportParser: CSVParser {
     // Parse threshold crossing height
     let thresholdCrossingHeight: UInt? = try t[optional: "THR_CROSSING_HGT"]
 
-    // Parse visual glidepath angle
+    // Parse visual glidepath angle (CSV stores degrees directly)
     let visualGlidepath: Float? = try t[optional: "VISUAL_GLIDE_PATH_ANGLE"]
 
     // Parse displaced threshold
@@ -922,7 +922,7 @@ actor CSVAirportParser: CSVParser {
       markingCondition: markingCondition,
       threshold: threshold,
       thresholdCrossingHeightFtAGL: thresholdCrossingHeight,
-      visualGlidepathHundredthsDeg: visualGlidepath,
+      visualGlidepathDeg: visualGlidepath,
       displacedThreshold: displacedThreshold,
       thresholdDisplacementFt: thresholdDisplacement,
       touchdownZoneElevationFtMSL: touchdownZoneElevation,
