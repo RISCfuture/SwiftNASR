@@ -21,7 +21,7 @@ actor FixedWidthAirportParser: FixedWidthParser {
 
   // MARK: - Transformers
 
-  private let airportTransformer = FixedWidthTransformer([
+  private let airportTransformer = ByteTransformer([
     .recordType,  //   0 record type
     .string(),  //   1 site number
     .recordEnum(Airport.FacilityType.self),  //   2 facility type
@@ -194,7 +194,7 @@ actor FixedWidthAirportParser: FixedWidthParser {
 
   // MARK: - Parsers
 
-  func parseValues(_ values: [String], for identifier: AirportRecordIdentifier) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: AirportRecordIdentifier) throws {
     switch identifier {
       case .airport:
         try parseAirportRecord(values)
@@ -209,7 +209,7 @@ actor FixedWidthAirportParser: FixedWidthParser {
     }
   }
 
-  private func parseAirportRecord(_ values: [String]) throws {
+  private func parseAirportRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try airportTransformer.applyTo(values)
 
     let owner = try parsePerson(t: t, startIndex: 15),

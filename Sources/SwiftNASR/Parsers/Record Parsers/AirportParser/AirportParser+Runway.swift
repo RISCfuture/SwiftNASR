@@ -3,7 +3,7 @@ import Foundation
 private let offsetParser = OffsetParser()
 
 extension FixedWidthAirportParser {
-  private var runwayTransformer: FixedWidthTransformer {
+  private var runwayTransformer: ByteTransformer {
     .init([
       .recordType,  //   0 record type
       .string(),  //   1 site number
@@ -213,8 +213,8 @@ extension FixedWidthAirportParser {
     ])
   }
 
-  func parseRunwayRecord(_ values: [String]) throws {
-    let airportIndex: String = values[1].trimmingCharacters(in: .whitespaces)
+  func parseRunwayRecord(_ values: [ArraySlice<UInt8>]) throws {
+    guard let airportIndex = values[1].toTrimmedString() else { return }
     guard let airport = airports[airportIndex] else { return }
 
     let t = try runwayTransformer.applyTo(values)

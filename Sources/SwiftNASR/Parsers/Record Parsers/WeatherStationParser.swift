@@ -54,7 +54,7 @@ actor FixedWidthWeatherStationParser: FixedWidthParser {
   // L  AN  0010 00164  N/A     INFORMATION EFFECTIVE DATE
   //       0082 00174  N/A     BLANKS: FILLER
 
-  private let basicTransformer = FixedWidthTransformer([
+  private let basicTransformer = ByteTransformer([
     .recordType,  //  0 record type
     .string(),  //  1 station ID
     .recordEnum(WeatherStation.StationType.self),  //  2 type
@@ -77,14 +77,16 @@ actor FixedWidthWeatherStationParser: FixedWidthParser {
   ])
 
   // AWOS2 - Remarks
-  private let remarkTransformer = FixedWidthTransformer([
+  private let remarkTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 station ID
     .recordEnum(WeatherStation.StationType.self),  // 2 type
     .string(nullable: .blank)  // 3 remark text
   ])
 
-  func parseValues(_ values: [String], for identifier: WeatherStationRecordIdentifier) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: WeatherStationRecordIdentifier)
+    throws
+  {
     switch identifier {
       case .basicInfo: try parseBasicRecord(values)
       case .remark: try parseRemark(values)
@@ -95,7 +97,7 @@ actor FixedWidthWeatherStationParser: FixedWidthParser {
     await data.finishParsing(weatherStations: Array(stations.values))
   }
 
-  private func parseBasicRecord(_ values: [String]) throws {
+  private func parseBasicRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try basicTransformer.applyTo(values)
 
     let position: Location?
@@ -130,7 +132,7 @@ actor FixedWidthWeatherStationParser: FixedWidthParser {
     stations[WeatherStationKey(station: station)] = station
   }
 
-  private func parseRemark(_ values: [String]) throws {
+  private func parseRemark(_ values: [ArraySlice<UInt8>]) throws {
     let t = try remarkTransformer.applyTo(values)
 
     guard let remarkText: String = try t[optional: 3], !remarkText.isEmpty else {

@@ -525,7 +525,7 @@ actor CSVAirportParser: CSVParser {
     else { return }
 
     // Parse frequency using the same method as TXT parser
-    guard let frequency = FixedWidthTransformer.parseFrequency(freqString) else { return }
+    guard let frequency = ByteTransformer.parseFrequency(freqString) else { return }
 
     // FRQ.csv contains many frequency types (navaids, AWOS stations, etc.)
     // We only extract UNICOM and CTAF for airport records

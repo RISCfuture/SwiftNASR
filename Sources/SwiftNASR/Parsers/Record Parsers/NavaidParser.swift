@@ -85,7 +85,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   var formats = [NASRTable]()
   var navaids = [NavaidKey: Navaid]()
 
-  private let basicTransformer = FixedWidthTransformer([
+  private let basicTransformer = ByteTransformer([
     .recordType,  //  0 record type
     .string(),  //  1 identifier
     .recordEnum(Navaid.FacilityType.self),  //  2 facility type
@@ -156,7 +156,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     .boolean(nullable: .blank)  // 61 tweb restriction flag
   ])
 
-  private let remarkTransformer = FixedWidthTransformer([
+  private let remarkTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 id
     .recordEnum(Navaid.FacilityType.self),  // 2 facility type
@@ -165,7 +165,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     .null  // 4 filler
   ])
 
-  private let fixTransformer = FixedWidthTransformer([
+  private let fixTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 id
     .recordEnum(Navaid.FacilityType.self),  // 2 facility type
@@ -175,7 +175,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     .null  // 5 blank
   ])
 
-  private let holdingPatternTransformer = FixedWidthTransformer([
+  private let holdingPatternTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 id
     .recordEnum(Navaid.FacilityType.self),  // 2 facility type
@@ -190,7 +190,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     .null  // 6 blank
   ])
 
-  private let fanMarkerTransformer = FixedWidthTransformer([
+  private let fanMarkerTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 id
     .recordEnum(Navaid.FacilityType.self),  // 2 facility type
@@ -200,7 +200,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     .null  // 5 blank
   ])
 
-  private let checkpointTransformer = FixedWidthTransformer([
+  private let checkpointTransformer = ByteTransformer([
     .recordType,  //  0 record type
     .string(),  //  1 id
     .recordEnum(Navaid.FacilityType.self),  //  2 facility type
@@ -215,7 +215,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     .null  // 10 blank
   ])
 
-  func parseValues(_ values: [String], for identifier: NavaidRecordIdentifier) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: NavaidRecordIdentifier) throws {
     switch identifier {
       case .basicInfo: try parseBasicRecord(values)
       case .remark: try parseRemark(values)
@@ -230,7 +230,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     await data.finishParsing(navaids: Array(navaids.values))
   }
 
-  private func parseBasicRecord(_ values: [String]) throws {
+  private func parseBasicRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try basicTransformer.applyTo(values),
       lat: Float = try t[22],
       lon: Float = try t[24],
@@ -318,7 +318,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     navaids[NavaidKey(navaid: navaid)] = navaid
   }
 
-  private func parseRemark(_ values: [String]) throws {
+  private func parseRemark(_ values: [ArraySlice<UInt8>]) throws {
     let t = try remarkTransformer.applyTo(values),
       remarkText: String = try t[3]
     try updateNavaid(t) { navaid in
@@ -326,7 +326,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     }
   }
 
-  private func parseFixes(_ values: [String]) throws {
+  private func parseFixes(_ values: [ArraySlice<UInt8>]) throws {
     let t = try fixTransformer.applyTo(values),
       firstFix: Substring = try t[3],
       // Array types need raw access and manual casting due to [Any?] covariance
@@ -341,7 +341,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     }
   }
 
-  private func parseHoldingPatterns(_ values: [String]) throws {
+  private func parseHoldingPatterns(_ values: [ArraySlice<UInt8>]) throws {
     let t = try holdingPatternTransformer.applyTo(values),
       patternName: String = try t[3],
       patternNumber: UInt = try t[4],
@@ -359,7 +359,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     }
   }
 
-  private func parseFanMarkers(_ values: [String]) throws {
+  private func parseFanMarkers(_ values: [ArraySlice<UInt8>]) throws {
     let t = try fanMarkerTransformer.applyTo(values),
       firstMarker: String = try t[3],
       // Array types need raw access and manual casting due to [Any?] covariance
@@ -374,7 +374,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     }
   }
 
-  private func parseCheckpoint(_ values: [String]) throws {
+  private func parseCheckpoint(_ values: [ArraySlice<UInt8>]) throws {
     let t = try checkpointTransformer.applyTo(values),
       bearingValue: UInt = try t[4]
     try updateNavaid(t) { navaid in

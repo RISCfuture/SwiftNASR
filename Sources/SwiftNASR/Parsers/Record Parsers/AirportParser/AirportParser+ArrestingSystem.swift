@@ -1,5 +1,5 @@
 extension FixedWidthAirportParser {
-  private var arrestingSystemTransformer: FixedWidthTransformer {
+  private var arrestingSystemTransformer: ByteTransformer {
     .init([
       .recordType,  // 0 record type
       .string(),  // 1 site number
@@ -11,7 +11,7 @@ extension FixedWidthAirportParser {
     ])
   }
 
-  func parseArrestingSystemRecord(_ values: [String]) throws {
+  func parseArrestingSystemRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try arrestingSystemTransformer.applyTo(values)
 
     let airportID: String = try t[1]

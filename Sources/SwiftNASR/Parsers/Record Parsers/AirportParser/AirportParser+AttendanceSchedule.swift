@@ -1,5 +1,5 @@
 extension FixedWidthAirportParser {
-  private var attendanceTransformer: FixedWidthTransformer {
+  private var attendanceTransformer: ByteTransformer {
     .init([
       .recordType,  // 0 record type
       .string(),  // 1 site number
@@ -10,8 +10,8 @@ extension FixedWidthAirportParser {
     ])
   }
 
-  func parseAttendanceRecord(_ values: [String]) throws {
-    if values[4].trimmingCharacters(in: .whitespaces).isEmpty { return }
+  func parseAttendanceRecord(_ values: [ArraySlice<UInt8>]) throws {
+    if values[4].isBlank() { return }
     let t = try attendanceTransformer.applyTo(values)
 
     let airportID: String = try t[1]

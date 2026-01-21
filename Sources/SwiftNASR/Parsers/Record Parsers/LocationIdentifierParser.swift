@@ -22,7 +22,7 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
   var formats = [NASRTable]()
   var identifiers = [LocationIdentifier]()
 
-  private let usaTransformer = FixedWidthTransformer([
+  private let usaTransformer = ByteTransformer([
     .null,  // 0 group sort code (1)
     .null,  // 1 group code (3)
     .string(),  // 2 location identifier (5)
@@ -58,7 +58,7 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
     .null  // 32 blanks (447)
   ])
 
-  func parseValues(_ values: [String], for identifier: LIDRecordIdentifier) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: LIDRecordIdentifier) throws {
     switch identifier {
       case .USA:
         try parseUSARecord(values)
@@ -68,7 +68,7 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
     }
   }
 
-  private func parseUSARecord(_ values: [String]) throws {
+  private func parseUSARecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try usaTransformer.applyTo(values)
 
     let identifier: String = try t[2]

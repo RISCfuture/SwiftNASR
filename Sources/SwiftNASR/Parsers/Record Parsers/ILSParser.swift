@@ -41,7 +41,7 @@ actor FixedWidthILSParser: FixedWidthParser {
 
   // ILS1 - Base data
   // Layout positions based on ils_rf.txt (1-indexed positions converted to 0-indexed)
-  private let baseTransformer = FixedWidthTransformer([
+  private let baseTransformer = ByteTransformer([
     .recordType,  //  0: record type (ILS1)
     .string(),  //  1: airport site number [00005-00015]
     .string(),  //  2: runway end ID [00016-00018]
@@ -65,7 +65,7 @@ actor FixedWidthILSParser: FixedWidthParser {
   ])
 
   // ILS2 - Localizer data
-  private let localizerTransformer = FixedWidthTransformer([
+  private let localizerTransformer = ByteTransformer([
     .recordType,  //  0: record type (ILS2)
     .string(),  //  1: airport site number
     .string(),  //  2: runway end ID
@@ -93,7 +93,7 @@ actor FixedWidthILSParser: FixedWidthParser {
   ])
 
   // ILS3 - Glide slope data
-  private let glideSlopeTransformer = FixedWidthTransformer([
+  private let glideSlopeTransformer = ByteTransformer([
     .recordType,  //  0: record type (ILS3)
     .string(),  //  1: airport site number
     .string(),  //  2: runway end ID
@@ -118,7 +118,7 @@ actor FixedWidthILSParser: FixedWidthParser {
   ])
 
   // ILS4 - DME data
-  private let dmeTransformer = FixedWidthTransformer([
+  private let dmeTransformer = ByteTransformer([
     .recordType,  //  0: record type (ILS4)
     .string(),  //  1: airport site number
     .string(),  //  2: runway end ID
@@ -141,7 +141,7 @@ actor FixedWidthILSParser: FixedWidthParser {
   ])
 
   // ILS5 - Marker beacon data
-  private let markerTransformer = FixedWidthTransformer([
+  private let markerTransformer = ByteTransformer([
     .recordType,  //  0: record type (ILS5)
     .string(),  //  1: airport site number
     .string(),  //  2: runway end ID
@@ -170,7 +170,7 @@ actor FixedWidthILSParser: FixedWidthParser {
   ])
 
   // ILS6 - Remark
-  private let remarkTransformer = FixedWidthTransformer([
+  private let remarkTransformer = ByteTransformer([
     .recordType,  //  0: record type (ILS6)
     .string(),  //  1: airport site number
     .string(),  //  2: runway end ID
@@ -178,7 +178,7 @@ actor FixedWidthILSParser: FixedWidthParser {
     .string(nullable: .blank)  //  4: remark text [00029-00378]
   ])
 
-  func parseValues(_ values: [String], for identifier: ILSRecordIdentifier) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: ILSRecordIdentifier) throws {
     switch identifier {
       case .base: try parseBaseRecord(values)
       case .localizer: try parseLocalizerRecord(values)
@@ -214,7 +214,7 @@ actor FixedWidthILSParser: FixedWidthParser {
     }
   }
 
-  private func parseBaseRecord(_ values: [String]) throws {
+  private func parseBaseRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try baseTransformer.applyTo(values),
       airportSiteNumber = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       runwayEndId = try (t[2] as String).trimmingCharacters(in: .whitespaces)
@@ -294,7 +294,7 @@ actor FixedWidthILSParser: FixedWidthParser {
     }
   }
 
-  private func parseLocalizerRecord(_ values: [String]) throws {
+  private func parseLocalizerRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try localizerTransformer.applyTo(values),
       airportSiteNumber = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       runwayEndId = try (t[2] as String).trimmingCharacters(in: .whitespaces)
@@ -349,7 +349,7 @@ actor FixedWidthILSParser: FixedWidthParser {
     ILSFacilities[key]?.localizer = localizer
   }
 
-  private func parseGlideSlopeRecord(_ values: [String]) throws {
+  private func parseGlideSlopeRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try glideSlopeTransformer.applyTo(values),
       airportSiteNumber = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       runwayEndId = try (t[2] as String).trimmingCharacters(in: .whitespaces)
@@ -401,7 +401,7 @@ actor FixedWidthILSParser: FixedWidthParser {
     ILSFacilities[key]?.glideSlope = glideSlope
   }
 
-  private func parseDMERecord(_ values: [String]) throws {
+  private func parseDMERecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try dmeTransformer.applyTo(values),
       airportSiteNumber = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       runwayEndId = try (t[2] as String).trimmingCharacters(in: .whitespaces)
@@ -450,7 +450,7 @@ actor FixedWidthILSParser: FixedWidthParser {
     ILSFacilities[key]?.dme = DME
   }
 
-  private func parseMarkerRecord(_ values: [String]) throws {
+  private func parseMarkerRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try markerTransformer.applyTo(values),
       airportSiteNumber = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       runwayEndId = try (t[2] as String).trimmingCharacters(in: .whitespaces)
@@ -509,7 +509,7 @@ actor FixedWidthILSParser: FixedWidthParser {
     ILSFacilities[key]?.markers.append(marker)
   }
 
-  private func parseRemarkRecord(_ values: [String]) throws {
+  private func parseRemarkRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try remarkTransformer.applyTo(values),
       airportSiteNumber = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       runwayEndId = try (t[2] as String).trimmingCharacters(in: .whitespaces)

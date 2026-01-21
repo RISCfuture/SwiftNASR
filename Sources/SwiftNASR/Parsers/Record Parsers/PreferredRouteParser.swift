@@ -19,7 +19,7 @@ actor FixedWidthPreferredRouteParser: FixedWidthParser {
   var formats = [NASRTable]()
   var routes = [String: PreferredRoute]()
 
-  private let baseTransformer = FixedWidthTransformer([
+  private let baseTransformer = ByteTransformer([
     .recordType,  // 0 record type indicator (4)
     .string(),  // 1 origin identifier (5)
     .string(),  // 2 destination identifier (5)
@@ -38,7 +38,7 @@ actor FixedWidthPreferredRouteParser: FixedWidthParser {
     .string(nullable: .blank)  // 15 destination city (40)
   ])
 
-  private let segmentTransformer = FixedWidthTransformer([
+  private let segmentTransformer = ByteTransformer([
     .recordType,  // 0 record type indicator (4)
     .string(),  // 1 origin identifier (5)
     .string(),  // 2 destination identifier (5)
@@ -55,7 +55,7 @@ actor FixedWidthPreferredRouteParser: FixedWidthParser {
     .null  // 13 blanks (234)
   ])
 
-  func parseValues(_ values: [String], for identifier: PFRRecordIdentifier) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: PFRRecordIdentifier) throws {
     switch identifier {
       case .base:
         try parseBaseRecord(values)
@@ -64,7 +64,7 @@ actor FixedWidthPreferredRouteParser: FixedWidthParser {
     }
   }
 
-  private func parseBaseRecord(_ values: [String]) throws {
+  private func parseBaseRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try baseTransformer.applyTo(values),
       originID: String = try t[1],
       destID: String = try t[2],
@@ -99,7 +99,7 @@ actor FixedWidthPreferredRouteParser: FixedWidthParser {
     routes[routeKey] = route
   }
 
-  private func parseSegmentRecord(_ values: [String]) throws {
+  private func parseSegmentRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try segmentTransformer.applyTo(values),
       originID: String = try t[1],
       destID: String = try t[2],

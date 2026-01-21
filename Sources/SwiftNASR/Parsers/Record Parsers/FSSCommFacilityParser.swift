@@ -45,7 +45,7 @@ actor FixedWidthFSSCommFacilityParser: Parser {
 
   var facilities = [FSSCommFacility]()
 
-  private let transformer = FixedWidthTransformer([
+  private let transformer = ByteTransformer([
     .string(),  // 0 outlet identifier (4)
     .string(nullable: .blank),  // 1 outlet type (7)
     .string(nullable: .blank),  // 2 navaid identifier (4)
@@ -91,11 +91,12 @@ actor FixedWidthFSSCommFacilityParser: Parser {
       )
     }
 
-    // Extract field values using hardcoded positions
-    let values = Self.fields.map { start, length -> String in
-      guard start < data.count else { return "" }
-      let range = start..<min(start + length, data.count)
-      return String(data: data[range], encoding: .isoLatin1) ?? ""
+    // Extract field values as byte slices using hardcoded positions
+    let bytes = [UInt8](data)
+    let values = Self.fields.map { start, length -> ArraySlice<UInt8> in
+      guard start < bytes.count else { return bytes[0..<0] }
+      let endIndex = min(start + length, bytes.count)
+      return bytes[start..<endIndex]
     }
 
     let t = try transformer.applyTo(values)

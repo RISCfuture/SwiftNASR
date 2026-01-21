@@ -43,7 +43,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
   var formats = [NASRTable]()
   var ARTCCs = [ARTCCKey: ARTCC]()
 
-  private let generalTransformer = FixedWidthTransformer([
+  private let generalTransformer = ByteTransformer([
     .recordType,  //  0 record type
     .string(),  //  1 identifier
 
@@ -64,7 +64,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     .null  // 14 blank
   ])
 
-  private let remarksTransformer = FixedWidthTransformer([
+  private let remarksTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 ARTCC ID
     .string(),  // 2 ARTCC location
@@ -74,7 +74,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     .null  // 6 blank
   ])
 
-  private let frequencyTransformer = FixedWidthTransformer([
+  private let frequencyTransformer = ByteTransformer([
     .recordType,  //  0 record type
     .string(),  //  1 ARTCC ID
     .string(),  //  2 ARTCC location
@@ -96,7 +96,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     .null  // 16 airport longitude - seconds
   ])
 
-  private let frequencyRemarksTransformer = FixedWidthTransformer([
+  private let frequencyRemarksTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 ARTCC ID
     .string(),  // 2 ARTCC location
@@ -107,7 +107,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     .null  // 7 blank
   ])
 
-  func parseValues(_ values: [String], for identifier: ARTCCRecordIdentifier) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: ARTCCRecordIdentifier) throws {
     switch identifier {
       case .generalData: try parseGeneralRecord(values)
       case .remarks: try parseRemarks(values)
@@ -120,7 +120,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     await data.finishParsing(ARTCCs: Array(ARTCCs.values))
   }
 
-  private func parseGeneralRecord(_ values: [String]) throws {
+  private func parseGeneralRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try generalTransformer.applyTo(values)
 
     var location: Location?
@@ -142,7 +142,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     ARTCCs[ARTCCKey(center: center)] = center
   }
 
-  private func parseRemarks(_ values: [String]) throws {
+  private func parseRemarks(_ values: [ArraySlice<UInt8>]) throws {
     let t = try remarksTransformer.applyTo(values),
       remarkText: String = try t[5]
     try updateARTCC(t) { center in
@@ -150,7 +150,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     }
   }
 
-  private func parseFrequency(_ values: [String]) throws {
+  private func parseFrequency(_ values: [ArraySlice<UInt8>]) throws {
     let t = try frequencyTransformer.applyTo(values)
 
     try updateARTCC(t) { center in
@@ -165,7 +165,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     }
   }
 
-  private func parseFrequencyRemarks(_ values: [String]) throws {
+  private func parseFrequencyRemarks(_ values: [ArraySlice<UInt8>]) throws {
     let t = try frequencyRemarksTransformer.applyTo(values),
       freqKHz: UInt = try t[4],
       remarkText: String = try t[6]

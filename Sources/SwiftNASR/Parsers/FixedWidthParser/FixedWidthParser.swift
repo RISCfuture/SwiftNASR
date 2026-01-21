@@ -9,7 +9,7 @@ protocol FixedWidthParser: LayoutDataParser {
   var recordTypeRange: Range<UInt> { get }
   var formats: [NASRTable] { get set }
 
-  func parseValues(_ values: [String], for identifier: RecordIdentifier) throws
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: RecordIdentifier) throws
 }
 
 extension FixedWidthParser {
@@ -17,7 +17,7 @@ extension FixedWidthParser {
 
   func format(forRecordIdentifier identifier: RecordIdentifier) -> NASRTable {
     guard let index = Self.layoutFormatOrder.firstIndex(of: identifier) else {
-      preconditionFailure("No configured layout format for ‘\(identifier.rawValue)’")
+      preconditionFailure("No configured layout format for '\(identifier.rawValue)'")
     }
     guard index < formats.count else {
       preconditionFailure(
@@ -28,13 +28,15 @@ extension FixedWidthParser {
   }
 
   func parse(data: Data) throws {
-    let recordIdentifier = try readIdentifier(data: data)
+    let bytes = [UInt8](data)
+    let recordIdentifier = try readIdentifier(bytes: bytes)
     let layoutFormat = format(forRecordIdentifier: recordIdentifier)
-    let values = layoutFormat.fields.map { field in
-      return String(data: data[field.range], encoding: .isoLatin1)!
+
+    let slices = layoutFormat.fields.map { field in
+      bytes[Int(field.range.lowerBound)..<Int(field.range.upperBound)]
     }
 
-    try parseValues(values, for: recordIdentifier)
+    try parseValues(slices, for: recordIdentifier)
   }
 
   @available(*, unavailable)
@@ -42,12 +44,14 @@ extension FixedWidthParser {
     fatalError("must be implemented by subclasses")
   }
 
-  private func readIdentifier(data: Data) throws -> RecordIdentifier {
-    guard let identifierString = String(data: data[recordTypeRange], encoding: .isoLatin1) else {
+  private func readIdentifier(bytes: [UInt8]) throws -> RecordIdentifier {
+    let range = recordTypeRange
+    let slice = bytes[Int(range.lowerBound)..<Int(range.upperBound)]
+    guard let identifierString = slice.toString() else {
       throw ParserError.badData("Invalid ISO-Latin1 character")
     }
     guard let identifier = RecordIdentifier(rawValue: identifierString) else {
-      throw ParserError.badData("Invalid record identifier ‘\(identifierString)’")
+      throw ParserError.badData("Invalid record identifier '\(identifierString)'")
     }
 
     return identifier

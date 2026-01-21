@@ -48,7 +48,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   // AWY1 - Basic and MEA data
   // Layout positions based on awy_rf.txt
   // Note: Per awy_rf.txt, airway type field uses "A" = Alaska, "H" = Hawaii, "BLANK" = U.S. Federal Airway
-  private let basicTransformer = FixedWidthTransformer([
+  private let basicTransformer = ByteTransformer([
     .recordType,  //  0 record type (AWY1)
     .string(),  //  1 airway designation
     .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type (blank = federal per layout)
@@ -95,7 +95,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   ])
 
   // AWY2 - Point description
-  private let pointTransformer = FixedWidthTransformer([
+  private let pointTransformer = ByteTransformer([
     .recordType,  //  0 record type (AWY2)
     .string(),  //  1 airway designation
     .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type
@@ -115,7 +115,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   ])
 
   // AWY3 - Changeover point navaid
-  private let changeoverTransformer = FixedWidthTransformer([
+  private let changeoverTransformer = ByteTransformer([
     .recordType,  //  0 record type (AWY3)
     .string(),  //  1 airway designation
     .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type
@@ -130,7 +130,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   ])
 
   // AWY4 - Point remarks
-  private let pointRemarkTransformer = FixedWidthTransformer([
+  private let pointRemarkTransformer = ByteTransformer([
     .recordType,  //  0 record type (AWY4)
     .string(),  //  1 airway designation
     .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type
@@ -141,7 +141,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   ])
 
   // AWY5 - Changeover exception
-  private let changeoverExceptionTransformer = FixedWidthTransformer([
+  private let changeoverExceptionTransformer = ByteTransformer([
     .recordType,  //  0 record type (AWY5)
     .string(),  //  1 airway designation
     .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type
@@ -152,7 +152,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   ])
 
   // RMK - Airway remark
-  private let airwayRemarkTransformer = FixedWidthTransformer([
+  private let airwayRemarkTransformer = ByteTransformer([
     .recordType,  //  0 record type (RMK )
     .string(),  //  1 airway designation
     .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type
@@ -163,7 +163,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
     .null  //  7 record sort sequence
   ])
 
-  func parseValues(_ values: [String], for identifier: AirwayRecordIdentifier) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: AirwayRecordIdentifier) throws {
     switch identifier {
       case .basicAndMEA: try parseBasicRecord(values)
       case .pointDescription: try parsePointRecord(values)
@@ -209,7 +209,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
     }
   }
 
-  private func parseBasicRecord(_ values: [String]) throws {
+  private func parseBasicRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try basicTransformer.applyTo(values),
       designation: String = try t[1],
       // Blank = U.S. Federal Airway per awy_rf.txt layout
@@ -291,7 +291,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
     segments[segmentKey] = segment
   }
 
-  private func parsePointRecord(_ values: [String]) throws {
+  private func parsePointRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try pointTransformer.applyTo(values),
       designation: String = try t[1],
       // Blank = U.S. Federal Airway per awy_rf.txt layout
@@ -347,7 +347,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
     }
   }
 
-  private func parseChangeoverRecord(_ values: [String]) throws {
+  private func parseChangeoverRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try changeoverTransformer.applyTo(values),
       designation: String = try t[1],
       // Blank = U.S. Federal Airway per awy_rf.txt layout
@@ -397,7 +397,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
     }
   }
 
-  private func parsePointRemark(_ values: [String]) throws {
+  private func parsePointRemark(_ values: [ArraySlice<UInt8>]) throws {
     let t = try pointRemarkTransformer.applyTo(values),
       designation: String = try t[1],
       // Blank = U.S. Federal Airway per awy_rf.txt layout
@@ -418,7 +418,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
     }
   }
 
-  private func parseChangeoverException(_ values: [String]) throws {
+  private func parseChangeoverException(_ values: [ArraySlice<UInt8>]) throws {
     let t = try changeoverExceptionTransformer.applyTo(values),
       designation: String = try t[1],
       // Blank = U.S. Federal Airway per awy_rf.txt layout
@@ -439,7 +439,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
     }
   }
 
-  private func parseAirwayRemark(_ values: [String]) throws {
+  private func parseAirwayRemark(_ values: [ArraySlice<UInt8>]) throws {
     let t = try airwayRemarkTransformer.applyTo(values),
       designation: String = try t[1],
       // Blank = U.S. Federal Airway per awy_rf.txt layout

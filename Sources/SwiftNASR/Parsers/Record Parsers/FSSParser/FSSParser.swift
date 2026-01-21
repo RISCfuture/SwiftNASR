@@ -25,7 +25,7 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
   private let frequencyParser = FrequencyParser()
   private let ddmmssParser = DDMMSSParser()
 
-  private var transformer: FixedWidthTransformer {
+  private var transformer: ByteTransformer {
     .init([
       .string(),  //  0 identifier
       .string(),  //  1 name
@@ -145,7 +145,7 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
     ])
   }
 
-  private let continuationTransformer = FixedWidthTransformer([
+  private let continuationTransformer = ByteTransformer([
     .generic { $0[$0.startIndex..<$0.endIndex] },  // 0 record ID
     .fixedWidthArray(
       width: 14,
@@ -180,7 +180,7 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
 
   private let facilityCount = 20  // TODO then why do some fields have cardinalities of 30 or 40?
 
-  func parseValues(_ values: [String]) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>]) throws {
     if values.count == 4 {
       let transformedValues = try continuationTransformer.applyTo(values)
       try parseContinuation(transformedValues)

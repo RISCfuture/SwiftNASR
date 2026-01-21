@@ -31,7 +31,7 @@ actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
   var locations = [String: WeatherReportingLocation]()
   var currentLocationId: String?
 
-  private let baseTransformer = FixedWidthTransformer([
+  private let baseTransformer = ByteTransformer([
     .string(),  // 0 identifier (5)
     .string(nullable: .blank),  // 1 latitude DDMMSSTC (8)
     .string(nullable: .blank),  // 2 longitude DDDMMSSTC (9)
@@ -61,11 +61,12 @@ actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
   }
 
   private func parseBaseRecord(_ data: Data) throws {
-    // Extract field values using hardcoded positions
-    let values = Self.baseFields.map { start, length -> String in
-      guard start < data.count else { return "" }
-      let range = start..<min(start + length, data.count)
-      return String(data: data[range], encoding: .isoLatin1) ?? ""
+    // Extract field values as byte slices using hardcoded positions
+    let bytes = [UInt8](data)
+    let values = Self.baseFields.map { start, length -> ArraySlice<UInt8> in
+      guard start < bytes.count else { return bytes[0..<0] }
+      let endIndex = min(start + length, bytes.count)
+      return bytes[start..<endIndex]
     }
 
     let t = try baseTransformer.applyTo(values)

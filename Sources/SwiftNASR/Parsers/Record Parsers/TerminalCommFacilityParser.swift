@@ -25,7 +25,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   var facilities = [String: TerminalCommFacility]()
 
   // TWR1 - Base data (record length 1608)
-  private let baseTransformer = FixedWidthTransformer([
+  private let baseTransformer = ByteTransformer([
     .recordType,  //  0: record type (TWR1)
     .string(),  //  1: facility ID [00005-00008]
     .dateComponents(format: .monthDayYearSlash, nullable: .blank),  //  2: effective date [00009-00018]
@@ -77,7 +77,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   ])
 
   // TWR2 - Hours data
-  private let hoursTransformer = FixedWidthTransformer([
+  private let hoursTransformer = ByteTransformer([
     .recordType,  //  0: record type (TWR2)
     .string(),  //  1: facility ID [00005-00008]
     .string(nullable: .blank),  //  2: PMSV hours [00009-00208]
@@ -91,7 +91,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   ])
 
   // TWR3 - Frequencies data (9 frequency pairs, then 9 extended frequency fields)
-  private let frequenciesTransformer = FixedWidthTransformer([
+  private let frequenciesTransformer = ByteTransformer([
     .recordType,  //  0: record type (TWR3)
     .string(),  //  1: facility ID [00005-00008]
     .string(nullable: .blank),  //  2: frequency 1 [00009-00052]
@@ -125,7 +125,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   ])
 
   // TWR4 - Services data
-  private let servicesTransformer = FixedWidthTransformer([
+  private let servicesTransformer = ByteTransformer([
     .recordType,  //  0: record type (TWR4)
     .string(),  //  1: facility ID [00005-00008]
     .string(nullable: .blank),  //  2: master airport services [00009-00108]
@@ -133,7 +133,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   ])
 
   // TWR5 - Radar data
-  private let radarTransformer = FixedWidthTransformer([
+  private let radarTransformer = ByteTransformer([
     .recordType,  //  0: record type (TWR5)
     .string(),  //  1: facility ID [00005-00008]
     .recordEnum(TerminalCommFacility.RadarType.self, nullable: .blank),  //  2: primary approach radar [00009-00017]
@@ -152,7 +152,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   ])
 
   // TWR6 - Remark data
-  private let remarkTransformer = FixedWidthTransformer([
+  private let remarkTransformer = ByteTransformer([
     .recordType,  //  0: record type (TWR6)
     .string(),  //  1: facility ID [00005-00008]
     .string(nullable: .blank),  //  2: element number [00009-00013]
@@ -161,7 +161,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   ])
 
   // TWR7 - Satellite airport data
-  private let satelliteTransformer = FixedWidthTransformer([
+  private let satelliteTransformer = ByteTransformer([
     .recordType,  //  0: record type (TWR7)
     .string(),  //  1: facility ID [00005-00008]
     .string(nullable: .blank),  //  2: satellite frequency [00009-00052]
@@ -190,7 +190,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   ])
 
   // TWR8 - Airspace data
-  private let airspaceTransformer = FixedWidthTransformer([
+  private let airspaceTransformer = ByteTransformer([
     .recordType,  //  0: record type (TWR8)
     .string(),  //  1: facility ID [00005-00008]
     .string(nullable: .blank),  //  2: class B [00009]
@@ -202,7 +202,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
   ])
 
   // TWR9 - ATIS data
-  private let ATISTransformer = FixedWidthTransformer([
+  private let ATISTransformer = ByteTransformer([
     .recordType,  //  0: record type (TWR9)
     .string(),  //  1: facility ID [00005-00008]
     .unsignedInteger(nullable: .blank),  //  2: ATIS serial number [00009-00012]
@@ -212,7 +212,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     .null  //  6: blank [00331-01608]
   ])
 
-  func parseValues(_ values: [String], for identifier: TWRRecordIdentifier) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: TWRRecordIdentifier) throws {
     switch identifier {
       case .base: try parseBaseRecord(values)
       case .hours: try parseHoursRecord(values)
@@ -250,7 +250,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     }
   }
 
-  private func parseBaseRecord(_ values: [String]) throws {
+  private func parseBaseRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try baseTransformer.applyTo(values),
       facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       airportSiteNumber: String? = try t[optional: 3],
@@ -354,7 +354,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     facilities[facilityID] = facility
   }
 
-  private func parseHoursRecord(_ values: [String]) throws {
+  private func parseHoursRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try hoursTransformer.applyTo(values),
       facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       pmsvHours: String? = try t[optional: 2],
@@ -384,7 +384,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     facilities[facilityID]?.towerHours = towerHours
   }
 
-  private func parseFrequenciesRecord(_ values: [String]) throws {
+  private func parseFrequenciesRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try frequenciesTransformer.applyTo(values),
       facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces)
 
@@ -404,7 +404,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
         use: String? = try t[optional: useIndex]
 
       if let freqString, !freqString.isEmpty,
-        let freqKHz = FixedWidthTransformer.parseFrequency(freqString)
+        let freqKHz = ByteTransformer.parseFrequency(freqString)
       {
         let frequency = TerminalCommFacility.Frequency(
           frequencyKHz: freqKHz,
@@ -416,7 +416,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     }
   }
 
-  private func parseServicesRecord(_ values: [String]) throws {
+  private func parseServicesRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try servicesTransformer.applyTo(values),
       facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       masterAirportServices: String? = try t[optional: 2]
@@ -432,7 +432,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     facilities[facilityID]?.masterAirportServices = masterAirportServices
   }
 
-  private func parseRadarRecord(_ values: [String]) throws {
+  private func parseRadarRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try radarTransformer.applyTo(values),
       facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       primaryApproachRadar: TerminalCommFacility.RadarType? = try t[optional: 2],
@@ -477,7 +477,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     facilities[facilityID]?.radar = radar
   }
 
-  private func parseRemarkRecord(_ values: [String]) throws {
+  private func parseRemarkRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try remarkTransformer.applyTo(values),
       facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       remark: String? = try t[optional: 3]
@@ -495,7 +495,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     }
   }
 
-  private func parseSatelliteRecord(_ values: [String]) throws {
+  private func parseSatelliteRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try satelliteTransformer.applyTo(values),
       facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       truncatedFrequency: String? = try t[optional: 2],
@@ -531,7 +531,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     let frequencyString =
       extendedFrequency?.isEmpty == false ? extendedFrequency : truncatedFrequency
     let frequencyKHz: UInt? =
-      if let frequencyString { FixedWidthTransformer.parseFrequency(frequencyString) } else { nil }
+      if let frequencyString { ByteTransformer.parseFrequency(frequencyString) } else { nil }
 
     let satPosition = try makeLocation(
       latitude: satLat,
@@ -563,7 +563,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     facilities[facilityID]?.satelliteAirports.append(satellite)
   }
 
-  private func parseAirspaceRecord(_ values: [String]) throws {
+  private func parseAirspaceRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try airspaceTransformer.applyTo(values),
       facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       classBStr: String? = try t[optional: 2],
@@ -596,7 +596,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     facilities[facilityID]?.airspace = airspace
   }
 
-  private func parseATISRecord(_ values: [String]) throws {
+  private func parseATISRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try ATISTransformer.applyTo(values),
       facilityID = try (t[1] as String).trimmingCharacters(in: .whitespaces),
       hours: String? = try t[optional: 3],

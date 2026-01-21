@@ -41,7 +41,7 @@ actor FixedWidthFixParser: FixedWidthParser {
   var fixes = [FixKey: Fix]()
 
   // FIX1 - Base fix data
-  private let basicTransformer = FixedWidthTransformer([
+  private let basicTransformer = ByteTransformer([
     .recordType,  //  0 record type
     .string(),  //  1 fix ID
     .string(),  //  2 state name
@@ -66,7 +66,7 @@ actor FixedWidthFixParser: FixedWidthParser {
   ])
 
   // FIX2 - Navaid makeup
-  private let navaidMakeupTransformer = FixedWidthTransformer([
+  private let navaidMakeupTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 fix ID
     .string(),  // 2 state name
@@ -76,7 +76,7 @@ actor FixedWidthFixParser: FixedWidthParser {
   ])
 
   // FIX3 - ILS makeup
-  private let ILSMakeupTransformer = FixedWidthTransformer([
+  private let ILSMakeupTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 fix ID
     .string(),  // 2 state name
@@ -86,7 +86,7 @@ actor FixedWidthFixParser: FixedWidthParser {
   ])
 
   // FIX4 - Remarks
-  private let remarkTransformer = FixedWidthTransformer([
+  private let remarkTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 fix ID
     .string(),  // 2 state name
@@ -96,7 +96,7 @@ actor FixedWidthFixParser: FixedWidthParser {
   ])
 
   // FIX5 - Charting types
-  private let chartingTransformer = FixedWidthTransformer([
+  private let chartingTransformer = ByteTransformer([
     .recordType,  // 0 record type
     .string(),  // 1 fix ID
     .string(),  // 2 state name
@@ -105,7 +105,7 @@ actor FixedWidthFixParser: FixedWidthParser {
     .null  // 5 blanks
   ])
 
-  func parseValues(_ values: [String], for identifier: FixRecordIdentifier) throws {
+  func parseValues(_ values: [ArraySlice<UInt8>], for identifier: FixRecordIdentifier) throws {
     switch identifier {
       case .basicInfo: try parseBasicRecord(values)
       case .navaidMakeup: try parseNavaidMakeup(values)
@@ -119,7 +119,7 @@ actor FixedWidthFixParser: FixedWidthParser {
     await data.finishParsing(fixes: Array(fixes.values))
   }
 
-  private func parseBasicRecord(_ values: [String]) throws {
+  private func parseBasicRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try basicTransformer.applyTo(values),
       lat: Float = try t[4],
       lon: Float = try t[5],
@@ -153,7 +153,7 @@ actor FixedWidthFixParser: FixedWidthParser {
     fixes[FixKey(fix: fix)] = fix
   }
 
-  private func parseNavaidMakeup(_ values: [String]) throws {
+  private func parseNavaidMakeup(_ values: [ArraySlice<UInt8>]) throws {
     let t = try navaidMakeupTransformer.applyTo(values)
 
     guard let rawDescription: String = try t[optional: 4], !rawDescription.isEmpty else {
@@ -167,7 +167,7 @@ actor FixedWidthFixParser: FixedWidthParser {
     }
   }
 
-  private func parseILSMakeup(_ values: [String]) throws {
+  private func parseILSMakeup(_ values: [ArraySlice<UInt8>]) throws {
     let t = try ILSMakeupTransformer.applyTo(values)
 
     guard let rawDescription: String = try t[optional: 4], !rawDescription.isEmpty else {
@@ -181,7 +181,7 @@ actor FixedWidthFixParser: FixedWidthParser {
     }
   }
 
-  private func parseRemark(_ values: [String]) throws {
+  private func parseRemark(_ values: [ArraySlice<UInt8>]) throws {
     let t = try remarkTransformer.applyTo(values)
 
     guard let fieldLabel: String = try t[optional: 4],
@@ -196,7 +196,7 @@ actor FixedWidthFixParser: FixedWidthParser {
     }
   }
 
-  private func parseCharting(_ values: [String]) throws {
+  private func parseCharting(_ values: [ArraySlice<UInt8>]) throws {
     let t = try chartingTransformer.applyTo(values)
 
     guard let chartType: String = try t[optional: 4] else {

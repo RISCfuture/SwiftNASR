@@ -1,17 +1,19 @@
 import Foundation
 
 protocol FixedWidthNoRecordIDParser: LayoutDataParser {
-  func parseValues(_ values: [String]) throws
+  func parseValues(_ values: [ArraySlice<UInt8>]) throws
   func formatForData(_ data: Data) throws -> NASRTable
 }
 
 extension FixedWidthNoRecordIDParser {
   func parse(data: Data) throws {
-    let values = try formatForData(data).fields.map { field in
-      return String(data: data[field.range], encoding: .isoLatin1)!
+    let bytes = [UInt8](data)
+    let format = try formatForData(data)
+    let slices = format.fields.map { field in
+      bytes[Int(field.range.lowerBound)..<Int(field.range.upperBound)]
     }
 
-    try parseValues(values)
+    try parseValues(slices)
   }
 
   @available(*, unavailable)

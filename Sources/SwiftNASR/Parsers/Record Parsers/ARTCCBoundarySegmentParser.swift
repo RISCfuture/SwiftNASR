@@ -22,7 +22,7 @@ actor FixedWidthARTCCBoundarySegmentParser: Parser {
 
   var segments = [ARTCCBoundarySegment]()
 
-  private let transformer = FixedWidthTransformer([
+  private let transformer = ByteTransformer([
     .string(),  // 0 record identifier (12)
     .string(),  // 1 center name (40)
     .string(),  // 2 altitude structure decode name (10)
@@ -46,11 +46,12 @@ actor FixedWidthARTCCBoundarySegmentParser: Parser {
       )
     }
 
-    // Extract field values using hardcoded positions
-    let values = Self.fields.map { start, length -> String in
-      guard start < data.count else { return "" }
-      let range = start..<min(start + length, data.count)
-      return String(data: data[range], encoding: .isoLatin1) ?? ""
+    // Extract field values as byte slices using hardcoded positions
+    let bytes = [UInt8](data)
+    let values = Self.fields.map { start, length -> ArraySlice<UInt8> in
+      guard start < bytes.count else { return bytes[0..<0] }
+      let endIndex = min(start + length, bytes.count)
+      return bytes[start..<endIndex]
     }
 
     let t = try transformer.applyTo(values),
