@@ -76,7 +76,7 @@ extension Downloader {
   public var cycleURL: URL {
     switch format {
       case .txt:
-        let cycleString = cycleDateFormatter.string(from: cycle.date!)
+        let cycleString = cycleDateFormatter.string(from: cycle.effectiveDate!)
         return URL(
           string:
             "https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_\(cycleString).zip"
@@ -87,7 +87,7 @@ extension Downloader {
         formatter.locale = Locale(identifier: "en_US")
         formatter.timeZone = TimeZone(identifier: "UTC")
         formatter.dateFormat = "dd_MMM_yyyy"
-        let csvDateString = formatter.string(from: cycle.date!)
+        let csvDateString = formatter.string(from: cycle.effectiveDate!)
         return URL(
           string: "https://nfdc.faa.gov/webContent/28DaySub/extra/\(csvDateString)_CSV.zip"
         )!

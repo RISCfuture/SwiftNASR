@@ -16,7 +16,7 @@ public final class ArchiveFileDownloader: Downloader {
   public let location: URL?
 
   public init(cycle: Cycle? = nil, format: DataFormat = .txt) {
-    self.cycle = cycle ?? .current
+    self.cycle = cycle ?? .effective
     self.format = format
     session = .shared
     location = nil
@@ -28,7 +28,7 @@ public final class ArchiveFileDownloader: Downloader {
     location: URL? = nil,
     session: URLSession = .shared
   ) {
-    self.cycle = cycle ?? .current
+    self.cycle = cycle ?? .effective
     self.format = format
     self.location = location
     self.session = session

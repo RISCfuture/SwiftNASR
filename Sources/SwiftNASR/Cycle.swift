@@ -9,10 +9,10 @@ public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, E
   /// The earliest reference cycle (not necessarily the earliest cycle for
   /// which data is available, but the earliest representable date for a
   /// cycle).
-  public static let datum = Self(year: 2020, month: 12, day: 3)
+  static let datum = Self(year: 2020, month: 12, day: 3)
 
-  /// `true` if this cycle's effectivity period includes the current date.
-  public static var current: Self { effectiveCycle(for: Date())! }
+  /// The currently effective cycle.
+  public static var effective: Self { effectiveCycle(for: Date())! }
 
   private static var calendar: Calendar {
     var calendar = Calendar(identifier: .gregorian)
@@ -21,7 +21,7 @@ public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, E
   }
 
   /// The length of time a cycle is effective for.
-  public static let cycleDuration: DateComponents = .init(day: 28)
+  static let cycleDuration: DateComponents = .init(day: 28)
   private static let negativeCycleDuration: DateComponents = .init(day: -28)
 
   /// The year of the first date of the cycle.
@@ -43,21 +43,23 @@ public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, E
     return dc
   }
 
-  /// A `Date` object representing the first effective day of this cycle.
-  public var date: Date? { Self.calendar.date(from: dateComponents) }
+  /// The effective date of this cycle (midnight UTC when cycle becomes effective).
+  public var effectiveDate: Date? { Self.calendar.date(from: dateComponents) }
 
-  /// The last date when this cycle is effective.
-  public var endDate: Date? {
-    guard let date else { return nil }
-    return Self.calendar.date(byAdding: Self.cycleDuration, to: date)
+  /// The expiration date of this cycle (midnight UTC when cycle expires).
+  ///
+  /// This is the exact moment the cycle expires, which is also the effective date of the next cycle.
+  public var expirationDate: Date? {
+    guard let effectiveDate else { return nil }
+    return Self.calendar.date(byAdding: Self.cycleDuration, to: effectiveDate)
   }
 
   /// The range of times when this cycle is effective.
+  ///
+  /// The range starts at `effectiveDate` and ends at `expirationDate` (exclusive).
   public var dateRange: DateInterval? {
-    guard let date else { return nil }
-    guard let endDate else { return nil }
-
-    return DateInterval(start: date, end: endDate)
+    guard let effectiveDate, let expirationDate else { return nil }
+    return DateInterval(start: effectiveDate, end: expirationDate)
   }
 
   /// Whether or not this cycle is currently effective.
@@ -65,8 +67,8 @@ public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, E
 
   /// The next active cycle following this one.
   public var next: Self? {
-    guard let endDate else { return nil }
-    let components = Self.calendar.dateComponents([.year, .month, .day], from: endDate)
+    guard let expirationDate else { return nil }
+    let components = Self.calendar.dateComponents([.year, .month, .day], from: expirationDate)
     guard let year = components.year,
       let month = components.month,
       let day = components.day
@@ -76,8 +78,9 @@ public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, E
 
   /// The previously active cycle before this one.
   public var previous: Self? {
-    guard let date else { return nil }
-    guard let prevDate = Self.calendar.date(byAdding: Self.negativeCycleDuration, to: date) else {
+    guard let effectiveDate else { return nil }
+    guard let prevDate = Self.calendar.date(byAdding: Self.negativeCycleDuration, to: effectiveDate)
+    else {
       return nil
     }
     let components = Self.calendar.dateComponents([.year, .month, .day], from: prevDate)
@@ -116,7 +119,7 @@ public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, E
               ``datum`` date.
    */
   public static func effectiveCycle(for date: Date) -> Self? {
-    guard var cycle = datum.date else { return nil }
+    guard var cycle = datum.effectiveDate else { return nil }
     guard date >= cycle else { return nil }
 
     var lastCycle = cycle
@@ -155,5 +158,25 @@ public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, E
 
   enum CodingKeys: String, CodingKey {
     case year, month, day
+  }
+}
+
+extension Cycle: Comparable {
+  public static func < (lhs: Cycle, rhs: Cycle) -> Bool {
+    if lhs.year != rhs.year { return lhs.year < rhs.year }
+    if lhs.month != rhs.month { return lhs.month < rhs.month }
+    return lhs.day < rhs.day
+  }
+}
+
+// MARK: - Factory Methods
+
+extension Cycle {
+  /// Returns the cycle that contains the given date.
+  ///
+  /// - Parameter date: The date to find the cycle for.
+  /// - Returns: The cycle containing the date, or `nil` if the date is before the datum.
+  public static func cycle(for date: Date) -> Self? {
+    effectiveCycle(for: date)
   }
 }

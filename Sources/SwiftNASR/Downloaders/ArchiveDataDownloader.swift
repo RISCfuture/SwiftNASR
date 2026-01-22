@@ -13,13 +13,13 @@ public final class ArchiveDataDownloader: Downloader {
   public let session: URLSession
 
   public init(cycle: Cycle? = nil, format: DataFormat = .txt) {
-    self.cycle = cycle ?? .current
+    self.cycle = cycle ?? .effective
     self.format = format
     session = .shared
   }
 
   public init(cycle: Cycle? = nil, format: DataFormat = .txt, session: URLSession = .shared) {
-    self.cycle = cycle ?? .current
+    self.cycle = cycle ?? .effective
     self.format = format
     self.session = session
   }
