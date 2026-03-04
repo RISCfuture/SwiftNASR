@@ -1,5 +1,8 @@
-import CoreLocation
 import Foundation
+
+#if canImport(CoreLocation)
+  import CoreLocation
+#endif
 
 // MARK: - Location
 
@@ -18,29 +21,33 @@ public extension Location {
   var elevation: Measurement<UnitLength>? {
     elevationFtMSL.map { Measurement(value: Double($0), unit: .feet) }
   }
+}
 
-  /// The coordinate as a CoreLocation coordinate.
-  var coordinate: CLLocationCoordinate2D {
-    CLLocationCoordinate2D(
-      latitude: latitude.converted(to: .degrees).value,
-      longitude: longitude.converted(to: .degrees).value
-    )
-  }
-
-  /// The location as a CoreLocation location, including altitude if available.
-  var location: CLLocation {
-    if let elevation {
-      return CLLocation(
-        coordinate: coordinate,
-        altitude: elevation.converted(to: .meters).value,
-        horizontalAccuracy: -1,
-        verticalAccuracy: -1,
-        timestamp: .distantPast
+#if canImport(CoreLocation)
+  public extension Location {
+    /// The coordinate as a CoreLocation coordinate.
+    var coordinate: CLLocationCoordinate2D {
+      CLLocationCoordinate2D(
+        latitude: latitude.converted(to: .degrees).value,
+        longitude: longitude.converted(to: .degrees).value
       )
     }
-    return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+
+    /// The location as a CoreLocation location, including altitude if available.
+    var location: CLLocation {
+      if let elevation {
+        return CLLocation(
+          coordinate: coordinate,
+          altitude: elevation.converted(to: .meters).value,
+          horizontalAccuracy: -1,
+          verticalAccuracy: -1,
+          timestamp: .distantPast
+        )
+      }
+      return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+    }
   }
-}
+#endif
 
 // MARK: - Bearing
 
