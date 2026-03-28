@@ -90,7 +90,7 @@ public protocol Distribution: Sendable {
 
   /**
    Locates a file in the distribution by its prefix.
-  
+
    - Parameter prefix: The filename prefix.
    - Returns: The first matching file, or `nil` if no file names match the
               prefix.
@@ -100,7 +100,7 @@ public protocol Distribution: Sendable {
 
   /**
    Decompresses and reads a file asynchronously from a distribution.
-  
+
    - Parameter path: The path to the file.
    - Parameter progressHandler: A block that receives the Progress object when
                                 the task begins. You can add it to your parent
@@ -120,18 +120,18 @@ public protocol Distribution: Sendable {
 
   /**
    Reads the cycle from the distribution.
-  
+
    - Returns: The parsed cycle, or `nil` if the cycle could not be parsed.
    */
   func readCycle() async throws -> Cycle?
 
   /**
    Reads a file as raw data chunks without line splitting.
-  
+
    This method streams the file content as raw `Data` chunks, suitable for
    parsers that handle their own buffering and line detection (such as CSV
    parsers with multi-line quoted fields).
-  
+
    - Parameter path: The path to the file within the distribution.
    - Parameter progressHandler: A block that receives the Progress object when
                                 the task begins.
@@ -148,7 +148,7 @@ extension Distribution {
 
   /**
    Reads the data for a given record type from the distribution.
-  
+
    - Parameter type: The record type to read data for.
    - Parameter progressHandler: A block that receives the Progress object when
    the task begins. You can add it to your parent Progress.

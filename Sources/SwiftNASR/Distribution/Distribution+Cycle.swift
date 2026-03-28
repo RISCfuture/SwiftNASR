@@ -24,7 +24,7 @@ extension Distribution {
 
   /**
    Default implementation that reads the cycle from the README file.
-  
+
    - Returns: The parsed cycle, or `nil` if the cycle could not be parsed.
    */
 
@@ -62,9 +62,9 @@ extension Distribution {
 
   /**
    Parses a cycle from a CSV-style date string.
-  
+
    Expected format: DD_MMM_YYYY (e.g., 04_Sep_2025)
-  
+
    - Parameter dateString: The date string to parse
    - Returns: The parsed cycle, or `nil` if the cycle could not be parsed.
    */

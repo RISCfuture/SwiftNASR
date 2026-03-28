@@ -19,7 +19,7 @@ public protocol Loader: Sendable {
   /**
    Asynchronously wraps downloaded data (or data loaded from disk or memory)
    in an appropriate ``Distribution`` implementation.
-  
+
    - Parameter progressHandler: This block is called before processing begins
                                 with a Progress object you can use to track
                                 loading progress. You would add this object to

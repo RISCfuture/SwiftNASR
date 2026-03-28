@@ -8,14 +8,14 @@ public enum Error: Swift.Error {
 
   /**
    Received a bad HTTP response.
-  
+
    - Parameter response: The HTTP response.
    */
   case badResponse(_ response: URLResponse)
 
   /**
    Download failed for a specific reason.
-  
+
    - Parameter reason: The reason for the failure.
    */
   case downloadFailed(reason: String)
@@ -35,28 +35,28 @@ public enum Error: Swift.Error {
 
   /**
    Parsed an unknown runway surface identifier.
-  
+
    - Parameter value: The unknown identifier.
    */
   case invalidRunwaySurface(_ value: String)
 
   /**
    Parsed an unknown pavement classification identifier.
-  
+
    - Parameter value: The unknown identifier.
    */
   case invalidPavementClassification(_ value: String)
 
   /**
    Parsed an unknown VGSI identifier.
-  
+
    - Parameter value: The unknown identifier.
    */
   case invalidVGSI(_ value: String)
 
   /**
    Parsed an unknown ARTCC identifier.
-  
+
    - Parameter ID: The unknown identifier.
    */
   case unknownARTCC(_ ID: String)
@@ -64,7 +64,7 @@ public enum Error: Swift.Error {
   /**
    Parsed an ARTCC frequency record for a frequency not associated with the
    ARTCC.
-  
+
    - Parameter frequency: The unknown frequency.
    - Parameter ARTCC: The ARTCC record.
    */
@@ -72,14 +72,14 @@ public enum Error: Swift.Error {
 
   /***
    Parsed an unknown navigation aid.
-  
+
    - Parameter ID: The unknown identifier.
    */
   case unknownNavaid(_ ID: String)
 
   /**
    Parsed an unknown ARTCC data field identifier.
-  
+
    - Parameter fieldId: The unknown identifier.
    - Parameter ARTCC: The ARTCC record.
    */
@@ -87,7 +87,7 @@ public enum Error: Swift.Error {
 
   /**
    Parsed an unknown ARTCC frequency data field identifier.
-  
+
    - Parameter fieldId: The unknown identifier.
    - Parameter frequency: The associated frequency.
    - Parameter ARTCC: The ARTCC record.
@@ -96,21 +96,21 @@ public enum Error: Swift.Error {
 
   /**
    Attempted to parse an invalid frequency.
-  
+
    - Parameter string: The invalid frequency string.
    */
   case invalidFrequency(_ string: String)
 
   /**
    Attempted to parse data for an unknown FSS ID.
-  
+
    - Parameter string: The unknown FSS ID.
    */
   case unknownFSS(_ ID: String)
 
   /**
    Attempted to parse an invalid altitude format.
-  
+
    - Parameter string: The invalid altitude string.
    */
   case invalidAltitudeFormat(_ string: String)

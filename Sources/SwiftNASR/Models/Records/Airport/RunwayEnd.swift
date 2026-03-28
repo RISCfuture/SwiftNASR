@@ -343,7 +343,7 @@ public struct RunwayEnd: Record {
 
       /**
        Any obstacle not coded as one of the other categories.
-      
+
        - Parameter value: The obstacle type.
        */
       case other(_ value: String? = nil)

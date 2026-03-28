@@ -14,7 +14,7 @@ public final class DirectoryLoader: Loader {
 
   /**
    Creates a loader that loads from a given location on disk.
-  
+
    - Parameter location: The location of the distribution directory on disk.
    - Parameter format: The data format (defaults to .txt for backward compatibility)
    */

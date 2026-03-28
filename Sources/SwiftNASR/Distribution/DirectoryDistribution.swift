@@ -19,7 +19,7 @@ public final class DirectoryDistribution: Distribution {
 
   /**
    Creates a new instance from the given directory.
-  
+
    - Parameter location: The path to the distribution directory.
    - Parameter format: The data format (defaults to .txt for backward compatibility)
    */

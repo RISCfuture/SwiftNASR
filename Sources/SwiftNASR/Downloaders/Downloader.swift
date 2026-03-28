@@ -19,7 +19,7 @@ public protocol Downloader: Loader {
 
   /**
    Creates a downloader for a given cycle.
-  
+
    - Parameter cycle: The cycle to download NASR data for. If not specified,
                       uses the current cycle.
    - Parameter format: The data format to download (defaults to .txt).
@@ -29,7 +29,7 @@ public protocol Downloader: Loader {
 
   /**
    Downloads the NASR data asynchronously.
-  
+
    - Returns: The downloaded distribution, and an object for tracking progress.
    - Throws: If the distribution could not be downloaded.
    */

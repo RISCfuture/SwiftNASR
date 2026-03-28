@@ -23,7 +23,7 @@ public final class ArchiveDataDistribution: Distribution {
 
   /**
    Creates a new instance from the given data.
-  
+
    - Parameter data: The compressed distribution.
    - Parameter format: The data format (defaults to .txt for backward compatibility)
    - Throws: If the archive could not be read.

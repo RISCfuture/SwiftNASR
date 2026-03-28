@@ -41,7 +41,7 @@ public actor NASR {
   /**
    Loads NASR data from a local ZIP file. The file must have already been
    downloaded from the FAA's NASR website.
-  
+
    - Parameter location: The URL for the ZIP file on disk.
    - Parameter format: The data format (.txt or .csv). Defaults to .txt.
    - Returns: The instance for loading, parsing, and accessing that data.
@@ -55,7 +55,7 @@ public actor NASR {
   /**
    Loads NASR data from a directory created by unzipping a ZIP file that has
    been downloaded from the FAA's NASR website.
-  
+
    - Parameter location: The URL for the unzipped directory on disk.
    - Parameter format: The data format (.txt or .csv). Defaults to .txt.
    - Returns: The instance for loading, parsing, and accessing that data.
@@ -69,7 +69,7 @@ public actor NASR {
   /**
    Loads NASR data from the FAA website. The data is downloaded into memory
    and not saved to a file.
-  
+
    - Parameter date: The date to use for determining the data cycle. The data
    downloaded will be the data active during `date`. If not
    given, the current data is used.
@@ -95,7 +95,7 @@ public actor NASR {
   /**
    Loads NASR data from the FAA website. The data is downloaded to a ZIP file
    on disk.
-  
+
    - Parameter location: The location on disk to save the ZIP file. If not
    given, a tempfile is created.
    - Parameter date: The date to use for determining the data cycle. The data
@@ -125,7 +125,7 @@ public actor NASR {
   /**
    Creates an instance for working with NASR data that was parsed and
    serialized at a prior time.
-  
+
    - Parameter data: The deserialized parsed data.
    - Returns: The instance for accessing that data.
    */
@@ -143,7 +143,7 @@ public actor NASR {
 
   /**
    Asynchronously loads data, either from disk or from the Internet.
-  
+
    - Parameter progressHandler: This block is called before processing begins
    with a Progress object that you can use to
    track loading progress. You would add this
@@ -161,7 +161,7 @@ public actor NASR {
   /**
    Parses data of a certain type (e.g., airports) from the NASR distribution.
    Populates the corresponding field in the ``NASRData`` field of ``data``.
-  
+
    - Parameter type: The type of data to parse.
    - Parameter progressHandler: This block is called before processing begins
    with a Progress object that you can use to

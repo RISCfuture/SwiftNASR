@@ -27,7 +27,7 @@ public struct Remarks<F: RemarkField>: Record {
 
   /**
    Gets the remarks for a specific field.
-  
+
    - Parameter field: The field to get remarks for.
    - Returns: The remarks for that field (if any).
    */

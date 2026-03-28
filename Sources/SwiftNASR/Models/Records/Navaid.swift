@@ -185,7 +185,7 @@ public struct Navaid: ParentRecord {
 
   /**
    True if this navaid is an NDB or NDB/DME.
-  
+
    Returns false for UHF NDBs or other beacons not receivable by a standard
    automatic direction finder (ADF) set.
    */
@@ -513,7 +513,7 @@ public struct Navaid: ParentRecord {
 
     /**
      The location is accurate to within a given angular distance.
-    
+
      - Parameter seconds: The accuracy in arc-seconds (e.g., a survey
                           accurate to one degree would be 3600 seconds).
      */

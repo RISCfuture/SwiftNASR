@@ -5,7 +5,8 @@ import Foundation
  time period. Cycles are defined by the first day of their effectivity period.
  */
 
-public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, Equatable, Hashable {
+public struct Cycle: Codable, LosslessStringConvertible, Sendable, Identifiable, Equatable, Hashable
+{
   /// The earliest reference cycle (not necessarily the earliest cycle for
   /// which data is available, but the earliest representable date for a
   /// cycle).
@@ -98,9 +99,24 @@ public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, E
 
   public var id: String { description }
 
+  /// Creates a cycle by parsing a `YYYY-MM-DD` string.
+  ///
+  /// - Parameter description: A string in `YYYY-MM-DD` format.
+  public init?(_ description: String) {
+    let parts = description.split(separator: "-")
+    guard parts.count == 3,
+      let year = UInt(parts[0]),
+      let month = UInt8(parts[1]),
+      let day = UInt8(parts[2]),
+      month >= 1, month <= 12,
+      day >= 1, day <= 31
+    else { return nil }
+    self.init(year: year, month: month, day: day)
+  }
+
   /**
    Generates a cycle from a month, day, and year. Does not validate the cycle.
-  
+
    - Parameter year: The cycle year (2020 or later.
    - Parameter month: The cycle month (1–12).
    - Parameter day: The cycle day (1–31).
@@ -113,7 +129,7 @@ public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, E
 
   /**
    Returns the cycle whose effectivity period includes the given date.
-  
+
    - Parameter date: The date to use.
    - Returns: The cycle covering that date, or `nil` if the date is before the
               ``datum`` date.
@@ -147,7 +163,7 @@ public struct Cycle: Codable, CustomStringConvertible, Sendable, Identifiable, E
 
   /**
    Returns whether a given date falls within this cycle.
-  
+
    - Parameter date: A date to check.
    - Returns: Whether the date falls within the cycle's effectivity period.
    */
