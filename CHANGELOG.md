@@ -1,5 +1,37 @@
 # Change Log
 
+## [2.0.0] - 2026-05-01
+
+### Breaking Changes
+
+- Renamed date-component-returning fields to `…components` accessors; canonical `Date`-returning extensions are now provided alongside under the un-suffixed name
+- Dimensional property and variable names are now suffixed with their unit of measure (e.g. `altitude` → `altitudeFeet`)
+- Glidepath in CSV format is now stored in degrees rather than 100ths of a degree
+
+### Added
+
+- CSV parsing support, with parsers for all remaining record types
+- Complete coverage of all TXT and CSV model types and their parsers
+- `Measurement` extensions for dimensional properties
+- `Date`-returning extensions accompanying the renamed `components` accessors
+- `--record-types` option for `SwiftNASR_E2E`
+- Improved CSV progress tracking; E2E tests split into separate files
+- `LosslessStringConvertible` conformance for canonical representations
+
+### Changed
+
+- Replaced `FixedWidthParser` with the more performant `ByteParser`
+- Normalized the `Cycle` interface for consistency across libraries
+- Adopted more typesafe parsing throughout
+- Concurrency improvements and warning fixes
+
+### Internal
+
+- Updated to Swift 6.2; CI matrix standardized to Swift 6.0–6.2 on macOS 14–15
+- Added swift-format
+- Updated GitHub Actions
+- Updated documentation generation and READMEs
+
 ## [1.0.0] - 2025-08-20
 
 Swift 6 concurrency mode
