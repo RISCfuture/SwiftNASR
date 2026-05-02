@@ -1,5 +1,5 @@
 {
-  "originHash" : "c9d00ec2b9fd99568f2a76871f23108a3757b808b2a4f645d6b4f1809949d451",
+  "originHash" : "a85ce982927d44e823f9f6acceb479a96fc80c343c8bafdc24f0714d424d9f0a",
   "pins" : [
     {
       "identity" : "cwlcatchexception",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Quick/Nimble.git",
       "state" : {
-        "revision" : "cc945f7bdf3b485adedc315e18685c065059b4ca",
-        "version" : "13.8.0"
+        "revision" : "035b88ad6ae8035f5ce2b50b0a6d69c3b16d2120",
+        "version" : "14.0.0"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-docc-plugin.git",
       "state" : {
-        "revision" : "e977f65879f82b375a044c8837597f690c067da6",
-        "version" : "1.4.6"
+        "revision" : "647c708be89f834fa6a6d4945442793a77ddf5b6",
+        "version" : "1.5.0"
       }
     },
     {
@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/stackotter/swift-macro-toolkit",
       "state" : {
-        "revision" : "569627091e1fbb8745d691aeeb008e7247dedb7c",
-        "version" : "0.6.1"
+        "revision" : "d6ed555bb83c9f21a292e9769952e8f52610a6e2",
+        "version" : "0.9.0"
       }
     },
     {
