@@ -1,8 +1,6 @@
 import Foundation
 
 extension String {
-  var nsRange: NSRange { return NSRange(location: 0, length: count) }
-
   func partitionSlices(by length: Int) -> [Substring] {
     var startIndex = self.startIndex
     var results = [Substring]()

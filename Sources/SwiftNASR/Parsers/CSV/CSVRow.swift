@@ -11,9 +11,6 @@ struct CSVRow: Sendable {
   /// The raw field values for this row.
   let values: [String]
 
-  /// Number of fields in this row.
-  var count: Int { values.count }
-
   // MARK: - Methods
 
   /// Access a field that should exist but may be empty.

@@ -18,13 +18,6 @@ var CSVRecordTypes: Set<RecordType> {
   Set(recordTypeRegistry.values.filter(\.availableInCSV).map(\.recordType))
 }
 
-/// Calculates the total progress weight for a given format.
-func totalWeight(isCSV: Bool) -> Int64 {
-  let recordTypes = isCSV ? CSVRecordTypes : txtRecordTypes
-  let recordTotal = recordTypes.reduce(0) { $0 + weight(for: $1, isCSV: isCSV) }
-  return loadingWeight + recordTotal
-}
-
 /// Calculates the total progress weight for selected record types.
 func totalWeight(isCSV: Bool, selectedRecordTypes: Set<RecordType>) -> Int64 {
   let recordTotal = selectedRecordTypes.reduce(0) { $0 + weight(for: $1, isCSV: isCSV) }

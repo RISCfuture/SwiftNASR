@@ -45,15 +45,6 @@ final class OffsetParser: Sendable {
   }
 }
 
-extension Parser {
-  static func raw<T: RecordEnum>(_ rawValue: T.RawValue, toEnum _: T.Type) throws -> T {
-    guard let val = T.for(rawValue) else {
-      throw ParserError.unknownRecordEnumValue(rawValue)
-    }
-    return val
-  }
-}
-
 enum ParserError: Swift.Error, CustomStringConvertible {
   case badData(_ reason: String)
   case unknownRecordIdentifier(_ recordIdentifier: String)

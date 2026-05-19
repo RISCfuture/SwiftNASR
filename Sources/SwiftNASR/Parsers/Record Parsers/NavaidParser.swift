@@ -421,8 +421,6 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   }
 }
 
-private let classDesignatorDelimiters = CharacterSet(charactersIn: "-/")
-
 private func parseLFRLegs(_ string: String, fieldIndex: Int) throws -> [(LFRLeg.Quadrant, UInt)] {
   let scanner = Scanner(string: string)
   var legs = [(LFRLeg.Quadrant, UInt)]()

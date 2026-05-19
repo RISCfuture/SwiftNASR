@@ -41,7 +41,6 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
   }
 
   private let progress = ProgressTracker()
-  private var progressTask: Task<Void, Swift.Error>?
 
   init() {}
 
@@ -157,7 +156,7 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     }
     print("Done loading \(formatName); parsing…")
 
-    progressTask = trackProgress(progress: progress)
+    _ = trackProgress(progress: progress)
     let errorCollector = ErrorCollector()
     try await parseValues(
       nasr: nasr,

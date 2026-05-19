@@ -13,18 +13,6 @@ public struct Remarks<F: RemarkField>: Record {
   /// All remarks added to the record.
   public var remarks = [Remark<F>]()
 
-  /// Remarks applied to a record as a whole.
-  var general: [String] {
-    var remarks = [String]()
-
-    for remark in self.remarks {
-      guard case .general(let content) = remark else { break }
-      remarks.append(content)
-    }
-
-    return remarks
-  }
-
   /**
    Gets the remarks for a specific field.
 
