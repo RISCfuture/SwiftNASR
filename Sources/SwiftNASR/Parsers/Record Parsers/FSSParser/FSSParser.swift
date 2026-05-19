@@ -1,21 +1,5 @@
 import Foundation
 
-private var dateFormatter: DateFormatter {
-  let df = DateFormatter()
-  df.dateFormat = "dd MMM yyyy"
-  df.locale = Locale(identifier: "en_US_POSIX")
-  df.timeZone = zulu
-  return df
-}
-
-private var lastUpdatedDateFormatter: DateFormatter {
-  let df = DateFormatter()
-  df.dateFormat = "dd MMM yyyy"
-  df.locale = Locale(identifier: "en_US_POSIX")
-  df.timeZone = zulu
-  return df
-}
-
 actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
   static let type: RecordType = .flightServiceStations
   var formats = [NASRTable]()

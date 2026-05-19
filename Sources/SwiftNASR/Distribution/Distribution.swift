@@ -1,29 +1,5 @@
 import Foundation
 
-private let metatypes =
-  [
-    (RecordType.states, State.self),
-    (RecordType.airports, Airport.self),
-    (RecordType.ARTCCFacilities, ARTCC.self),
-    (RecordType.reportingPoints, Fix.self),
-    (RecordType.weatherReportingStations, WeatherStation.self),
-    (RecordType.airways, Airway.self),
-    (RecordType.ILSes, ILS.self),
-    (RecordType.terminalCommFacilities, TerminalCommFacility.self),
-    (RecordType.departureArrivalProceduresComplete, DepartureArrivalProcedure.self),
-    (RecordType.preferredRoutes, PreferredRoute.self),
-    (RecordType.holds, Hold.self),
-    (RecordType.weatherReportingLocations, WeatherReportingLocation.self),
-    (RecordType.parachuteJumpAreas, ParachuteJumpArea.self),
-    (RecordType.militaryTrainingRoutes, MilitaryTrainingRoute.self),
-    (RecordType.codedDepartureRoutes, CodedDepartureRoute.self),
-    (RecordType.miscActivityAreas, MiscActivityArea.self),
-    (RecordType.ARTCCBoundarySegments, ARTCCBoundarySegment.self),
-    (RecordType.FSSCommFacilities, FSSCommFacility.self),
-    (RecordType.ATSAirways, ATSAirway.self),
-    (RecordType.locationIdentifiers, LocationIdentifier.self)
-  ] as [(RecordType, any Record.Type)]
-
 /// Record types available to load from a distribution.
 public enum RecordType: String, Codable, Sendable {
   case ARTCCFacilities = "AFF"
@@ -51,20 +27,6 @@ public enum RecordType: String, Codable, Sendable {
   /// This is a pseudo-record-type intended to represent the `STATE.txt` file.
   /// `states` is not a loadable record type.
   case states = "_ST"
-
-  var metatype: any Record.Type {
-    guard let type = metatypes.first(where: { $0.0 == self })?.1 else {
-      preconditionFailure("Unsupported type \(self)")
-    }
-    return type
-  }
-
-  static func forType(_ type: any Record.Type) -> Self {
-    guard let value = metatypes.first(where: { $0.1 == type })?.0 else {
-      preconditionFailure("Unsupported type \(type)")
-    }
-    return value
-  }
 }
 
 /// Global actor that guarantees exclusive access to the distribution file.

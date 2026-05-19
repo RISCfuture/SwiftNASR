@@ -3,10 +3,6 @@ import Foundation
 actor ErrorCollector {
   private var errors: [RecordError] = []
 
-  var errorCount: Int {
-    errors.count
-  }
-
   func record(_ error: Swift.Error, recordType: String) {
     errors.append(RecordError(recordType: recordType, error: error))
   }

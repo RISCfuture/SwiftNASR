@@ -41,7 +41,7 @@ func trackProgress(progress: ProgressTracker) -> Task<Void, Swift.Error> {
 }
 
 @MainActor
-func renderProgressBar(progress: ProgressTracker, barWidth: Int = 80) async {
+func renderProgressBar(progress: ProgressTracker) async {
   let fractionCompleted = await progress.fractionCompleted
   let currentRecordType = await progress.currentRecordType
   let percent = Int((fractionCompleted * 100).rounded())

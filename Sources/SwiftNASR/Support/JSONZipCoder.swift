@@ -42,7 +42,6 @@ public class JSONZipDecoder: JSONDecoder, @unchecked Sendable {
 }
 
 enum JSONZipError: Swift.Error {
-  case couldntCreateArchive
   case couldntReadArchive
   case emptyArchive
   case noDistributionFile

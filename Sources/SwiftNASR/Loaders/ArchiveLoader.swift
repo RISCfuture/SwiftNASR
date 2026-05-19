@@ -12,12 +12,6 @@ public final class ArchiveLoader: Loader {
   /// The data format for the archive (.txt or .csv).
   public let format: DataFormat
 
-  private let queue = DispatchQueue(
-    label: "codes.tim.SwiftNASR.ArchiveLoader",
-    qos: .utility,
-    attributes: .concurrent
-  )
-
   /**
    Creates a loader that loads from a given location on disk.
 
