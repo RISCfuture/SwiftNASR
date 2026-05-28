@@ -1,10 +1,16 @@
-.swiftpm
+# Swift Package Manager
+.build/
+.swiftpm/
 
+# Xcode user state
+xcuserdata/
 
-# SwiftLint Remote Config Cache
+# SwiftLint remote config cache
 .swiftlint/RemoteConfigCache
 
-# SwiftNASR Test Data Working Directory
+# swift-format (downloaded in CI)
+.swift-format
+
+# SwiftNASR test data working directory
 .SwiftNASR_TestData/
 comparison_report.json
-.swift-format
