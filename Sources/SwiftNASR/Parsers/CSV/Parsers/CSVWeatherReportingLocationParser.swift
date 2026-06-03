@@ -4,12 +4,14 @@ import StreamingCSV
 /// CSV Weather Reporting Location Parser using declarative transformers.
 ///
 /// Parses WXL_BASE.csv and WXL_SVC.csv files to create WeatherReportingLocation records.
-actor CSVWeatherReportingLocationParser: CSVParser {
+actor CSVWeatherReportingLocationParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.weatherReportingLocations
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["WXL_BASE.csv", "WXL_SVC.csv"]
 
+  var pendingDiagnostics = [RecordParseError]()
   var locations = [String: WeatherReportingLocation]()
 
   private let baseTransformer = CSVTransformer([
@@ -20,12 +22,12 @@ actor CSVWeatherReportingLocationParser: CSVParser {
     .init("LAT_DECIMAL", .float(nullable: .blank)),
     .init("LONG_DECIMAL", .float(nullable: .blank)),
     .init("ELEV", .float(nullable: .blank)),
-    .init("SURVEY_METHOD_CODE", .generic({ try parseElevationAccuracy($0) }, nullable: .blank))
+    .init("SURVEY_METHOD_CODE", .string(nullable: .blank))
   ])
 
   private let serviceTransformer = CSVTransformer([
     .init("WEA_ID", .string()),
-    .init("WEA_SVC_TYPE_CODE", .generic({ parseWeatherServiceType($0) }, nullable: .blank)),
+    .init("WEA_SVC_TYPE_CODE", .string(nullable: .blank)),
     .init("WEA_AFFECT_AREA", .string(nullable: .blank))
   ])
 
@@ -66,7 +68,12 @@ actor CSVWeatherReportingLocationParser: CSVParser {
         city: try t[optional: "CITY"],
         stateCode: try t[optional: "STATE_CODE"],
         countryCode: try t[optional: "COUNTRY_CODE"],
-        elevationAccuracy: try t[optional: "SURVEY_METHOD_CODE"],
+        elevationAccuracy: diagnose(
+          WeatherReportingLocation.ElevationAccuracy.self,
+          try t[optional: "SURVEY_METHOD_CODE"],
+          field: "elevationAccuracy",
+          id: identifier
+        ),
         weatherServices: [],
         collectives: [],
         affectedAreas: []
@@ -88,9 +95,13 @@ actor CSVWeatherReportingLocationParser: CSVParser {
       guard self.locations[identifier] != nil else { return }
 
       // Add weather service type if valid
-      if let serviceType: WeatherReportingLocation.WeatherServiceType = try t[
-        optional: "WEA_SVC_TYPE_CODE"
-      ] {
+      let serviceType = self.diagnose(
+        WeatherReportingLocation.WeatherServiceType.self,
+        try t[optional: "WEA_SVC_TYPE_CODE"],
+        field: "weatherServices",
+        id: identifier
+      )
+      if let serviceType {
         self.locations[identifier]!.weatherServices.append(serviceType)
       }
 
@@ -100,11 +111,7 @@ actor CSVWeatherReportingLocationParser: CSVParser {
       {
         // Parse space-separated state codes
         let states = affectedAreasStr.split(separator: " ").map { String($0) }
-        if !states.isEmpty,
-          let serviceType: WeatherReportingLocation.WeatherServiceType = try t[
-            optional: "WEA_SVC_TYPE_CODE"
-          ]
-        {
+        if !states.isEmpty, let serviceType {
           let affectedArea = WeatherReportingLocation.AffectedArea(
             serviceType: serviceType,
             states: states
@@ -118,20 +125,4 @@ actor CSVWeatherReportingLocationParser: CSVParser {
   func finish(data: NASRData) async {
     await data.finishParsing(weatherReportingLocations: Array(locations.values))
   }
-}
-
-// MARK: - Private Helpers
-
-private func parseElevationAccuracy(_ str: String) throws
-  -> WeatherReportingLocation.ElevationAccuracy?
-{
-  guard !str.isEmpty else { return nil }
-  return WeatherReportingLocation.ElevationAccuracy.for(str)
-}
-
-private func parseWeatherServiceType(_ str: String)
-  -> WeatherReportingLocation.WeatherServiceType?
-{
-  guard !str.isEmpty else { return nil }
-  return WeatherReportingLocation.WeatherServiceType.for(str)
 }

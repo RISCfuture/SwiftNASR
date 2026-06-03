@@ -2,12 +2,14 @@ import Foundation
 import StreamingCSV
 
 /// CSV Weather Station Parser for parsing AWOS.csv
-actor CSVWeatherStationParser: CSVParser {
+actor CSVWeatherStationParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.weatherReportingStations
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["AWOS.csv"]
 
+  var pendingDiagnostics = [RecordParseError]()
   var stations = [WeatherStationKey: WeatherStation]()
 
   private let basicTransformer = CSVTransformer([
@@ -45,16 +47,15 @@ actor CSVWeatherStationParser: CSVParser {
       let elevation: Float? = try t[optional: "ELEV"]
       let stationID: String = try t["ASOS_AWOS_ID"]
 
-      guard
-        let position = try self.makeLocation(
-          latitude: latDecimal,
-          longitude: lonDecimal,
-          elevation: elevation,
-          context: "weather station \(stationID)"
-        )
-      else {
-        throw ParserError.missingRequiredField(field: "position", recordType: "AWOS")
-      }
+      // Position is optional on WeatherStation, so a station with no coordinates
+      // is kept with a nil position rather than dropped. (makeLocation still
+      // throws on a half-present coordinate, which is genuinely malformed.)
+      let position = try self.makeLocation(
+        latitude: latDecimal,
+        longitude: lonDecimal,
+        elevation: elevation,
+        context: "weather station \(stationID)"
+      )
 
       // CSV has a single remark field, but we need to check commission status
       // Since the COMMISSIONED_DATE can be empty or a date

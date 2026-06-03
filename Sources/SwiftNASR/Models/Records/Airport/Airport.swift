@@ -797,6 +797,12 @@ public struct Airport: ParentRecord {
 
     /// Hydrogen
     case hydrogen = "H"
+
+    // CSV distributions use the full "G100UL" code; the TXT format truncates it
+    // to "G100" (see ``avgasG100UL``).
+    public static var synonyms: [String: Self] {
+      ["G100UL": .avgasG100UL]
+    }
   }
 
   /// Repair service levels available.

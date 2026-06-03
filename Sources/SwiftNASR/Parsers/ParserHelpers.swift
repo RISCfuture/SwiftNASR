@@ -5,9 +5,15 @@ enum ParserHelpers {
 
   // MARK: - Navaid-specific parsers
 
-  static func parseClassDesignator(_ code: String) throws -> Navaid.NavaidClass {
+  /// Parses a navaid class makeup string into its altitude and class codes,
+  /// returning any tokens that matched no known class code so the caller can
+  /// surface them rather than dropping them silently.
+  static func parseClassDesignator(_ code: String) -> (
+    navaidClass: Navaid.NavaidClass, unrecognized: [String]
+  ) {
     let scanner = Scanner(string: code)
     var navaidClass = Navaid.NavaidClass()
+    var unrecognized = [String]()
 
     for altCode in Navaid.NavaidClass.AltitudeCode.allCases {
       let altPrefix = "\(altCode.rawValue)-"
@@ -30,11 +36,14 @@ enum ParserHelpers {
         continue isEmptyLoop
       }
 
-      // If we can't parse this designator, skip it
-      _ = scanner.scanCharacters(from: classDesignatorDelimiters.inverted)
+      // No known class code matched here; capture the token so the caller can
+      // report it.
+      if let token = scanner.scanCharacters(from: classDesignatorDelimiters.inverted) {
+        unrecognized.append(token)
+      }
     }
 
-    return navaidClass
+    return (navaidClass, unrecognized)
   }
 
   static func parseSurveyAccuracy(_ code: String) throws -> Navaid.SurveyAccuracy {
@@ -151,10 +160,6 @@ enum ParserHelpers {
 }
 
 // MARK: - Global convenience functions for backwards compatibility
-
-func parseClassDesignator(_ code: String) throws -> Navaid.NavaidClass {
-  return try ParserHelpers.parseClassDesignator(code)
-}
 
 func parseSurveyAccuracy(_ code: String) throws -> Navaid.SurveyAccuracy {
   return try ParserHelpers.parseSurveyAccuracy(code)

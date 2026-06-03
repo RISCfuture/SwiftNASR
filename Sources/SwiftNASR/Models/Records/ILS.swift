@@ -229,8 +229,11 @@ public struct ILS: ParentRecord {
     /// Back course is unusable.
     case unusable = "UNUSABLE"
 
+    // Single-character codes used in CSV distributions (ILS_BASE
+    // BK_COURSE_STATUS_CODE). Verified against the spelled-out TXT values:
+    // N = "NO RESTRICTIONS", U = "UNUSABLE", Y = "USABLE", R = "RESTRICTED".
     public static var synonyms: [String: Self] {
-      ["Y": .usable, "N": .unusable, "U": .unusable]
+      ["Y": .usable, "N": .noRestrictions, "U": .unusable, "R": .restricted]
     }
   }
 
@@ -475,8 +478,15 @@ public struct ILS: ParentRecord {
       /// Marker with NDB.
       case markerNDB = "MARKER/NDB"
 
+      // Single- and double-letter codes used in CSV distributions (ILS_MKR
+      // MKR_FAC_TYPE_CODE). Verified against the ILS layout's facility/type
+      // table: M = MARKER, C = COMLO, R = NDB, MC = MARKER/COMLO,
+      // MR = MARKER/NDB. The spelled-out forms decode via the raw values.
       public static var synonyms: [String: Self] {
-        ["MK": .marker, "CL": .compassLocator, "MC": .markerCompassLocator, "MN": .markerNDB]
+        [
+          "M": .marker, "C": .compassLocator, "R": .NDB,
+          "MC": .markerCompassLocator, "MR": .markerNDB
+        ]
       }
     }
 

@@ -368,7 +368,7 @@ public enum StandardTimeZone: String, RecordEnum {
 ///
 /// Used to identify the type of ILS or MLS facility providing course/azimuth
 /// information for holding patterns and fix definitions.
-public enum ILSFacilityType: String, RecordEnum {
+public enum ILSFacilityType: String, RecordEnum, CaseIterable {
 
   /// LDA with Distance Measuring Equipment.
   case LDA_DME = "DD"

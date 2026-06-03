@@ -29,7 +29,7 @@ actor CSVNavaidParser: CSVParser, DiagnosingParser {
     .init("OPERATOR", .generic({ stripOwnerTypePrefix($0) }, nullable: .blank)),
     .init("NAS_USE_FLAG", .boolean()),
     .init("PUBLIC_USE_FLAG", .boolean()),
-    .init("NDB_CLASS_CODE", .generic({ try parseClassDesignator($0) }, nullable: .blank)),
+    .init("NDB_CLASS_CODE", .string(nullable: .blank)),
     .init("OPER_HOURS", .string(nullable: .blank)),
     .init("HIGH_ALT_ARTCC_ID", .string(nullable: .blank)),
     .init("LOW_ALT_ARTCC_ID", .string(nullable: .blank)),
@@ -155,7 +155,7 @@ actor CSVNavaidParser: CSVParser, DiagnosingParser {
         operatorName: try t[optional: "OPERATOR"],
         commonSystemUsage: try t[optional: "NAS_USE_FLAG"] ?? false,
         publicUse: try t[optional: "PUBLIC_USE_FLAG"] ?? false,
-        navaidClass: try t[optional: "NDB_CLASS_CODE"],
+        navaidClass: parseNavaidClass(try t[optional: "NDB_CLASS_CODE"], id: navaidID),
         hoursOfOperation: try t[optional: "OPER_HOURS"],
         highAltitudeARTCCCode: try t[optional: "HIGH_ALT_ARTCC_ID"],
         lowAltitudeARTCCCode: try t[optional: "LOW_ALT_ARTCC_ID"],
@@ -217,10 +217,19 @@ actor CSVNavaidParser: CSVParser, DiagnosingParser {
         key.ID == navID && key.type == navType && (key.city == city || key.city.isEmpty)
       }
 
-      if let key = matchingKey, var navaid = self.navaids[key] {
-        navaid.remarks.append(remark)
-        self.navaids[key] = navaid
+      guard let key = matchingKey, var navaid = self.navaids[key] else {
+        recordDroppedRow(
+          ParserError.unknownParentRecord(
+            parentType: "navaid",
+            parentID: navID,
+            childType: "remark"
+          ),
+          id: navID
+        )
+        return
       }
+      navaid.remarks.append(remark)
+      self.navaids[key] = navaid
     }
 
     // Parse NAV_CKPT.csv for VOR checkpoints
@@ -244,7 +253,17 @@ actor CSVNavaidParser: CSVParser, DiagnosingParser {
         key.ID == navID && key.type == navType && (key.city == city || key.city.isEmpty)
       }
 
-      guard let key = matchingKey else { return }
+      guard let key = matchingKey else {
+        recordDroppedRow(
+          ParserError.unknownParentRecord(
+            parentType: "navaid",
+            parentID: navID,
+            childType: "VOR checkpoint"
+          ),
+          id: navID
+        )
+        return
+      }
 
       // Parse checkpoint fields
       let altitudeStr = row[ifExists: "ALTITUDE"] ?? ""
@@ -307,5 +326,21 @@ actor CSVNavaidParser: CSVParser, DiagnosingParser {
 
   func finish(data: NASRData) async {
     await data.finishParsing(navaids: Array(navaids.values))
+  }
+
+  /// Decodes a navaid class makeup string, reporting any tokens that matched no
+  /// known class code as field-level diagnostics rather than dropping them.
+  private func parseNavaidClass(_ raw: String?, id: String?) -> Navaid.NavaidClass? {
+    guard let raw, !raw.isEmpty else { return nil }
+    let (navaidClass, unrecognized) = ParserHelpers.parseClassDesignator(raw)
+    for token in unrecognized {
+      recordFieldError(
+        field: "navaidClass",
+        value: token,
+        id: id,
+        underlying: ParserError.unknownRecordEnumValue(token)
+      )
+    }
+    return navaidClass
   }
 }

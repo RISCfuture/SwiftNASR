@@ -379,15 +379,25 @@ func verifyAssociations(
       }
     }
 
-    // PreferredRoute associations
-    if canTest(.preferredRoutes), let routes = await nasr.data.preferredRoutes, !routes.isEmpty {
-      if let route = routes.first {
-        let origin = await route.originLocation
-        check("PreferredRoute.originLocation", origin != nil)
-
-        let destination = await route.destinationLocation
-        check("PreferredRoute.destinationLocation", destination != nil)
+    // PreferredRoute associations. `preferredRoutes` is an array of a
+    // dictionary's values, so its order is nondeterministic, and not every
+    // origin/destination identifier has a matching LocationIdentifier. Iterate
+    // to find a route whose endpoint resolves instead of relying on
+    // `routes.first`, which made this check flaky.
+    if canTest(.preferredRoutes, .locationIdentifiers),
+      let routes = await nasr.data.preferredRoutes, !routes.isEmpty
+    {
+      var foundOrigin = false
+      for route in routes where !foundOrigin {
+        foundOrigin = await route.originLocation != nil
       }
+      check("PreferredRoute.originLocation", foundOrigin)
+
+      var foundDestination = false
+      for route in routes where !foundDestination {
+        foundDestination = await route.destinationLocation != nil
+      }
+      check("PreferredRoute.destinationLocation", foundDestination)
     }
 
     // LocationIdentifier associations

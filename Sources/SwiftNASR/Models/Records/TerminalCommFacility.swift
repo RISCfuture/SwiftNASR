@@ -226,6 +226,15 @@ public struct TerminalCommFacility: ParentRecord {
 
     /// ATCT plus Center Radar Approach Control.
     case ATCTCERAP = "ATCT-CERAP"
+
+    /// Center Radar Approach Control (standalone). Present in live ATC data
+    /// though not listed in the layout's facility-type table.
+    case CERAP = "CERAP"
+
+    /// Air Route Traffic Control Center providing terminal approach services.
+    /// Present in live ATC data though not listed in the layout's facility-type
+    /// table.
+    case ARTCC = "ARTCC"
   }
 
   /// Regularity of tower operation.

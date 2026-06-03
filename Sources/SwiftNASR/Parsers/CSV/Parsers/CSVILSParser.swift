@@ -391,22 +391,7 @@ actor CSVILSParser: CSVParser, DiagnosingParser {
     _ code: String?,
     id: String?
   ) -> ILS.MarkerBeacon.MarkerFacilityType? {
-    guard let trimmed = code, !trimmed.isEmpty else { return nil }
-    // Handle short codes from CSV
-    switch trimmed {
-      case "M": return .marker
-      case "MR": return .markerNDB
-      case "CL", "COMLO": return .compassLocator
-      case "MC": return .markerCompassLocator
-      case "MN": return .markerNDB
-      default:
-        return diagnose(
-          ILS.MarkerBeacon.MarkerFacilityType.self,
-          trimmed,
-          field: "markerFacilityType",
-          id: id
-        )
-    }
+    diagnose(ILS.MarkerBeacon.MarkerFacilityType.self, code, field: "markerFacilityType", id: id)
   }
 
   /// Creates a Location from optional lat/lon (decimal degrees), throwing if only one is present.

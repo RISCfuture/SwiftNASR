@@ -19,26 +19,11 @@ extension String {
     return partitionSlices(by: length).map { String($0) }
   }
 
+  /// Splits on any character in `separator`, like the standard-library
+  /// `split(whereSeparator:)`: separator characters are dropped and empty
+  /// subsequences (from leading, trailing, or consecutive separators) are
+  /// omitted.
   func split(separator: CharacterSet) -> [Substring] {
-    var index = startIndex
-    var substrings = [Substring]()
-
-    var rangeStart = startIndex
-    var rangeEnd = startIndex
-
-    while index != endIndex {
-      if separator.contains(self[index].unicodeScalars.first!) {
-        substrings.append(self[rangeStart...rangeEnd])
-        index = self.index(after: index)
-        rangeStart = index
-        rangeEnd = index
-      } else {
-        rangeEnd = index
-        index = self.index(after: index)
-      }
-    }
-
-    substrings.append(self[rangeStart...])
-    return substrings
+    split(whereSeparator: { separator.contains($0.unicodeScalars.first!) })
   }
 }

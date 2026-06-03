@@ -95,6 +95,12 @@ public struct ATSAirway: Record, Identifiable {
     case airwayIntersection = "AWY-INTXN"
     case coordinationFix = "COORDN-FIX"
 
+    // The raw values above are the TXT codes. CSV distributions (AWY_SEG_ALT)
+    // abbreviate the two most common point types.
+    public static var synonyms: [String: Self] {
+      ["WP": .waypoint, "RP": .reportingPoint]
+    }
+
     public var description: String {
       switch self {
         case .waypoint: return "Waypoint"

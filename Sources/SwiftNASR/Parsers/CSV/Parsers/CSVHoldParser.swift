@@ -55,17 +55,26 @@ actor CSVHoldParser: CSVParser, DiagnosingParser {
 
       let holdKey = "\(name)-\(patternNumber)"
 
-      // Parse navaid facility type from raw string
-      let navaidTypeStr: String = try t[optional: "NAV_TYPE"] ?? ""
-      let navaidFacilityType: Navaid.FacilityType? = diagnose(
-        Navaid.FacilityType.self,
-        navaidTypeStr.isEmpty ? nil : navaidTypeStr,
-        field: "navaidFacilityType",
-        id: holdKey
-      )
+      // NAV_TYPE/NAV_ID identify either an ILS facility or a navaid. The TXT
+      // format keeps these in separate fields; CSV combines them into a single
+      // NAV_TYPE/NAV_ID pair. Route by which facility-type code system the
+      // value belongs to (ILS codes are two letters, navaid types are spelled
+      // out, so the two sets never collide).
+      let facilityTypeStr: String = try t[optional: "NAV_TYPE"] ?? ""
+      let ilsFacilityType = ILSFacilityType.for(facilityTypeStr)
+      let navaidFacilityType: Navaid.FacilityType? =
+        ilsFacilityType == nil
+        ? diagnose(
+          Navaid.FacilityType.self,
+          facilityTypeStr.isEmpty ? nil : facilityTypeStr,
+          field: "navaidFacilityType",
+          id: holdKey
+        )
+        : nil
 
       // Get optional string values
-      let navaidId: String? = try t[optional: "NAV_ID"]
+      let facilityIdRaw: String? = try t[optional: "NAV_ID"]
+      let facilityId = facilityIdRaw?.isEmpty == false ? facilityIdRaw : nil
       let fixId: String? = try t[optional: "FIX_ID"]
       let stateCode: String? = try t[optional: "STATE_CODE"]
       let icaoRegion: String? = try t[optional: "ICAO_REGION_CODE"]
@@ -80,9 +89,9 @@ actor CSVHoldParser: CSVParser, DiagnosingParser {
         holdingDirection: try t[optional: "HOLD_DIRECTION"],
         magneticBearingDeg: try t[optional: "HOLD_DEG_OR_CRS"],
         azimuthType: try t[optional: "AZIMUTH"],
-        ILSFacilityIdentifier: nil,  // Not in CSV format
-        ilsFacilityType: nil,  // Not in CSV format
-        navaidIdentifier: navaidId?.isEmpty == false ? navaidId : nil,
+        ILSFacilityIdentifier: ilsFacilityType != nil ? facilityId : nil,
+        ilsFacilityType: ilsFacilityType,
+        navaidIdentifier: ilsFacilityType == nil ? facilityId : nil,
         navaidFacilityType: navaidFacilityType,
         additionalFacility: nil,  // Not in CSV format
         inboundCourseDeg: try t[optional: "COURSE_INBOUND_DEG"],

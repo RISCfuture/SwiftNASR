@@ -103,7 +103,7 @@ actor FixedWidthNavaidParser: FixedWidthParser, DiagnosingParser {
     .string(nullable: .blank),  // 13 operator name
     .boolean(),  // 14 common system
     .boolean(),  // 15 public use
-    .generic({ try parseClassDesignator($0) }, nullable: .blank),  // 16 navaid class
+    .string(nullable: .blank),  // 16 navaid class
     .string(nullable: .blank),  // 17 hours of operation
     .string(nullable: .blank),  // 18 high alt ARTCC code
     .null,  // 19 high alt ARTCC name
@@ -230,6 +230,22 @@ actor FixedWidthNavaidParser: FixedWidthParser, DiagnosingParser {
     await data.finishParsing(navaids: Array(navaids.values))
   }
 
+  /// Decodes a navaid class makeup string, reporting any tokens that matched no
+  /// known class code as field-level diagnostics rather than dropping them.
+  private func parseNavaidClass(_ raw: String?, id: String?) -> Navaid.NavaidClass? {
+    guard let raw, !raw.isEmpty else { return nil }
+    let (navaidClass, unrecognized) = ParserHelpers.parseClassDesignator(raw)
+    for token in unrecognized {
+      recordFieldError(
+        field: "navaidClass",
+        value: token,
+        id: id,
+        underlying: ParserError.unknownRecordEnumValue(token)
+      )
+    }
+    return navaidClass
+  }
+
   private func parseBasicRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try basicTransformer.applyTo(values),
       lat: Float = try t[22],
@@ -267,8 +283,10 @@ actor FixedWidthNavaidParser: FixedWidthParser, DiagnosingParser {
       )
     }
 
+    let navaidID: String = try t[1]
+
     let navaid = Navaid(
-      id: try t[1],
+      id: navaidID,
       name: try t[5],
       type: try t[2],
       city: try t[6],
@@ -279,7 +297,7 @@ actor FixedWidthNavaidParser: FixedWidthParser, DiagnosingParser {
       operatorName: try t[optional: 13],
       commonSystemUsage: try t[14],
       publicUse: try t[15],
-      navaidClass: try t[optional: 16],
+      navaidClass: parseNavaidClass(try t[optional: 16], id: navaidID),
       hoursOfOperation: try t[optional: 17],
       highAltitudeARTCCCode: try t[optional: 18],
       lowAltitudeARTCCCode: try t[optional: 20],

@@ -364,16 +364,11 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
     let inspectionMethod: Airport.InspectionMethod? = try t[optional: "INSPECT_METHOD_CODE"]
     let inspectionAgency: Airport.InspectionAgency? = try t[optional: "INSPECTOR_CODE"]
 
-    // Parse fuel types
+    // Parse fuel types (CSV format is comma-separated)
     let fuelTypesStr: String = (try? t[optional: "FUEL_TYPES"]) ?? ""
     var fuelsAvailable = [Airport.FuelType]()
-    var index = fuelTypesStr.startIndex
-    while index < fuelTypesStr.endIndex {
-      let endIndex =
-        fuelTypesStr.index(index, offsetBy: 5, limitedBy: fuelTypesStr.endIndex)
-        ?? fuelTypesStr
-        .endIndex
-      let fuelCode = String(fuelTypesStr[index..<endIndex]).trimmingCharacters(in: .whitespaces)
+    for component in fuelTypesStr.split(separator: ",") {
+      let fuelCode = String(component).trimmingCharacters(in: .whitespaces)
       if let fuelType = diagnose(
         Airport.FuelType.self,
         fuelCode,
@@ -382,7 +377,6 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
       ) {
         fuelsAvailable.append(fuelType)
       }
-      index = endIndex
     }
 
     // Parse repair services
@@ -649,7 +643,7 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
       }
 
     // Parse pavement classification
-    let pavementClassification = try parsePavementClassification(t)
+    let pavementClassification = try parsePavementClassification(t, runwayId: runwayId, id: siteNo)
 
     // Parse edge lights
     let edgeLightCode: String? = try t[optional: "RWY_LGT_CODE"]
@@ -754,8 +748,10 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
   ) -> (Set<Runway.Material>, Runway.Condition?) {
     var materials = Set<Runway.Material>()
 
-    // Parse materials from hyphen-separated surface codes
-    for component in surfaceCode.split(separator: "-") {
+    // A surface code is a primary material plus an optional secondary one. The
+    // separator is normally "-" (e.g. "ASPH-CONC") but a few records use "/"
+    // (e.g. "ASPH/GRVL"); the TXT parser splits on both, so match it here.
+    for component in surfaceCode.split(separator: CharacterSet(charactersIn: "-/")) {
       if let material = diagnose(
         Runway.Material.self,
         String(component),
@@ -782,30 +778,46 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
     return (materials, condition)
   }
 
-  private func parsePavementClassification(_ t: TransformedRow) throws
-    -> Runway.PavementClassification?
-  {
+  private func parsePavementClassification(
+    _ t: TransformedRow,
+    runwayId: String,
+    id: String?
+  ) throws -> Runway.PavementClassification? {
     guard let pcnNumber: Int = try t[optional: "PCN"] else { return nil }
 
     guard
-      let typeCode: String = try t[optional: "PAVEMENT_TYPE_CODE"],
-      let type = Runway.PavementClassification.Classification(rawValue: typeCode)
+      let type = diagnose(
+        Runway.PavementClassification.Classification.self,
+        try t[optional: "PAVEMENT_TYPE_CODE"],
+        field: "runway[\(runwayId)].pavementClassification.type",
+        id: id
+      )
     else { return nil }
 
     guard
-      let strengthCode: String = try t[optional: "SUBGRADE_STRENGTH_CODE"],
-      let strength = Runway.PavementClassification.SubgradeStrengthCategory(rawValue: strengthCode)
+      let strength = diagnose(
+        Runway.PavementClassification.SubgradeStrengthCategory.self,
+        try t[optional: "SUBGRADE_STRENGTH_CODE"],
+        field: "runway[\(runwayId)].pavementClassification.subgradeStrengthCategory",
+        id: id
+      )
     else { return nil }
 
     guard
-      let tirePressureCode: String = try t[optional: "TIRE_PRES_CODE"],
-      let tirePressure = Runway.PavementClassification.TirePressureLimit(rawValue: tirePressureCode)
+      let tirePressure = diagnose(
+        Runway.PavementClassification.TirePressureLimit.self,
+        try t[optional: "TIRE_PRES_CODE"],
+        field: "runway[\(runwayId)].pavementClassification.tirePressureLimit",
+        id: id
+      )
     else { return nil }
 
     guard
-      let determinationCode: String = try t[optional: "DTRM_METHOD_CODE"],
-      let determination = Runway.PavementClassification.DeterminationMethod(
-        rawValue: determinationCode
+      let determination = diagnose(
+        Runway.PavementClassification.DeterminationMethod.self,
+        try t[optional: "DTRM_METHOD_CODE"],
+        field: "runway[\(runwayId)].pavementClassification.determinationMethod",
+        id: id
       )
     else { return nil }
 
@@ -938,7 +950,11 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
     let vgsiCode: String? = try t[optional: "VGSI_CODE"]
     let visualGlideslopeIndicator: RunwayEnd.VisualGlideslopeIndicator? =
       if let code = vgsiCode {
-        try parseVGSI(code)
+        parseVGSI(
+          code,
+          field: "runway[\(runwayId)][\(endId)].visualGlideslopeIndicator",
+          id: airportId
+        )
       } else {
         nil
       }
@@ -1096,7 +1112,9 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
     )
   }
 
-  private func parseVGSI(_ value: String) throws -> RunwayEnd.VisualGlideslopeIndicator? {
+  private func parseVGSI(_ value: String, field: String, id: String?)
+    -> RunwayEnd.VisualGlideslopeIndicator?
+  {
     if value.isEmpty || value == "N" || value == "NONE" { return nil }
 
     switch value {
@@ -1153,6 +1171,14 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
           let side = RunwayEnd.VisualGlideslopeIndicator.Side(rawValue: sideChar)
           return RunwayEnd.VisualGlideslopeIndicator(type: .panels, number: nil, side: side)
         }
+        // The code matched no known VGSI pattern; surface it rather than
+        // silently dropping the indicator.
+        recordFieldError(
+          field: field,
+          value: value,
+          id: id,
+          underlying: ParserError.invalidValue(value)
+        )
         return nil
     }
   }
