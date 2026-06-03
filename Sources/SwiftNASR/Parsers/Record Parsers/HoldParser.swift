@@ -5,11 +5,12 @@ import Foundation
 /// These files contain published holding patterns.
 /// Records are 487 characters fixed-width with HP1 (base), HP2 (charting),
 /// HP3 (other altitude/speed), and HP4 (remarks) record types.
-actor FixedWidthHoldParser: LayoutDataParser {
+actor FixedWidthHoldParser: LayoutDataParser, DiagnosingParser {
   static let type = RecordType.holds
 
   var formats = [NASRTable]()
   var holds = [String: Hold]()
+  var pendingDiagnostics = [RecordParseError]()
 
   func parse(data: Data) throws {
     guard let line = String(data: data, encoding: .isoLatin1) else {
@@ -86,8 +87,18 @@ actor FixedWidthHoldParser: LayoutDataParser {
         let (legTime, legDist) = parseLegLength(legLengthStr)
 
         // Parse enums
-        let holdingDirection = CardinalDirection.for(directionStr)
-        let azimuthType = Hold.AzimuthType.for(azimuthStr)
+        let holdingDirection = diagnose(
+          CardinalDirection.self,
+          directionStr.isEmpty ? nil : directionStr,
+          field: "holdingDirection",
+          id: holdKey
+        )
+        let azimuthType = diagnose(
+          Hold.AzimuthType.self,
+          azimuthStr.isEmpty ? nil : azimuthStr,
+          field: "azimuthType",
+          id: holdKey
+        )
         let turnDirection = parseTurnDirection(turnDirStr)
 
         let fixPosition = try makeLocation(

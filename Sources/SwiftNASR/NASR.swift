@@ -167,28 +167,40 @@ public actor NASR {
    with a Progress object that you can use to
    track loading progress. You would add this
    object to your parent Progress object.
-   - Parameter errorHandler: A block of code to call if parsing fails. If the
-   block returns `true`, parsing will continue even
-   if a specific record has an error. If not given,
-   any error will be swallowed but parsing will
-   continue. The block receives the parsing error
-   that occurred.
-   - Returns: `true` if the parsing completed, or `false` if it was aborted by
-   `errorHandler`.
+   - Parameter errorHandler: Called whenever a parsing problem is encountered.
+   Receives a ``RecordParseError`` describing the
+   problem, and returns a ``ParseDisposition``:
+   `.proceed` to continue parsing, `.abort` to stop.
+   - Returns: `true` if parsing completed, or `false` if `errorHandler` returned
+   `.abort`.
    */
 
   @discardableResult
   public func parse(
     _ type: RecordType,
     withProgress progressHandler: @Sendable (Progress) -> Void = { _ in },
-    errorHandler: @Sendable (_ error: Swift.Error) -> Bool
+    errorHandler: @Sendable (_ error: RecordParseError) -> ParseDisposition
   ) async throws -> Bool {
     guard let distribution = self.distribution else { throw Error.notYetLoaded }
     let parser = parserFor(recordType: type, format: distribution.format)
     try await parser.prepare(distribution: distribution)
 
-    // For CSV parsers, progress is based on bytes read across all files.
-    // The caller's weight system handles proportional distribution across record types.
+    // Drains diagnostics accumulated by the parser (field errors, and for CSV the
+    // per-row record drops). Returns false if the handler asked to abort.
+    func drainDiagnostics() async -> Bool {
+      guard let diagnosing = parser as? any DiagnosingParser else { return true }
+      for event in await diagnosing.takeDiagnostics() where errorHandler(event) == .abort {
+        return false
+      }
+      return true
+    }
+
+    // Discards diagnostics accumulated for a record that ended up being dropped.
+    func discardPendingDiagnostics() async {
+      guard let diagnosing = parser as? any DiagnosingParser else { return }
+      _ = await diagnosing.takeDiagnostics()
+    }
+
     if let csvParser = parser as? CSVParser {
       let progress = await csvParser.setupProgress()
       progressHandler(progress)
@@ -198,21 +210,24 @@ public actor NASR {
         do {
           try await parser.parse(data: chunk)
         } catch {
-          let shouldContinue = errorHandler(error)
-          if !shouldContinue {
+          await discardPendingDiagnostics()
+          if errorHandler(.fromThrown(recordType: type, recordID: nil, error)) == .abort {
             await parser.finish(data: self.data)
             return false
           }
+          continue
+        }
+        if await drainDiagnostics() == false {
+          await parser.finish(data: self.data)
+          return false
         }
       }
 
-      // Ensure progress completes
       progress.completedUnitCount = progress.totalUnitCount
       await parser.finish(data: self.data)
       return true
     }
 
-    // TXT parsers use line-based progress
     let progress = Progress(totalUnitCount: 10)
     progressHandler(progress)
     var parseProgress: Progress!
@@ -254,11 +269,16 @@ public actor NASR {
         try await parser.parse(data: chunk)
         parseProgress.completedUnitCount += 1
       } catch {
-        let shouldContinue = errorHandler(error)
-        if !shouldContinue {
+        await discardPendingDiagnostics()
+        if errorHandler(.fromThrown(recordType: type, recordID: nil, error)) == .abort {
           await parser.finish(data: self.data)
           return false
         }
+        continue
+      }
+      if await drainDiagnostics() == false {
+        await parser.finish(data: self.data)
+        return false
       }
     }
 

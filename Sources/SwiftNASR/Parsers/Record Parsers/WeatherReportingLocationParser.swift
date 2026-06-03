@@ -11,7 +11,7 @@ import Foundation
 /// Note: This parser uses hardcoded field positions rather than layout file formats
 /// because the record type detection logic is complex (based on first character and
 /// content of subsequent fields).
-actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
+actor FixedWidthWeatherReportingLocationParser: LayoutDataParser, DiagnosingParser {
   static let type = RecordType.weatherReportingLocations
 
   // Base record field positions (0-indexed start, length)
@@ -30,6 +30,7 @@ actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
   var formats = [NASRTable]()
   var locations = [String: WeatherReportingLocation]()
   var currentLocationId: String?
+  var pendingDiagnostics = [RecordParseError]()
 
   private let baseTransformer = ByteTransformer([
     .string(),  // 0 identifier (5)
@@ -89,7 +90,12 @@ actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
     let elevAccuracyStr: String? = try t[optional: 7]
     let servicesStr: String? = try t[optional: 8]
 
-    let elevationAccuracy = WeatherReportingLocation.ElevationAccuracy.for(elevAccuracyStr ?? "")
+    let elevationAccuracy = diagnose(
+      WeatherReportingLocation.ElevationAccuracy.self,
+      elevAccuracyStr,
+      field: "elevationAccuracy",
+      id: trimmedId
+    )
     let weatherServices = parseWeatherServices(servicesStr ?? "")
 
     let position = try makeLocation(
@@ -138,7 +144,12 @@ actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
           String(data: data[6..<7], encoding: .isoLatin1)?.trimmingCharacters(in: .whitespaces)
           ?? ""
         if let collectiveNum = UInt(collectiveNumStr) {
-          let serviceType = WeatherReportingLocation.WeatherServiceType.for(serviceTypeStr)
+          let serviceType = diagnose(
+            WeatherReportingLocation.WeatherServiceType.self,
+            serviceTypeStr,
+            field: "serviceType",
+            id: currentId
+          )
           let collective = WeatherReportingLocation.Collective(
             serviceType: serviceType,
             number: collectiveNum
@@ -157,7 +168,12 @@ actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
         let states = statesStr.split(separator: " ").map { String($0) }
 
         if !states.isEmpty {
-          let serviceType = WeatherReportingLocation.WeatherServiceType.for(serviceTypeStr)
+          let serviceType = diagnose(
+            WeatherReportingLocation.WeatherServiceType.self,
+            serviceTypeStr,
+            field: "serviceType",
+            id: currentId
+          )
           let affectedArea = WeatherReportingLocation.AffectedArea(
             serviceType: serviceType,
             states: states

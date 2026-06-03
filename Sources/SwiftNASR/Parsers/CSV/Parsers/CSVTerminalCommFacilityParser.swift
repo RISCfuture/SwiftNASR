@@ -2,13 +2,16 @@ import Foundation
 import StreamingCSV
 
 /// CSV Terminal Communications Facility Parser for parsing ATC_BASE.csv, ATC_SVC.csv, ATC_ATIS.csv, ATC_RMK.csv
-actor CSVTerminalCommFacilityParser: CSVParser {
+actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.terminalCommFacilities
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["ATC_BASE.csv", "ATC_SVC.csv", "ATC_ATIS.csv", "ATC_RMK.csv"]
 
   var facilities = [String: TerminalCommFacility]()
+  var pendingDiagnostics = [RecordParseError]()
 
   func prepare(distribution: Distribution) throws {
     self.distribution = distribution
@@ -37,7 +40,12 @@ actor CSVTerminalCommFacilityParser: CSVParser {
         position: nil,  // Not directly in CSV BASE
         tieInFSSId: nil,
         tieInFSSName: nil,
-        facilityType: TerminalCommFacility.FacilityType.for(try row["FACILITY_TYPE"]),
+        facilityType: diagnose(
+          TerminalCommFacility.FacilityType.self,
+          try row.optional("FACILITY_TYPE"),
+          field: "facilityType",
+          id: facilityID
+        ),
         hoursOfOperation: nil,
         operationRegularity: nil,
         masterAirportId: nil,

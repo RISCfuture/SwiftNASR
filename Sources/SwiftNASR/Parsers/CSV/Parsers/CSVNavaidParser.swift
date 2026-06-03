@@ -2,13 +2,16 @@ import Foundation
 import StreamingCSV
 
 /// CSV Navaid Parser using declarative transformers like FixedWidthNavaidParser
-actor CSVNavaidParser: CSVParser {
+actor CSVNavaidParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.navaids
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["NAV_BASE.csv", "NAV_RMK.csv", "NAV_CKPT.csv"]
 
   var navaids = [NavaidKey: Navaid]()
+  var pendingDiagnostics = [RecordParseError]()
 
   // Transformer with named fields for header-based parsing
   private let basicTransformer = CSVTransformer([
@@ -47,20 +50,7 @@ actor CSVNavaidParser: CSVParser {
     .init("CHAN", .generic({ try parseTACAN($0, fieldIndex: 34) }, nullable: .blank)),
     .init("FREQ", .string(nullable: .blank)),  // raw string - converted to Hz based on navaid type
     .init("MKR_IDENT", .string(nullable: .blank)),
-    .init(
-      "MKR_SHAPE",
-      .generic(
-        { str in
-          switch str.uppercased() {
-            case "E": return Navaid.FanMarkerType.elliptical
-            case "B": return Navaid.FanMarkerType.bone
-            case "": return nil
-            default: return Navaid.FanMarkerType.for(str)
-          }
-        },
-        nullable: .blank
-      )
-    ),
+    .init("MKR_SHAPE", .string(nullable: .blank)),
     .init("MKR_BRG", .unsignedInteger(nullable: .blank)),
     .init("ALT_CODE", .generic({ try parseServiceVolume($0) }, nullable: .blank)),
     .init("DME_SSV", .generic({ try parseServiceVolume($0) }, nullable: .blank)),
@@ -129,12 +119,32 @@ actor CSVNavaidParser: CSVParser {
       }
 
       // Convert frequency to Hz based on navaid type
+      let navaidID: String = try t["NAV_ID"]
       let navaidType: Navaid.FacilityType = try t["NAV_TYPE"]
       let rawFreq: String? = try t[optional: "FREQ"]
       let frequencyHz = parseNavaidFrequencyToHz(rawFreq, navaidType: navaidType)
 
+      // Decode fan marker type with diagnostics for unrepresentable values
+      let rawMkrShape: String? = try t[optional: "MKR_SHAPE"]
+      let fanMarkerType: Navaid.FanMarkerType?
+      if let rawMkrShape {
+        switch rawMkrShape.uppercased() {
+          case "E": fanMarkerType = .elliptical
+          case "B": fanMarkerType = .bone
+          default:
+            fanMarkerType = diagnose(
+              Navaid.FanMarkerType.self,
+              rawMkrShape,
+              field: "fanMarkerType",
+              id: navaidID
+            )
+        }
+      } else {
+        fanMarkerType = nil
+      }
+
       let navaid = Navaid(
-        id: try t["NAV_ID"],
+        id: navaidID,
         name: try t[optional: "NAME"] ?? "",
         type: navaidType,
         city: try t[optional: "CITY"] ?? "",
@@ -162,7 +172,7 @@ actor CSVNavaidParser: CSVParser {
         tacanChannel: try t[optional: "CHAN"],
         frequencyHz: frequencyHz,
         beaconIdentifier: try t[optional: "MKR_IDENT"],
-        fanMarkerType: try t[optional: "MKR_SHAPE"],
+        fanMarkerType: fanMarkerType,
         fanMarkerMajorBearing: fanMarkerMajorBearing,
         VORServiceVolume: try t[optional: "ALT_CODE"],
         DMEServiceVolume: try t[optional: "DME_SSV"],
@@ -199,7 +209,8 @@ actor CSVNavaidParser: CSVParser {
       guard !navID.isEmpty, !remark.isEmpty else { return }
 
       // Parse navaid type
-      guard let navType = Navaid.FacilityType.for(navTypeStr) else { return }
+      guard let navType = diagnose(Navaid.FacilityType.self, navTypeStr, field: "type", id: navID)
+      else { return }
 
       // Find the navaid by iterating through keys (since city might not match exactly)
       let matchingKey = self.navaids.keys.first { key in
@@ -224,7 +235,9 @@ actor CSVNavaidParser: CSVParser {
       guard !navID.isEmpty else { return }
 
       // Parse navaid type
-      guard let navType = Navaid.FacilityType.for(navTypeStr) else { return }
+      guard
+        let navType = diagnose(Navaid.FacilityType.self, navTypeStr, field: "type", id: navID)
+      else { return }
 
       // Find the navaid
       let matchingKey = self.navaids.keys.first { key in
@@ -242,13 +255,20 @@ actor CSVNavaidParser: CSVParser {
       let stateCode = row[ifExists: "STATE_CHK_CODE"] ?? ""
 
       // Parse checkpoint type
-      guard let checkpointType = VORCheckpoint.CheckpointType.for(airGndCode) else { return }
+      guard
+        let checkpointType = diagnose(
+          VORCheckpoint.CheckpointType.self,
+          airGndCode,
+          field: "checkpoints[].type",
+          id: navID
+        )
+      else { return }
 
       // Parse bearing
       guard let bearingValue = UInt(bearingStr) else { return }
 
       // Get magnetic variation from the navaid for bearing conversion
-      let navaid = self.navaids[key]!
+      guard var navaid = self.navaids[key] else { return }
       let bearing = Bearing(
         bearingValue,
         reference: .magnetic,
@@ -277,7 +297,8 @@ actor CSVNavaidParser: CSVParser {
         groundDescription: groundDescription
       )
 
-      self.navaids[key]!.checkpoints.append(checkpoint)
+      navaid.checkpoints.append(checkpoint)
+      self.navaids[key] = navaid
     }
 
     // Note: NAV_FIX.csv and NAV_HP.csv relate to fixes and holding patterns,

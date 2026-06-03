@@ -2,7 +2,9 @@ import Foundation
 import StreamingCSV
 
 /// CSV Airway Parser for parsing AWY_BASE.csv and AWY_SEG_ALT.csv
-actor CSVAirwayParser: CSVParser {
+actor CSVAirwayParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.airways
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
@@ -10,6 +12,7 @@ actor CSVAirwayParser: CSVParser {
 
   var airways = [AirwayKey: Airway]()
   var segments = [SegmentKey: Airway.Segment]()
+  var pendingDiagnostics = [RecordParseError]()
 
   func prepare(distribution: Distribution) throws {
     self.distribution = distribution
@@ -76,7 +79,12 @@ actor CSVAirwayParser: CSVParser {
       // Parse point data
       let fromPoint = try row["FROM_POINT"]
       let pointTypeStr = row[ifExists: "FROM_PT_TYPE"] ?? ""
-      let pointType = Airway.PointType(rawValue: pointTypeStr)
+      let pointType = self.diagnose(
+        Airway.PointType.self,
+        pointTypeStr,
+        field: "pointType",
+        id: "\(designation)/\(sequenceNumber)"
+      )
       let stateCode = row[ifExists: "STATE_CODE"]
       let ICAORegion = row[ifExists: "ICAO_REGION_CODE"]
       let ARTCCID = row[ifExists: "ARTCC"]

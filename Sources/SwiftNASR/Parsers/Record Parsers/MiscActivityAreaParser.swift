@@ -7,9 +7,10 @@ import Foundation
 /// Records are 919 characters fixed-width with MAA1 (base), MAA2 (polygon coordinates),
 /// MAA3 (times of use), MAA4 (user groups), MAA5 (contact facilities),
 /// MAA6 (check for NOTAMs), and MAA7 (remarks).
-actor FixedWidthMiscActivityAreaParser: LayoutDataParser {
+actor FixedWidthMiscActivityAreaParser: LayoutDataParser, DiagnosingParser {
   static let type = RecordType.miscActivityAreas
 
+  var pendingDiagnostics = [RecordParseError]()
   var formats = [NASRTable]()
   var areas = [String: MiscActivityArea]()
 
@@ -121,7 +122,12 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser {
 
     let area = MiscActivityArea(
       MAAId: MAAId,
-      areaType: MiscActivityArea.AreaType.for(areaTypeStr),
+      areaType: diagnose(
+        MiscActivityArea.AreaType.self,
+        areaTypeStr,
+        field: "areaType",
+        id: MAAId
+      ),
       areaName: areaName.isEmpty ? nil : areaName,
       stateCode: stateAbbr.isEmpty ? nil : stateAbbr,
       stateName: stateName.isEmpty ? nil : stateName,
@@ -138,7 +144,12 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser {
       associatedAirportSiteNumber: assocAirportSite.isEmpty ? nil : assocAirportSite,
       nearestAirportId: nearestAirportID.isEmpty ? nil : nearestAirportID,
       nearestAirportDistanceNM: Double(nearestDistStr),
-      nearestAirportDirection: Direction(rawValue: nearestDir),
+      nearestAirportDirection: diagnose(
+        Direction.self,
+        nearestDir,
+        field: "nearestAirportDirection",
+        id: MAAId
+      ),
       maximumAltitude: maxAlt.isEmpty ? nil : try Altitude(parsing: maxAlt),
       minimumAltitude: minAlt.isEmpty ? nil : try Altitude(parsing: minAlt),
       areaRadiusNM: Double(radiusStr),

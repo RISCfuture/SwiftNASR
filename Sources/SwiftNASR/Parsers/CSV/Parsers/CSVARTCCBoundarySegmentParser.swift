@@ -5,12 +5,14 @@ import StreamingCSV
 ///
 /// Parses `ARB_SEG.csv` to create `ARTCCBoundarySegment` records containing
 /// boundary point locations and descriptions for Air Route Traffic Control Centers.
-actor CSVARTCCBoundarySegmentParser: CSVParser {
+actor CSVARTCCBoundarySegmentParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.ARTCCBoundarySegments
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["ARB_SEG.csv"]
 
+  var pendingDiagnostics = [RecordParseError]()
   var segments = [ARTCCBoundarySegment]()
 
   private let transformer = CSVTransformer([
@@ -54,7 +56,12 @@ actor CSVARTCCBoundarySegmentParser: CSVParser {
       let segment = ARTCCBoundarySegment(
         recordIdentifier: recordId,
         ARTCCIdentifier: ARTCCId,
-        altitudeStructure: ARTCCBoundarySegment.AltitudeStructure(rawValue: altitudeCode),
+        altitudeStructure: self.diagnose(
+          ARTCCBoundarySegment.AltitudeStructure.self,
+          altitudeCode,
+          field: "altitudeStructure",
+          id: recordId
+        ),
         pointDesignator: pointDesignator,
         centerName: try t["LOCATION_NAME"],
         altitudeStructureName: try t["ALTITUDE"],

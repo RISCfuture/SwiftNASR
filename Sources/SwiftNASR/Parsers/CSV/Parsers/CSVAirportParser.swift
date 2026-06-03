@@ -2,7 +2,9 @@ import Foundation
 import StreamingCSV
 
 /// CSV Airport Parser using header-based field access
-actor CSVAirportParser: CSVParser {
+actor CSVAirportParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.airports
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
@@ -12,6 +14,7 @@ actor CSVAirportParser: CSVParser {
   ]
 
   var airports = [String: Airport]()
+  var pendingDiagnostics = [RecordParseError]()
 
   /// Temporary storage for UNICOM frequencies from FRQ.csv
   /// Key is the SERVICED_FACILITY (airport ID)
@@ -340,8 +343,16 @@ actor CSVAirportParser: CSVParser {
 
     // Parse federal agreements
     let agreementCodes: String = (try? t[optional: "NASP_CODE"]) ?? ""
-    let agreements: [Airport.FederalAgreement] = agreementCodes.compactMap {
-      Airport.FederalAgreement(rawValue: String($0))
+    var agreements = [Airport.FederalAgreement]()
+    for char in agreementCodes {
+      if let agreement = diagnose(
+        Airport.FederalAgreement.self,
+        String(char),
+        field: "agreements",
+        id: siteNumber
+      ) {
+        agreements.append(agreement)
+      }
     }
 
     // Parse airspace analysis determination
@@ -363,7 +374,12 @@ actor CSVAirportParser: CSVParser {
         ?? fuelTypesStr
         .endIndex
       let fuelCode = String(fuelTypesStr[index..<endIndex]).trimmingCharacters(in: .whitespaces)
-      if let fuelType = Airport.FuelType(rawValue: fuelCode) {
+      if let fuelType = diagnose(
+        Airport.FuelType.self,
+        fuelCode,
+        field: "fuelsAvailable",
+        id: siteNumber
+      ) {
         fuelsAvailable.append(fuelType)
       }
       index = endIndex
@@ -375,15 +391,33 @@ actor CSVAirportParser: CSVParser {
 
     // Parse oxygen availability
     let bottledOxyStr: String = (try? t[optional: "BOTTLED_OXY_TYPE"]) ?? ""
-    let bottledOxygen: [Airport.OxygenPressure] = bottledOxyStr.split(separator: "/").compactMap {
-      let code = String($0).trimmingCharacters(in: .whitespaces)
-      return code == "NONE" ? nil : Airport.OxygenPressure.for(code)
+    var bottledOxygen = [Airport.OxygenPressure]()
+    for component in bottledOxyStr.split(separator: "/") {
+      let code = String(component).trimmingCharacters(in: .whitespaces)
+      guard code != "NONE" else { continue }
+      if let oxygen = diagnose(
+        Airport.OxygenPressure.self,
+        code,
+        field: "bottledOxygenAvailable",
+        id: siteNumber
+      ) {
+        bottledOxygen.append(oxygen)
+      }
     }
 
     let bulkOxyStr: String = (try? t[optional: "BULK_OXY_TYPE"]) ?? ""
-    let bulkOxygen: [Airport.OxygenPressure] = bulkOxyStr.split(separator: "/").compactMap {
-      let code = String($0).trimmingCharacters(in: .whitespaces)
-      return code == "NONE" ? nil : Airport.OxygenPressure.for(code)
+    var bulkOxygen = [Airport.OxygenPressure]()
+    for component in bulkOxyStr.split(separator: "/") {
+      let code = String(component).trimmingCharacters(in: .whitespaces)
+      guard code != "NONE" else { continue }
+      if let oxygen = diagnose(
+        Airport.OxygenPressure.self,
+        code,
+        field: "bulkOxygenAvailable",
+        id: siteNumber
+      ) {
+        bulkOxygen.append(oxygen)
+      }
     }
 
     // Parse segmented circle and beacon color
@@ -392,9 +426,17 @@ actor CSVAirportParser: CSVParser {
 
     // Parse other services
     let servicesStr: String = (try? t[optional: "OTHER_SERVICES"]) ?? ""
-    let otherServices: [Airport.Service] = servicesStr.split(separator: ",").compactMap {
-      let code = String($0).trimmingCharacters(in: .whitespaces)
-      return Airport.Service.for(code)
+    var otherServices = [Airport.Service]()
+    for component in servicesStr.split(separator: ",") {
+      let code = String(component).trimmingCharacters(in: .whitespaces)
+      if let service = diagnose(
+        Airport.Service.self,
+        code,
+        field: "otherServices",
+        id: siteNumber
+      ) {
+        otherServices.append(service)
+      }
     }
 
     // Parse wind indicator
@@ -418,7 +460,7 @@ actor CSVAirportParser: CSVParser {
 
     // Parse status
     let statusCode: String = try t["ARPT_STATUS"]
-    let status = Airport.Status(rawValue: statusCode)!
+    let status = try Airport.Status.require(statusCode)
 
     let airportId: String = try t["ARPT_ID"]
 
@@ -585,13 +627,23 @@ actor CSVAirportParser: CSVParser {
     // Parse surface type and condition
     let surfaceCode: String = (try? t[optional: "SURFACE_TYPE_CODE"]) ?? ""
     let conditionCode: String? = try t[optional: "COND"]
-    let (materials, condition) = parseRunwaySurface(surfaceCode, conditionCode: conditionCode)
+    let (materials, condition) = parseRunwaySurface(
+      surfaceCode,
+      conditionCode: conditionCode,
+      runwayId: runwayId,
+      airportId: siteNo
+    )
 
     // Parse treatment
     let treatmentCode: String? = try t[optional: "TREATMENT_CODE"]
     let treatment: Runway.Treatment? =
       if let code = treatmentCode, code != "NONE" {
-        Runway.Treatment(rawValue: code)
+        diagnose(
+          Runway.Treatment.self,
+          code,
+          field: "runway[\(runwayId)].treatment",
+          id: siteNo
+        )
       } else {
         nil
       }
@@ -603,7 +655,12 @@ actor CSVAirportParser: CSVParser {
     let edgeLightCode: String? = try t[optional: "RWY_LGT_CODE"]
     let edgeLightsIntensity: Runway.EdgeLightIntensity? =
       if let code = edgeLightCode {
-        Runway.EdgeLightIntensity.for(code)
+        diagnose(
+          Runway.EdgeLightIntensity.self,
+          code,
+          field: "runway[\(runwayId)].edgeLightsIntensity",
+          id: siteNo
+        )
       } else {
         nil
       }
@@ -689,14 +746,22 @@ actor CSVAirportParser: CSVParser {
     airports[compositeId]!.runways.append(runway)
   }
 
-  private func parseRunwaySurface(_ surfaceCode: String, conditionCode: String?) -> (
-    Set<Runway.Material>, Runway.Condition?
-  ) {
+  private func parseRunwaySurface(
+    _ surfaceCode: String,
+    conditionCode: String?,
+    runwayId: String,
+    airportId: String
+  ) -> (Set<Runway.Material>, Runway.Condition?) {
     var materials = Set<Runway.Material>()
 
     // Parse materials from hyphen-separated surface codes
     for component in surfaceCode.split(separator: "-") {
-      if let material = Runway.Material.for(String(component)) {
+      if let material = diagnose(
+        Runway.Material.self,
+        String(component),
+        field: "runway[\(runwayId)].materials",
+        id: airportId
+      ) {
         materials.insert(material)
       }
     }
@@ -704,7 +769,12 @@ actor CSVAirportParser: CSVParser {
     // Parse condition from separate field
     let condition: Runway.Condition? =
       if let code = conditionCode {
-        Runway.Condition.for(code)
+        diagnose(
+          Runway.Condition.self,
+          code,
+          field: "runway[\(runwayId)].condition",
+          id: airportId
+        )
       } else {
         nil
       }
@@ -771,7 +841,9 @@ actor CSVAirportParser: CSVParser {
 
     let runwayEnd = try buildRunwayEnd(
       from: t,
-      magneticVariation: airport.magneticVariationDeg
+      magneticVariation: airport.magneticVariationDeg,
+      airportId: siteNo,
+      runwayId: runwayId
     )
 
     // Determine if this is base or reciprocal end
@@ -786,7 +858,12 @@ actor CSVAirportParser: CSVParser {
     }
   }
 
-  private func buildRunwayEnd(from t: TransformedRow, magneticVariation: Int?) throws -> RunwayEnd {
+  private func buildRunwayEnd(
+    from t: TransformedRow,
+    magneticVariation: Int?,
+    airportId: String,
+    runwayId: String
+  ) throws -> RunwayEnd {
     let endId: String = try t["RWY_END_ID"]
 
     // Convert true heading to Bearing<UInt>
@@ -799,7 +876,12 @@ actor CSVAirportParser: CSVParser {
     let ILSCode: String? = try t[optional: "ILS_TYPE"]
     let instrumentLandingSystem: RunwayEnd.InstrumentLandingSystem? =
       if let code = ILSCode {
-        RunwayEnd.InstrumentLandingSystem.for(code)
+        diagnose(
+          RunwayEnd.InstrumentLandingSystem.self,
+          code,
+          field: "runway[\(runwayId)][\(endId)].instrumentLandingSystem",
+          id: airportId
+        )
       } else {
         nil
       }
@@ -811,7 +893,12 @@ actor CSVAirportParser: CSVParser {
     let markingCode: String? = try t[optional: "RWY_MARKING_TYPE_CODE"]
     let marking: RunwayEnd.Marking? =
       if let code = markingCode, code != "NONE" {
-        RunwayEnd.Marking(rawValue: code)
+        diagnose(
+          RunwayEnd.Marking.self,
+          code,
+          field: "runway[\(runwayId)][\(endId)].marking",
+          id: airportId
+        )
       } else {
         nil
       }
@@ -819,7 +906,12 @@ actor CSVAirportParser: CSVParser {
     let markingCondCode: String? = try t[optional: "RWY_MARKING_COND"]
     let markingCondition: RunwayEnd.MarkingCondition? =
       if let code = markingCondCode {
-        RunwayEnd.MarkingCondition.for(code)
+        diagnose(
+          RunwayEnd.MarkingCondition.self,
+          code,
+          field: "runway[\(runwayId)][\(endId)].markingCondition",
+          id: airportId
+        )
       } else {
         nil
       }
@@ -853,7 +945,11 @@ actor CSVAirportParser: CSVParser {
 
     // Parse RVR sensors
     let rvrCode: String = (try? t[optional: "RWY_VISUAL_RANGE_EQUIP_CODE"]) ?? ""
-    let RVRSensors = parseRVRSensors(rvrCode)
+    let RVRSensors = parseRVRSensors(
+      rvrCode,
+      field: "runway[\(runwayId)][\(endId)].RVRSensors",
+      airportId: airportId
+    )
 
     // Parse RVV
     let hasRVV = try parseYNFlag("RWY_VSBY_VALUE_EQUIP_FLAG", from: t)
@@ -862,7 +958,12 @@ actor CSVAirportParser: CSVParser {
     let approachLightCode: String? = try t[optional: "APCH_LGT_SYSTEM_CODE"]
     let approachLighting: RunwayEnd.ApproachLighting? =
       if let code = approachLightCode, code != "NONE" {
-        RunwayEnd.ApproachLighting(rawValue: code)
+        diagnose(
+          RunwayEnd.ApproachLighting.self,
+          code,
+          field: "runway[\(runwayId)][\(endId)].approachLighting",
+          id: airportId
+        )
       } else {
         nil
       }
@@ -877,7 +978,12 @@ actor CSVAirportParser: CSVParser {
     let hasEndTouchdownLighting = try parseYNFlag("TDZ_LGT_AVBL_FLAG", from: t)
 
     // Parse controlling object
-    let controllingObject = try parseControllingObject(t)
+    let controllingObject = try parseControllingObject(
+      t,
+      runwayId: runwayId,
+      endId: endId,
+      airportId: airportId
+    )
 
     // Parse gradient
     let gradient = try parseGradient(t)
@@ -1051,28 +1157,49 @@ actor CSVAirportParser: CSVParser {
     }
   }
 
-  private func parseRVRSensors(_ code: String) -> [RunwayEnd.RVRSensor] {
+  private func parseRVRSensors(
+    _ code: String,
+    field: String,
+    airportId: String
+  ) -> [RunwayEnd.RVRSensor] {
     var sensors = [RunwayEnd.RVRSensor]()
     for char in code {
-      if let sensor = RunwayEnd.RVRSensor(rawValue: String(char)) {
+      if let sensor = diagnose(
+        RunwayEnd.RVRSensor.self,
+        String(char),
+        field: field,
+        id: airportId
+      ) {
         sensors.append(sensor)
       }
     }
     return sensors
   }
 
-  private func parseControllingObject(_ t: TransformedRow) throws -> RunwayEnd.ControllingObject? {
+  private func parseControllingObject(
+    _ t: TransformedRow,
+    runwayId: String,
+    endId: String,
+    airportId: String
+  ) throws -> RunwayEnd.ControllingObject? {
     guard let categoryCode: String = try t[optional: "OBSTN_TYPE"] else {
       return nil
     }
 
+    // Category uses a custom init(rawValue:) that maps everything to .other(_) for unknowns;
+    // it never fails, so no diagnostic is needed here.
     let category = RunwayEnd.ControllingObject.Category(rawValue: categoryCode)
 
     // Parse markings
     var markings = [RunwayEnd.ControllingObject.Marking]()
     if let markingCode: String = try t[optional: "OBSTN_MRKD_CODE"] {
       for char in markingCode {
-        if let marking = RunwayEnd.ControllingObject.Marking(rawValue: String(char)) {
+        if let marking = diagnose(
+          RunwayEnd.ControllingObject.Marking.self,
+          String(char),
+          field: "runway[\(runwayId)][\(endId)].controllingObject.markings",
+          id: airportId
+        ) {
           markings.append(marking)
         }
       }
@@ -1233,7 +1360,12 @@ actor CSVAirportParser: CSVParser {
 
       case "FUEL_TYPE":
         // Fuel-specific remarks
-        if let fuelType = Airport.FuelType(rawValue: element) {
+        if let fuelType = diagnose(
+          Airport.FuelType.self,
+          element,
+          field: "fuelsAvailable",
+          id: siteNo
+        ) {
           airports[compositeId]!.remarks.append(
             .fuel(field: .fuelsAvailable, fuel: fuelType, content: remark)
           )

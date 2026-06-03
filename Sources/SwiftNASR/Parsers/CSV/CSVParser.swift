@@ -77,7 +77,15 @@ extension CSVParser {
       }
 
       let csvRow = CSVRow(headerMap: headerMap!, values: row)
-      try await handler(csvRow)
+      do {
+        try await handler(csvRow)
+      } catch {
+        if let diagnosing = self as? any DiagnosingParser {
+          await diagnosing.recordDroppedRow(error)
+        } else {
+          throw error  // preserve abort behavior for any non-diagnosing CSV parser
+        }
+      }
     }
   }
 }

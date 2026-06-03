@@ -3,7 +3,9 @@ import StreamingCSV
 
 /// CSV Military Training Route Parser for parsing MTR_BASE.csv, MTR_AGY.csv,
 /// MTR_PT.csv, MTR_SOP.csv, MTR_TERR.csv, and MTR_WDTH.csv
-actor CSVMilitaryTrainingRouteParser: CSVParser {
+actor CSVMilitaryTrainingRouteParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.militaryTrainingRoutes
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
@@ -13,6 +15,7 @@ actor CSVMilitaryTrainingRouteParser: CSVParser {
   ]
 
   var routes = [String: MilitaryTrainingRoute]()
+  var pendingDiagnostics = [RecordParseError]()
 
   func prepare(distribution: Distribution) throws {
     self.distribution = distribution
@@ -84,7 +87,12 @@ actor CSVMilitaryTrainingRouteParser: CSVParser {
       guard !key.isEmpty, self.routes[key] != nil else { return }
 
       let agencyTypeStr = row[ifExists: "AGENCY_TYPE"] ?? ""
-      let agencyType = MilitaryTrainingRoute.AgencyType(rawValue: agencyTypeStr)
+      let agencyType = self.diagnose(
+        MilitaryTrainingRoute.AgencyType.self,
+        agencyTypeStr.isEmpty ? nil : agencyTypeStr,
+        field: "agencyType",
+        id: key
+      )
 
       let agency = MilitaryTrainingRoute.Agency(
         agencyType: agencyType,

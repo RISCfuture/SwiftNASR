@@ -5,11 +5,12 @@ import Foundation
 /// These files contain parachute jump area information.
 /// Records are 473 characters fixed-width with PJA1 (base), PJA2 (times),
 /// PJA3 (user groups), PJA4 (contact facilities), and PJA5 (remarks) record types.
-actor FixedWidthParachuteJumpAreaParser: LayoutDataParser {
+actor FixedWidthParachuteJumpAreaParser: LayoutDataParser, DiagnosingParser {
   static let type = RecordType.parachuteJumpAreas
 
   var formats = [NASRTable]()
   var areas = [String: ParachuteJumpArea]()
+  var pendingDiagnostics = [RecordParseError]()
 
   func parse(data: Data) throws {
     guard let line = String(data: data, encoding: .isoLatin1) else {
@@ -99,7 +100,22 @@ actor FixedWidthParachuteJumpAreaParser: LayoutDataParser {
     let FSSName = String(line.substring(434, 30)).trimmingCharacters(in: .whitespaces)
     let useTypeStr =
       line.count >= 472 ? String(line.substring(464, 8)).trimmingCharacters(in: .whitespaces) : nil
-    let useType = useTypeStr.flatMap { ParachuteJumpArea.UseType(rawValue: $0) }
+    let useType: ParachuteJumpArea.UseType?
+    if let raw = useTypeStr, !raw.isEmpty {
+      if let value = ParachuteJumpArea.UseType(rawValue: raw) {
+        useType = value
+      } else {
+        recordFieldError(
+          field: "useType",
+          value: raw,
+          id: PJAId,
+          underlying: ParserError.unknownRecordEnumValue(raw)
+        )
+        useType = nil
+      }
+    } else {
+      useType = nil
+    }
 
     let lat = parseLatitude(latFormatted)
     let lon = parseLongitude(lonFormatted)

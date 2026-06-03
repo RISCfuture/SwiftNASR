@@ -2,12 +2,15 @@ import Foundation
 import StreamingCSV
 
 /// CSV Misc Activity Area Parser for parsing MAA_BASE.csv, MAA_CON.csv, MAA_RMK.csv, and MAA_SHP.csv
-actor CSVMiscActivityAreaParser: CSVParser {
+actor CSVMiscActivityAreaParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.miscActivityAreas
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["MAA_BASE.csv", "MAA_CON.csv", "MAA_RMK.csv", "MAA_SHP.csv"]
 
+  var pendingDiagnostics = [RecordParseError]()
   var areas = [String: MiscActivityArea]()
 
   private let baseTransformer = CSVTransformer([
@@ -60,12 +63,13 @@ actor CSVMiscActivityAreaParser: CSVParser {
       )
 
       // Parse area type
-      let areaType: MiscActivityArea.AreaType? = {
-        guard let typeStr: String = try? t[optional: "MAA_TYPE_NAME"], !typeStr.isEmpty else {
-          return nil
-        }
-        return MiscActivityArea.AreaType.for(typeStr)
-      }()
+      let areaTypeRaw: String? = try t[optional: "MAA_TYPE_NAME"]
+      let areaType: MiscActivityArea.AreaType? = self.diagnose(
+        MiscActivityArea.AreaType.self,
+        areaTypeRaw,
+        field: "areaType",
+        id: MAAId
+      )
 
       // Parse altitudes (format like "5000AGL" or "4000MSL")
       let maxAltitude: Altitude? = {
@@ -79,12 +83,13 @@ actor CSVMiscActivityAreaParser: CSVParser {
       }()
 
       // Parse nearest airport direction
-      let nearestDirection: Direction? = {
-        guard let dirStr: String = try? t[optional: "NEAREST_ARPT_DIR"], !dirStr.isEmpty else {
-          return nil
-        }
-        return Direction(rawValue: dirStr)
-      }()
+      let nearestDirRaw: String? = try t[optional: "NEAREST_ARPT_DIR"]
+      let nearestDirection: Direction? = self.diagnose(
+        Direction.self,
+        nearestDirRaw,
+        field: "nearestAirportDirection",
+        id: MAAId
+      )
 
       // Parse times of use - single string in CSV
       let timesOfUse: [String] = {

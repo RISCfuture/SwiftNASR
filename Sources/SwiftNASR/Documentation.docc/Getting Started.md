@@ -46,8 +46,9 @@ the data and parse it:
 
 ```swift
 try await distribution.load()
-try await distribution.parse(.airports, errorHandler: { error in
-    // [...]
+try await distribution.parse(.airports, errorHandler: { _ in
+    // inspect error
+    return .proceed
 })
 ```
 

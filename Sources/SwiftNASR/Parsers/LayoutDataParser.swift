@@ -37,6 +37,8 @@ private final class FieldParser: Sendable {
           }
         }
       } transform: {
+        // Force-unwrap is safe: NASRTableField.Identifier.init?(rawValue:) never returns nil
+        // because its `default` case maps any unrecognized string to `.number(rawValue)`.
         .init(rawValue: String($0))!
       }
       OneOrMore(.whitespace)

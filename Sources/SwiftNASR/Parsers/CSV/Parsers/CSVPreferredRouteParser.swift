@@ -2,13 +2,16 @@ import Foundation
 import StreamingCSV
 
 /// CSV Preferred Route Parser for parsing PFR_BASE.csv and PFR_SEG.csv
-actor CSVPreferredRouteParser: CSVParser {
+actor CSVPreferredRouteParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.preferredRoutes
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["PFR_BASE.csv", "PFR_SEG.csv"]
 
   var routes = [String: PreferredRoute]()
+  var pendingDiagnostics = [RecordParseError]()
 
   func prepare(distribution: Distribution) throws {
     self.distribution = distribution
@@ -39,7 +42,12 @@ actor CSVPreferredRouteParser: CSVParser {
       let route = PreferredRoute(
         originIdentifier: originID,
         destinationIdentifier: destID,
-        routeType: PreferredRoute.RouteType.for(routeTypeCode),
+        routeType: self.diagnose(
+          PreferredRoute.RouteType.self,
+          routeTypeCode.isEmpty ? nil : routeTypeCode,
+          field: "routeType",
+          id: key
+        ),
         sequenceNumber: routeNo,
         routeTypeDescription: nil,  // Not in CSV
         areaDescription: try row.optional("SPECIAL_AREA_DESCRIP"),
@@ -75,14 +83,24 @@ actor CSVPreferredRouteParser: CSVParser {
 
       let segValue = try row.optional("SEG_VALUE") ?? ""
       let segTypeStr = try row.optional("SEG_TYPE") ?? ""
-      let segmentType = PreferredRoute.SegmentType.for(segTypeStr)
+      let segmentType = self.diagnose(
+        PreferredRoute.SegmentType.self,
+        segTypeStr.isEmpty ? nil : segTypeStr,
+        field: "segmentType",
+        id: key
+      )
 
       let stateCode = try row.optional("STATE_CODE")
       let ICAORegionCode = try row.optional("ICAO_REGION_CODE")
 
       // Parse navaid type from NAV_TYPE column
       let navTypeStr = try row.optional("NAV_TYPE") ?? ""
-      let navaidType = navTypeStr.isEmpty ? nil : Navaid.FacilityType.for(navTypeStr)
+      let navaidType = self.diagnose(
+        Navaid.FacilityType.self,
+        navTypeStr.isEmpty ? nil : navTypeStr,
+        field: "navaidType",
+        id: key
+      )
 
       // Parse radial/distance from segment value for FRD and RADIAL types
       let radialDistance = parseRadialDistance(segValue, segmentType: segmentType)

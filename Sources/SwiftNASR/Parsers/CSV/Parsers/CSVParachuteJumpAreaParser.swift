@@ -2,13 +2,16 @@ import Foundation
 import StreamingCSV
 
 /// CSV Parachute Jump Area Parser for parsing PJA_BASE.csv and PJA_CON.csv
-actor CSVParachuteJumpAreaParser: CSVParser {
+actor CSVParachuteJumpAreaParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.parachuteJumpAreas
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["PJA_BASE.csv", "PJA_CON.csv"]
 
   var areas = [String: ParachuteJumpArea]()
+  var pendingDiagnostics = [RecordParseError]()
 
   private let baseTransformer = CSVTransformer([
     .init("PJA_ID", .string()),
@@ -75,10 +78,25 @@ actor CSVParachuteJumpAreaParser: CSVParser {
       }()
 
       // Parse use type
-      let useType: ParachuteJumpArea.UseType? = {
-        guard let useStr: String = try? t[optional: "PJA_USE"], !useStr.isEmpty else { return nil }
-        return ParachuteJumpArea.UseType(rawValue: useStr.uppercased())
-      }()
+      let useTypeRaw: String? = (try? t[optional: "PJA_USE"] as String?).flatMap {
+        $0.isEmpty ? nil : $0.uppercased()
+      }
+      let useType: ParachuteJumpArea.UseType?
+      if let raw = useTypeRaw {
+        if let value = ParachuteJumpArea.UseType(rawValue: raw) {
+          useType = value
+        } else {
+          recordFieldError(
+            field: "useType",
+            value: raw,
+            id: PJAId,
+            underlying: ParserError.unknownRecordEnumValue(raw)
+          )
+          useType = nil
+        }
+      } else {
+        useType = nil
+      }
 
       // Parse times of use - split by semicolon if multiple
       let timesOfUse: [String] = {

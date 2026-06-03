@@ -58,7 +58,7 @@ extension FixedWidthParser {
   }
 }
 
-enum FixedWidthParserError: Swift.Error, CustomStringConvertible {
+enum FixedWidthParserError: Swift.Error, CustomStringConvertible, Sendable {
   case required(at: Int)
   case invalidNumber(_ value: String, at: Int)
   case invalidDate(_ value: String, at: Int)

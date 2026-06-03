@@ -9,7 +9,7 @@ enum PFRRecordIdentifier: String {
 ///
 /// These files contain preferred IFR routes between airports.
 /// Records are 344 characters fixed-width with PFR1 (base) and PFR2 (segment) record types.
-actor FixedWidthPreferredRouteParser: FixedWidthParser {
+actor FixedWidthPreferredRouteParser: FixedWidthParser, DiagnosingParser {
   typealias RecordIdentifier = PFRRecordIdentifier
 
   static let type = RecordType.preferredRoutes
@@ -18,6 +18,7 @@ actor FixedWidthPreferredRouteParser: FixedWidthParser {
   var recordTypeRange: Range<UInt> { 0..<4 }
   var formats = [NASRTable]()
   var routes = [String: PreferredRoute]()
+  var pendingDiagnostics = [RecordParseError]()
 
   private let baseTransformer = ByteTransformer([
     .recordType,  // 0 record type indicator (4)
@@ -83,7 +84,12 @@ actor FixedWidthPreferredRouteParser: FixedWidthParser {
     let route = PreferredRoute(
       originIdentifier: originID,
       destinationIdentifier: destID,
-      routeType: PreferredRoute.RouteType.for(routeTypeCode),
+      routeType: diagnose(
+        PreferredRoute.RouteType.self,
+        routeTypeCode.isEmpty ? nil : routeTypeCode,
+        field: "routeType",
+        id: routeKey
+      ),
       sequenceNumber: seqNum,
       routeTypeDescription: try t[optional: 5],
       areaDescription: try t[optional: 6],
@@ -124,10 +130,20 @@ actor FixedWidthPreferredRouteParser: FixedWidthParser {
     let segment = PreferredRoute.Segment(
       sequenceNumber: segSeq,
       identifier: try t[optional: 6],
-      segmentType: segmentType.flatMap { PreferredRoute.SegmentType.for($0) },
+      segmentType: diagnose(
+        PreferredRoute.SegmentType.self,
+        segmentType,
+        field: "segmentType",
+        id: routeKey
+      ),
       fixStateCode: try t[optional: 8],
       ICAORegionCode: try t[optional: 9],
-      navaidType: navaidTypeCode.flatMap { Navaid.FacilityType.for($0) },
+      navaidType: diagnose(
+        Navaid.FacilityType.self,
+        navaidTypeCode,
+        field: "navaidType",
+        id: routeKey
+      ),
       navaidTypeDescription: try t[optional: 11],
       radialDistance: parseRadialDistance(radialDistValue)
     )

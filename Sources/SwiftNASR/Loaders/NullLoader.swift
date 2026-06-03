@@ -11,8 +11,9 @@ import Foundation
 
  ``` swift
  let distribution = NASR.fromInternetToFile(distributionURL)!
- try distribution.parse(.airports, errorHandler: { error in
-     // [...]
+ try distribution.parse(.airports, errorHandler: { _ in
+     // inspect error
+     return .proceed
  })
  ```
 

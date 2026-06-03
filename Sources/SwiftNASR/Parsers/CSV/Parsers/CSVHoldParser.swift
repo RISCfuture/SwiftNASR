@@ -4,13 +4,16 @@ import Foundation
 ///
 /// Parses holding pattern data from CSV files: `HPF_BASE.csv`, `HPF_CHRT.csv`,
 /// `HPF_SPD_ALT.csv`, and `HPF_RMK.csv`.
-actor CSVHoldParser: CSVParser {
+actor CSVHoldParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.holds
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["HPF_BASE.csv", "HPF_CHRT.csv", "HPF_SPD_ALT.csv", "HPF_RMK.csv"]
 
   var holds = [String: Hold]()
+  var pendingDiagnostics = [RecordParseError]()
 
   // Transformer for base fields using named columns
   private let baseTransformer = CSVTransformer([
@@ -54,12 +57,12 @@ actor CSVHoldParser: CSVParser {
 
       // Parse navaid facility type from raw string
       let navaidTypeStr: String = try t[optional: "NAV_TYPE"] ?? ""
-      let navaidFacilityType: Navaid.FacilityType? =
-        if navaidTypeStr.isEmpty {
-          nil
-        } else {
-          Navaid.FacilityType.for(navaidTypeStr)
-        }
+      let navaidFacilityType: Navaid.FacilityType? = diagnose(
+        Navaid.FacilityType.self,
+        navaidTypeStr.isEmpty ? nil : navaidTypeStr,
+        field: "navaidFacilityType",
+        id: holdKey
+      )
 
       // Get optional string values
       let navaidId: String? = try t[optional: "NAV_ID"]

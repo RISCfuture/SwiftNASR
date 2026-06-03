@@ -8,7 +8,8 @@ import Foundation
 ///
 /// Note: This parser uses hardcoded field positions because the FAA layout file
 /// does not contain group separators required by the layout parser.
-actor FixedWidthFSSCommFacilityParser: Parser {
+actor FixedWidthFSSCommFacilityParser: Parser, DiagnosingParser {
+  static let type = RecordType.FSSCommFacilities
   // Field positions (0-indexed start, length)
   private static let fields: [(Int, Int)] = [
     (0, 4),  // outlet identifier
@@ -44,6 +45,7 @@ actor FixedWidthFSSCommFacilityParser: Parser {
   ]
 
   var facilities = [FSSCommFacility]()
+  var pendingDiagnostics = [RecordParseError]()
 
   private let transformer = ByteTransformer([
     .string(),  // 0 outlet identifier (4)
@@ -107,7 +109,7 @@ actor FixedWidthFSSCommFacilityParser: Parser {
       throw ParserError.missingRequiredField(field: "outletIdentifier", recordType: "COM")
     }
 
-    let outletTypeStr: String = (try t[optional: 1] ?? "").trimmingCharacters(in: .whitespaces)
+    let outletTypeStr: String? = try t[optional: 1]
 
     // Parse frequencies (16 x 9 characters)
     let frequenciesStr: String = try t[optional: 16] ?? ""
@@ -208,9 +210,9 @@ actor FixedWidthFSSCommFacilityParser: Parser {
 
     let facility = FSSCommFacility(
       outletIdentifier: outletId,
-      outletType: FSSCommFacility.OutletType(rawValue: outletTypeStr),
+      outletType: diagnose(FSSCommFacility.OutletType.self, outletTypeStr, field: "outletType", id: outletId),
       navaidIdentifier: try t[optional: 2],
-      navaidType: navaidTypeCode.flatMap { Navaid.FacilityType.for($0) },
+      navaidType: diagnose(Navaid.FacilityType.self, navaidTypeCode, field: "navaidType", id: outletId),
       navaidCity: try t[optional: 4],
       navaidState: try t[optional: 5],
       navaidName: try t[optional: 6],
@@ -236,8 +238,8 @@ actor FixedWidthFSSCommFacilityParser: Parser {
       operatorCode: try t[optional: 24],
       operatorName: try t[optional: 25],
       charts: charts,
-      timeZone: tzCode.flatMap { StandardTimeZone(rawValue: $0) },
-      status: statusStr.flatMap { FSS.Status(rawValue: $0) },
+      timeZone: diagnose(StandardTimeZone.self, tzCode, field: "timeZone", id: outletId),
+      status: diagnose(FSS.Status.self, statusStr, field: "status", id: outletId),
       statusDateComponents: try t[optional: 29]
     )
 

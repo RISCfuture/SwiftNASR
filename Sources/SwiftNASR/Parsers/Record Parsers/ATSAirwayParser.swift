@@ -6,9 +6,12 @@ import Foundation
 /// and Puerto Rico routes. Records are 355 characters fixed-width with 6 record types:
 /// ATS1 (base/MEA data), ATS2 (point description), ATS3 (changeover point),
 /// ATS4 (point remarks), ATS5 (changeover exceptions), and RMK (route remarks).
-actor FixedWidthATSAirwayParser: Parser {
+actor FixedWidthATSAirwayParser: Parser, DiagnosingParser {
+  static let type = RecordType.ATSAirways
+
   var airways = [String: ATSAirway]()
   var pointData = [String: [UInt: ATSAirway.RoutePoint]]()
+  var pendingDiagnostics = [RecordParseError]()
 
   func prepare(distribution _: Distribution) throws {
     // No layout file parsing needed
@@ -248,7 +251,7 @@ actor FixedWidthATSAirwayParser: Parser {
     point = ATSAirway.RoutePoint(
       sequenceNumber: point.sequenceNumber,
       pointName: pointName.isEmpty ? nil : pointName,
-      pointType: ATSAirway.PointType(rawValue: pointType),
+      pointType: diagnose(ATSAirway.PointType.self, pointType, field: "pointType", id: "\(key)/\(seqNum)"),
       isNamedFix: try parseIsNamedFix(fixCategory),
       stateCode: stateCode.isEmpty ? nil : stateCode,
       ICAORegionCode: icaoCode.isEmpty ? nil : icaoCode,
@@ -328,7 +331,12 @@ actor FixedWidthATSAirwayParser: Parser {
     )
 
     point.changeoverNavaidName = navName.isEmpty ? nil : navName
-    point.changeoverNavaidType = navType.isEmpty ? nil : ATSAirway.PointType(rawValue: navType)
+    point.changeoverNavaidType = diagnose(
+      ATSAirway.PointType.self,
+      navType,
+      field: "changeoverNavaidType",
+      id: "\(key)/\(seqNum)"
+    )
     point.changeoverNavaidStateCode = stateCode.isEmpty ? nil : stateCode
     point.changeoverNavaidPosition = copPosition
 

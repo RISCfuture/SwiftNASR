@@ -7,7 +7,8 @@ import Foundation
 ///
 /// Note: This parser uses hardcoded field positions because the FAA layout file
 /// does not contain group separators required by the layout parser.
-actor FixedWidthARTCCBoundarySegmentParser: Parser {
+actor FixedWidthARTCCBoundarySegmentParser: Parser, DiagnosingParser {
+  static let type = RecordType.ARTCCBoundarySegments
   // Field positions (0-indexed start, length)
   private static let fields: [(Int, Int)] = [
     (0, 12),  // record identifier
@@ -20,6 +21,7 @@ actor FixedWidthARTCCBoundarySegmentParser: Parser {
     (396, 1)  // NAS description only flag
   ]
 
+  var pendingDiagnostics = [RecordParseError]()
   var segments = [ARTCCBoundarySegment]()
 
   private let transformer = ByteTransformer([
@@ -89,7 +91,12 @@ actor FixedWidthARTCCBoundarySegmentParser: Parser {
     let segment = ARTCCBoundarySegment(
       recordIdentifier: recordId,
       ARTCCIdentifier: ARTCCId,
-      altitudeStructure: ARTCCBoundarySegment.AltitudeStructure(rawValue: altitudeCode),
+      altitudeStructure: diagnose(
+        ARTCCBoundarySegment.AltitudeStructure.self,
+        altitudeCode,
+        field: "altitudeStructure",
+        id: recordId
+      ),
       pointDesignator: pointDesignator,
       centerName: try t[1],
       altitudeStructureName: try t[2],

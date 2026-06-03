@@ -6,13 +6,15 @@ import StreamingCSV
 /// Parses FSS communication outlet data from `COM.csv`.
 /// Note: The CSV format does not include frequencies, navaid position data,
 /// owner/operator info, charts, or time zone that are available in the TXT format.
-actor CSVFSSCommFacilityParser: CSVParser {
+actor CSVFSSCommFacilityParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.FSSCommFacilities
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["COM.csv"]
 
   var facilities = [FSSCommFacility]()
+  var pendingDiagnostics = [RecordParseError]()
 
   private let transformer = CSVTransformer([
     .init("EFF_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
@@ -52,21 +54,22 @@ actor CSVFSSCommFacilityParser: CSVParser {
       guard !outletID.isEmpty else { return }
 
       // Parse outlet type
-      let outletTypeStr: String = (try t[optional: "COMM_TYPE"] ?? "").trimmingCharacters(
-        in: .whitespaces
+      let outletTypeStr: String? = try t[optional: "COMM_TYPE"]
+      let outletType = self.diagnose(
+        FSSCommFacility.OutletType.self,
+        outletTypeStr,
+        field: "outletType",
+        id: outletID
       )
-      let outletType = FSSCommFacility.OutletType(rawValue: outletTypeStr)
 
       // Parse navaid type from full name (CSV has full name like "VOR/DME" not short code)
-      let navaidTypeStr: String = (try t[optional: "NAV_TYPE"] ?? "").trimmingCharacters(
-        in: .whitespaces
+      let navaidTypeStr: String? = try t[optional: "NAV_TYPE"]
+      let navaidType = self.diagnose(
+        Navaid.FacilityType.self,
+        navaidTypeStr,
+        field: "navaidType",
+        id: outletID
       )
-      let navaidType: Navaid.FacilityType? =
-        if navaidTypeStr.isEmpty {
-          nil
-        } else {
-          Navaid.FacilityType.for(navaidTypeStr)
-        }
 
       // Parse outlet position from decimal degrees
       let outletPosition: Location? = {
@@ -83,15 +86,20 @@ actor CSVFSSCommFacilityParser: CSVParser {
         return nil
       }()
 
-      // Parse status - CSV uses single character code
-      let statusCode: String = (try t[optional: "COMM_STATUS_CODE"] ?? "").trimmingCharacters(
-        in: .whitespaces
-      )
-      let status: FSS.Status? =
-        switch statusCode {
-          case "A": .operationalIFR
-          default: nil
+      // Parse status - CSV uses single-character code; unknown values are diagnosed
+      let statusCode: String? = try t[optional: "COMM_STATUS_CODE"]
+      var status: FSS.Status?
+      if let statusCode, !statusCode.trimmingCharacters(in: .whitespaces).isEmpty {
+        do {
+          status =
+            switch statusCode.trimmingCharacters(in: .whitespaces) {
+              case "A": .operationalIFR
+              default: throw ParserError.unknownRecordEnumValue(statusCode)
+            }
+        } catch {
+          self.recordFieldError(field: "status", value: statusCode, id: outletID, thrown: error)
         }
+      }
 
       let facility = FSSCommFacility(
         outletIdentifier: outletID,

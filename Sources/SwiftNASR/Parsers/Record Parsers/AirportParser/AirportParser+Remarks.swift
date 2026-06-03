@@ -36,7 +36,14 @@ extension FixedWidthAirportParser {
     } else if try tryAirportFuelRemark(remark, &airport, fieldID) {
       remarkParsed = true
     }
-    if !remarkParsed { throw AirportRemarksError.unknownFieldID(fieldID, airport: airport) }
+    if !remarkParsed {
+      recordFieldError(
+        field: "remarks[\(fieldID)]",
+        value: nil,
+        id: airport.id,
+        thrown: AirportRemarksError.unknownFieldID(fieldID, airport: airport)
+      )
+    }
 
     airports[airportID] = airport
   }

@@ -1,9 +1,10 @@
 import Foundation
+import SwiftNASR
 
 actor ErrorCollector {
   private var errors: [RecordError] = []
 
-  func record(_ error: Swift.Error, recordType: String) {
+  func record(_ error: RecordParseError, recordType: String) {
     errors.append(RecordError(recordType: recordType, error: error))
   }
 
@@ -24,7 +25,14 @@ actor ErrorCollector {
       }
     } else {
       print("\n=== Error Summary (\(formatName)) ===")
-      print("Total errors: \(errors.count)")
+      let dropped = errors.filter {
+        if case .recordError = $0.error { return true }
+        return false
+      }.count
+      let fieldIssues = errors.count - dropped
+      print(
+        "Total errors: \(errors.count) (\(dropped) dropped records, \(fieldIssues) field issues)"
+      )
 
       let grouped = errorsByRecordType()
       let sortedTypes = grouped.keys.sorted { grouped[$0]!.count > grouped[$1]!.count }
@@ -45,6 +53,6 @@ actor ErrorCollector {
 
   struct RecordError {
     let recordType: String
-    let error: Swift.Error
+    let error: RecordParseError
   }
 }

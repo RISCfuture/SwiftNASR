@@ -45,7 +45,7 @@ final class OffsetParser: Sendable {
   }
 }
 
-enum ParserError: Swift.Error, CustomStringConvertible {
+enum ParserError: Swift.Error, CustomStringConvertible, Sendable {
   case badData(_ reason: String)
   case unknownRecordIdentifier(_ recordIdentifier: String)
   case unknownRecordEnumValue(_ value: Sendable)

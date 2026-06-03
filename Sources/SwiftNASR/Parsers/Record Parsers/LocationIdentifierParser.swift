@@ -11,7 +11,7 @@ enum LIDRecordIdentifier: String {
 /// Records are 1039 characters fixed-width with two record groups:
 /// USA (United States and its territories) and DOD (selected Department of
 /// Defense overseas locations). This parser currently handles USA records only.
-actor FixedWidthLocationIdentifierParser: FixedWidthParser {
+actor FixedWidthLocationIdentifierParser: FixedWidthParser, DiagnosingParser {
   typealias RecordIdentifier = LIDRecordIdentifier
 
   static let type = RecordType.locationIdentifiers
@@ -20,6 +20,7 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
   var recordTypeRange: Range<UInt> { 1..<4 }
   var formats = [NASRTable]()
   var identifiers = [LocationIdentifier]()
+  var pendingDiagnostics = [RecordParseError]()
 
   private let usaTransformer = ByteTransformer([
     .null,  // 0 group sort code (1)
@@ -78,18 +79,18 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
     // Build navaids array from fields 11-18
     var navaids = [LocationIdentifier.NavaidInfo]()
     let navaidPairs = [(11, 12), (13, 14), (15, 16), (17, 18)]
-    for (nameIdx, typeIdx) in navaidPairs {
+    for (index, pair) in navaidPairs.enumerated() {
+      let (nameIdx, typeIdx) = pair
       if let name: String = try t[optional: nameIdx], !name.isEmpty {
-        let navTypeStr: String = try t[optional: typeIdx] ?? ""
-        let navType = LocationIdentifier.NavaidFacilityType(rawValue: navTypeStr)
+        let navType = diagnose(
+          LocationIdentifier.NavaidFacilityType.self,
+          try t[optional: typeIdx],
+          field: "navaid[\(index)].type",
+          id: identifier
+        )
         navaids.append(LocationIdentifier.NavaidInfo(name: name, facilityType: navType))
       }
     }
-
-    let landingTypeStr: String = try t[optional: 9] ?? "",
-      ILSTypeStr: String = try t[optional: 21] ?? "",
-      ARTCCTypeStr: String = try t[optional: 27] ?? "",
-      otherTypeStr: String = try t[optional: 30] ?? ""
 
     let record = LocationIdentifier(
       identifier: identifier,
@@ -100,21 +101,41 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
       controllingARTCC: try t[optional: 6],
       controllingARTCCComputerId: try t[optional: 7],
       landingFacilityName: try t[optional: 8],
-      landingFacilityType: LocationIdentifier.LandingFacilityType(rawValue: landingTypeStr),
+      landingFacilityType: diagnose(
+        LocationIdentifier.LandingFacilityType.self,
+        try t[optional: 9],
+        field: "landingFacilityType",
+        id: identifier
+      ),
       landingFacilityFSS: try t[optional: 10],
       navaids: navaids,
       navaidFSS: try t[optional: 19],
       ILSRunwayEnd: try t[optional: 20],
-      ilsFacilityType: LocationIdentifier.ILSFacilityType(rawValue: ILSTypeStr),
+      ilsFacilityType: diagnose(
+        LocationIdentifier.ILSFacilityType.self,
+        try t[optional: 21],
+        field: "ilsFacilityType",
+        id: identifier
+      ),
       ILSAirportIdentifier: try t[optional: 22],
       ILSAirportName: try t[optional: 23],
       ILSFSS: try t[optional: 24],
       FSSName: try t[optional: 25],
       ARTCCName: try t[optional: 26],
-      artccFacilityType: LocationIdentifier.ARTCCFacilityType(rawValue: ARTCCTypeStr),
+      artccFacilityType: diagnose(
+        LocationIdentifier.ARTCCFacilityType.self,
+        try t[optional: 27],
+        field: "artccFacilityType",
+        id: identifier
+      ),
       isFlightWatchStation: try t[optional: 28],
       otherFacilityName: try t[optional: 29],
-      otherFacilityType: LocationIdentifier.OtherFacilityType(rawValue: otherTypeStr),
+      otherFacilityType: diagnose(
+        LocationIdentifier.OtherFacilityType.self,
+        try t[optional: 30],
+        field: "otherFacilityType",
+        id: identifier
+      ),
       effectiveDateComponents: try t[optional: 31]
     )
 

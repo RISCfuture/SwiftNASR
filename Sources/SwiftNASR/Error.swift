@@ -1,7 +1,7 @@
 import Foundation
 
 /// Errors that can occur in SwiftNASR methods.
-public enum Error: Swift.Error {
+public enum Error: Swift.Error, Sendable {
   /// Tried to call ``NASR/load(withProgress:)`` on a ``NASR`` instance with
   /// a ``NullDistribution``.
   case nullDistribution

@@ -5,11 +5,12 @@ import Foundation
 /// These files contain military training route information.
 /// Records are 519 characters fixed-width with MTR1 (base), MTR2 (operating procedures),
 /// MTR3 (route width), MTR4 (terrain following), MTR5 (route points), and MTR6 (agencies).
-actor FixedWidthMilitaryTrainingRouteParser: LayoutDataParser {
+actor FixedWidthMilitaryTrainingRouteParser: LayoutDataParser, DiagnosingParser {
   static let type = RecordType.militaryTrainingRoutes
 
   var formats = [NASRTable]()
   var routes = [String: MilitaryTrainingRoute]()
+  var pendingDiagnostics = [RecordParseError]()
 
   func parse(data: Data) throws {
     guard let line = String(data: data, encoding: .isoLatin1) else {
@@ -295,7 +296,12 @@ actor FixedWidthMilitaryTrainingRouteParser: LayoutDataParser {
     let hours = String(line.substring(262, 175)).trimmingCharacters(in: .whitespaces)
 
     let agency = MilitaryTrainingRoute.Agency(
-      agencyType: MilitaryTrainingRoute.AgencyType(rawValue: agencyTypeStr),
+      agencyType: diagnose(
+        MilitaryTrainingRoute.AgencyType.self,
+        agencyTypeStr.isEmpty ? nil : agencyTypeStr,
+        field: "agencyType",
+        id: key
+      ),
       organizationName: orgName.isEmpty ? nil : orgName,
       station: station.isEmpty ? nil : station,
       address: address.isEmpty ? nil : address,

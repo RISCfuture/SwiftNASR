@@ -8,7 +8,7 @@ enum AirportRecordIdentifier: String {
   case remark = "RMK"
 }
 
-actor FixedWidthAirportParser: FixedWidthParser {
+actor FixedWidthAirportParser: FixedWidthParser, DiagnosingParser {
   typealias RecordIdentifier = AirportRecordIdentifier
 
   static let type: RecordType = .airports
@@ -18,6 +18,7 @@ actor FixedWidthAirportParser: FixedWidthParser {
   var formats = [NASRTable]()
 
   var airports = [String: Airport]()
+  var pendingDiagnostics = [RecordParseError]()
 
   // MARK: - Transformers
 
@@ -81,7 +82,7 @@ actor FixedWidthAirportParser: FixedWidthParser {
     .boolean(nullable: .blank),  //  52 NOTAM D available
 
     .dateComponents(format: .monthYear, nullable: .blank),  //  53 activation date
-    .generic { Airport.Status(rawValue: $0) },  //  54 status code
+    .recordEnum(Airport.Status.self),  //  54 status code
     .delimitedArray(
       delimiter: " ",
       convert: { $0 },
@@ -112,9 +113,8 @@ actor FixedWidthAirportParser: FixedWidthParser {
 
     .fixedWidthArray(
       width: 5,
-      convert: { Airport.FuelType(rawValue: $0) },
       nullable: .compact
-    ),  //  66 available fuel types
+    ),  //  66 available fuel types (raw strings; decoded inline with diagnose)
     .recordEnum(Airport.RepairService.self, nullable: .blank),  //  67 airframe repair available
     .recordEnum(Airport.RepairService.self, nullable: .blank),  //  68 powerplant repair available
     .delimitedArray(
@@ -212,6 +212,8 @@ actor FixedWidthAirportParser: FixedWidthParser {
   private func parseAirportRecord(_ values: [ArraySlice<UInt8>]) throws {
     let t = try airportTransformer.applyTo(values)
 
+    let airportID: String = try t[1]
+
     let owner = try parsePerson(t: t, startIndex: 15),
       manager = try parsePerson(t: t, startIndex: 19)
 
@@ -237,13 +239,18 @@ actor FixedWidthAirportParser: FixedWidthParser {
         )
       }
 
+    let rawFuelIDs: [String] = try t[66]
+    let fuelsAvailable = rawFuelIDs.compactMap {
+      diagnose(Airport.FuelType.self, $0, field: "fuelsAvailable", id: airportID)
+    }
+
     let lat: Float = try t[23],
       lon: Float = try t[25],
       elev: Float = try t[28],
       location = Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: elev)
 
     let airport = Airport(
-      id: try t[1],
+      id: airportID,
       name: try t[12],
       LID: try t[3],
       ICAOIdentifier: try t[optional: 102],
@@ -288,7 +295,7 @@ actor FixedWidthAirportParser: FixedWidthParser {
       inspectionAgency: try t[optional: 63],
       lastPhysicalInspectionDateComponents: try t[optional: 64],
       lastInformationRequestCompletedDateComponents: try t[optional: 65],
-      fuelsAvailable: try t[66],
+      fuelsAvailable: fuelsAvailable,
       airframeRepairAvailable: try t[optional: 67],
       powerplantRepairAvailable: try t[optional: 68],
       bottledOxygenAvailable: try t[69],
@@ -327,7 +334,7 @@ actor FixedWidthAirportParser: FixedWidthParser {
       minimumOperationalNetwork: try t[103]
     )
 
-    airports[airport.id] = airport
+    airports[airportID] = airport
   }
 
   func finish(data: NASRData) async {

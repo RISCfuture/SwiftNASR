@@ -1,13 +1,16 @@
 import Foundation
 
 /// CSV ILS Parser for parsing ILS_BASE.csv, ILS_GS.csv, ILS_DME.csv, ILS_MKR.csv, and ILS_RMK.csv
-actor CSVILSParser: CSVParser {
+actor CSVILSParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.ILSes
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["ILS_BASE.csv", "ILS_GS.csv", "ILS_DME.csv", "ILS_MKR.csv", "ILS_RMK.csv"]
 
   var ILSFacilities = [ILSKey: ILS]()
+  var pendingDiagnostics = [RecordParseError]()
 
   func prepare(distribution: Distribution) throws {
     self.distribution = distribution
@@ -66,7 +69,7 @@ actor CSVILSParser: CSVParser {
         regionCode: row[ifExists: "REGION_CODE"],
         runwayLengthFt: row[ifExists: "RWY_LEN"].flatMap { UInt($0) },
         runwayWidthFt: row[ifExists: "RWY_WIDTH"].flatMap { UInt($0) },
-        category: self.parseCategory(row[ifExists: "CATEGORY"]),
+        category: self.parseCategory(row[ifExists: "CATEGORY"], id: "\(siteNo)/\(runwayEndId)"),
         owner: row[ifExists: "OWNER"],
         operator: row[ifExists: "OPERATOR"],
         approachBearing: approachBearing,
@@ -75,11 +78,12 @@ actor CSVILSParser: CSVParser {
       )
 
       // Create localizer from BASE file
-      let LOCStatus = self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"])
+      let ilsId = "\(siteNo)/\(runwayEndId)"
+      let LOCStatus = self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"], id: ilsId)
       let LOCStatusDate = self.parseYYYYMMDDDate(row[ifExists: "COMPONENT_STATUS_DATE"])
       let LOCFreq = row[ifExists: "LOC_FREQ"].flatMap { Float($0) }.map { UInt($0 * 1000) }
-      let backCourse = self.parseBackCourseStatus(row[ifExists: "BK_COURSE_STATUS_CODE"])
-      let posSource = self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"])
+      let backCourse = self.parseBackCourseStatus(row[ifExists: "BK_COURSE_STATUS_CODE"], id: ilsId)
+      let posSource = self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"], id: ilsId)
       let siteElev = row[ifExists: "SITE_ELEVATION"].flatMap { Float($0) }
 
       guard
@@ -151,15 +155,16 @@ actor CSVILSParser: CSVParser {
         throw ParserError.missingRequiredField(field: "position", recordType: "ILS_GS")
       }
 
+      let gsId = "\(siteNo)/\(runwayEndId)"
       let glideSlope = ILS.GlideSlope(
-        status: self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"]),
+        status: self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"], id: gsId),
         statusDateComponents: self.parseYYYYMMDDDate(row[ifExists: "COMPONENT_STATUS_DATE"]),
         position: gsPosition,
-        positionSource: self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"]),
+        positionSource: self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"], id: gsId),
         distanceFromApproachEndFt: nil,
         distanceFromCenterlineFt: nil,
         distanceSource: nil,
-        glideSlopeType: self.parseGlidePathType(row[ifExists: "G_S_TYPE_CODE"]),
+        glideSlopeType: self.parseGlidePathType(row[ifExists: "G_S_TYPE_CODE"], id: gsId),
         angleDeg: row[ifExists: "G_S_ANGLE"].flatMap { Float($0) },
         frequencyKHz: row[ifExists: "G_S_FREQ"].flatMap { Float($0) }.map { UInt($0 * 1000) },
         adjacentRunwayElevationFtMSL: nil
@@ -206,11 +211,12 @@ actor CSVILSParser: CSVParser {
         throw ParserError.missingRequiredField(field: "position", recordType: "ILS_DME")
       }
 
+      let dmeId = "\(siteNo)/\(runwayEndId)"
       let DME = ILS.DME(
-        status: self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"]),
+        status: self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"], id: dmeId),
         statusDateComponents: self.parseYYYYMMDDDate(row[ifExists: "COMPONENT_STATUS_DATE"]),
         position: DMEPosition,
-        positionSource: self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"]),
+        positionSource: self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"], id: dmeId),
         distanceFromApproachEndFt: nil,
         distanceFromCenterlineFt: nil,
         distanceSource: nil,
@@ -247,8 +253,10 @@ actor CSVILSParser: CSVParser {
         )
       }
 
-      guard let markerType = self.parseMarkerType(try row["ILS_COMP_TYPE_CODE"]) else {
-        throw ParserError.unknownRecordEnumValue(try row["ILS_COMP_TYPE_CODE"])
+      let mkrId = "\(siteNo)/\(runwayEndId)"
+      let markerTypeCode = try row["ILS_COMP_TYPE_CODE"]
+      guard let markerType = self.parseMarkerType(markerTypeCode, id: mkrId) else {
+        throw ParserError.unknownRecordEnumValue(markerTypeCode)
       }
 
       let latDecimal = Float(try row["LAT_DECIMAL"])
@@ -276,19 +284,22 @@ actor CSVILSParser: CSVParser {
 
       let marker = ILS.MarkerBeacon(
         markerType: markerType,
-        status: self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"]),
+        status: self.parseOperationalStatus(row[ifExists: "COMPONENT_STATUS"], id: mkrId),
         statusDateComponents: self.parseYYYYMMDDDate(row[ifExists: "COMPONENT_STATUS_DATE"]),
         position: mkrPosition,
-        positionSource: self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"]),
+        positionSource: self.parsePositionSource(row[ifExists: "LAT_LONG_SOURCE_CODE"], id: mkrId),
         distanceFromApproachEndFt: nil,
         distanceFromCenterlineFt: nil,
         distanceSource: nil,
-        facilityType: self.parseMarkerFacilityType(row[ifExists: "MKR_FAC_TYPE_CODE"]),
+        facilityType: self.parseMarkerFacilityType(row[ifExists: "MKR_FAC_TYPE_CODE"], id: mkrId),
         locationId: row[ifExists: "MARKER_ID_BEACON"],
         name: row[ifExists: "COMPASS_LOCATOR_NAME"],
         frequencyKHz: row[ifExists: "FREQ"].flatMap { UInt($0) },
         collocatedNavaid: collocatedNavaid,
-        lowPoweredNDBStatus: self.parseOperationalStatus(row[ifExists: "LOW_POWERED_NDB_STATUS"]),
+        lowPoweredNDBStatus: self.parseOperationalStatus(
+          row[ifExists: "LOW_POWERED_NDB_STATUS"],
+          id: mkrId
+        ),
         service: nil
       )
 
@@ -352,37 +363,34 @@ actor CSVILSParser: CSVParser {
     return systemType
   }
 
-  private func parseCategory(_ code: String?) -> ILS.Category? {
-    guard let trimmed = code, !trimmed.isEmpty else { return nil }
-    return ILS.Category.for(trimmed)
+  private func parseCategory(_ code: String?, id: String?) -> ILS.Category? {
+    diagnose(ILS.Category.self, code, field: "category", id: id)
   }
 
-  private func parseOperationalStatus(_ status: String?) -> OperationalStatus? {
-    guard let trimmed = status, !trimmed.isEmpty else { return nil }
-    return OperationalStatus.for(trimmed)
+  private func parseOperationalStatus(_ status: String?, id: String?) -> OperationalStatus? {
+    diagnose(OperationalStatus.self, status, field: "operationalStatus", id: id)
   }
 
-  private func parsePositionSource(_ code: String?) -> ILS.PositionSource? {
-    guard let trimmed = code, !trimmed.isEmpty else { return nil }
-    return ILS.PositionSource.for(trimmed)
+  private func parsePositionSource(_ code: String?, id: String?) -> ILS.PositionSource? {
+    diagnose(ILS.PositionSource.self, code, field: "positionSource", id: id)
   }
 
-  private func parseBackCourseStatus(_ code: String?) -> ILS.BackCourseStatus? {
-    guard let trimmed = code, !trimmed.isEmpty else { return nil }
-    return ILS.BackCourseStatus.for(trimmed)
+  private func parseBackCourseStatus(_ code: String?, id: String?) -> ILS.BackCourseStatus? {
+    diagnose(ILS.BackCourseStatus.self, code, field: "backCourseStatus", id: id)
   }
 
-  private func parseGlidePathType(_ code: String?) -> ILS.GlideSlope.GlidePathType? {
-    guard let trimmed = code, !trimmed.isEmpty else { return nil }
-    return ILS.GlideSlope.GlidePathType.for(trimmed)
+  private func parseGlidePathType(_ code: String?, id: String?) -> ILS.GlideSlope.GlidePathType? {
+    diagnose(ILS.GlideSlope.GlidePathType.self, code, field: "glideSlopeType", id: id)
   }
 
-  private func parseMarkerType(_ code: String?) -> ILS.MarkerBeacon.MarkerType? {
-    guard let trimmed = code, !trimmed.isEmpty else { return nil }
-    return ILS.MarkerBeacon.MarkerType.for(trimmed)
+  private func parseMarkerType(_ code: String?, id: String?) -> ILS.MarkerBeacon.MarkerType? {
+    diagnose(ILS.MarkerBeacon.MarkerType.self, code, field: "markerType", id: id)
   }
 
-  private func parseMarkerFacilityType(_ code: String?) -> ILS.MarkerBeacon.MarkerFacilityType? {
+  private func parseMarkerFacilityType(
+    _ code: String?,
+    id: String?
+  ) -> ILS.MarkerBeacon.MarkerFacilityType? {
     guard let trimmed = code, !trimmed.isEmpty else { return nil }
     // Handle short codes from CSV
     switch trimmed {
@@ -391,7 +399,13 @@ actor CSVILSParser: CSVParser {
       case "CL", "COMLO": return .compassLocator
       case "MC": return .markerCompassLocator
       case "MN": return .markerNDB
-      default: return ILS.MarkerBeacon.MarkerFacilityType.for(trimmed)
+      default:
+        return diagnose(
+          ILS.MarkerBeacon.MarkerFacilityType.self,
+          trimmed,
+          field: "markerFacilityType",
+          id: id
+        )
     }
   }
 

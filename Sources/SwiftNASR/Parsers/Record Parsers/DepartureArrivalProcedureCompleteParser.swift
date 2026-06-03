@@ -5,11 +5,12 @@ import Foundation
 /// This parser uses the same format as SSD but represents the complete
 /// comprehensive set of STAR and DP procedures, including multiple main
 /// body procedures and procedures without computer IDs.
-actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
+actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser, DiagnosingParser {
   static let type = RecordType.departureArrivalProceduresComplete
 
   var formats = [NASRTable]()
   var procedures = [String: DepartureArrivalProcedure]()
+  var pendingDiagnostics = [RecordParseError]()
 
   func parse(data: Data) throws {
     guard let line = String(data: data, encoding: .isoLatin1) else {
@@ -42,11 +43,17 @@ actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
       line.count >= 223
       ? String(line.substring(161, 62)).trimmingCharacters(in: .whitespaces) : nil
 
-    let fixType = DepartureArrivalProcedure.FixType.for(fixTypeCode)
     let latitude = parseLatitude(latitudeStr)
     let longitude = parseLongitude(longitudeStr)
 
     let procedureKey = "\(procedureType.rawValue)\(sequenceNumber)"
+
+    let fixType = diagnose(
+      DepartureArrivalProcedure.FixType.self,
+      fixTypeCode.isEmpty ? nil : fixTypeCode,
+      field: "fixType",
+      id: procedureKey
+    )
 
     // Get existing procedure or create new one
     var procedure =

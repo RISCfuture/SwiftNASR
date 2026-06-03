@@ -72,7 +72,7 @@ struct NavaidKey: Hashable {
   }
 }
 
-actor FixedWidthNavaidParser: FixedWidthParser {
+actor FixedWidthNavaidParser: FixedWidthParser, DiagnosingParser {
   typealias RecordIdentifier = NavaidRecordIdentifier
 
   static let type: RecordType = .navaids
@@ -83,6 +83,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
   var recordTypeRange: Range<UInt> { 0..<4 }
   var formats = [NASRTable]()
   var navaids = [NavaidKey: Navaid]()
+  var pendingDiagnostics = [RecordParseError]()
 
   private let basicTransformer = ByteTransformer([
     .recordType,  //  0 record type

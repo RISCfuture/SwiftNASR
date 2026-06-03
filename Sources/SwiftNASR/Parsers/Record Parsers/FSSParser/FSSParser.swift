@@ -1,10 +1,11 @@
 import Foundation
 
-actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
+actor FixedWidthFSSParser: FixedWidthNoRecordIDParser, DiagnosingParser {
   static let type: RecordType = .flightServiceStations
   var formats = [NASRTable]()
 
   var FSSes = [String: FSS]()
+  var pendingDiagnostics = [RecordParseError]()
 
   private let frequencyParser = FrequencyParser()
   private let ddmmssParser = DDMMSSParser()
@@ -226,7 +227,7 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
         statusDate = element(statusDates53, at: i),
         navaidAndType = element(navaidsAndTypes54, at: i),
         chart = element(charts55, at: i),
-        timezone = element(timezones56, at: i).flatMap { StandardTimeZone(rawValue: $0) }
+        timezone = diagnose(StandardTimeZone.self, element(timezones56, at: i), field: "timezone", id: ID)
 
       let location = zipOptionals(lat, lon).map { lat, lon in
         Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: nil)
@@ -270,10 +271,10 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       }
 
     let navaidsRaw: [[Substring]] = try t[20],
-      navaids = navaidsRaw.map { IDAndType -> FSS.Navaid in
+      navaids = try navaidsRaw.map { IDAndType -> FSS.Navaid in
         FSS.Navaid(
           identification: String(IDAndType[0]),
-          type: Navaid.FacilityType.for(String(IDAndType[1]))!
+          type: try Navaid.FacilityType.require(String(IDAndType[1]))
         )
       }
 
@@ -283,19 +284,40 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
     VOLMETs.reserveCapacity(VOLMETFreqs.count)
     for (i, frequency) in VOLMETFreqs.enumerated() {
       guard let frequency else { continue }
-      let schedule = VOLMETSchedules[i]
-      VOLMETs.append(FSS.VOLMET(frequency: frequency, schedule: schedule!))
+      guard let schedule = VOLMETSchedules[i] else {
+        recordFieldError(
+          field: "VOLMETs[\(i)].schedule",
+          value: nil,
+          id: ID,
+          thrown: ParserError.missingRequiredField(field: "VOLMETs[\(i)].schedule", recordType: "FSS")
+        )
+        continue
+      }
+      VOLMETs.append(FSS.VOLMET(frequency: frequency, schedule: schedule))
     }
 
     let DFType: String? = try t[optional: 34],
       DFLat: Float? = try t[optional: 35],
-      DFLon: Float? = try t[optional: 36],
-      DFEquipment = DFType.map { type in
-        FSS.DirectionFindingEquipment(
-          type: type,
-          location: Location(latitudeArcsec: DFLat!, longitudeArcsec: DFLon!)
+      DFLon: Float? = try t[optional: 36]
+    let DFEquipment: FSS.DirectionFindingEquipment?
+    if let DFType {
+      if let DFLat, let DFLon {
+        DFEquipment = FSS.DirectionFindingEquipment(
+          type: DFType,
+          location: Location(latitudeArcsec: DFLat, longitudeArcsec: DFLon)
         )
+      } else {
+        recordFieldError(
+          field: "DFEquipment.location",
+          value: nil,
+          id: ID,
+          thrown: ParserError.missingRequiredField(field: "DFEquipment.location", recordType: "FSS")
+        )
+        DFEquipment = nil
       }
+    } else {
+      DFEquipment = nil
+    }
 
     let lat27: Float? = try t[optional: 27],
       lon28: Float? = try t[optional: 28],

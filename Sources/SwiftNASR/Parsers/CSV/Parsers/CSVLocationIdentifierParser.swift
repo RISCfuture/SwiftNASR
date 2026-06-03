@@ -6,13 +6,16 @@ import StreamingCSV
 /// The CSV format stores one facility type per row, unlike the TXT format which
 /// aggregates all facility types under a single location identifier record.
 /// This parser creates one `LocationIdentifier` record per CSV row.
-actor CSVLocationIdentifierParser: CSVParser {
+actor CSVLocationIdentifierParser: CSVParser, DiagnosingParser {
+  static let type = RecordType.locationIdentifiers
+
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
   let CSVFiles = ["LID.csv"]
 
   var identifiers = [LocationIdentifier]()
+  var pendingDiagnostics = [RecordParseError]()
 
   private let transformer = CSVTransformer([
     .init("EFF_DATE", .dateComponents(format: .yearMonthDaySlash, nullable: .blank)),
@@ -74,18 +77,42 @@ actor CSVLocationIdentifierParser: CSVParser {
       switch lidGroup {
         case "LANDING FACILITY":
           landingFacilityName = facName
-          landingFacilityType = try parseLandingFacilityType(facType)
+          if !facType.isEmpty {
+            do {
+              landingFacilityType = try parseLandingFacilityType(facType)
+            } catch {
+              recordFieldError(
+                field: "landingFacilityType",
+                value: facType,
+                id: locID,
+                thrown: error
+              )
+            }
+          }
           landingFacilityFSS = fssID
 
         case "NAVIGATION AID":
           if let facName {
-            let navType = try parseNavaidFacilityType(facType)
+            var navType: LocationIdentifier.NavaidFacilityType?
+            if !facType.isEmpty {
+              do {
+                navType = try parseNavaidFacilityType(facType)
+              } catch {
+                recordFieldError(field: "navaid[0].type", value: facType, id: locID, thrown: error)
+              }
+            }
             navaids.append(LocationIdentifier.NavaidInfo(name: facName, facilityType: navType))
           }
           navaidFSS = fssID
 
         case "INSTRUMENT LANDING SYSTEM":
-          ilsFacilityType = try parseILSFacilityType(facType)
+          if !facType.isEmpty {
+            do {
+              ilsFacilityType = try parseILSFacilityType(facType)
+            } catch {
+              recordFieldError(field: "ilsFacilityType", value: facType, id: locID, thrown: error)
+            }
+          }
           ILSFSS = fssID
           // Parse runway end and airport info from FAC_NAME if available
           if let facName {
@@ -96,7 +123,13 @@ actor CSVLocationIdentifierParser: CSVParser {
           }
 
         case "CONTROL FACILITY":
-          artccFacilityType = try parseARTCCFacilityType(facType)
+          if !facType.isEmpty {
+            do {
+              artccFacilityType = try parseARTCCFacilityType(facType)
+            } catch {
+              recordFieldError(field: "artccFacilityType", value: facType, id: locID, thrown: error)
+            }
+          }
           ARTCCName = facName
 
         case "FLIGHT SERVICE STATION", "REMOTE COMMUNICATION OUTLET":
@@ -107,7 +140,13 @@ actor CSVLocationIdentifierParser: CSVParser {
           otherFacilityName = facName
 
         case "SPECIAL USE RESOURCE":
-          otherFacilityType = try parseOtherFacilityType(facType)
+          if !facType.isEmpty {
+            do {
+              otherFacilityType = try parseOtherFacilityType(facType)
+            } catch {
+              recordFieldError(field: "otherFacilityType", value: facType, id: locID, thrown: error)
+            }
+          }
           otherFacilityName = facName
 
         case "DOD OVERSEA FACILITY":

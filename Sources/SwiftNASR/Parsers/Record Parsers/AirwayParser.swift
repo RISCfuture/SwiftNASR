@@ -29,7 +29,7 @@ struct SegmentKey: Hashable {
   let sequenceNumber: UInt
 }
 
-actor FixedWidthAirwayParser: FixedWidthParser {
+actor FixedWidthAirwayParser: FixedWidthParser, DiagnosingParser {
   typealias RecordIdentifier = AirwayRecordIdentifier
 
   static let type: RecordType = .airways
@@ -44,6 +44,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
   var segments = [SegmentKey: Airway.Segment]()
   var points = [SegmentKey: Airway.Point]()
   var changeoverPoints = [SegmentKey: Airway.ChangeoverPoint]()
+  var pendingDiagnostics = [RecordParseError]()
 
   // AWY1 - Basic and MEA data
   // Layout positions based on awy_rf.txt
@@ -309,18 +310,23 @@ actor FixedWidthAirwayParser: FixedWidthParser {
       )
 
     let pointName: String? = try t[optional: 4],
-      pointTypeStr: String? = try t[optional: 5],
-      pointType = pointTypeStr.flatMap { Airway.PointType(rawValue: $0) },
-      point = Airway.Point(
-        sequenceNumber: sequenceNumber,
-        name: pointName,
-        pointType: pointType,
-        position: ptPosition,
-        stateCode: try t[optional: 7],
-        ICAORegionCode: try t[optional: 8],
-        navaidId: try t[optional: 12],
-        minimumReceptionAltitudeFt: try t[optional: 11]
-      )
+      pointTypeStr: String? = try t[optional: 5]
+    let pointType = diagnose(
+      Airway.PointType.self,
+      pointTypeStr,
+      field: "pointType",
+      id: "\(designation)/\(sequenceNumber)"
+    )
+    let point = Airway.Point(
+      sequenceNumber: sequenceNumber,
+      name: pointName,
+      pointType: pointType,
+      position: ptPosition,
+      stateCode: try t[optional: 7],
+      ICAORegionCode: try t[optional: 8],
+      navaidId: try t[optional: 12],
+      minimumReceptionAltitudeFt: try t[optional: 11]
+    )
 
     points[segmentKey] = point
 

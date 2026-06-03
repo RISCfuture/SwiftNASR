@@ -228,11 +228,13 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     }
 
     // Helper to create error handler for a record type
-    func errorHandler(for recordType: RecordType) -> @Sendable (Swift.Error) -> Bool {
+    func errorHandler(for recordType: RecordType)
+      -> @Sendable (RecordParseError) -> ParseDisposition
+    {
       let typeName = String(describing: recordType)
       return { error in
         Task { await errorCollector.record(error, recordType: typeName) }
-        return true
+        return .proceed
       }
     }
 
