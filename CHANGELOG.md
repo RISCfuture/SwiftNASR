@@ -1,5 +1,11 @@
 # Change Log
 
+## [2.0.1] - 2026-06-03
+
+### Fixed
+
+- Fixed silent record and field drops discovered by validating the parsers against live FAA data
+
 ## [2.0.0] - 2026-05-01
 
 ### Breaking Changes
