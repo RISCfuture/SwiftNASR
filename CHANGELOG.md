@@ -1,5 +1,24 @@
 # Change Log
 
+## [3.0.0] - 2026-06-03
+
+### Breaking Changes
+
+- `NASR.parse` now takes `errorHandler: (RecordParseError) -> ParseDisposition` instead of `(Error) -> Bool`, unifying dropped-record and kept-field diagnostics into a single channel
+
+### Added
+
+- `RecordParseError` and `ParseDisposition` public types describing parse problems and how to respond to them
+- Parsers now surface unrepresentable values as field- or record-level diagnostics instead of silently coercing them to `nil`
+
+### Fixed
+
+- A single malformed row in a CSV file no longer drops the rest of that file's rows
+- Many enum and value gaps now parse correctly via CSV synonyms (airway point types, fuel types, ILS marker and back-course status, hold facility routing, terminal facility types)
+- Corrected comma- and slash-separated field splitting (fuel types, runway surfaces)
+- AWOS weather stations without coordinates are kept (with a nil position) instead of dropped
+- Fixed two latent parser bugs: a weather-station parser that could abort an entire file on one bad row, and a string-splitting helper that emitted separator characters
+
 ## [2.0.1] - 2026-06-03
 
 ### Fixed
