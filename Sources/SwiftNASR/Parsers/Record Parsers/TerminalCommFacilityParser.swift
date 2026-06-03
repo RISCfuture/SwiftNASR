@@ -42,7 +42,7 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     .string(nullable: .blank),  // 13: tie-in FSS ID [00205-00208]
     .string(nullable: .blank),  // 14: tie-in FSS name [00209-00238]
     .recordEnum(TerminalCommFacility.FacilityType.self, nullable: .blank),  // 15: facility type [00239-00250]
-    .string(nullable: .blank),  // 16: hours of operation [00251-00252]
+    .string(nullable: .blank),  // 16: number of hours of daily operation [00251-00252]
     .recordEnum(TerminalCommFacility.OperationRegularity.self, nullable: .blank),  // 17: operation regularity [00253-00255]
     .string(nullable: .blank),  // 18: master airport ID [00256-00259]
     .string(nullable: .blank),  // 19: master airport name [00260-00309]
@@ -112,15 +112,15 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
     .string(nullable: .blank),  // 17: use 8 [00711-00760]
     .string(nullable: .blank),  // 18: frequency 9 [00761-00804]
     .string(nullable: .blank),  // 19: use 9 [00805-00854]
-    .null,  // 20: extended frequency 1 [00855-00914]
-    .null,  // 21: extended frequency 2 [00915-00974]
-    .null,  // 22: extended frequency 3 [00975-01034]
-    .null,  // 23: extended frequency 4 [01035-01094]
-    .null,  // 24: extended frequency 5 [01095-01154]
-    .null,  // 25: extended frequency 6 [01155-01214]
-    .null,  // 26: extended frequency 7 [01215-01274]
-    .null,  // 27: extended frequency 8 [01275-01334]
-    .null,  // 28: extended frequency 9 [01335-01394]
+    .string(nullable: .blank),  // 20: extended frequency 1 [00855-00914]
+    .string(nullable: .blank),  // 21: extended frequency 2 [00915-00974]
+    .string(nullable: .blank),  // 22: extended frequency 3 [00975-01034]
+    .string(nullable: .blank),  // 23: extended frequency 4 [01035-01094]
+    .string(nullable: .blank),  // 24: extended frequency 5 [01095-01154]
+    .string(nullable: .blank),  // 25: extended frequency 6 [01155-01214]
+    .string(nullable: .blank),  // 26: extended frequency 7 [01215-01274]
+    .string(nullable: .blank),  // 27: extended frequency 8 [01275-01334]
+    .string(nullable: .blank),  // 28: extended frequency 9 [01335-01394]
     .null  // 29: blank [01395-01608]
   ])
 
@@ -396,23 +396,32 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
       )
     }
 
-    // Parse up to 9 frequency pairs
+    // Parse up to 9 frequency entries, preferring the not-truncated extended
+    // field over its 44-char truncated counterpart.
     for i in 0..<9 {
-      let freqIndex = 2 + (i * 2),
-        useIndex = 3 + (i * 2),
-        freqString: String? = try t[optional: freqIndex],
-        use: String? = try t[optional: useIndex]
+      let truncated: String? = try t[optional: 2 + (i * 2)],
+        use: String? = try t[optional: 3 + (i * 2)],
+        extended: String? = try t[optional: 20 + i]
+      let freqString = ((extended?.isEmpty == false) ? extended : truncated)?
+        .trimmingCharacters(in: .whitespaces)
+      guard let freqString, !freqString.isEmpty else { continue }
 
-      if let freqString, !freqString.isEmpty,
-        let freqKHz = ByteTransformer.parseFrequency(freqString)
-      {
-        let frequency = TerminalCommFacility.Frequency(
-          frequencyKHz: freqKHz,
-          use: use,
-          sectorization: nil
-        )
-        facilities[facilityID]?.frequencies.append(frequency)
+      // The field is "<frequency>[ ;<sectorization/limitation text>]" or
+      // "<frequency><suffix>"; separate the numeric prefix from the remainder.
+      let numericPrefix = freqString.prefix { $0.isNumber || $0 == "." }
+      guard let freqKHz = ByteTransformer.parseFrequency(String(numericPrefix)) else { continue }
+
+      var remainder = freqString.dropFirst(numericPrefix.count).trimmingCharacters(in: .whitespaces)
+      if remainder.hasPrefix(";") {
+        remainder = String(remainder.dropFirst()).trimmingCharacters(in: .whitespaces)
       }
+
+      let frequency = TerminalCommFacility.Frequency(
+        frequencyKHz: freqKHz,
+        use: use,
+        sectorization: remainder.isEmpty ? nil : remainder
+      )
+      facilities[facilityID]?.frequencies.append(frequency)
     }
   }
 

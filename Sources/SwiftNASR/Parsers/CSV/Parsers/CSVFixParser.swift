@@ -132,7 +132,7 @@ actor CSVFixParser: CSVParser {
         let makeup = Fix.NavaidMakeup(
           navaidId: navId,
           navaidType: navaidType,
-          radialDeg: bearing.map { UInt($0) },
+          radialDeg: bearing,
           distanceNM: distanceNM,
           rawDescription: "\(navId)*\(navTypeStr)*\(bearing ?? 0)/\(distanceNM ?? 0)"
         )

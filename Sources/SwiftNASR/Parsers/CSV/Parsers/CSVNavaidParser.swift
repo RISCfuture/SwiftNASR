@@ -125,7 +125,7 @@ actor CSVNavaidParser: CSVParser {
       // Convert fan marker bearing to Bearing<UInt>
       let fanMarkerBearing: UInt? = try t[optional: "MKR_BRG"]
       let fanMarkerMajorBearing = fanMarkerBearing.map { value in
-        Bearing(value, reference: .magnetic, magneticVariationDeg: magneticVariationDeg ?? 0)
+        Bearing(value, reference: .true, magneticVariationDeg: magneticVariationDeg ?? 0)
       }
 
       // Convert frequency to Hz based on navaid type

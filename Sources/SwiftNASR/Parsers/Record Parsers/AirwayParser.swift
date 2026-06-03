@@ -53,15 +53,15 @@ actor FixedWidthAirwayParser: FixedWidthParser {
     .string(),  //  1 airway designation
     .recordEnum(Airway.AirwayType.self, nullable: .blank),  //  2 airway type (blank = federal per layout)
     .unsignedInteger(),  //  3 point sequence number
-    .null,  //  4 effective date
+    .null,  //  4 chart/publication effective date
     .string(nullable: .blank),  //  5 track angle outbound (RNAV)
     .unsignedInteger(nullable: .blank),  //  6 distance to changeover point (RNAV)
     .string(nullable: .blank),  //  7 track angle inbound (RNAV)
-    .float(nullable: .blank),  //  8 distance to next point
+    .float(nullable: .blank),  //  8 distance to next point in nautical miles
     .null,  //  9 bearing (reserved)
     .float(nullable: .blank),  // 10 segment magnetic course
     .float(nullable: .blank),  // 11 segment magnetic course opposite
-    .float(nullable: .blank),  // 12 distance to next point in segment
+    .float(nullable: .blank),  // 12 distance to next point in segment in nautical miles
     .unsignedInteger(nullable: .blank),  // 13 MEA
     .string(nullable: .blank),  // 14 MEA direction
     .unsignedInteger(nullable: .blank),  // 15 MEA opposite
@@ -69,7 +69,7 @@ actor FixedWidthAirwayParser: FixedWidthParser {
     .unsignedInteger(nullable: .blank),  // 17 MAA
     .unsignedInteger(nullable: .blank),  // 18 MOCA
     .boolean(trueValue: "X", nullable: .blank),  // 19 airway gap flag
-    .unsignedInteger(nullable: .blank),  // 20 distance to changeover point
+    .unsignedInteger(nullable: .blank),  // 20 distance to changeover point for next navaid
     .unsignedInteger(nullable: .blank),  // 21 MCA
     .string(nullable: .blank),  // 22 MCA direction
     .unsignedInteger(nullable: .blank),  // 23 MCA opposite

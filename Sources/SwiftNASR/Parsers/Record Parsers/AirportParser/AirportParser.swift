@@ -76,8 +76,8 @@ actor FixedWidthAirportParser: FixedWidthParser {
     .null,  //  47 toll-free FSS number
     .string(nullable: .blank),  //  48 alternate FSS ID
     .null,  //  49 alternate FSS name
-    .null,  //  60 alternate FSS toll-free number
-    .string(nullable: .blank),  //  51 NOTAM faclity ID
+    .null,  //  50 alternate FSS toll-free number
+    .string(nullable: .blank),  //  51 NOTAM facility ID
     .boolean(nullable: .blank),  //  52 NOTAM D available
 
     .dateComponents(format: .monthYear, nullable: .blank),  //  53 activation date

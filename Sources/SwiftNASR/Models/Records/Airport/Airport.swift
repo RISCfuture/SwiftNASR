@@ -785,8 +785,18 @@ public struct Airport: ParentRecord {
     /// Grade 94 avgas, unleaded (ASTM D7547)
     case avgasUL94 = "UL94"
 
-    /// Grade 100 avgas, unleaded (G100UL-12C9 or Swift 100R)
+    /// Grade 100 avgas, unleaded (legacy code UL100)
     case avgasUL100 = "UL100"
+
+    /// Unleaded Grade 100 avgas (G100UL). NASR truncates the code "G100UL" to
+    /// "G100" due to a field-width constraint (per apt_rf.txt A70).
+    case avgasG100UL = "G100"
+
+    /// Unleaded Grade 100 avgas (Swift 100R)
+    case avgas100R = "100R"
+
+    /// Hydrogen
+    case hydrogen = "H"
   }
 
   /// Repair service levels available.

@@ -388,6 +388,13 @@ public enum ILSFacilityType: String, RecordEnum {
   /// Localizer with Glide Slope.
   case LOC_GS = "LG"
 
+  /// Compass locator at the ILS outer marker (LOM).
+  case LOM = "LO"
+
+  /// Compass locator at the ILS middle marker (LMM). Observed in live data
+  /// (e.g. `MFR*LM`) though not enumerated in the layout's ILS type-code table.
+  case LMM = "LM"
+
   /// Standard Instrument Landing System.
   case ILS = "LS"
 

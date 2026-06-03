@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "lineLength": 140,
+  "lineBreakBeforeEachArgument": true,
+  "indentSwitchCaseLabels": true,
+  "multilineTrailingCommaBehavior": "neverUsed",
+  "multiElementCollectionTrailingCommas": false,
+  "reflowMultilineStringLiterals": "always",
+  "rules": {
+    "UseLetInEveryBoundCaseVariable": false
+  }
+}

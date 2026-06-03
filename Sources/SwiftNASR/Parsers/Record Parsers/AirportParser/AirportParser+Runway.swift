@@ -13,7 +13,7 @@ extension FixedWidthAirportParser {
       .unsignedInteger(nullable: .blank),  //   4 length
       .unsignedInteger(nullable: .blank),  //   5 width
       .string(nullable: .blank),  //   6 surface type and condition
-      .recordEnum(Runway.Treatment.self, nullable: .sentinel(["", "NONE"])),  //   7 surface treament
+      .recordEnum(Runway.Treatment.self, nullable: .sentinel(["", "NONE"])),  //   7 surface treatment
       .string(nullable: .blank),  //   8 pavement classification
       .recordEnum(Runway.EdgeLightIntensity.self, nullable: .sentinel(["", "NONE"])),  //   9 edge light intensity
 
@@ -207,7 +207,7 @@ extension FixedWidthAirportParser {
       .dateComponents(
         format: .monthDayYearSlash,
         nullable: .blank
-      ),  // 133 base end: LAHSO position source date
+      ),  // 133 reciprocal end: LAHSO position source date
 
       .null  // 134 filler
     ])
@@ -299,8 +299,7 @@ extension FixedWidthAirportParser {
     return (materials, condition)
   }
 
-  private func parsePavementClassification(_ value: String) throws -> Runway.PavementClassification
-  {
+  private func parsePavementClassification(_ value: String) throws -> Runway.PavementClassification {
     let components = value.split(separator: "/")
     let numberStr = String(components[0]).trimmingCharacters(in: .whitespaces)
     guard let number = UInt(numberStr) else { throw Error.invalidPavementClassification(value) }

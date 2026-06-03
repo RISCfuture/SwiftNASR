@@ -99,7 +99,8 @@ public struct Navaid: ParentRecord {
   public let fanMarkerType: FanMarkerType?
 
   /// The major bearing of the fan marker, if applicable. The fan marker
-  /// reception cone is longest along this bearing.
+  /// reception cone is longest along this bearing. Referenced to true north
+  /// (NASR field N77).
   public let fanMarkerMajorBearing: Bearing<UInt>?
 
   /// The service volume of a VOR.

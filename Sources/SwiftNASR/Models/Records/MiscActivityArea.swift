@@ -131,6 +131,10 @@ public struct MiscActivityArea: Record, Identifiable {
     case unmannedAircraft = "UNMANNED AIRCRAFT"
     case other = "OTHER"
 
+    /// Live data uses "SPACE LAUNCH ACTIVITY" where the layout documents the
+    /// code as "SPACE LAUNCH".
+    static let synonyms: [String: Self] = ["SPACE LAUNCH ACTIVITY": .spaceLaunch]
+
     public var description: String {
       switch self {
         case .aerobaticPractice: return "Aerobatic Practice"

@@ -60,11 +60,19 @@ public struct ARTCCBoundarySegment: Record, Identifiable {
   {
     case low = "L"
     case high = "H"
+    case boundary = "B"
+    case FIROnly = "F"
+    case controlArea = "G"
+    case upperControlArea = "U"
 
     public var description: String {
       switch self {
         case .low: return "Low"
         case .high: return "High"
+        case .boundary: return "Boundary"
+        case .FIROnly: return "FIR Only"
+        case .controlArea: return "Control Area"
+        case .upperControlArea: return "Upper Control Area"
       }
     }
   }

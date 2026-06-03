@@ -242,8 +242,7 @@ actor FixedWidthWeatherReportingLocationParser: LayoutDataParser {
   }
 
   /// Parse weather services string (space-separated service codes)
-  private func parseWeatherServices(_ str: String) -> [WeatherReportingLocation.WeatherServiceType]
-  {
+  private func parseWeatherServices(_ str: String) -> [WeatherReportingLocation.WeatherServiceType] {
     guard !str.isEmpty else { return [] }
 
     var services = [WeatherReportingLocation.WeatherServiceType]()

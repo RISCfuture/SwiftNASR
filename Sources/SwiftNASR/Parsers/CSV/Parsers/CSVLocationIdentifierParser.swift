@@ -227,8 +227,12 @@ actor CSVLocationIdentifierParser: CSVParser {
     switch facType.uppercased() {
       case "DME": return .DME
       case "FAN MARKER": return .fanMarker
-      case "NDB", "MARINE NDB": return .NDB
+      case "LFR": return .LFR
+      case "MARINE NDB": return .marineNDB
+      case "MARINE NDB/DME": return .marineNDB_DME
+      case "NDB": return .NDB
       case "NDB/DME": return .NDB_DME
+      case "UHF NDB", "UHF/NDB": return .UHF_NDB
       case "TACAN": return .TACAN
       case "VOR": return .VOR
       case "VOR/DME": return .VOR_DME
@@ -244,8 +248,12 @@ actor CSVLocationIdentifierParser: CSVParser {
     switch facType.uppercased() {
       case "DME": return .DME
       case "FAN MARKER": return .fanMarker
-      case "NDB", "MARINE NDB": return .NDB
+      case "LFR": return .LFR
+      case "MARINE NDB": return .marineNDB
+      case "MARINE NDB/DME": return .marineNDB_DME
+      case "NDB": return .NDB
       case "NDB/DME": return .NDB_DME
+      case "UHF NDB", "UHF/NDB": return .UHF_NDB
       case "TACAN": return .TACAN
       case "VOR": return .VOR
       case "VOR/DME": return .VOR_DME
@@ -294,7 +302,10 @@ actor CSVLocationIdentifierParser: CSVParser {
       case "ADMINISTRATIVE SERVICES", "ADMINISTRATIVE SERVICES(2)": return .administrative
       case "GEOGRAPHIC REFERENCE POINT", "GEOREF": return .georef
       case "SPECIAL USAGE", "SPECIAL USE": return .specialUse
-      case "WEATHER STATION", "WEATHER STATION(2)", "WEATHER SERVICE OFFICE": return .weatherStation
+      case "WEATHER STATION", "WEATHER STATION(2)": return .weatherStation
+      case "WEATHER SERVICE OFFICE", "WSO": return .weatherServiceOffice
+      case "TRACON": return .TRACON
+      case "SPECIAL PROCEDURE", "SPECIAL PROCEDU": return .specialProcedure
       default: throw ParserError.unknownRecordEnumValue(facType)
     }
   }

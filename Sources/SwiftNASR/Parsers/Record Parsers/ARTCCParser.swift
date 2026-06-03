@@ -57,9 +57,9 @@ actor FixedWidthARTCCParser: FixedWidthParser {
     .string(nullable: .blank),  //  8 state PO code
 
     .DDMMSS(nullable: .blank),  //  9 latitude - formatted
-    .null,  // 10 latitude - decimal
+    .null,  // 10 latitude - seconds
     .DDMMSS(nullable: .blank),  // 11 longitude - formatted
-    .null,  // 12 longitude - decimal
+    .null,  // 12 longitude - seconds
     .string(nullable: .blank),  // 13 ICAO ID
     .null  // 14 blank
   ])
@@ -82,7 +82,7 @@ actor FixedWidthARTCCParser: FixedWidthParser {
 
     .frequency(),  //  4 frequency
     .delimitedArray(delimiter: "/") { try ARTCC.CommFrequency.Altitude.require($0) },  //  5 altitude
-    .string(nullable: .blank),  //  6 special usage name
+    .null,  //  6 not used
     .boolean(nullable: .blank),  //  7 RCAG freq charted flag
 
     .string(nullable: .blank),  //  8 landing facility LID
@@ -157,7 +157,6 @@ actor FixedWidthARTCCParser: FixedWidthParser {
       let frequency = ARTCC.CommFrequency(
         frequencyKHz: try t[4],
         altitude: try t[5],
-        specialUsageName: try t[optional: 6],
         remoteOutletFrequencyCharted: try t[optional: 7],
         associatedAirportCode: try t[optional: 8]
       )

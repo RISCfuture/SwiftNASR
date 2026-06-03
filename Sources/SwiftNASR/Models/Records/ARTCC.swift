@@ -116,10 +116,6 @@ public struct ARTCC: ParentRecord {
     /// The altitude blocks that this frequency is used for.
     public let altitude: [Altitude]
 
-    /// Special usage name (e.g., "approach control", "discrete",
-    /// "do not publish").
-    public let specialUsageName: String?
-
     /// `true` if the RCAG frequency is charted.
     public let remoteOutletFrequencyCharted: Bool?
 
@@ -136,23 +132,21 @@ public struct ARTCC: ParentRecord {
     init(
       frequencyKHz: UInt,
       altitude: [Altitude],
-      specialUsageName: String?,
       remoteOutletFrequencyCharted: Bool?,
       associatedAirportCode: String?
     ) {
       self.frequencyKHz = frequencyKHz
       self.altitude = altitude
-      self.specialUsageName = specialUsageName
       self.remoteOutletFrequencyCharted = remoteOutletFrequencyCharted
       self.associatedAirportCode = associatedAirportCode
     }
 
     /// Fields that per-field remarks can be associated with.
     public enum Field: String, RemarkField {
-      case altitude, specialUsageName, associatedAirportCode
+      case altitude, associatedAirportCode
 
       static let fieldOrder: [Self?] = [
-        nil, nil, nil, nil, nil, .altitude, .specialUsageName, nil,
+        nil, nil, nil, nil, nil, .altitude, nil, nil,
         .associatedAirportCode, .associatedAirportCode,
         .associatedAirportCode, .associatedAirportCode,
         .associatedAirportCode, .associatedAirportCode,
@@ -162,7 +156,7 @@ public struct ARTCC: ParentRecord {
     }
 
     enum CodingKeys: String, CodingKey {
-      case frequencyKHz, altitude, specialUsageName, remoteOutletFrequencyCharted,
+      case frequencyKHz, altitude, remoteOutletFrequencyCharted,
         associatedAirportCode, remarks
     }
 

@@ -44,12 +44,13 @@ actor FixedWidthHoldParser: LayoutDataParser {
         let azimuthStr = String(line.substring(104, 5)).trimmingCharacters(in: .whitespaces)
         let ILSIdent = String(line.substring(109, 7)).trimmingCharacters(in: .whitespaces)
 
-        // ILS type is embedded at end of ILS identifier - need to parse from name or layout
-        // From mock data: "PDK*LS" means PDK with type LS
+        // ILS type code is appended to the ILS identifier after a "*" separator
+        // (e.g. "PDK*LD" means identifier PDK with type code LD = ILS/DME).
         let (ILSIdentParsed, ILSType) = parseIdentifierWithType(ILSIdent)
 
         let navaidIdent = String(line.substring(116, 7)).trimmingCharacters(in: .whitespaces)
-        // Navaid type is a single char at end
+        // Navaid type code is appended after a "*" separator (one or two characters,
+        // e.g. C = VORTAC, RD = NDB/DME).
         let (navaidIdentParsed, navaidType) = parseNavaidIdentifierWithType(navaidIdent)
 
         let additionalFacility = String(line.substring(123, 12)).trimmingCharacters(
@@ -237,7 +238,7 @@ actor FixedWidthHoldParser: LayoutDataParser {
     }
   }
 
-  /// Parse identifier with ILS type (e.g., "PDK*LS" → ("PDK", .ILS))
+  /// Parse identifier with ILS type code (e.g., "ABE*LS" → ("ABE", .ILS))
   private func parseIdentifierWithType(_ str: String) -> (String, ILSFacilityType?) {
     let parts = str.split(separator: "*")
     guard parts.count == 2 else { return (str, nil) }
@@ -301,7 +302,7 @@ actor FixedWidthHoldParser: LayoutDataParser {
   /// Parse latitude string (e.g., "34-04-05.000N")
   private func parseLatitude(_ str: String) -> Double? {
     guard !str.isEmpty else { return nil }
-    // Format: DD-MM-SS.SSSN or DD-MM-SS.SSSS
+    // Format per layout: DD-MM-SS.SSSN (hemisphere letter N or S)
     let isNorth = str.hasSuffix("N")
     let isSouth = str.hasSuffix("S")
     var working = str
@@ -325,7 +326,7 @@ actor FixedWidthHoldParser: LayoutDataParser {
   /// Parse longitude string (e.g., "084-12-51.710W")
   private func parseLongitude(_ str: String) -> Double? {
     guard !str.isEmpty else { return nil }
-    // Format: DDD-MM-SS.SSSW or DDD-MM-SS.SSSS
+    // Format per layout: DDD-MM-SS.SSSW (hemisphere letter W or E)
     let isWest = str.hasSuffix("W")
     let isEast = str.hasSuffix("E")
     var working = str

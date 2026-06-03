@@ -101,16 +101,16 @@ actor FixedWidthILSParser: FixedWidthParser {
     .recordEnum(OperationalStatus.self, nullable: .blank),  //  4: operational status [00029-00050]
     .dateComponents(format: .monthDayYearSlash, nullable: .blank),  //  5: status effective date [00051-00060]
     .DDMMSS(nullable: .blank),  //  6: latitude formatted [00061-00074]
-    .null,  //  7: latitude all seconds - skip
+    .null,  //  7: latitude all seconds [00075-00085] - skip, use formatted
     .DDMMSS(nullable: .blank),  //  8: longitude formatted [00086-00099]
-    .null,  //  9: longitude all seconds - skip
+    .null,  //  9: longitude all seconds [00100-00110] - skip, use formatted
     .recordEnum(ILS.PositionSource.self, nullable: .blank),  // 10: lat/lon source [00111-00112]
     .integer(nullable: .blank),  // 11: distance from approach end [00113-00119]
     .unsignedInteger(nullable: .blank),  // 12: distance from centerline [00120-00123]
     .string(nullable: .blank),  // 13: direction from centerline (L/R) [00124]
     .recordEnum(ILS.PositionSource.self, nullable: .blank),  // 14: distance source [00125-00126]
     .float(nullable: .blank),  // 15: site elevation [00127-00133]
-    .recordEnum(ILS.GlideSlope.GlidePathType.self, nullable: .blank),  // 16: glide slope type [00134-00148]
+    .recordEnum(ILS.GlideSlope.GlidePathType.self, nullable: .blank),  // 16: glide slope class/type [00134-00148]
     .float(nullable: .blank),  // 17: glide slope angle [00149-00153]
     .float(nullable: .blank),  // 18: frequency [00154-00160]
     .float(nullable: .blank),  // 19: runway elevation adjacent [00161-00168]
@@ -126,9 +126,9 @@ actor FixedWidthILSParser: FixedWidthParser {
     .recordEnum(OperationalStatus.self, nullable: .blank),  //  4: operational status [00029-00050]
     .dateComponents(format: .monthDayYearSlash, nullable: .blank),  //  5: status effective date [00051-00060]
     .DDMMSS(nullable: .blank),  //  6: latitude formatted [00061-00074]
-    .null,  //  7: latitude all seconds - skip
+    .null,  //  7: latitude all seconds [00075-00085] - skip, use formatted
     .DDMMSS(nullable: .blank),  //  8: longitude formatted [00086-00099]
-    .null,  //  9: longitude all seconds - skip
+    .null,  //  9: longitude all seconds [00100-00110] - skip, use formatted
     .recordEnum(ILS.PositionSource.self, nullable: .blank),  // 10: lat/lon source [00111-00112]
     .integer(nullable: .blank),  // 11: distance from approach end [00113-00119]
     .unsignedInteger(nullable: .blank),  // 12: distance from centerline [00120-00123]
@@ -150,9 +150,9 @@ actor FixedWidthILSParser: FixedWidthParser {
     .recordEnum(OperationalStatus.self, nullable: .blank),  //  5: operational status [00031-00052]
     .dateComponents(format: .monthDayYearSlash, nullable: .blank),  //  6: status effective date [00053-00062]
     .DDMMSS(nullable: .blank),  //  7: latitude formatted [00063-00076]
-    .null,  //  8: latitude all seconds - skip
+    .null,  //  8: latitude all seconds [00077-00087] - skip, use formatted
     .DDMMSS(nullable: .blank),  //  9: longitude formatted [00088-00101]
-    .null,  // 10: longitude all seconds - skip
+    .null,  // 10: longitude all seconds [00102-00112] - skip, use formatted
     .recordEnum(ILS.PositionSource.self, nullable: .blank),  // 11: lat/lon source [00113-00114]
     .integer(nullable: .blank),  // 12: distance from approach end [00115-00121]
     .unsignedInteger(nullable: .blank),  // 13: distance from centerline [00122-00125]

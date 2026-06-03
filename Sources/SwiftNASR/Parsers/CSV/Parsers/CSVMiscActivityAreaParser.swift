@@ -64,7 +64,7 @@ actor CSVMiscActivityAreaParser: CSVParser {
         guard let typeStr: String = try? t[optional: "MAA_TYPE_NAME"], !typeStr.isEmpty else {
           return nil
         }
-        return MiscActivityArea.AreaType(rawValue: typeStr)
+        return MiscActivityArea.AreaType.for(typeStr)
       }()
 
       // Parse altitudes (format like "5000AGL" or "4000MSL")

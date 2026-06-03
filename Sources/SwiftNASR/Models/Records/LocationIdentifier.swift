@@ -180,6 +180,11 @@ public struct LocationIdentifier: Record, Identifiable {
     case georef = "GEOREF"
     case specialUse = "SPECIAL USE"
     case weatherStation = "WEATHER STATION"
+    case TRACON = "TRACON"
+    case weatherServiceOffice = "WSO"
+    /// Special procedure facility. The FAA's 15-character field truncates
+    /// "SPECIAL PROCEDURE" to "SPECIAL PROCEDU".
+    case specialProcedure = "SPECIAL PROCEDU"
 
     public var description: String { rawValue }
   }
@@ -247,11 +252,23 @@ public struct LocationIdentifier: Record, Identifiable {
     /// Fan Marker
     case fanMarker = "FAN MARKER"
 
+    /// Low Frequency Range
+    case LFR = "LFR"
+
+    /// Marine Non-Directional Beacon
+    case marineNDB = "MARINE NDB"
+
+    /// Marine NDB with Distance Measuring Equipment
+    case marineNDB_DME = "MARINE NDB/DME"
+
     /// Non-Directional Beacon
     case NDB = "NDB"
 
     /// NDB with Distance Measuring Equipment
     case NDB_DME = "NDB/DME"
+
+    /// Ultra High Frequency Non-Directional Beacon
+    case UHF_NDB = "UHF NDB"
 
     /// Tactical Air Navigation
     case TACAN = "TACAN"

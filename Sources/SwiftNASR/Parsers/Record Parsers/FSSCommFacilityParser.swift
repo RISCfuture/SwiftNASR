@@ -134,9 +134,9 @@ actor FixedWidthFSSCommFacilityParser: Parser {
             use = .receiveOnly
             freqStr = String(freqStr.dropLast())
           }
-          // Convert MHz to kHz (multiply by 1000)
-          if let mhz = Double(freqStr) {
-            let khz = UInt(mhz * 1000)
+          // Convert MHz to kHz using exact integer-string arithmetic (avoids
+          // binary-float rounding that can corrupt 8.33 kHz spacings).
+          if let khz = ByteTransformer.parseFrequency(freqStr) {
             frequencies.append(FSSCommFacility.Frequency(frequencyKHz: khz, use: use))
           }
         }
@@ -223,9 +223,13 @@ actor FixedWidthFSSCommFacilityParser: Parser {
       outletCall: try t[optional: 15],
       frequencies: frequencies,
       FSSIdentifier: try t[optional: 17],
-      FSSName: try t[optional: 18],
+      // The name fields are formatted "IDENT*NAME"; keep only the name part.
+      FSSName: (try t[optional: 18] as String?)?.split(separator: "*", maxSplits: 1).last.map(
+        String.init
+      ),
       alternateFSSIdentifier: try t[optional: 19],
-      alternateFSSName: try t[optional: 20],
+      alternateFSSName: (try t[optional: 20] as String?)?.split(separator: "*", maxSplits: 1).last
+        .map(String.init),
       operationalHours: opHours,
       ownerCode: try t[optional: 22],
       ownerName: try t[optional: 23],

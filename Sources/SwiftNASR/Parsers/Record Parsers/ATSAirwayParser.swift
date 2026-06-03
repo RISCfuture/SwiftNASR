@@ -80,7 +80,8 @@ actor FixedWidthATSAirwayParser: Parser {
     let trackOutbound = String(line.substring(35, 7)).trimmingCharacters(in: .whitespaces)
     let distCOP = String(line.substring(42, 5)).trimmingCharacters(in: .whitespaces)
     let trackInbound = String(line.substring(47, 7)).trimmingCharacters(in: .whitespaces)
-    let distNextPt = String(line.substring(54, 6)).trimmingCharacters(in: .whitespaces)
+    // col 79 segment distance (col 55 AR5 is the RNAV-only variant)
+    let distNextPt = String(line.substring(78, 6)).trimmingCharacters(in: .whitespaces)
     let magCourse = String(line.substring(66, 6)).trimmingCharacters(in: .whitespaces)
     let magCourseOpp = String(line.substring(72, 6)).trimmingCharacters(in: .whitespaces)
     let MEAStr = String(line.substring(84, 5)).trimmingCharacters(in: .whitespaces)
@@ -298,7 +299,7 @@ actor FixedWidthATSAirwayParser: Parser {
   }
 
   private func parseATS3(_ line: String, key: String) throws {
-    // ATS3 record - Changeover point navaid
+    // ATS3 record - Changeover-to-point navaid description
     let seqStr = String(line.substring(20, 5)).trimmingCharacters(in: .whitespaces)
     let navName = String(line.substring(25, 30)).trimmingCharacters(in: .whitespaces)
     let navType = String(line.substring(55, 25)).trimmingCharacters(in: .whitespaces)

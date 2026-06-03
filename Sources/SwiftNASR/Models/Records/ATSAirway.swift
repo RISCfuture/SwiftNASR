@@ -87,7 +87,13 @@ public struct ATSAirway: Record, Identifiable {
     case NDB = "NDB"
     case VOR = "VOR"
     case DME = "DME"
+    case TACAN = "TACAN"
     case canadian = "CN"
+    case ARTCCBoundary = "ARTCC-BDRY"
+    case militaryReportingPoint = "MIL-REP-PT"
+    case turnPoint = "TURN-PT"
+    case airwayIntersection = "AWY-INTXN"
+    case coordinationFix = "COORDN-FIX"
 
     public var description: String {
       switch self {
@@ -99,7 +105,13 @@ public struct ATSAirway: Record, Identifiable {
         case .NDB: return "NDB"
         case .VOR: return "VOR"
         case .DME: return "DME"
+        case .TACAN: return "TACAN"
         case .canadian: return "Canadian"
+        case .ARTCCBoundary: return "ARTCC Boundary"
+        case .militaryReportingPoint: return "Military Reporting Point"
+        case .turnPoint: return "Turn Point"
+        case .airwayIntersection: return "Airway Intersection"
+        case .coordinationFix: return "Coordination Fix"
       }
     }
   }

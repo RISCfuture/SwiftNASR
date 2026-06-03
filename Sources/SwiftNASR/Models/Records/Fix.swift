@@ -155,7 +155,7 @@ public struct Fix: ParentRecord {
     public let navaidType: Navaid.FacilityType
 
     /// The radial or bearing from the navaid (degrees).
-    public let radialDeg: UInt?
+    public let radialDeg: Float?
 
     /// The DME distance from the navaid (nautical miles).
     public let distanceNM: Float?

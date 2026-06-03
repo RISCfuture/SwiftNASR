@@ -8,8 +8,11 @@ xcuserdata/
 # SwiftLint remote config cache
 .swiftlint/RemoteConfigCache
 
-# swift-format (downloaded in CI)
+# swift-format (root config downloaded in CI)
 .swift-format
+# …except the per-directory override that raises lineLength for the record
+# parsers' intentionally long, aligned field-index comments
+!Sources/SwiftNASR/Parsers/Record Parsers/.swift-format
 
 # SwiftNASR test data working directory
 .SwiftNASR_TestData/

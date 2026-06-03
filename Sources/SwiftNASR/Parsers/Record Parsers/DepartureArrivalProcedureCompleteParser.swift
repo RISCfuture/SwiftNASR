@@ -144,7 +144,9 @@ actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
 
   // MARK: - Helper methods
 
-  /// Creates a Location from optional lat/lon. Both must be present or absent.
+  /// Creates a Location from optional lat/lon. Returns `nil` only when both are
+  /// absent; if only one coordinate is present, a partial Location is created
+  /// (this parser is lenient about coordinate data quality issues).
   private func makeLocation(latitude: Float?, longitude: Float?) -> Location? {
     switch (latitude, longitude) {
       case let (.some(lat), .some(lon)):
@@ -152,10 +154,10 @@ actor FixedWidthDepartureArrivalProcedureCompleteParser: LayoutDataParser {
       case (.none, .none):
         return nil
       case let (.some(lat), .none):
-        // Log but don't throw - this parser is more lenient due to data quality issues
+        // Don't throw - this parser is lenient about partial coordinate data
         return Location(latitudeDeg: Double(lat), longitudeDeg: nil)
       case let (.none, .some(lon)):
-        // Log but don't throw - this parser is more lenient due to data quality issues
+        // Don't throw - this parser is lenient about partial coordinate data
         return Location(latitudeDeg: nil, longitudeDeg: Double(lon))
     }
   }

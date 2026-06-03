@@ -361,8 +361,7 @@ extension FixedWidthAirportParser {
     return RunwayEnd.LAHSOPoint.Field.fieldOrder[offset]
   }
 
-  private func controllingObjectFieldForID(_ fieldID: String) -> RunwayEnd.ControllingObject.Field?
-  {
+  private func controllingObjectFieldForID(_ fieldID: String) -> RunwayEnd.ControllingObject.Field? {
     let layout = format(forRecordIdentifier: .runway)
     guard let offset = layout.fieldOffset(forID: fieldID) else { return nil }
     return RunwayEnd.ControllingObject.Field.fieldOrder[offset]

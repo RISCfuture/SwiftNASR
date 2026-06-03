@@ -227,26 +227,26 @@ actor FixedWidthFixParser: FixedWidthParser {
 // MARK: - Makeup Parsing Helpers
 
 private func parseNavaidMakeupDescription(_ description: String) -> Fix.NavaidMakeup? {
-  // Format: LOCATOR*TYPE*RADIAL/DISTANCE (e.g., "ABC*V*090" or "ABC*D*270/12.5")
+  // Format: LOCATOR*TYPE*RADIAL/DISTANCE (e.g., "ABC*V*090.00" or "ABC*D*270.00/12.5")
   let parts = description.components(separatedBy: "*")
   guard parts.count >= 2 else { return nil }
 
   let navaidId = parts[0]
   guard let navaidType = Navaid.FacilityType.for(parts[1]) else { return nil }
 
-  var radialDeg: UInt?
+  var radialDeg: Float?
   var distanceNM: Float?
 
   if parts.count >= 3 {
     let radialDistPart = parts[2]
     if radialDistPart.contains("/") {
       let subParts = radialDistPart.components(separatedBy: "/")
-      radialDeg = UInt(subParts[0])
+      radialDeg = Float(subParts[0])
       if subParts.count > 1 {
         distanceNM = Float(subParts[1])
       }
     } else {
-      radialDeg = UInt(radialDistPart)
+      radialDeg = Float(radialDistPart)
     }
   }
 

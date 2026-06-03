@@ -43,9 +43,9 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
         width: 7,
         convert: { $0.split(separator: "*") },
         nullable: .compact
-      ),  // 20 associated navaids
+      ),  // 20 navaid identifier & facility type
       .null,  // 21 reserved
-      .boolean(nullable: .blank),  // 22 wx radar availibility
+      .boolean(nullable: .blank),  // 22 wx radar availability
       .boolean(),  // 23 EFAS availability
       .string(nullable: .blank),  // 24 flight watch hours of operation
       .string(nullable: .blank),  // 25 non-airport FSS city
@@ -162,7 +162,14 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
     return NASRTable(fields: fields)
   }
 
-  private let facilityCount = 20  // TODO then why do some fields have cardinalities of 30 or 40?
+  /// Returns `array[index]`, or `nil` when `index` is past the end.
+  ///
+  /// The FAA assigns the parallel comm-facility arrays inconsistent occurrence
+  /// counts (frequencies 60, owners/hours/statuses 40, cities 30, navaids and
+  /// time zones 20), so each must be indexed against its own length.
+  private func element<T>(_ array: [T?], at index: Int) -> T? {
+    index < array.count ? array[index] : nil
+  }
 
   func parseValues(_ values: [ArraySlice<UInt8>]) throws {
     if values.count == 4 {
@@ -202,24 +209,24 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
       timezones56: [String?] = try t[56]
 
     var commFacilities = [FSS.CommFacility]()
-    commFacilities.reserveCapacity(facilityCount)
-    for i in 0..<facilityCount {
+    commFacilities.reserveCapacity(frequencies50.count)
+    for i in frequencies50.indices {
       guard let frequency = frequencies50[i] else { continue }
 
-      let city = cities41[i],
-        state = states42[i],
-        lat = lats43[i],
-        lon = lons44[i],
-        owner = owners45[i],
-        ownerName = ownerNames46[i],
-        `operator` = operators47[i],
-        operatorName = operatorNames48[i],
-        hours = hours51[i],
-        status = statuses52[i],
-        statusDate = statusDates53[i],
-        navaidAndType = navaidsAndTypes54[i],
-        chart = charts55[i],
-        timezone = timezones56[i].flatMap { StandardTimeZone(rawValue: $0) }
+      let city = element(cities41, at: i),
+        state = element(states42, at: i),
+        lat = element(lats43, at: i),
+        lon = element(lons44, at: i),
+        owner = element(owners45, at: i),
+        ownerName = element(ownerNames46, at: i),
+        `operator` = element(operators47, at: i),
+        operatorName = element(operatorNames48, at: i),
+        hours = element(hours51, at: i),
+        status = element(statuses52, at: i),
+        statusDate = element(statusDates53, at: i),
+        navaidAndType = element(navaidsAndTypes54, at: i),
+        chart = element(charts55, at: i),
+        timezone = element(timezones56, at: i).flatMap { StandardTimeZone(rawValue: $0) }
 
       let location = zipOptionals(lat, lon).map { lat, lon in
         Location(latitudeArcsec: lat, longitudeArcsec: lon, elevationFtMSL: nil)
@@ -360,8 +367,7 @@ actor FixedWidthFSSParser: FixedWidthNoRecordIDParser {
     }
   }
 
-  private func updateFSS(_ t: FixedWidthTransformedRow, process: (inout FSS) throws -> Void) throws
-  {
+  private func updateFSS(_ t: FixedWidthTransformedRow, process: (inout FSS) throws -> Void) throws {
     let IDAndStar: Substring = try t[0],
       ID = String(IDAndStar[IDAndStar.startIndex..<IDAndStar.index(before: IDAndStar.endIndex)])
     guard var fss = FSSes[ID] else { throw Error.unknownFSS(ID) }

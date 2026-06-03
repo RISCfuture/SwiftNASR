@@ -2,8 +2,8 @@ import Foundation
 
 /// Converts a navaid frequency string to Hz based on the navaid type.
 ///
-/// NDB-type navaids (NDB, NDB/DME, Marine NDB, Marine NDB/DME, UHF/NDB) store
-/// frequencies in kHz (e.g., "365" = 365 kHz = 365,000 Hz).
+/// NDB-type navaids (NDB, NDB/DME, Marine NDB, Marine NDB/DME, UHF/NDB, LFR)
+/// store frequencies in kHz (e.g., "365" = 365 kHz = 365,000 Hz).
 ///
 /// VOR-type navaids (VOR, VOR/DME, VORTAC, TACAN, VOT, DME, etc.) store
 /// frequencies in MHz with decimals (e.g., "113.00" = 113 MHz = 113,000,000 Hz).
@@ -12,8 +12,7 @@ import Foundation
 ///   - frequencyString: The raw frequency string from the data file.
 ///   - navaidType: The type of navaid to determine the input unit.
 /// - Returns: The frequency in Hz, or nil if the string is empty or unparseable.
-func parseNavaidFrequencyToHz(_ frequencyString: String?, navaidType: Navaid.FacilityType) -> UInt?
-{
+func parseNavaidFrequencyToHz(_ frequencyString: String?, navaidType: Navaid.FacilityType) -> UInt? {
   guard let frequencyString, !frequencyString.isEmpty else { return nil }
 
   // NDB-type navaids use kHz (whole numbers like "365")
@@ -89,7 +88,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     .recordType,  //  0 record type
     .string(),  //  1 identifier
     .recordEnum(Navaid.FacilityType.self),  //  2 facility type
-    .null,  //  3 identifier
+    .null,  //  3 official identifier
 
     .null,  //  4 effective date
     .string(),  //  5 name
@@ -132,7 +131,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
     .string(nullable: .blank),  // 40 freq (raw string - converted to Hz in parseBasicRecord based on navaid type)
     .string(nullable: .blank),  // 41 fan marker ident
     .recordEnum(Navaid.FanMarkerType.self, nullable: .blank),  // 42 fan marker type
-    .unsignedInteger(nullable: .blank),  // 43 fan marker major axis
+    .unsignedInteger(nullable: .blank),  // 43 true bearing of fan marker major axis (whole degrees)
     .generic({ try parseServiceVolume($0) }, nullable: .blank),  // 44 VOR service volume
     .generic({ try parseServiceVolume($0) }, nullable: .blank),  // 45 DME service volume
     .boolean(nullable: .blank),  // 46 lo facility in hi structure
@@ -245,7 +244,7 @@ actor FixedWidthNavaidParser: FixedWidthParser {
       // Convert fan marker bearing to Bearing<UInt>
       fanMarkerMajorBearingValue: UInt? = try t[optional: 43],
       fanMarkerMajorBearing = fanMarkerMajorBearingValue.map { value in
-        Bearing(value, reference: .magnetic, magneticVariationDeg: magneticVariationDeg ?? 0)
+        Bearing(value, reference: .true, magneticVariationDeg: magneticVariationDeg ?? 0)
       },
       // Convert LFR leg bearings to Bearing<UInt>
       rawLFRLegs: [(LFRLeg.Quadrant, UInt)]? = try t[optional: 54],

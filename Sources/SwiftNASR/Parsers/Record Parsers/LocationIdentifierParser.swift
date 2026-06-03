@@ -1,22 +1,21 @@
 import Foundation
 
 enum LIDRecordIdentifier: String {
-  case USA = "USA"
-  case DOD = "DOD"
-  case canada = "CAN"
+  case USA
+  case DOD
 }
 
 /// Parser for Location Identifier (LID) files.
 ///
 /// These files contain location identifiers for various aviation facilities.
-/// Records are 1039 characters fixed-width with three record types:
-/// USA (United States), DOD (Dept of Defense overseas), and CAN (Canadian).
-/// This parser currently handles USA records only.
+/// Records are 1039 characters fixed-width with two record groups:
+/// USA (United States and its territories) and DOD (selected Department of
+/// Defense overseas locations). This parser currently handles USA records only.
 actor FixedWidthLocationIdentifierParser: FixedWidthParser {
   typealias RecordIdentifier = LIDRecordIdentifier
 
   static let type = RecordType.locationIdentifiers
-  static let layoutFormatOrder: [LIDRecordIdentifier] = [.USA, .DOD, .canada]
+  static let layoutFormatOrder: [LIDRecordIdentifier] = [.USA, .DOD]
 
   var recordTypeRange: Range<UInt> { 1..<4 }
   var formats = [NASRTable]()
@@ -33,7 +32,7 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
     .string(nullable: .blank),  // 7 controlling ARTCC computer ID (3)
     .string(nullable: .blank),  // 8 landing facility name (50)
     .string(nullable: .blank),  // 9 landing facility type (13)
-    .string(nullable: .blank),  // 10 landing facility FSS (4)
+    .string(nullable: .blank),  // 10 landing facility tie-in FSS identifier (4)
     .string(nullable: .blank),  // 11 navaid 1 name (30)
     .string(nullable: .blank),  // 12 navaid 1 type (20)
     .string(nullable: .blank),  // 13 navaid 2 name (30)
@@ -42,12 +41,12 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
     .string(nullable: .blank),  // 16 navaid 3 type (20)
     .string(nullable: .blank),  // 17 navaid 4 name (30)
     .string(nullable: .blank),  // 18 navaid 4 type (20)
-    .string(nullable: .blank),  // 19 navaid FSS (4)
+    .string(nullable: .blank),  // 19 navaid tie-in FSS identifier (4)
     .string(nullable: .blank),  // 20 ILS runway end (3)
     .string(nullable: .blank),  // 21 ILS facility type (20)
     .string(nullable: .blank),  // 22 ILS airport identifier (5)
     .string(nullable: .blank),  // 23 ILS airport name (50)
-    .string(nullable: .blank),  // 24 ILS FSS (4)
+    .string(nullable: .blank),  // 24 ILS airport tie-in FSS identifier (4)
     .string(nullable: .blank),  // 25 FSS name (30)
     .string(nullable: .blank),  // 26 ARTCC name (30)
     .string(nullable: .blank),  // 27 ARTCC facility type (17)
@@ -62,8 +61,8 @@ actor FixedWidthLocationIdentifierParser: FixedWidthParser {
     switch identifier {
       case .USA:
         try parseUSARecord(values)
-      case .DOD, .canada:
-        // DOD and Canada records have different formats - not implemented
+      case .DOD:
+        // DOD records have a different format - not implemented
         break
     }
   }

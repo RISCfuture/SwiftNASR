@@ -121,7 +121,7 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser {
 
     let area = MiscActivityArea(
       MAAId: MAAId,
-      areaType: MiscActivityArea.AreaType(rawValue: areaTypeStr),
+      areaType: MiscActivityArea.AreaType.for(areaTypeStr),
       areaName: areaName.isEmpty ? nil : areaName,
       stateCode: stateAbbr.isEmpty ? nil : stateAbbr,
       stateName: stateName.isEmpty ? nil : stateName,

@@ -32,7 +32,7 @@ final class AttendanceScheduleSpec: QuickSpec {
         let encoded = Data(#"{"daily":"2","hourly":"3","monthly":"1","type":"components"}"#.utf8)
         let schedule = try decoder.decode(AttendanceSchedule.self, from: encoded)
 
-        guard case .components(let monthly, let daily, let hourly) = schedule else {
+        guard case let .components(monthly, daily, hourly) = schedule else {
           fail("Expected AttendanceSchedule.components, got .custom")
           return
         }

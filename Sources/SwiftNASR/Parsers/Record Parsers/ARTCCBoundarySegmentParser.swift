@@ -61,19 +61,25 @@ actor FixedWidthARTCCBoundarySegmentParser: Parser {
       throw ParserError.missingRequiredField(field: "recordIdentifier", recordType: "ARB")
     }
 
-    // Parse the record identifier components
-    // Format: ARTCC ID (3) + Altitude code (1) + Point designator (8)
-    let ARTCCId = String(recordId.prefix(3)).trimmingCharacters(in: .whitespaces),
+    // Parse the record identifier components. The field is "*"-framed as
+    // ARTCC ID + "*" + altitude code + "*" + point designator (e.g. "ZAB *H*53855").
+    let ARTCCId: String,
       altitudeCode: String,
       pointDesignator: String
-    if recordId.count >= 4 {
-      altitudeCode = String(recordId[recordId.index(recordId.startIndex, offsetBy: 3)])
+    let components = recordId.split(separator: "*", omittingEmptySubsequences: false)
+    if components.count >= 3 {
+      ARTCCId = String(components[0]).trimmingCharacters(in: .whitespaces)
+      altitudeCode = String(components[1]).trimmingCharacters(in: .whitespaces)
+      pointDesignator = String(components[2]).trimmingCharacters(in: .whitespaces)
+    } else {
+      // Fallback for any unframed identifier: ARTCC ID (3) + altitude code (1) + designator.
+      ARTCCId = String(recordId.prefix(3)).trimmingCharacters(in: .whitespaces)
+      altitudeCode =
+        recordId.count > 3
+        ? String(recordId[recordId.index(recordId.startIndex, offsetBy: 3)]) : ""
       pointDesignator =
         recordId.count > 4
         ? String(recordId.dropFirst(4)).trimmingCharacters(in: .whitespaces) : ""
-    } else {
-      altitudeCode = ""
-      pointDesignator = ""
     }
 
     let lat: Double = try t[3],

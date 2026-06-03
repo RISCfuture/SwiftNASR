@@ -3,7 +3,7 @@ import Foundation
 
 final class FrequencyParser: Sendable {
   private let MHzRef = Reference<UInt>()
-  private let kHzRef = Reference<UInt?>()
+  private let fractionRef = Reference<String?>()
   private let useRef = Reference<FSS.Frequency.Use?>()
   private let SSBRef = Reference<Bool>()
   private let nameRef = Reference<String?>()
@@ -18,10 +18,10 @@ final class FrequencyParser: Sendable {
       }
       Optionally {
         "."
-        Capture(as: kHzRef) {
+        Capture(as: fractionRef) {
           OneOrMore(.digit)
         } transform: {
-          .init($0)
+          String($0)
         }
       }
       Capture(as: useRef) {
@@ -52,8 +52,16 @@ final class FrequencyParser: Sendable {
     }
 
     let MHz = match[MHzRef]
-    let kHz = match[kHzRef] ?? 0
-    let frequency = MHz * 1000 + kHz
+    let frequency: UInt
+    if let fraction = match[fractionRef] {
+      // A decimal point means a VHF/UHF value in MHz; the fractional digits are
+      // thousandths of an MHz (kHz), so right-pad to three digits ("5" → 500).
+      let kHz = UInt(fraction.padding(toLength: 3, withPad: "0", startingAt: 0)) ?? 0
+      frequency = MHz * 1000 + kHz
+    } else {
+      // No decimal point means an HF value already expressed in kHz (e.g. 8903).
+      frequency = MHz
+    }
     let use = match[useRef]
     let SSB = match[SSBRef]
     let name = match[nameRef]
