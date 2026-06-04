@@ -26,8 +26,6 @@ public struct Airway: ParentRecord {
   /// General remarks about the entire airway.
   public internal(set) var remarks = [String]()
 
-  weak var data: NASRData?
-
   public var id: String { "\(designation)\(type.rawValue)" }
 
   // MARK: - Nested Types

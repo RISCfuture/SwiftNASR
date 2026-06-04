@@ -17,11 +17,6 @@ struct ByteTransformer {
     self.fields = fields
   }
 
-  /// Parses a frequency from bytes to kHz.
-  static func parseFrequency(_ bytes: ByteSlice) -> UInt? {
-    bytes.parseFrequencyKHz()
-  }
-
   /// Parses a frequency string to kHz.
   static func parseFrequency(_ string: String) -> UInt? {
     Array(string.utf8)[...].parseFrequencyKHz()

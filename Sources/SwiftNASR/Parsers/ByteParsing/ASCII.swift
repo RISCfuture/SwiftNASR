@@ -1,6 +1,9 @@
+// periphery:ignore:all
 /// Named ASCII byte constants for use in byte-level parsing.
 ///
 /// Using named constants instead of inline literals improves readability and reduces errors.
+/// This is a deliberately complete reference table covering the printable ASCII range, so
+/// individual unused entries are retained for coherence.
 @usableFromInline
 enum ASCII {
   // Control characters

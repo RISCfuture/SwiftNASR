@@ -112,14 +112,7 @@ public actor NASRData {
   }
 
   /// Airways loaded by SwiftNASR.
-  public var airways: [Airway]? {
-    didSet {
-      guard airways != nil else { return }
-      for airwayIndex in 0..<airways!.count {
-        airways![airwayIndex].data = self
-      }
-    }
-  }
+  public var airways: [Airway]?
 
   /// ILS facilities loaded by SwiftNASR.
   public var ILSFacilities: [ILS]? {
@@ -583,15 +576,6 @@ extension WeatherStation {
       guard let airportSiteNumber else { return nil }
       return await data?.airports?.first { $0.id == airportSiteNumber }
     }
-  }
-}
-
-extension Airway {
-
-  /// Resolves the ARTCC for a segment by its ID.
-  func resolveARTCC(_ artccID: String?) async -> ARTCC? {
-    guard let artccID else { return nil }
-    return await data?.ARTCCs?.first { $0.code == artccID }
   }
 }
 

@@ -68,51 +68,6 @@ struct TransformedRow {
 struct CSVTransformer {
   // MARK: - Type Properties
 
-  static var yearOnly: DateFormatter {
-    let df = DateFormatter()
-    df.dateFormat = "yyyy"
-    df.timeZone = zulu
-    return df
-  }
-  static var monthYear: DateFormatter {
-    let df = DateFormatter()
-    df.dateFormat = "MM/yyyy"
-    df.timeZone = zulu
-    return df
-  }
-  static var monthDayYear: DateFormatter {
-    let df = DateFormatter()
-    df.dateFormat = "MMddyyyy"
-    df.timeZone = zulu
-    return df
-  }
-  static var monthDayYearSlash: DateFormatter {
-    let df = DateFormatter()
-    df.dateFormat = "MM/dd/yyyy"
-    df.timeZone = zulu
-    return df
-  }
-  // CSV date formats (FAA CSV uses yyyy/MM/dd and yyyy/MM)
-  static var yearMonthDaySlash: DateFormatter {
-    let df = DateFormatter()
-    df.dateFormat = "yyyy/MM/dd"
-    df.timeZone = zulu
-    return df
-  }
-  static var yearMonthSlash: DateFormatter {
-    let df = DateFormatter()
-    df.dateFormat = "yyyy/MM"
-    df.timeZone = zulu
-    return df
-  }
-  static var dayMonthYear: DateFormatter {
-    let df = DateFormatter()
-    df.dateFormat = "dd MMM yyyy"
-    df.locale = Locale(identifier: "en_US_POSIX")
-    df.timeZone = zulu
-    return df
-  }
-
   private static let ddmmssParser = DDMMSSParser()
 
   // MARK: - Instance Properties

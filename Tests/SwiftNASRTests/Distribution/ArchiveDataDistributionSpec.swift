@@ -44,11 +44,12 @@ class ArchiveDataDistributionSpec: AsyncSpec {
   }
 
   override class func spec() {
-    //        let distributionPrefix = try ArchiveDataDistribution(data: mockDataReadmePrefix)
     var distributionReadme: ArchiveDataDistribution!
+    var distributionPrefix: ArchiveDataDistribution!
 
     beforeEach {
       distributionReadme = try .init(data: mockDataReadme)
+      distributionPrefix = try .init(data: mockDataReadmePrefix)
     }
 
     describe("readFile") {
@@ -93,7 +94,7 @@ class ArchiveDataDistributionSpec: AsyncSpec {
       }
 
       it("reads the cycle from the Read_me_* file") {
-        guard let cycle = try await distributionReadme.readCycle() else {
+        guard let cycle = try await distributionPrefix.readCycle() else {
           fail()
           return
         }

@@ -54,22 +54,6 @@ struct NavaidKey: Hashable {
     type = navaid.type
     city = navaid.city
   }
-
-  /// Initialize from transformed values for NAV2-NAV6 records.
-  /// These records don't include city, so we use an empty string.
-  /// This means lookups will only work correctly if there's only one navaid
-  /// with the given (ID, type) combination.
-  init(values: FixedWidthTransformedRow) throws {
-    ID = try values[1]
-    type = try values[2]
-    city = ""  // NAV2-NAV6 records don't include city
-  }
-
-  init(ID: String, type: Navaid.FacilityType, city: String) {
-    self.ID = ID
-    self.type = type
-    self.city = city
-  }
 }
 
 actor FixedWidthNavaidParser: FixedWidthParser, DiagnosingParser {

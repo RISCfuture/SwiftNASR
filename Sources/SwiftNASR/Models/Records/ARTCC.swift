@@ -98,11 +98,6 @@ public struct ARTCC: ParentRecord {
   /// Fields that per-field remarks can be associated with.
   public enum Field: String, RemarkField {
     case alternateName, stateCode, location
-
-    static let fieldOrder: [Self?] = [
-      nil, nil, nil, nil, .alternateName, nil, nil, .stateCode,
-      .stateCode, .location, .location, .location, .location, nil, nil
-    ]
   }
 
   // MARK: - Classes
@@ -144,15 +139,6 @@ public struct ARTCC: ParentRecord {
     /// Fields that per-field remarks can be associated with.
     public enum Field: String, RemarkField {
       case altitude, associatedAirportCode
-
-      static let fieldOrder: [Self?] = [
-        nil, nil, nil, nil, nil, .altitude, nil, nil,
-        .associatedAirportCode, .associatedAirportCode,
-        .associatedAirportCode, .associatedAirportCode,
-        .associatedAirportCode, .associatedAirportCode,
-        .associatedAirportCode, .associatedAirportCode,
-        .associatedAirportCode
-      ]
     }
 
     enum CodingKeys: String, CodingKey {

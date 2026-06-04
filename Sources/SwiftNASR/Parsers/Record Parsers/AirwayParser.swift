@@ -12,16 +12,6 @@ enum AirwayRecordIdentifier: String {
 struct AirwayKey: Hashable {
   let designation: String
   let type: Airway.AirwayType
-
-  init(airway: Airway) {
-    designation = airway.designation
-    type = airway.type
-  }
-
-  init(designation: String, type: Airway.AirwayType) {
-    self.designation = designation
-    self.type = type
-  }
 }
 
 struct SegmentKey: Hashable {

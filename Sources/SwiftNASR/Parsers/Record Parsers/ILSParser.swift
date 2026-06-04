@@ -13,18 +13,6 @@ struct ILSKey: Hashable {
   let airportSiteNumber: String
   let runwayEndId: String
   let systemType: ILS.SystemType
-
-  init(ils: ILS) {
-    airportSiteNumber = ils.airportSiteNumber
-    runwayEndId = ils.runwayEndId
-    systemType = ils.systemType
-  }
-
-  init(airportSiteNumber: String, runwayEndId: String, systemType: ILS.SystemType) {
-    self.airportSiteNumber = airportSiteNumber
-    self.runwayEndId = runwayEndId
-    self.systemType = systemType
-  }
 }
 
 actor FixedWidthILSParser: FixedWidthParser {

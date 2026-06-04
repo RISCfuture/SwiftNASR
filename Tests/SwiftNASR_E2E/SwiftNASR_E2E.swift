@@ -298,6 +298,7 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     return selectedTypes
   }
 
+  // periphery:ignore - used by ArgumentParser's Decodable-based command parsing
   private enum CodingKeys: String, CodingKey {
     case workingDirectory
     case format

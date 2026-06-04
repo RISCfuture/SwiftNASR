@@ -39,6 +39,7 @@ extension FixedWidthParser {
     try parseValues(slices, for: recordIdentifier)
   }
 
+  // periphery:ignore - abstract requirement; subclasses must provide an implementation
   @available(*, unavailable)
   func finish(data _: NASRData) {
     fatalError("must be implemented by subclasses")

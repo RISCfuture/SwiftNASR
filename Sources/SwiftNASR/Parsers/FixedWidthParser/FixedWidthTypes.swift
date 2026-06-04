@@ -6,26 +6,10 @@ import Foundation
 struct FixedWidthTransformedRow {
   private let values: [Any?]
 
-  /// Returns the number of values in this row.
-  var count: Int { values.count }
-
   // MARK: - Initializer
 
   init(_ values: [Any?]) {
     self.values = values
-  }
-
-  // MARK: - Methods
-
-  /// Provides backward-compatible access for code using `as!` casts during migration.
-  ///
-  /// Example: `transformedValues.value(at: 55) as! [String]`
-  ///
-  /// Prefer using typed subscripts for new code:
-  /// - `let x: String = try t[1]` for required values
-  /// - `let x: String? = try t[optional: 1]` for optional values
-  func value(at index: Int) -> Any? {
-    return values[index]
   }
 
   // MARK: - Subscripts
@@ -68,16 +52,6 @@ struct FixedWidthTransformedRow {
   /// the typed subscripts `t[index]` or `t[optional: index]`.
   subscript(raw index: Int) -> Any? {
     return values[index]
-  }
-
-  /// Returns a slice of raw values for the specified range.
-  subscript(_ range: ClosedRange<Int>) -> ArraySlice<Any?> {
-    return values[range]
-  }
-
-  /// Returns a slice of raw values for the specified range.
-  subscript(_ range: Range<Int>) -> ArraySlice<Any?> {
-    return values[range]
   }
 }
 
