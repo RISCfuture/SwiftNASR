@@ -1,7 +1,7 @@
 import Foundation
 
 /**
- NASR data is distributed on a 56-day cycle. The Cycle class represents one such
+ NASR data is distributed on a 28-day cycle. The Cycle class represents one such
  time period. Cycles are defined by the first day of their effectivity period.
  */
 
