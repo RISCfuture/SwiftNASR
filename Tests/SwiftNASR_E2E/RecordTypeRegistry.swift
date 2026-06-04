@@ -111,7 +111,7 @@ let recordTypeRegistry: [RecordType: RecordTypeInfo] = [
   .codedDepartureRoutes: RecordTypeInfo(
     recordType: .codedDepartureRoutes,
     displayName: "Coded Departure Routes",
-    txtWeight: nil,  // Not available in TXT
+    txtWeight: 41,  // CDR.txt: ~41k lines (comma-delimited)
     csvWeight: 5  // CDR.csv: ~5MB
   ),
   .miscActivityAreas: RecordTypeInfo(

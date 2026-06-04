@@ -1,5 +1,12 @@
 # Change Log
 
+## [3.1.0] - 2026-06-04
+
+### Added
+
+- Coded Departure Routes are now parsed from the TXT distribution (`CDR.txt`) in addition to CSV; the six fields present only in the CSV file are `nil` when parsed from TXT
+- The CSV `TerminalCommFacility` now carries radar, military-operations, and class-airspace data, folded in from the `RDR`, `MIL_OPS`, and `CLS_ARSP` files that the FAA split out of the legacy `TWR` subscriber file — matching the TXT representation
+
 ## [3.0.0] - 2026-06-03
 
 ### Breaking Changes

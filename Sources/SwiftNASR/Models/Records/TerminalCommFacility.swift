@@ -97,7 +97,7 @@ public struct TerminalCommFacility: ParentRecord {
   public let towerOperator: String?
 
   /// Name of agency conducting military operations.
-  public let militaryOperator: String?
+  public internal(set) var militaryOperator: String?
 
   /// Name of agency operating primary approach control.
   public let primaryApproachOperator: String?
@@ -117,7 +117,7 @@ public struct TerminalCommFacility: ParentRecord {
   public let towerRadioCall: String?
 
   /// Radio call for military operations.
-  public let militaryRadioCall: String?
+  public internal(set) var militaryRadioCall: String?
 
   /// Radio call for primary approach control.
   public let primaryApproachRadioCall: String?

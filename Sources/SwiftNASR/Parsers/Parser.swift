@@ -115,8 +115,7 @@ func parserFor(recordType: RecordType, format: DataFormat = .txt) -> Parser {
         case .FSSCommFacilities: return FixedWidthFSSCommFacilityParser()
         case .ATSAirways: return FixedWidthATSAirwayParser()
         case .locationIdentifiers: return FixedWidthLocationIdentifierParser()
-        default:
-          preconditionFailure("No TXT parser for \(recordType)")
+        case .codedDepartureRoutes: return TXTCodedDepartureRouteParser()
       }
     case .csv:
       switch recordType {

@@ -28,21 +28,33 @@ public struct CodedDepartureRoute: Record, Identifiable {
   public let departureCenterIdentifier: String
 
   /// Arrival center ARTCC identifier (e.g., "ZLA").
+  ///
+  /// `nil` when the distribution was loaded in the TXT format, which omits this field.
   public let arrivalCenterIdentifier: String?
 
   /// Space-separated list of transition center ARTCC identifiers.
+  ///
+  /// `nil` when the distribution was loaded in the TXT format, which omits this field.
   public let transitionCenterIdentifiers: String?
 
   /// Whether coordination is required for this route.
+  ///
+  /// `nil` when the distribution was loaded in the TXT format, which omits this field.
   public let coordinationRequired: Bool?
 
   /// Play information or notes for this route.
+  ///
+  /// `nil` when the distribution was loaded in the TXT format, which omits this field.
   public let playInfo: String?
 
   /// Navigation equipment requirements.
+  ///
+  /// `nil` when the distribution was loaded in the TXT format, which omits this field.
   public let navigationEquipment: String?
 
   /// Route length in nautical miles.
+  ///
+  /// `nil` when the distribution was loaded in the TXT format, which omits this field.
   public let lengthNM: UInt?
 
   /// Reference to parent NASRData for cross-referencing.

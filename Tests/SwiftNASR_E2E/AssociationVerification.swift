@@ -467,15 +467,38 @@ func verifyAssociations(
 
   // CSV-only associations
   if isCSV {
-    // CodedDepartureRoute associations
-    if canTest(.codedDepartureRoutes, .ARTCCFacilities),
-      let cdrs = await nasr.data.codedDepartureRoutes, !cdrs.isEmpty
+    // TerminalCommFacility radar/military/airspace data is split into separate CSV
+    // files (RDR/MIL_OPS/CLS_ARSP) and folded back in. The TXT format carries these
+    // inline, so this completeness check is CSV-only.
+    if canTest(.terminalCommFacilities),
+      let facilities = await nasr.data.terminalCommFacilities, !facilities.isEmpty
     {
-      if let cdr = cdrs.first {
-        let artcc = await cdr.artcc
-        check("CodedDepartureRoute.artcc", artcc != nil)
-      }
+      check(
+        "TerminalCommFacility.radar (folded from RDR.csv)",
+        facilities.contains { $0.radar != nil }
+      )
+      check(
+        "TerminalCommFacility.airspace (folded from CLS_ARSP.csv)",
+        facilities.contains { $0.airspace != nil }
+      )
+      check(
+        "TerminalCommFacility.militaryOperator (folded from MIL_OPS.csv)",
+        facilities.contains { $0.militaryOperator != nil }
+      )
     }
+  }
+
+  // CodedDepartureRoute associations (both formats — CDR now parses in TXT and CSV).
+  // `codedDepartureRoutes` is an array of a dictionary's values, so its order is
+  // nondeterministic and not every departure center resolves; iterate to find one.
+  if canTest(.codedDepartureRoutes, .ARTCCFacilities),
+    let cdrs = await nasr.data.codedDepartureRoutes, !cdrs.isEmpty
+  {
+    var foundARTCC = false
+    for cdr in cdrs where !foundARTCC {
+      foundARTCC = await cdr.artcc != nil
+    }
+    check("CodedDepartureRoute.artcc", foundARTCC)
   }
 
   // Print results

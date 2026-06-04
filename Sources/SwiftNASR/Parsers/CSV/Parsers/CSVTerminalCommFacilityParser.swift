@@ -1,14 +1,23 @@
 import Foundation
 import StreamingCSV
 
-/// CSV Terminal Communications Facility Parser for parsing ATC_BASE.csv, ATC_SVC.csv, ATC_ATIS.csv, ATC_RMK.csv
+/// CSV Terminal Communications Facility Parser.
+///
+/// The legacy `TWR.txt` subscriber file was deconstructed by the FAA into several CSV
+/// files. The base facility, services, ATIS, and remarks come from `ATC_*.csv`; the
+/// radar (legacy TWR5), military operations (legacy TWR1/2/6), and class-airspace
+/// (legacy TWR8) data are folded in from `RDR.csv`, `MIL_OPS.csv`, and `CLS_ARSP.csv`
+/// respectively, so the CSV ``TerminalCommFacility`` matches the TXT representation.
 actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
   static let type = RecordType.terminalCommFacilities
 
   var distribution: (any Distribution)?
   var progress: Progress?
   var bytesRead: Int64 = 0
-  let CSVFiles = ["ATC_BASE.csv", "ATC_SVC.csv", "ATC_ATIS.csv", "ATC_RMK.csv"]
+  let CSVFiles = [
+    "ATC_BASE.csv", "ATC_SVC.csv", "ATC_ATIS.csv", "ATC_RMK.csv",
+    "RDR.csv", "MIL_OPS.csv", "CLS_ARSP.csv"
+  ]
 
   var facilities = [String: TerminalCommFacility]()
   var pendingDiagnostics = [RecordParseError]()
@@ -164,13 +173,156 @@ actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
         self.facilities[facilityID]?.remarks.append(remark)
       }
     }
+
+    // The FAA split the legacy TWR radar/military/airspace data into separate CSV
+    // files. Fold them back into the facilities parsed above. RDR is keyed by
+    // FACILITY_ID; MIL_OPS and CLS_ARSP are keyed by SITE_NO.
+    let siteToFacility = Dictionary(
+      facilities.values.compactMap { facility -> (String, String)? in
+        guard let siteNumber = facility.airportSiteNumber, !siteNumber.isEmpty else { return nil }
+        return (siteNumber, facility.facilityId)
+      },
+      uniquingKeysWith: { first, _ in first }
+    )
+
+    try await parseRadar()
+    try await parseMilitaryOperations(siteToFacility: siteToFacility)
+    try await parseClassAirspace(siteToFacility: siteToFacility)
   }
 
   func finish(data: NASRData) async {
     await data.finishParsing(terminalCommFacilities: Array(facilities.values))
   }
 
+  // MARK: - Folded record files
+
+  /// Parses `RDR.csv` (legacy TWR5) and appends radar equipment to each facility,
+  /// matched by `FACILITY_ID`. Rows referencing an unknown facility are recorded as
+  /// dropped-row diagnostics.
+  private func parseRadar() async throws {
+    try await parseCSVFile(
+      filename: "RDR.csv",
+      requiredColumns: ["FACILITY_ID", "RADAR_TYPE"]
+    ) { row in
+      let facilityID = try row["FACILITY_ID"]
+      guard self.facilities[facilityID] != nil else {
+        throw ParserError.unknownParentRecord(
+          parentType: "TerminalCommFacility",
+          parentID: facilityID,
+          childType: "radar"
+        )
+      }
+
+      let radarType = try row["RADAR_TYPE"]
+      guard !radarType.isEmpty else { return }
+
+      let equipment = TerminalCommFacility.Radar.RadarEquipment(
+        radarType: radarType,
+        hours: try row.optional("RADAR_HRS")
+      )
+
+      if self.facilities[facilityID]?.radar == nil {
+        self.facilities[facilityID]?.radar = TerminalCommFacility.Radar(
+          primaryApproachRadar: nil,
+          secondaryApproachRadar: nil,
+          primaryDepartureRadar: nil,
+          secondaryDepartureRadar: nil
+        )
+      }
+      self.facilities[facilityID]?.radar?.equipment.append(equipment)
+    }
+  }
+
+  /// Parses `MIL_OPS.csv` (legacy TWR1/2/6) and merges military-operations data into
+  /// each facility, matched by `SITE_NO`. Rows referencing an unknown site are recorded
+  /// as dropped-row diagnostics.
+  private func parseMilitaryOperations(siteToFacility: [String: String]) async throws {
+    try await parseCSVFile(
+      filename: "MIL_OPS.csv",
+      requiredColumns: ["SITE_NO"]
+    ) { row in
+      let siteNumber = try row["SITE_NO"]
+      guard let facilityID = siteToFacility[siteNumber] else {
+        throw ParserError.unknownParentRecord(
+          parentType: "TerminalCommFacility",
+          parentID: siteNumber,
+          childType: "military operations"
+        )
+      }
+
+      self.facilities[facilityID]?.militaryOperator = self.militaryOperatorName(
+        try row.optional("MIL_OPS_OPER_CODE"),
+        siteNumber: siteNumber
+      )
+      self.facilities[facilityID]?.militaryRadioCall = try row.optional("MIL_OPS_CALL")
+      self.facilities[facilityID]?.militaryOperationsHours = try row.optional("MIL_OPS_HRS")
+      self.facilities[facilityID]?.macpHours = try row.optional("AMCP_HRS")
+      self.facilities[facilityID]?.pmsvHours = try row.optional("PMSV_HRS")
+    }
+  }
+
+  /// Parses `CLS_ARSP.csv` (legacy TWR8) and merges class-airspace data into each
+  /// facility, matched by `SITE_NO`. Rows referencing an unknown site are recorded as
+  /// dropped-row diagnostics.
+  private func parseClassAirspace(siteToFacility: [String: String]) async throws {
+    try await parseCSVFile(
+      filename: "CLS_ARSP.csv",
+      requiredColumns: ["SITE_NO"]
+    ) { row in
+      let siteNumber = try row["SITE_NO"]
+      guard let facilityID = siteToFacility[siteNumber] else {
+        throw ParserError.unknownParentRecord(
+          parentType: "TerminalCommFacility",
+          parentID: siteNumber,
+          childType: "class airspace"
+        )
+      }
+
+      let airspace = TerminalCommFacility.Airspace(
+        classB: try ParserHelpers.parseYNFlagRequired(
+          row.optional("CLASS_B_AIRSPACE"),
+          fieldName: "classB"
+        ),
+        classC: try ParserHelpers.parseYNFlagRequired(
+          row.optional("CLASS_C_AIRSPACE"),
+          fieldName: "classC"
+        ),
+        classD: try ParserHelpers.parseYNFlagRequired(
+          row.optional("CLASS_D_AIRSPACE"),
+          fieldName: "classD"
+        ),
+        classE: try ParserHelpers.parseYNFlagRequired(
+          row.optional("CLASS_E_AIRSPACE"),
+          fieldName: "classE"
+        ),
+        hours: try row.optional("AIRSPACE_HRS")
+      )
+      self.facilities[facilityID]?.airspace = airspace
+    }
+  }
+
   // MARK: - Helper methods
+
+  /// Decodes a `MIL_OPS_OPER_CODE` into the agency name used by the TXT format. An
+  /// unknown non-blank code records a field-level diagnostic and returns `nil`.
+  private func militaryOperatorName(_ code: String?, siteNumber: String) -> String? {
+    guard let code, !code.isEmpty else { return nil }
+    switch code.uppercased() {
+      case "A": return "U.S. AIR FORCE"
+      case "C": return "U.S. COAST GUARD"
+      case "F": return "FEDERAL AVIATION ADMIN"
+      case "N": return "U.S. NAVY"
+      case "R": return "U.S. ARMY"
+      default:
+        recordFieldError(
+          field: "militaryOperator",
+          value: code,
+          id: siteNumber,
+          underlying: ParserError.unknownRecordEnumValue(code)
+        )
+        return nil
+    }
+  }
 
   private func parseYYYYMMDDDate(_ string: String) -> DateComponents? {
     let trimmed = string.trimmingCharacters(in: .whitespaces)
