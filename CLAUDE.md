@@ -10,5 +10,3 @@
   to download real FAA data, then extract and examine the relevant files to
   find all actual values that appear in production data.
 - Also use the layout TXT files in the live distribution to interpret data values.
-- Do not create lists of symbols in Swift-DocC comments. Instead, create a
-  @DocumentationExtension that categorizes the symbols.
