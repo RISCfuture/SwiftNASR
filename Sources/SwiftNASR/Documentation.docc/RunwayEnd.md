@@ -80,4 +80,3 @@
 - ``MarkingCondition-swift.enum``
 - ``RVRSensor``
 - ``ApproachLighting-swift.enum``
-

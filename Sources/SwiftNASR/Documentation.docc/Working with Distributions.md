@@ -68,23 +68,23 @@ for more information.
 
 ### Downloading Distributions
 
-- ``NASR/fromInternetToMemory(activeAt:format:)``
-- ``ArchiveDataDistribution``
-- ``NASR/fromInternetToFile(_:activeAt:format:)``
-- ``ArchiveFileDistribution``
+* ``NASR/fromInternetToMemory(activeAt:format:)``
+* ``ArchiveDataDistribution``
+* ``NASR/fromInternetToFile(_:activeAt:format:)``
+* ``ArchiveFileDistribution``
 
 ### Loading Distributions from Disk
 
-- ``NASR/fromLocalArchive(_:format:)``
-- ``ArchiveFileDistribution``
-- ``NASR/fromLocalDirectory(_:format:)``
-- ``DirectoryDistribution``
+* ``NASR/fromLocalArchive(_:format:)``
+* ``ArchiveFileDistribution``
+* ``NASR/fromLocalDirectory(_:format:)``
+* ``DirectoryDistribution``
 
 ### Loading Parsed Data
 
-- ``NASR/fromData(_:)``
-- ``NullDistribution`` 
+* ``NASR/fromData(_:)``
+* ``NullDistribution``
 
 ### Subclassing
 
-- ``Distribution``
+* ``Distribution``

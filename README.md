@@ -27,7 +27,7 @@ likely to generate parsing errors, and require more developer work to maintain f
 compatibility -- but it also results in a library that's more in harmony with the design goals
 of the Swift language itself (type safety, compile-time checks, etc.).
 
-### What records can I parse with this?
+## What records can I parse with this?
 
 SwiftNASR parses all record types in a NASR distribution:
 
@@ -149,7 +149,7 @@ more information.
 ## Documentation
 
 Online API documentation and tutorials are available at
-https://riscfuture.github.io/SwiftNASR/documentation/swiftnasr/
+<https://riscfuture.github.io/SwiftNASR/documentation/swiftnasr/>
 
 DocC documentation is available, including tutorials and API documentation. For
 Xcode documentation, you can run
