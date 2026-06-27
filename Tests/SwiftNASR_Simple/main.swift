@@ -20,19 +20,14 @@ if FileManager.default.fileExists(atPath: txtPath.path) {
   print("NASR created!")
 
   print("About to call nasr.load()...")
-  Task {
-    do {
-      try await nasr.load { progress in
-        print("Load progress: \(progress.fractionCompleted)")
-      }
-      print("Load completed successfully!")
-    } catch {
-      print("Load failed: \(error)")
+  do {
+    try await nasr.load { progress in
+      print("Load progress: \(progress.fractionCompleted)")
     }
-    exit(0)
+    print("Load completed successfully!")
+  } catch {
+    print("Load failed: \(error)")
   }
-
-  RunLoop.main.run()
 } else {
   print("TXT archive not found")
 }

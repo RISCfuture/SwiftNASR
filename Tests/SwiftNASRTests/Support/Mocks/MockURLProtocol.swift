@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 struct MockResponse {
   var data: Data?
@@ -7,9 +8,21 @@ struct MockResponse {
 }
 
 class MockURLProtocol: URLProtocol {
-  // Quick tests do not run in parallel so access should always be synchronous
-  nonisolated(unsafe) static var nextResponse: MockResponse?
-  nonisolated(unsafe) static var lastURL: URL?
+  // `URLProtocol`'s `init`/`startLoading` are synchronous callbacks driven by
+  // `URLSession`, so an actor doesn't fit; a Mutex provides real mutual exclusion
+  // for this shared test fixture without requiring the protected state to be
+  // statically `Sendable`.
+  private static let state = Mutex(State())
+
+  static var nextResponse: MockResponse? {
+    get { state.withLock { $0.nextResponse } }
+    set { state.withLock { $0.nextResponse = newValue } }
+  }
+
+  static var lastURL: URL? {
+    get { state.withLock { $0.lastURL } }
+    set { state.withLock { $0.lastURL = newValue } }
+  }
 
   override init(
     request: URLRequest,
@@ -53,5 +66,10 @@ class MockURLProtocol: URLProtocol {
 
   override func stopLoading() {
     // Required, but not used in this mock
+  }
+
+  private struct State {
+    var nextResponse: MockResponse?
+    var lastURL: URL?
   }
 }

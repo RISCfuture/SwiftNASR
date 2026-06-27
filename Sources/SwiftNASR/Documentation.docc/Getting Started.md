@@ -71,7 +71,7 @@ print(sanCarlos.runways[0].length)
 
 To avoid parsing a large dataset each time your application loads, I recommend
 encoding the ``NASRData`` object. Choose the encoder you wish to use; for
-example, `JSONEncoder` uses a straightforward and portable format. This class
+example, `JSONEncoder` uses a straightforward and portable format. SwiftNASR
 also provides ``JSONZipEncoder`` to cut down on space when needed.
 
 You can encode the whole object, containing all the data you've loaded:

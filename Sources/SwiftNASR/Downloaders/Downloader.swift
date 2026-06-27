@@ -56,10 +56,8 @@ final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
     totalBytesWritten: Int64,
     totalBytesExpectedToWrite: Int64
   ) {
-    DispatchQueue.main.async { [weak self] in
-      self?.progress.completedUnitCount = totalBytesWritten
-      self?.progress.totalUnitCount = totalBytesExpectedToWrite
-    }
+    progress.completedUnitCount = totalBytesWritten
+    progress.totalUnitCount = totalBytesExpectedToWrite
   }
 }
 

@@ -2,10 +2,15 @@
 
 import PackageDescription
 
+let approachableConcurrency: [SwiftSetting] = [
+  .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+  .enableUpcomingFeature("InferIsolatedConformances")
+]
+
 let package = Package(
   name: "SwiftNASR",
   defaultLocalization: "en",
-  platforms: [.macOS(.v13), .iOS(.v16), .tvOS(.v16), .watchOS(.v9), .visionOS(.v1)],
+  platforms: [.macOS(.v15), .iOS(.v18), .tvOS(.v18), .watchOS(.v11), .visionOS(.v2)],
 
   products: [
     .library(
@@ -27,6 +32,7 @@ let package = Package(
       name: "SwiftNASR",
       dependencies: ["ZIPFoundation", "StreamingCSV"],
       resources: [.process("Resources")],
+      swiftSettings: approachableConcurrency,
       linkerSettings: [.linkedLibrary("swift_Concurrency")]
     ),
     .testTarget(
@@ -36,6 +42,7 @@ let package = Package(
         .copy("Resources/MockDistribution"),
         .copy("Resources/FailingMockDistribution")
       ],
+      swiftSettings: approachableConcurrency,
       linkerSettings: [.linkedLibrary("swift_Concurrency")]
     ),
     .executableTarget(
@@ -45,6 +52,7 @@ let package = Package(
         .product(name: "ArgumentParser", package: "swift-argument-parser")
       ],
       path: "Tests/SwiftNASR_E2E",
+      swiftSettings: approachableConcurrency,
       linkerSettings: [.linkedLibrary("swift_Concurrency")]
     )
   ],

@@ -8,11 +8,7 @@ import ZIPFoundation
 final class JSONZipCoderSpec: QuickSpec {
   override static func spec() {
     let object = ["foo": 1, "bar": 2]
-    var encoder: JSONZipEncoder {
-      let coder = JSONZipEncoder()
-      coder.outputFormatting = .sortedKeys
-      return coder
-    }
+    let encoder = JSONZipEncoder(outputFormatting: .sortedKeys)
     let decoder = JSONZipDecoder()
 
     describe("JSONZipEncoder") {

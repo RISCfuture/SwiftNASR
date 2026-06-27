@@ -64,7 +64,7 @@ public final class ArchiveFileDistribution: Distribution {
       totalBytesProcessed += UInt64(data.count)
       buffer.append(data)
 
-      Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
+      progress.completedUnitCount += Int64(data.count)
 
       // Process lines from buffer - handle both \r\n and \n line endings
       while true {
@@ -154,7 +154,7 @@ public final class ArchiveFileDistribution: Distribution {
 
         _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: true, progress: nil) {
           data in
-          Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
+          progress.completedUnitCount += Int64(data.count)
           // Force a copy to avoid ZIPFoundation buffer reuse issues
           continuation.yield(Data(data))
         }

@@ -75,7 +75,7 @@ public final class DirectoryDistribution: Distribution {
         if subdata.last == carriageReturn {
           subdata.removeLast()
         }
-        Task { @MainActor in progress.completedUnitCount += Int64(byteCount) }
+        progress.completedUnitCount += Int64(byteCount)
 
         eachLine(subdata)
         lines += 1
@@ -83,7 +83,7 @@ public final class DirectoryDistribution: Distribution {
         buffer.removeSubrange(subrange)
       } else {
         let data = handle.readData(ofLength: chunkSize)
-        Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
+        progress.completedUnitCount += Int64(data.count)
         guard !data.isEmpty else {
           if !buffer.isEmpty {
             // Strip trailing \r for Windows-style line endings
@@ -145,7 +145,7 @@ public final class DirectoryDistribution: Distribution {
         while true {
           let data = handle.readData(ofLength: chunkSize)
           guard !data.isEmpty else { break }
-          Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
+          progress.completedUnitCount += Int64(data.count)
           continuation.yield(data)
         }
 

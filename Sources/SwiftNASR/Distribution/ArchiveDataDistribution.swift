@@ -59,7 +59,7 @@ public final class ArchiveDataDistribution: Distribution {
 
     _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: false, progress: nil) { data in
       buffer.append(data)
-      Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
+      progress.completedUnitCount += Int64(data.count)
       // Handle both \r\n and \n line endings
       while true {
         let crlfRange = buffer.range(of: crlfDelimiter)
@@ -133,7 +133,7 @@ public final class ArchiveDataDistribution: Distribution {
 
         _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: false, progress: nil) {
           data in
-          Task { @MainActor in progress.completedUnitCount += Int64(data.count) }
+          progress.completedUnitCount += Int64(data.count)
           // Force a copy to avoid ZIPFoundation buffer reuse issues
           continuation.yield(Data(data))
         }
