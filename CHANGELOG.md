@@ -1,11 +1,22 @@
 # Change Log
 
-## [3.1.0] - 2026-06-04
+## [4.0.0] - 2026-06-26
 
 ### Added
 
 - Coded Departure Routes are now parsed from the TXT distribution (`CDR.txt`) in addition to CSV; the six fields present only in the CSV file are `nil` when parsed from TXT
 - The CSV `TerminalCommFacility` now carries radar, military-operations, and class-airspace data, folded in from the `RDR`, `MIL_OPS`, and `CLS_ARSP` files that the FAA split out of the legacy `TWR` subscriber file — matching the TXT representation
+
+### Changed
+
+- **BREAKING:** `JSONZipEncoder` and `JSONZipDecoder` are now `Sendable` value types (`struct`) instead of `JSONEncoder`/`JSONDecoder` subclasses, eliminating their unsound `@unchecked Sendable` conformances. Set formatting via `JSONZipEncoder(outputFormatting:)` (the `outputFormatting` property remains available); both types can now be shared safely across concurrency domains
+- Progress reporting is now updated synchronously and in order. The downloader's GCD `DispatchQueue.main.async` hop and the per-chunk `Task { @MainActor in … }` hops in the archive and directory distributions were replaced with direct, thread-safe `Progress` mutation, removing a hazard where progress could be reported out of order or after a stream finished
+- Adopted the Approachable Concurrency upcoming-feature flags (`NonisolatedNonsendingByDefault`, `InferIsolatedConformances`), which changes the execution semantics of `nonisolated` async work
+- **BREAKING:** Raised the minimum deployment targets to macOS 15, iOS 18, tvOS 18, watchOS 11, and visionOS 2 to adopt the standard-library `Synchronization` module (`Mutex`/`Atomic`)
+
+### Internal
+
+- Replaced `nonisolated(unsafe)` statics in the test URL-protocol mock with a `Synchronization.Mutex`, and modernized the manual smoke-test harness to top-level `await`
 
 ## [3.0.0] - 2026-06-03
 
