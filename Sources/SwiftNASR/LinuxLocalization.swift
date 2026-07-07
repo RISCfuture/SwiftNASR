@@ -6,8 +6,11 @@
 
   extension String {
     init(
-      localized key: String, table _: String? = nil, bundle _: Bundle? = nil,
-      locale _: Locale? = nil, comment _: StaticString? = nil
+      localized key: String,
+      table _: String? = nil,
+      bundle _: Bundle? = nil,
+      locale _: Locale? = nil,
+      comment _: StaticString? = nil
     ) {
       self = key
     }
