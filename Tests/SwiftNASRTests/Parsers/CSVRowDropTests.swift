@@ -30,7 +30,7 @@ struct CSVRowDropTests {
   @Test
   func keepsEveryGoodRowWhenOneRowThrows() async throws {
     let tempdir = FileManager.default.temporaryDirectory.appendingPathComponent(
-      ProcessInfo().globallyUniqueString
+      ProcessInfo.processInfo.globallyUniqueString
     )
     try FileManager.default.createDirectory(at: tempdir, withIntermediateDirectories: true)
     let csv = "ID\r\nA\r\nBAD\r\nB\r\nC\r\n"

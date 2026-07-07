@@ -21,7 +21,7 @@ struct ArchiveLoaderTests {
   @Test
   func callsBackWithTheArchive() throws {
     let location = FileManager.default.temporaryDirectory.appendingPathComponent(
-      ProcessInfo().globallyUniqueString
+      ProcessInfo.processInfo.globallyUniqueString
     )
     try Self.mockData.write(to: location)
     defer { try? FileManager.default.removeItem(at: location) }

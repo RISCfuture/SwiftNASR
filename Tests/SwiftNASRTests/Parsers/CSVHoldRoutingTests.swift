@@ -12,7 +12,7 @@ struct CSVHoldRoutingTests {
   @Test
   func routesILSTypeCodesToTheILSFieldsAndNavaidTypesToTheNavaidFields() async throws {
     let tempdir = FileManager.default.temporaryDirectory.appendingPathComponent(
-      ProcessInfo().globallyUniqueString
+      ProcessInfo.processInfo.globallyUniqueString
     )
     try FileManager.default.createDirectory(at: tempdir, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: tempdir) }

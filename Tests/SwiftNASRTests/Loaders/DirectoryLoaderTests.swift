@@ -8,7 +8,7 @@ struct DirectoryLoaderTests {
   @Test
   func callsBackWithTheDirectory() throws {
     let location = FileManager.default.temporaryDirectory
-      .appendingPathComponent(ProcessInfo().globallyUniqueString)
+      .appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString)
     let loader = DirectoryLoader(location: location)
 
     let distribution = try loader.load() as! DirectoryDistribution

@@ -9,10 +9,10 @@ struct DirectoryDistributionTests {
   private func makeDistribution() throws -> (DirectoryDistribution, URL) {
     let mockData = "Hello, world!\r\nLine 2".data(using: .isoLatin1)!
     let tempdir = FileManager.default.temporaryDirectory.appendingPathComponent(
-      ProcessInfo().globallyUniqueString
+      ProcessInfo.processInfo.globallyUniqueString
     )
     try FileManager.default.createDirectory(at: tempdir, withIntermediateDirectories: true)
-    try mockData.write(to: tempdir.appendingPathComponent("APT.txt"))
+    try mockData.write(to: tempdir.appendingPathComponent("APT.TXT"))
     return (DirectoryDistribution(location: tempdir), tempdir)
   }
 

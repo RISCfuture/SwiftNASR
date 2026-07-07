@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
 import Synchronization
 
 struct MockResponse {
@@ -24,7 +27,7 @@ class MockURLProtocol: URLProtocol {
     set { state.withLock { $0.lastURL = newValue } }
   }
 
-  override init(
+  override required init(
     request: URLRequest,
     cachedResponse: CachedURLResponse?,
     client: (any URLProtocolClient)?

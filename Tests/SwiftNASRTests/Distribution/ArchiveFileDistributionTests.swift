@@ -20,7 +20,7 @@ struct ArchiveFileDistributionTests {
 
   private func makeDistribution() throws -> (ArchiveFileDistribution, URL) {
     let tempfile = FileManager.default.temporaryDirectory.appendingPathComponent(
-      ProcessInfo().globallyUniqueString
+      ProcessInfo.processInfo.globallyUniqueString
     )
     try Self.mockData.write(to: tempfile)
     return (try .init(location: tempfile), tempfile)

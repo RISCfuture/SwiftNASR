@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
 
 /// Errors that can occur in SwiftNASR methods.
 public enum Error: Swift.Error, Sendable {
@@ -120,239 +123,133 @@ extension Error: LocalizedError {
   public var errorDescription: String? {
     switch self {
       case .nullDistribution, .noSuchFilePrefix, .noSuchFile:
-        #if canImport(Darwin)
-          return String(localized: "Couldn’t load distribution.", comment: "error description")
-        #else
-          return "Couldn’t load distribution."
-        #endif
+        return String(localized: "Couldn’t load distribution.", comment: "error description")
       case .badResponse, .noData, .downloadFailed:
-        #if canImport(Darwin)
-          return String(localized: "Couldn’t download distribution.", comment: "error description")
-        #else
-          return "Couldn’t download distribution."
-        #endif
+        return String(localized: "Couldn’t download distribution.", comment: "error description")
       case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldId,
         .unknownFrequencyFieldId, .invalidFrequency, .unknownFSS,
         .invalidRunwaySurface, .invalidPavementClassification,
         .invalidVGSI, .unknownNavaid, .invalidAltitudeFormat:
-        #if canImport(Darwin)
-          return String(
-            localized: "Couldn’t parse distribution data.",
-            comment: "error description"
-          )
-        #else
-          return "Couldn’t parse distribution data."
-        #endif
+        return String(
+          localized: "Couldn’t parse distribution data.",
+          comment: "error description"
+        )
       case .notYetLoaded:
-        #if canImport(Darwin)
-          return String(
-            localized: "This NASR has not been loaded yet.",
-            comment: "error description"
-          )
-        #else
-          return "This NASR has not been loaded yet."
-        #endif
+        return String(
+          localized: "This NASR has not been loaded yet.",
+          comment: "error description"
+        )
     }
   }
 
   public var failureReason: String? {
     switch self {
       case .nullDistribution:
-        #if canImport(Darwin)
-          return String(
-            localized: "Called .load() on a null distribution.",
-            comment: "failure reason"
-          )
-        #else
-          return "Called .load() on a null distribution."
-        #endif
+        return String(
+          localized: "Called .load() on a null distribution.",
+          comment: "failure reason"
+        )
       case .badResponse(let response):
-        #if canImport(Darwin)
-          return String(
-            localized: "Bad response: \(response.description).",
-            comment: "failure reason"
-          )
-        #else
-          return "Bad response: \(response.description)."
-        #endif
+        return String(
+          localized: "Bad response: \(response.description).",
+          comment: "failure reason"
+        )
       case .downloadFailed(let reason):
-        #if canImport(Darwin)
-          return String(localized: "Download failed: \(reason)", comment: "failure reason")
-        #else
-          return "Download failed: \(reason)"
-        #endif
+        return String(localized: "Download failed: \(reason)", comment: "failure reason")
       case .noSuchFilePrefix(let prefix):
-        #if canImport(Darwin)
-          return String(
-            localized: "Couldn’t find file in archive with prefix ‘\(prefix).’",
-            comment: "failure reason"
-          )
-        #else
-          return "Couldn’t find file in archive with prefix ‘\(prefix).’"
-        #endif
+        return String(
+          localized: "Couldn’t find file in archive with prefix ‘\(prefix).’",
+          comment: "failure reason"
+        )
       case .noData:
-        #if canImport(Darwin)
-          return String(localized: "No data was downloaded.", comment: "failure reason")
-        #else
-          return "No data was downloaded."
-        #endif
+        return String(localized: "No data was downloaded.", comment: "failure reason")
       case .unknownARTCC(let ID):
-        #if canImport(Darwin)
-          return String(
-            localized: "Referenced undefined ARTCC record with ID ‘\(ID)’.",
-            comment: "failure reason"
-          )
-        #else
-          return "Referenced undefined ARTCC record with ID ‘\(ID)’."
-        #endif
+        return String(
+          localized: "Referenced undefined ARTCC record with ID ‘\(ID)’.",
+          comment: "failure reason"
+        )
       case let .unknownARTCCFrequency(frequency, ARTCC):
-        #if canImport(Darwin)
-          return String(
-            localized: "Referenced undefined frequency ‘\(frequency)’ for ARTCC \(ARTCC.code).",
-            comment: "failure reason"
-          )
-        #else
-          return "Referenced undefined frequency ‘\(frequency)’ for ARTCC \(ARTCC.code)."
-        #endif
+        return String(
+          localized: "Referenced undefined frequency ‘\(frequency)’ for ARTCC \(ARTCC.code).",
+          comment: "failure reason"
+        )
       case let .unknownFieldId(fieldId, ARTCC):
-        #if canImport(Darwin)
-          return String(
-            localized: "Unknown field ID ‘\(fieldId)’ at ‘\(ARTCC.code) \(ARTCC.locationName)’.",
-            comment: "failure reason"
-          )
-        #else
-          return "Unknown field ID ‘\(fieldId)’ at ‘\(ARTCC.code) \(ARTCC.locationName)’."
-        #endif
+        return String(
+          localized: "Unknown field ID ‘\(fieldId)’ at ‘\(ARTCC.code) \(ARTCC.locationName)’.",
+          comment: "failure reason"
+        )
       case let .unknownFrequencyFieldId(fieldId, frequency, ARTCC):
-        #if canImport(Darwin)
-          return String(
-            localized:
-              "Unknown field ID '\(fieldId)' for \(frequency.frequencyKHz) kHz at '\(ARTCC.code) \(ARTCC.locationName)'.",
-            comment: "failure reason"
-          )
-        #else
-          return
-            "Unknown field ID '\(fieldId)' for \(frequency.frequencyKHz) kHz at '\(ARTCC.code) \(ARTCC.locationName)'."
-        #endif
+        return String(
+          localized:
+            "Unknown field ID '\(fieldId)' for \(frequency.frequencyKHz) kHz at '\(ARTCC.code) \(ARTCC.locationName)'.",
+          comment: "failure reason"
+        )
       case .invalidFrequency(let string):
-        #if canImport(Darwin)
-          return String(localized: "Invalid frequency ‘\(string)’.", comment: "failure reason")
-        #else
-          return "Invalid frequency ‘\(string)’."
-        #endif
+        return String(localized: "Invalid frequency ‘\(string)’.", comment: "failure reason")
       case .unknownFSS(let ID):
-        #if canImport(Darwin)
-          return String(
-            localized: "Continuation record references unknown FSS ‘\(ID)’.",
-            comment: "failure reason"
-          )
-        #else
-          return "Continuation record references unknown FSS ‘\(ID)’."
-        #endif
+        return String(
+          localized: "Continuation record references unknown FSS ‘\(ID)’.",
+          comment: "failure reason"
+        )
       case .notYetLoaded:
-        #if canImport(Darwin)
-          return String(
-            localized: "Attempted to access NASR data before .load() was called.",
-            comment: "failure reason"
-          )
-        #else
-          return "Attempted to access NASR data before .load() was called."
-        #endif
+        return String(
+          localized: "Attempted to access NASR data before .load() was called.",
+          comment: "failure reason"
+        )
       case .noSuchFile(let path):
-        #if canImport(Darwin)
-          return String(
-            localized: "No such file in distribution: \(path).",
-            comment: "failure reason"
-          )
-        #else
-          return "No such file in distribution: \(path)."
-        #endif
+        return String(
+          localized: "No such file in distribution: \(path).",
+          comment: "failure reason"
+        )
       case .invalidRunwaySurface(let string):
-        #if canImport(Darwin)
-          return String(localized: "Unknown runway surface ‘\(string)’.", comment: "failure reason")
-        #else
-          return "Unknown runway surface ‘\(string)’."
-        #endif
+        return String(localized: "Unknown runway surface ‘\(string)’.", comment: "failure reason")
       case .invalidPavementClassification(let string):
-        #if canImport(Darwin)
-          return String(
-            localized: "Unknown pavement classification ‘\(string)’ for PCN.",
-            comment: "failure reason"
-          )
-        #else
-          return "Unknown pavement classification ‘\(string)’ for PCN."
-        #endif
+        return String(
+          localized: "Unknown pavement classification ‘\(string)’ for PCN.",
+          comment: "failure reason"
+        )
       case .invalidVGSI(let string):
-        #if canImport(Darwin)
-          return String(
-            localized: "Unknown VGSI identifier ‘\(string)’.",
-            comment: "failure reason"
-          )
-        #else
-          return "Unknown VGSI identifier ‘\(string)’."
-        #endif
+        return String(
+          localized: "Unknown VGSI identifier ‘\(string)’.",
+          comment: "failure reason"
+        )
       case .unknownNavaid(let string):
-        #if canImport(Darwin)
-          return String(localized: "Unknown navaid ‘\(string)’.", comment: "failure reason")
-        #else
-          return "Unknown navaid ‘\(string)’."
-        #endif
+        return String(localized: "Unknown navaid ‘\(string)’.", comment: "failure reason")
       case .invalidAltitudeFormat(let string):
-        #if canImport(Darwin)
-          return String(
-            localized: "Invalid altitude format ‘\(string)’.",
-            comment: "failure reason"
-          )
-        #else
-          return "Invalid altitude format ‘\(string)’."
-        #endif
+        return String(
+          localized: "Invalid altitude format ‘\(string)’.",
+          comment: "failure reason"
+        )
     }
   }
 
   public var recoverySuggestion: String? {
     switch self {
       case .nullDistribution:
-        #if canImport(Darwin)
-          return String(
-            localized:
-              "Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk.",
-            comment: "recovery suggestion"
-          )
-        #else
-          return
-            "Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk."
-        #endif
+        return String(
+          localized:
+            "Do not call .load() on a NullDistribution. Use NullDistribution for distributions that were previously loaded and serialized to disk.",
+          comment: "recovery suggestion"
+        )
       case .badResponse, .noData, .downloadFailed:
-        #if canImport(Darwin)
-          return String(
-            localized: "Verify that the URL to the distribution is correct and accessible.",
-            comment: "recovery suggestion"
-          )
-        #else
-          return "Verify that the URL to the distribution is correct and accessible."
-        #endif
+        return String(
+          localized: "Verify that the URL to the distribution is correct and accessible.",
+          comment: "recovery suggestion"
+        )
       case .unknownARTCC, .unknownARTCCFrequency, .unknownFieldId,
         .unknownFrequencyFieldId, .invalidFrequency, .unknownFSS,
         .invalidRunwaySurface, .invalidPavementClassification,
         .invalidVGSI, .unknownNavaid, .noSuchFilePrefix, .noSuchFile,
         .invalidAltitudeFormat:
-        #if canImport(Darwin)
-          return String(
-            localized: "The NASR FADDS format may have changed, requiring an update to SwiftNASR.",
-            comment: "recovery suggestion"
-          )
-        #else
-          return "The NASR FADDS format may have changed, requiring an update to SwiftNASR."
-        #endif
+        return String(
+          localized: "The NASR FADDS format may have changed, requiring an update to SwiftNASR.",
+          comment: "recovery suggestion"
+        )
       case .notYetLoaded:
-        #if canImport(Darwin)
-          return String(
-            localized: "Call .load() before accessing NASR data.",
-            comment: "recovery suggestion"
-          )
-        #else
-          return "Call .load() before accessing NASR data."
-        #endif
+        return String(
+          localized: "Call .load() before accessing NASR data.",
+          comment: "recovery suggestion"
+        )
     }
   }
 }
