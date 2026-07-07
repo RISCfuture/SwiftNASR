@@ -1,5 +1,15 @@
 # Change Log
 
+## [4.1.0] - 2026-07-06
+
+### Added
+
+- Linux support. `URLSession` is guarded behind `FoundationNetworking`, a
+  `String(localized:)` shim covers error strings, the archive downloaders fall
+  back to buffered responses on Linux, and several platform-portability fixes
+  were applied (`@objc` gating, `ProcessInfo`, `URLProtocol` initializer, and
+  file-system error-code differences). Apple platforms are unaffected.
+
 ## [4.0.0] - 2026-06-26
 
 ### Added
