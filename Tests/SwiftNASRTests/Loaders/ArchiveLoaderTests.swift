@@ -1,11 +1,11 @@
 import Foundation
-import Nimble
-import Quick
+import Testing
 import ZIPFoundation
 
 @testable import SwiftNASR
 
-class ArchiveLoaderSpec: AsyncSpec {
+@Suite
+struct ArchiveLoaderTests {
   private static var mockData: Data {
     get throws {
       let data = "Hello, world!".data(using: .isoLatin1)!
@@ -18,25 +18,16 @@ class ArchiveLoaderSpec: AsyncSpec {
     }
   }
 
-  override static func spec() {
+  @Test
+  func callsBackWithTheArchive() throws {
     let location = FileManager.default.temporaryDirectory.appendingPathComponent(
       ProcessInfo().globallyUniqueString
     )
-    var loader: ArchiveLoader!
+    try Self.mockData.write(to: location)
+    defer { try? FileManager.default.removeItem(at: location) }
 
-    describe("load") {
-      aroundEach { test in
-        try self.mockData.write(to: location)
-        loader = ArchiveLoader(location: location)
-
-        await test()
-        try FileManager.default.removeItem(at: location)
-      }
-
-      it("calls back with the archive") {
-        let distribution = try loader.load() as! ArchiveFileDistribution
-        expect(distribution.location).to(equal(location))
-      }
-    }
+    let loader = ArchiveLoader(location: location)
+    let distribution = try loader.load() as! ArchiveFileDistribution
+    #expect(distribution.location == location)
   }
 }

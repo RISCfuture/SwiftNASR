@@ -1,5 +1,2 @@
 retain_public: true
 retain_assign_only_properties: true
-external_test_case_classes:
-  - QuickSpec
-  - AsyncSpec
