@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
 import Testing
 import ZIPFoundation
 
@@ -90,7 +93,15 @@ enum DownloaderTests {
     }
   }
 
-  @Suite
+  // swift-corelibs-foundation's `URLSession.download(from:delegate:)` crashes on completion when
+  // the mocked `URLProtocol` finishes loading via `didLoad(data:)` instead of writing an actual
+  // file to disk — a Linux Foundation limitation, not a SwiftNASR bug. `ArchiveFileDownloader`'s
+  // production download path is exercised by SwiftNASR_E2E against the real FAA endpoint instead.
+  #if canImport(FoundationNetworking)
+    @Suite(.disabled("URLSession.download(from:) + a mocked URLProtocol crashes on Linux"))
+  #else
+    @Suite
+  #endif
   struct ArchiveFileDownloaderTests {
     private func downloader() -> ArchiveFileDownloader {
       ArchiveFileDownloader(

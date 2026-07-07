@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
 
 /**
  A downloader is a class that can download a NASR distribution from the FAA's
@@ -37,7 +40,9 @@ public protocol Downloader: Loader {
   func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws -> Distribution
 }
 
-@objc
+#if canImport(Darwin)
+  @objc
+#endif
 final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
   let progress = Progress(totalUnitCount: 0)
 

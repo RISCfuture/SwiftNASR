@@ -70,12 +70,12 @@ func renderProgressBar(progress: ProgressTracker) async {
     String(repeating: "=", count: safeCompletedWidth)
     + String(repeating: " ", count: safeRemainingWidth)
   print("\r[\(bar)] \(percent)%\(statusSuffix)", terminator: "")
-  fflush(stdout)  // Ensure that the output is flushed immediately
+  fflush(nil)  // Ensure that all open output streams are flushed immediately
 }
 
 func terminalWidth() -> Int {
   var w = winsize()
-  if ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0 {
+  if ioctl(STDOUT_FILENO, UInt(TIOCGWINSZ), &w) == 0 {
     return Int(w.ws_col)
   }
   return 80

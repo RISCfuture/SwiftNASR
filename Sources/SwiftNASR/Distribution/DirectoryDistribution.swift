@@ -48,7 +48,9 @@ public final class DirectoryDistribution: Distribution {
     do {
       handle = try FileHandle(forReadingFrom: fileURL)
     } catch let error as NSError {
-      if error.domain == NSCocoaErrorDomain && error.code == NSFileNoSuchFileError {
+      if error.domain == NSCocoaErrorDomain,
+        error.code == NSFileNoSuchFileError || error.code == NSFileReadNoSuchFileError
+      {
         throw Error.noSuchFile(path: path)
       }
       throw error
@@ -131,7 +133,9 @@ public final class DirectoryDistribution: Distribution {
         do {
           handle = try FileHandle(forReadingFrom: fileURL)
         } catch let error as NSError {
-          if error.domain == NSCocoaErrorDomain && error.code == NSFileNoSuchFileError {
+          if error.domain == NSCocoaErrorDomain,
+        error.code == NSFileNoSuchFileError || error.code == NSFileReadNoSuchFileError
+      {
             throw Error.noSuchFile(path: path)
           }
           throw error
