@@ -17,3 +17,4 @@ xcuserdata/
 # SwiftNASR test data working directory
 .SwiftNASR_TestData/
 comparison_report.json
+.claude/settings.local.json
