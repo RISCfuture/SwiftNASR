@@ -11,10 +11,12 @@ public enum ParseDisposition: Sendable {
 /// A problem encountered while parsing a single record from a NASR distribution.
 ///
 /// Reported through the `errorHandler` of
-/// ``NASR/parse(_:withProgress:errorHandler:)``. A ``recordError`` means the
-/// record could not be constructed and was omitted; a ``fieldError`` means the
-/// record was kept but one field could not be represented and was set to `nil`
-/// (or a repeated sub-element was omitted).
+/// ``NASR/parse(_:withProgress:errorHandler:)``. A
+/// ``recordError(recordType:recordID:underlying:)`` means the record could not
+/// be constructed and was omitted; a
+/// ``fieldError(recordType:recordID:field:value:underlying:)`` means the record
+/// was kept but one field could not be represented and was set to `nil` (or a
+/// repeated sub-element was omitted).
 public enum RecordParseError: Swift.Error, Sendable {
   /// A record couldn't be constructed and was omitted from the results.
   case recordError(

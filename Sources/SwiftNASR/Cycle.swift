@@ -132,7 +132,7 @@ public struct Cycle: Codable, LosslessStringConvertible, Sendable, Identifiable,
 
    - Parameter date: The date to use.
    - Returns: The cycle covering that date, or `nil` if the date is before the
-              ``datum`` date.
+              `datum` date.
    */
   public static func effectiveCycle(for date: Date) -> Self? {
     guard var cycle = datum.effectiveDate else { return nil }

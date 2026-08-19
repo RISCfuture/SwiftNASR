@@ -10,7 +10,7 @@
 ### Dimensions and Geographics
 
 - ``heading``
-- ``visualGlidepathHundredthsDeg``
+- ``visualGlidepathDeg``
 - ``gradientPct``
 - ``LAHSO``
 - ``controllingObject-swift.property``

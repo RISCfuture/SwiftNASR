@@ -47,6 +47,22 @@ jobs:
         run: swift build -v
       - name: Test
         run: swift test -v
+  documentation:
+    name: Build Documentation
+    # macOS: the CoreLocation-gated Location extension is absent from the
+    # Linux symbol graph, so its documentation would go unchecked there.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+      - uses: SwiftyLab/setup-swift@latest
+        with:
+          swift-version: "6.3"
+      - name: Build documentation
+        run: |
+          swift package \
+           --allow-writing-to-directory "$RUNNER_TEMP/docs" \
+           generate-documentation --target SwiftNASR --output-path "$RUNNER_TEMP/docs" \
+           --warnings-as-errors
   lint:
     name: Run SwiftLint
     runs-on: ubuntu-latest

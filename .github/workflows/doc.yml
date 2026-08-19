@@ -17,12 +17,14 @@ concurrency:
 jobs:
   build:
     name: Generate Documentation
-    runs-on: ubuntu-latest
+    # macOS: the CoreLocation-gated Location extension is absent from the
+    # Linux symbol graph, so its documentation would be missing there.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v6
       - uses: SwiftyLab/setup-swift@latest
         with:
-          swift-version: "6.2"
+          swift-version: "6.3"
       - name: Build
         run: |
           swift package \

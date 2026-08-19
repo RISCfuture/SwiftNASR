@@ -30,7 +30,7 @@ public struct JSONZipEncoder: Sendable {
 
    - Parameter value: The value to encode.
    - Returns: The compressed archive data.
-   - Throws: ``JSONZipError`` if the archive could not be created, or an encoding
+   - Throws: `JSONZipError` if the archive could not be created, or an encoding
              error from the underlying `JSONEncoder`.
    */
 
@@ -71,7 +71,7 @@ public struct JSONZipDecoder: Sendable {
    - Parameter type: The type to decode.
    - Parameter data: The compressed archive data.
    - Returns: The decoded value.
-   - Throws: ``JSONZipError`` if the archive could not be read, or a decoding
+   - Throws: `JSONZipError` if the archive could not be read, or a decoding
              error from the underlying `JSONDecoder`.
    */
 
