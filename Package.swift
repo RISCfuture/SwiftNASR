@@ -20,10 +20,10 @@ let package = Package(
     .executable(name: "SwiftNASR_E2E", targets: ["SwiftNASR_E2E"])
   ],
   dependencies: [
-    .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19"),
-    .package(url: "https://github.com/swiftlang/swift-docc-plugin.git", from: "1.4.3"),
-    .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
-    .package(url: "https://github.com/RISCfuture/StreamingCSV.git", from: "2.0.0")
+    .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.20"),
+    .package(url: "https://github.com/swiftlang/swift-docc-plugin.git", from: "1.5.0"),
+    .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.8.2"),
+    .package(url: "https://github.com/RISCfuture/StreamingCSV.git", from: "2.1.0")
   ],
   targets: [
     .target(
