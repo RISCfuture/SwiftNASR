@@ -32,9 +32,7 @@ extension FixedWidthParser {
     let recordIdentifier = try readIdentifier(bytes: bytes)
     let layoutFormat = format(forRecordIdentifier: recordIdentifier)
 
-    let slices = layoutFormat.fields.map { field in
-      bytes[Int(field.range.lowerBound)..<Int(field.range.upperBound)]
-    }
+    let slices = try layoutFormat.slices(from: bytes, recordType: Self.type)
 
     try parseValues(slices, for: recordIdentifier)
   }
@@ -47,6 +45,14 @@ extension FixedWidthParser {
 
   private func readIdentifier(bytes: [UInt8]) throws -> RecordIdentifier {
     let range = recordTypeRange
+    guard bytes.count >= Int(range.upperBound) else {
+      throw ParserError.truncatedRecord(
+        recordType: Self.type.rawValue,
+        expectedMinLength: Int(range.upperBound),
+        actualLength: bytes.count
+      )
+    }
+
     let slice = bytes[Int(range.lowerBound)..<Int(range.upperBound)]
     guard let identifierString = slice.toString() else {
       throw ParserError.badData("Invalid ISO-Latin1 character")

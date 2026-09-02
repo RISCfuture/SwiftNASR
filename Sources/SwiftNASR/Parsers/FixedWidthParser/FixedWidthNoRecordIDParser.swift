@@ -9,9 +9,7 @@ extension FixedWidthNoRecordIDParser {
   func parse(data: Data) throws {
     let bytes = [UInt8](data)
     let format = try formatForData(data)
-    let slices = format.fields.map { field in
-      bytes[Int(field.range.lowerBound)..<Int(field.range.upperBound)]
-    }
+    let slices = try format.slices(from: bytes, recordType: Self.type)
 
     try parseValues(slices)
   }

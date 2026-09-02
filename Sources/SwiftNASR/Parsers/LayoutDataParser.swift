@@ -123,6 +123,39 @@ struct NASRTable {
       return value == number
     }
   }
+
+  /// Slices a fixed-width record into the fields this layout defines.
+  ///
+  /// Only the final field may extend past the end of the record. The FAA
+  /// occasionally over-declares a layout's trailing filler: the airport layout
+  /// effective 2026-09-03 runs to byte 1536, while the runway records it
+  /// describes are 1532 bytes. Clamping that field loses nothing, because it
+  /// names blank filler that every transformer discards. An earlier field
+  /// reaching past the end means the record itself is short, which is reported
+  /// rather than silently truncated.
+  ///
+  /// - Parameters:
+  ///   - bytes: The record to slice.
+  ///   - recordType: The record type, used to describe a truncated record.
+  /// - Returns: One slice per field, in layout order.
+  /// - Throws: ``ParserError`` if the record ends before a field other than the
+  ///           last one.
+  func slices(from bytes: [UInt8], recordType: RecordType) throws -> [ArraySlice<UInt8>] {
+    try fields.enumerated().map { index, field in
+      let lowerBound = Int(field.range.lowerBound)
+      let upperBound = Int(field.range.upperBound)
+      guard upperBound > bytes.count else { return bytes[lowerBound..<upperBound] }
+
+      guard index == fields.count - 1 else {
+        throw ParserError.truncatedRecord(
+          recordType: recordType.rawValue,
+          expectedMinLength: upperBound,
+          actualLength: bytes.count
+        )
+      }
+      return bytes[min(lowerBound, bytes.count)..<bytes.count]
+    }
+  }
 }
 
 protocol LayoutDataParser: Parser {

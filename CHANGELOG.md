@@ -1,5 +1,12 @@
 # Change Log
 
+## [4.1.1] - 2026-09-02
+
+### Fixed
+
+- A layout that declares more bytes than its records contain no longer crashes the fixed-width parsers. The airport layout effective 2026-09-03 widens the runway record's Pavement Classification field from 11 to 16 characters for the ICAO PCR transition, shifting the trailing filler to byte 1536 while the records themselves remain 1532 bytes; slicing that filler trapped on an out-of-range index and killed the process. Only a layout's final field may now overrun, and it is clamped to the end of the record. Any earlier field that runs past the end reports `truncatedRecord` through the parse error handler, so a genuinely short record is still diagnosed rather than silently truncated
+- A record shorter than its own record-type identifier now reports `truncatedRecord` instead of trapping
+
 ## [4.1.0] - 2026-07-06
 
 ### Added
