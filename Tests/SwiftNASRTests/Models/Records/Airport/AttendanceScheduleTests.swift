@@ -15,14 +15,14 @@ struct AttendanceScheduleTests {
   // MARK: encode
 
   @Test
-  func encodesAComponentsInstance() throws {
+  func `encodes a components instance`() throws {
     let schedule: AttendanceSchedule = .components(monthly: "1", daily: "2", hourly: "3")
     let encoded = String(data: try encoder.encode(schedule), encoding: .utf8)
     #expect(encoded == #"{"daily":"2","hourly":"3","monthly":"1","type":"components"}"#)
   }
 
   @Test
-  func encodesACustomInstance() throws {
+  func `encodes a custom instance`() throws {
     let schedule: AttendanceSchedule = .custom("hello world")
     let encoded = String(data: try encoder.encode(schedule), encoding: .utf8)
     #expect(encoded == #"{"schedule":"hello world","type":"custom"}"#)
@@ -31,7 +31,7 @@ struct AttendanceScheduleTests {
   // MARK: decode
 
   @Test
-  func decodesAComponentsInstance() throws {
+  func `decodes a components instance`() throws {
     let encoded = Data(#"{"daily":"2","hourly":"3","monthly":"1","type":"components"}"#.utf8)
     let schedule = try decoder.decode(AttendanceSchedule.self, from: encoded)
 
@@ -45,7 +45,7 @@ struct AttendanceScheduleTests {
   }
 
   @Test
-  func decodesACustomInstance() throws {
+  func `decodes a custom instance`() throws {
     let encoded = Data(#"{"schedule":"hello world","type":"custom"}"#.utf8)
     let schedule = try decoder.decode(AttendanceSchedule.self, from: encoded)
 

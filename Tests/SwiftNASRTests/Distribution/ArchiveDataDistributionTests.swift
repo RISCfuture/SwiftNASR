@@ -54,7 +54,7 @@ struct ArchiveDataDistributionTests {
   // MARK: readFile
 
   @Test
-  func readsEachLineFromTheFile() async throws {
+  func `reads each line from the file`() async throws {
     var iter = 0
     var progress = Progress(totalUnitCount: 0)
 
@@ -75,7 +75,7 @@ struct ArchiveDataDistributionTests {
   }
 
   @Test
-  func throwsAnErrorIfTheFileDoesntExist() async {
+  func `throws an error if the file doesn't exist`() async {
     await #expect {
       let stream = await distributionReadme.readFile(path: "unknown")
       for try await foo in stream { print(foo) }
@@ -88,7 +88,7 @@ struct ArchiveDataDistributionTests {
   // MARK: readCycle
 
   @Test
-  func readsTheCycleFromTheREADMEFile() async throws {
+  func `reads the cycle from the README file`() async throws {
     let cycle = try #require(try await distributionReadme.readCycle())
     #expect(cycle.year == 2020)
     #expect(cycle.month == 12)
@@ -96,7 +96,7 @@ struct ArchiveDataDistributionTests {
   }
 
   @Test
-  func readsTheCycleFromTheReadMePrefixFile() async throws {
+  func `reads the cycle from a Read_me-prefixed file`() async throws {
     let cycle = try #require(try await distributionPrefix.readCycle())
     #expect(cycle.year == 2020)
     #expect(cycle.month == 12)

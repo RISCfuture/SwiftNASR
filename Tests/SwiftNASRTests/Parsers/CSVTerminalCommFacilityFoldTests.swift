@@ -12,7 +12,7 @@ import Testing
 @Suite
 struct CSVTerminalCommFacilityFoldTests {
   @Test
-  func foldsRadarMilitaryAndAirspaceDataIntoTheMatchingFacility() async throws {
+  func `folds radar military and airspace data into the matching facility`() async throws {
     let tempdir = FileManager.default.temporaryDirectory.appendingPathComponent(
       ProcessInfo.processInfo.globallyUniqueString
     )

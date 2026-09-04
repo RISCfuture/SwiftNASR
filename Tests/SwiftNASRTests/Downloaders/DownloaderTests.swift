@@ -58,7 +58,7 @@ enum DownloaderTests {
     }
 
     @Test
-    func callsBackWithTheData() async throws {
+    func `calls back with the data`() async throws {
       let mockData = try DownloaderTests.mockArchive()
       let response = HTTPURLResponse(
         url: DownloaderTests.mockURL,
@@ -74,7 +74,7 @@ enum DownloaderTests {
     }
 
     @Test
-    func callsBackWithAnErrorForABadHTTPCode() async throws {
+    func `calls back with an error for a bad HTTP code`() async throws {
       let response = HTTPURLResponse(
         url: DownloaderTests.mockURL,
         statusCode: 404,
@@ -95,7 +95,7 @@ enum DownloaderTests {
     }
 
     @Test
-    func callsBackWithAnErrorForAnHTTPError() async {
+    func `calls back with an error for an HTTP error`() async {
       MockURLProtocol.nextResponse = .init(
         error: NSError(domain: "TestDomain", code: -1, userInfo: [:])
       )
@@ -127,7 +127,7 @@ enum DownloaderTests {
     }
 
     @Test
-    func callsBackWithTheFile() async throws {
+    func `calls back with the file`() async throws {
       let mockData = try DownloaderTests.mockArchive()
       let response = HTTPURLResponse(
         url: DownloaderTests.mockURL,
@@ -143,7 +143,7 @@ enum DownloaderTests {
     }
 
     @Test
-    func callsBackWithAnErrorForABadHTTPCode() async throws {
+    func `calls back with an error for a bad HTTP code`() async throws {
       let response = HTTPURLResponse(
         url: DownloaderTests.mockURL,
         statusCode: 404,
@@ -164,7 +164,7 @@ enum DownloaderTests {
     }
 
     @Test
-    func callsBackWithAnErrorForAnHTTPError() async {
+    func `calls back with an error for an HTTP error`() async {
       MockURLProtocol.nextResponse = .init(
         error: NSError(domain: "TestDomain", code: -1, userInfo: [:])
       )

@@ -10,7 +10,7 @@ import Testing
 @Suite
 struct CSVWeatherStationPositionTests {
   @Test
-  func keepsAStationThatHasNoCoordinatesWithANilPosition() async throws {
+  func `keeps a station that has no coordinates with a nil position`() async throws {
     let tempdir = FileManager.default.temporaryDirectory.appendingPathComponent(
       ProcessInfo.processInfo.globallyUniqueString
     )

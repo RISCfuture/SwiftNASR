@@ -6,7 +6,7 @@ import Testing
 @Suite
 struct RecordParseErrorTests {
   @Test
-  func carriesFieldErrorContextAndADescription() {
+  func `carries field error context and a description`() {
     let underlying = ParserError.unknownRecordEnumValue("ZZ")
     let error = RecordParseError.fieldError(
       recordType: .navaids,
@@ -28,7 +28,7 @@ struct RecordParseErrorTests {
   }
 
   @Test
-  func wrapsAnArbitraryThrownErrorAsARecordError() {
+  func `wraps an arbitrary thrown error as a record error`() {
     let error = RecordParseError.fromThrown(
       recordType: .airports,
       recordID: nil,

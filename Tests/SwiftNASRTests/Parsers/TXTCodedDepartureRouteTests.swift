@@ -10,7 +10,7 @@ import Testing
 @Suite
 struct TXTCodedDepartureRouteTests {
   @Test
-  func parsesSixCommaSeparatedFieldsPerLineAndDropsMalformedLines() async throws {
+  func `parses six comma separated fields per line and drops malformed lines`() async throws {
     let tempdir = FileManager.default.temporaryDirectory.appendingPathComponent(
       ProcessInfo.processInfo.globallyUniqueString
     )

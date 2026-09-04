@@ -27,7 +27,7 @@ struct ArchiveFileDistributionTests {
   }
 
   @Test
-  func readsEachLineFromTheFile() async throws {
+  func `reads each line from the file`() async throws {
     let (distribution, tempfile) = try makeDistribution()
     defer { try? FileManager.default.removeItem(at: tempfile) }
 
@@ -51,7 +51,7 @@ struct ArchiveFileDistributionTests {
   }
 
   @Test
-  func throwsAnErrorIfTheFileDoesntExist() async throws {
+  func `throws an error if the file doesn't exist`() async throws {
     let (distribution, tempfile) = try makeDistribution()
     defer { try? FileManager.default.removeItem(at: tempfile) }
 

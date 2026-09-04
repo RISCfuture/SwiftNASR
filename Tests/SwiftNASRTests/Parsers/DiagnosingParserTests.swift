@@ -22,7 +22,7 @@ private actor TestDiagnosingParser: DiagnosingParser {
 @Suite
 struct DiagnosingParserTests {
   @Test
-  func returnsTheValueAndRecordsNothingForAKnownRawValue() async {
+  func `returns the value and records nothing for a known raw value`() async {
     let parser = TestDiagnosingParser()
     let value = await parser.decode("R")
     #expect(value == .red)
@@ -31,7 +31,7 @@ struct DiagnosingParserTests {
   }
 
   @Test
-  func returnsNilAndRecordsNothingForABlankOrAbsentValue() async {
+  func `returns nil and records nothing for a blank or absent value`() async {
     let parser = TestDiagnosingParser()
     let value = await parser.decode("")
     #expect(value == nil)
@@ -40,7 +40,7 @@ struct DiagnosingParserTests {
   }
 
   @Test
-  func returnsNilAndRecordsAFieldErrorForAnUnknownNonBlankValue() async {
+  func `returns nil and records a field error for an unknown non blank value`() async {
     let parser = TestDiagnosingParser()
     let value = await parser.decode("ZZ")
     #expect(value == nil)
@@ -56,7 +56,7 @@ struct DiagnosingParserTests {
   }
 
   @Test
-  func clearsPendingDiagnosticsWhenDrained() async {
+  func `clears pending diagnostics when drained`() async {
     let parser = TestDiagnosingParser()
     _ = await parser.decode("ZZ")
     _ = await parser.takeDiagnostics()
