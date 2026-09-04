@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension ATSAirway {
   /// Chart/publication effective date.

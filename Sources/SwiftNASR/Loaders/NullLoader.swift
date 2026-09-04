@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /**
  `NullLoader` is provided for API compatibility between loading data from a
@@ -53,7 +53,7 @@ public final class NullLoader: Loader {
    */
 
   public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) throws
-    -> Distribution
+    -> any Distribution
   {
     progressHandler(completedProgress())
     return NullDistribution()

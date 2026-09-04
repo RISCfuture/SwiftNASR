@@ -13,7 +13,7 @@ actor CSVPreferredRouteParser: CSVParser, DiagnosingParser {
   var routes = [String: PreferredRoute]()
   var pendingDiagnostics = [RecordParseError]()
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

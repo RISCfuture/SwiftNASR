@@ -80,7 +80,7 @@ actor FixedWidthFSSCommFacilityParser: Parser, DiagnosingParser {
     .dateComponents(format: .dayMonthYear, nullable: .blank)  // 29 status date (11)
   ])
 
-  func prepare(distribution _: Distribution) throws {
+  func prepare(distribution _: any Distribution) throws {
     // No layout file parsing needed - using hardcoded field positions
   }
 

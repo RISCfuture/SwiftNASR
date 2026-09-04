@@ -164,13 +164,13 @@ protocol LayoutDataParser: Parser {
 }
 
 extension LayoutDataParser {
-  func prepare(distribution: Distribution) async throws {
+  func prepare(distribution: any Distribution) async throws {
     self.formats = try await formatsFor(type: Self.type, distribution: distribution)
   }
 
-  func formatsFor(type: RecordType, distribution: Distribution) async throws -> [NASRTable] {
+  func formatsFor(type: RecordType, distribution: any Distribution) async throws -> [NASRTable] {
     var formats = [NASRTable]()
-    var lineError: Swift.Error?
+    var lineError: (any Swift.Error)?
 
     let layoutPath = "Layout_Data/\(type.rawValue.lowercased())_rf.txt"
     let lines: AsyncThrowingStream = await distribution.readFile(

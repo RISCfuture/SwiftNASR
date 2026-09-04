@@ -198,7 +198,7 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
 
   // MARK: - Protocol Methods
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

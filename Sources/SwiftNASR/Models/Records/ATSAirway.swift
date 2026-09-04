@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// An Air Traffic Service (ATS) route/airway.
 ///

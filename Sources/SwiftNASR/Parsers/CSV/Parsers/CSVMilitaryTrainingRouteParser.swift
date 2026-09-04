@@ -17,7 +17,7 @@ actor CSVMilitaryTrainingRouteParser: CSVParser, DiagnosingParser {
   var routes = [String: MilitaryTrainingRoute]()
   var pendingDiagnostics = [RecordParseError]()
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

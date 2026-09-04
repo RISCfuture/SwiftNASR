@@ -382,7 +382,7 @@ enum CSVParserError: Swift.Error, CustomStringConvertible {
   case invalidDateInColumn(_ value: String, column: String)
   case invalidFrequencyInColumn(_ value: String, column: String)
   case invalidGeodesicInColumn(_ value: String, column: String)
-  case conversionErrorInColumn(_ value: String, error: Swift.Error, column: String)
+  case conversionErrorInColumn(_ value: String, error: any Swift.Error, column: String)
   case invalidValueInColumn(_ value: String, column: String)
   case typeMismatch(column: String, expected: String, actual: String)
 

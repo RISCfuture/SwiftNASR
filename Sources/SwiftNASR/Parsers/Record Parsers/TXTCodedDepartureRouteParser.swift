@@ -22,7 +22,7 @@ actor TXTCodedDepartureRouteParser: Parser, DiagnosingParser {
   var pendingDiagnostics = [RecordParseError]()
   var routes = [String: CodedDepartureRoute]()
 
-  func prepare(distribution _: Distribution) throws {
+  func prepare(distribution _: any Distribution) throws {
     // No layout file or distribution state is needed; CDR.txt is read line-by-line.
   }
 

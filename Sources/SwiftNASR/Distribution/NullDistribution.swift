@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /**
  An empty distribution, used by ``NullLoader`` to provide API compatibility
@@ -18,14 +18,14 @@ public final class NullDistribution: Distribution {
     path _: String,
     withProgress _: @Sendable (Progress) -> Void = { _ in },
     returningLines _: (UInt) -> Void = { _ in }
-  ) -> AsyncThrowingStream<Data, Swift.Error> {
+  ) -> AsyncThrowingStream<Data, any Swift.Error> {
     return AsyncThrowingStream { $0.finish(throwing: Error.nullDistribution) }
   }
 
   public func readFileRaw(
     path _: String,
     withProgress _: @Sendable (Progress) -> Void = { _ in }
-  ) -> AsyncThrowingStream<Data, Swift.Error> {
+  ) -> AsyncThrowingStream<Data, any Swift.Error> {
     return AsyncThrowingStream { $0.finish(throwing: Error.nullDistribution) }
   }
 

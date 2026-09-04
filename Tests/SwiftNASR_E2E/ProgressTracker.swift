@@ -31,7 +31,7 @@ actor ProgressTracker {
 
 // MARK: - Progress Display
 
-func trackProgress(progress: ProgressTracker) -> Task<Void, Swift.Error> {
+func trackProgress(progress: ProgressTracker) -> Task<Void, any Swift.Error> {
   Task.detached {
     repeat {
       try await Task.sleep(for: .seconds(0.1))

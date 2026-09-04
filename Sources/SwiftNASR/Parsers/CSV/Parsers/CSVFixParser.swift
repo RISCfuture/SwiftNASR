@@ -48,7 +48,7 @@ actor CSVFixParser: CSVParser {
     .init("CHARTING_TYPE_DESC", .string(nullable: .blank))
   ])
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

@@ -1,3 +1,5 @@
+import Foundation
+
 private let arrestingSystemDLIDOffsetRange = 3...4
 // these should be labeled "DLID" but they're not
 

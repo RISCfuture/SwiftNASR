@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension WeatherStation {
   /// The primary frequency for receiving weather broadcasts as a Measurement.

@@ -6,7 +6,7 @@ import Synchronization
 
 struct MockResponse {
   var data: Data?
-  var error: Error?
+  var error: (any Error)?
   var response: URLResponse?
 }
 

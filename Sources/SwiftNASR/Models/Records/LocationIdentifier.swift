@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// A location identifier record from the LID file.
 ///

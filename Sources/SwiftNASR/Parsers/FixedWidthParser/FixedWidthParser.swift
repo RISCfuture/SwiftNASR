@@ -71,7 +71,7 @@ enum FixedWidthParserError: Swift.Error, CustomStringConvertible, Sendable {
   case invalidDate(_ value: String, at: Int)
   case invalidFrequency(_ value: String, at: Int)
   case invalidGeodesic(_ value: String, at: Int)
-  case conversionError(_ value: String, error: Swift.Error, at: Int)
+  case conversionError(_ value: String, error: any Swift.Error, at: Int)
   case invalidValue(_ value: String, at: Int)
   case typeMismatch(at: Int, expected: Any.Type, actual: Any.Type)
 

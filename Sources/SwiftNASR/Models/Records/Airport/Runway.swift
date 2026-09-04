@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /**
  A runway at an airport (or other surface used for taking off or landing

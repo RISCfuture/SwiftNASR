@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 func completedProgress() -> Progress {
   let progress = Progress(totalUnitCount: 1)
@@ -28,5 +28,6 @@ public protocol Loader: Sendable {
               and an object you can use to track progress.
    */
 
-  func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws -> Distribution
+  func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws
+    -> any Distribution
 }

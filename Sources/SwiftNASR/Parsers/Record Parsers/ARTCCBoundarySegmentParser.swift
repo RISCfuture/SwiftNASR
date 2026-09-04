@@ -35,7 +35,7 @@ actor FixedWidthARTCCBoundarySegmentParser: Parser, DiagnosingParser {
     .boolean(trueValue: "X", nullable: .blank)  // 7 NAS description only flag (1)
   ])
 
-  func prepare(distribution _: Distribution) throws {
+  func prepare(distribution _: any Distribution) throws {
     // No layout file parsing needed - using hardcoded field positions
   }
 

@@ -938,7 +938,7 @@ public struct NASRDataCodable: Codable {
     locationIdentifiers = await data.locationIdentifiers?.sorted { $0.id < $1.id }
   }
 
-  public init(from decoder: Decoder) throws {
+  public init(from decoder: any Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
 
     let decodedCycle = try container.decodeIfPresent(Cycle.self, forKey: .cycle)

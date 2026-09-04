@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 extension RandomAccessCollection<UInt8> {
   // MARK: - Properties

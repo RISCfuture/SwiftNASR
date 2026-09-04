@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension Navaid {
   /// The epoch date of the magnetic variation data.

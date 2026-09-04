@@ -39,7 +39,7 @@ actor CSVMiscActivityAreaParser: CSVParser, DiagnosingParser {
     .init("USER_GROUP_NAME", .string(nullable: .blank))
   ])
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

@@ -13,7 +13,7 @@ actor FixedWidthATSAirwayParser: Parser, DiagnosingParser {
   var pointData = [String: [UInt: ATSAirway.RoutePoint]]()
   var pendingDiagnostics = [RecordParseError]()
 
-  func prepare(distribution _: Distribution) throws {
+  func prepare(distribution _: any Distribution) throws {
     // No layout file parsing needed
   }
 

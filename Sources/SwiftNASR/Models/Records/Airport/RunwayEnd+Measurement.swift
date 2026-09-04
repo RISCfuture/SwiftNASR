@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension RunwayEnd {
   /// The height of the visual glidepath above the runway threshold as a Measurement.

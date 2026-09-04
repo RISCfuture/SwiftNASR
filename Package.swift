@@ -2,9 +2,13 @@
 
 import PackageDescription
 
-let approachableConcurrency: [SwiftSetting] = [
+let upcomingFeatures: [SwiftSetting] = [
   .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
-  .enableUpcomingFeature("InferIsolatedConformances")
+  .enableUpcomingFeature("InferIsolatedConformances"),
+  .enableUpcomingFeature("ImmutableWeakCaptures"),
+  .enableUpcomingFeature("MemberImportVisibility"),
+  .enableUpcomingFeature("ExistentialAny"),
+  .enableUpcomingFeature("InternalImportsByDefault")
 ]
 
 let package = Package(
@@ -30,7 +34,7 @@ let package = Package(
       name: "SwiftNASR",
       dependencies: ["ZIPFoundation", "StreamingCSV"],
       resources: [.process("Resources")],
-      swiftSettings: approachableConcurrency,
+      swiftSettings: upcomingFeatures,
       linkerSettings: [.linkedLibrary("swift_Concurrency")]
     ),
     .testTarget(
@@ -40,7 +44,7 @@ let package = Package(
         .copy("Resources/MockDistribution"),
         .copy("Resources/FailingMockDistribution")
       ],
-      swiftSettings: approachableConcurrency,
+      swiftSettings: upcomingFeatures,
       linkerSettings: [.linkedLibrary("swift_Concurrency")]
     ),
     .executableTarget(
@@ -50,7 +54,7 @@ let package = Package(
         .product(name: "ArgumentParser", package: "swift-argument-parser")
       ],
       path: "Tests/SwiftNASR_E2E",
-      swiftSettings: approachableConcurrency,
+      swiftSettings: upcomingFeatures,
       linkerSettings: [.linkedLibrary("swift_Concurrency")]
     )
   ],

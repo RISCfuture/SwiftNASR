@@ -66,7 +66,7 @@ actor CSVNavaidParser: CSVParser, DiagnosingParser {
     .init("HIWAS_FLAG", .boolean(nullable: .blank))
   ])
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

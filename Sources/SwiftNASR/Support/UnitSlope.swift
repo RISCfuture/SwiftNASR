@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// A unit of slope or gradient (rise over run).
 ///

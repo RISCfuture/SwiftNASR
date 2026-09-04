@@ -28,7 +28,7 @@ actor CSVARTCCBoundarySegmentParser: CSVParser, DiagnosingParser {
     .init("NAS_DESCRIP_FLAG", .boolean(trueValue: "X", nullable: .blank))
   ])
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

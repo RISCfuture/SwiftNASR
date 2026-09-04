@@ -10,7 +10,7 @@ private actor TestDiagnosingParser: DiagnosingParser {
   static let type = RecordType.navaids
   var pendingDiagnostics = [RecordParseError]()
 
-  func prepare(distribution _: Distribution) throws {}
+  func prepare(distribution _: any Distribution) throws {}
   func parse(data _: Data) throws {}
   func finish(data _: NASRData) {}
 

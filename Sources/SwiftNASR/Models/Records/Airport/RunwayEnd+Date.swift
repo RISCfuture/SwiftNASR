@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension RunwayEnd {
   /// The date the threshold position was determined.

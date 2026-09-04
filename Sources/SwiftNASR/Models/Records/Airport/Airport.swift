@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /**
  A landing facility, including airports, seaports, heliports, balloonports, etc.

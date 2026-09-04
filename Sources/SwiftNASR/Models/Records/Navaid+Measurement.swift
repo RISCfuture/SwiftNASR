@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension Navaid {
   /// The magnetic variation at the location of the navaid as a Measurement.

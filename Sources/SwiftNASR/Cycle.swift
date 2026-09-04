@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /**
  NASR data is distributed on a 28-day cycle. The Cycle class represents one such

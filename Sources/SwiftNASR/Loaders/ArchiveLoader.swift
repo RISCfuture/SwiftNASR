@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /**
  Wraps distribution data in an ``ArchiveFileDistribution``.
@@ -25,7 +25,7 @@ public final class ArchiveLoader: Loader {
   }
 
   public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) throws
-    -> Distribution
+    -> any Distribution
   {
     progressHandler(completedProgress())
     return try ArchiveFileDistribution(location: location, format: format)
