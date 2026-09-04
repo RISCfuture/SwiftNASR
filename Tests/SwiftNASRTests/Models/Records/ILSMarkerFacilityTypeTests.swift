@@ -12,7 +12,7 @@ struct ILSMarkerFacilityTypeTests {
   typealias FacilityType = ILS.MarkerBeacon.MarkerFacilityType
 
   @Test
-  func mapsTheShortCSVCodesToTheCorrectFacilityType() {
+  func `maps the short CSV codes to the correct facility type`() {
     #expect(FacilityType.for("M") == .marker)
     #expect(FacilityType.for("C") == .compassLocator)
     #expect(FacilityType.for("R") == .NDB)
@@ -21,7 +21,7 @@ struct ILSMarkerFacilityTypeTests {
   }
 
   @Test
-  func stillDecodesTheSpelledOutTXTValues() {
+  func `still decodes the spelled out TXT values`() {
     #expect(FacilityType.for("MARKER") == .marker)
     #expect(FacilityType.for("COMLO") == .compassLocator)
     #expect(FacilityType.for("MARKER/NDB") == .markerNDB)

@@ -10,7 +10,7 @@ import Testing
 @Suite
 struct CSVHoldRoutingTests {
   @Test
-  func routesILSTypeCodesToTheILSFieldsAndNavaidTypesToTheNavaidFields() async throws {
+  func `routes ILS type codes and navaid types to their own fields`() async throws {
     let tempdir = FileManager.default.temporaryDirectory.appendingPathComponent(
       ProcessInfo.processInfo.globallyUniqueString
     )
@@ -56,7 +56,7 @@ struct CSVHoldRoutingTests {
   // silently routed to the ILS fields. This guards against a future synonym
   // or case that would reintroduce a collision.
   @Test
-  func keepsTheILSAndNavaidFacilityTypeCodeSystemsDisjoint() {
+  func `keeps the ILS and navaid facility type code systems disjoint`() {
     for ilsType in ILSFacilityType.allCases {
       #expect(
         Navaid.FacilityType.for(ilsType.rawValue) == nil,

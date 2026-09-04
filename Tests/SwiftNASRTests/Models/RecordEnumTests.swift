@@ -16,17 +16,17 @@ enum TestEnum: String, RecordEnum {
 @Suite
 struct RecordEnumTests {
   @Test
-  func returnsAnEnumValueByRawValue() {
+  func `returns an enum value by raw value`() {
     #expect(TestEnum.for("1") == .first)
   }
 
   @Test
-  func returnsAnEnumValueBySynonym() {
+  func `returns an enum value by synonym`() {
     #expect(TestEnum.for("ONE") == .first)
   }
 
   @Test
-  func returnsNilForUnknownValues() {
+  func `returns nil for unknown values`() {
     #expect(TestEnum.for("3") == nil)
   }
 }

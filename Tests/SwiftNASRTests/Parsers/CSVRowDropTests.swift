@@ -28,7 +28,7 @@ private actor RowCountingParser: CSVParser, DiagnosingParser {
 @Suite
 struct CSVRowDropTests {
   @Test
-  func keepsEveryGoodRowWhenOneRowThrows() async throws {
+  func `keeps every good row when one row throws`() async throws {
     let tempdir = FileManager.default.temporaryDirectory.appendingPathComponent(
       ProcessInfo.processInfo.globallyUniqueString
     )

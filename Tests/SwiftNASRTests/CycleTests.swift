@@ -18,7 +18,7 @@ struct CycleTests {
   // MARK: effectiveCycle
 
   @Test
-  func returnsTheEffectiveCycleForADate() {
+  func `returns the effective cycle for a date`() {
     let cycle = Cycle.effectiveCycle(
       for: calendar.date(from: .init(year: 2021, month: 2, day: 21))!
     )!
@@ -28,7 +28,7 @@ struct CycleTests {
   }
 
   @Test
-  func returnsNilIfTheDateComesBeforeTheFirstCycle() {
+  func `returns nil if the date comes before the first cycle`() {
     let cycle = Cycle.effectiveCycle(
       for: calendar.date(from: .init(year: 1903, month: 12, day: 17))!
     )
@@ -38,14 +38,14 @@ struct CycleTests {
   // MARK: contains
 
   @Test
-  func returnsTrueIfTheDateFallsWithinTheCycle() {
+  func `returns true if the date falls within the cycle`() {
     let cycle = cycle(year: 2021, month: 2, day: 21)
     let date = Calendar.current.date(from: .init(year: 2021, month: 2, day: 1))!
     #expect(cycle.contains(date))
   }
 
   @Test
-  func returnsFalseIfTheDateDoesNotFallWithinTheCycle() {
+  func `returns false if the date does not fall within the cycle`() {
     let cycle = cycle(year: 2021, month: 2, day: 21)
     var date = Calendar.current.date(from: .init(year: 2021, month: 2, day: 28))!
     #expect(!cycle.contains(date))
@@ -57,21 +57,21 @@ struct CycleTests {
   // MARK: description
 
   @Test
-  func returnsTheCycleInYYYYmmddFormat() {
+  func `returns the cycle in YYYY-MM-DD format`() {
     #expect(cycle(year: 2021, month: 1, day: 28).description == "2021-01-28")
   }
 
   // MARK: effective
 
   @Test
-  func returnsTheCurrentlyEffectiveCycle() {
+  func `returns the currently effective cycle`() {
     #expect(Cycle.effective.isEffective)
   }
 
   // MARK: cycle(for:)
 
   @Test
-  func returnsTheCycleForAGivenDate() {
+  func `returns the cycle for a given date`() {
     let cycle = Cycle.cycle(for: calendar.date(from: .init(year: 2021, month: 2, day: 21))!)
     #expect(cycle != nil)
     #expect(cycle?.year == 2021)
@@ -80,7 +80,7 @@ struct CycleTests {
   }
 
   @Test
-  func returnsNilForDatesBeforeDatum() {
+  func `returns nil for dates before datum`() {
     let cycle = Cycle.cycle(for: calendar.date(from: .init(year: 1903, month: 12, day: 17))!)
     #expect(cycle == nil)
   }
@@ -88,7 +88,7 @@ struct CycleTests {
   // MARK: previous and next
 
   @Test
-  func returnsThePreviousCycle() {
+  func `returns the previous cycle`() {
     let previous = cycle(year: 2021, month: 1, day: 28).previous
     #expect(previous != nil)
     #expect(previous?.year == 2020)
@@ -97,7 +97,7 @@ struct CycleTests {
   }
 
   @Test
-  func returnsTheNextCycle() {
+  func `returns the next cycle`() {
     let next = cycle(year: 2021, month: 1, day: 28).next
     #expect(next != nil)
     #expect(next?.year == 2021)
@@ -108,7 +108,7 @@ struct CycleTests {
   // MARK: Comparable
 
   @Test
-  func comparesCyclesCorrectly() {
+  func `compares cycles correctly`() {
     let older = Cycle(year: 2021, month: 1, day: 28)
     let newer = Cycle(year: 2021, month: 2, day: 25)
     let same = Cycle(year: 2021, month: 1, day: 28)
@@ -121,7 +121,7 @@ struct CycleTests {
   // MARK: dateRange
 
   @Test
-  func returnsADateIntervalCoveringTheCycle() {
+  func `returns a date interval covering the cycle`() {
     let dateRange = cycle(year: 2021, month: 1, day: 28).dateRange
     #expect(dateRange != nil)
 
@@ -133,7 +133,7 @@ struct CycleTests {
   // MARK: expirationDate
 
   @Test
-  func returnsTheExactExpirationMoment() {
+  func `returns the exact expiration moment`() {
     let cycle = cycle(year: 2021, month: 1, day: 28)
     let expirationDate = cycle.expirationDate
     #expect(expirationDate != nil)

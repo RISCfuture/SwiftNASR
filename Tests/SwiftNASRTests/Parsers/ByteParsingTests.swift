@@ -12,27 +12,27 @@ struct ByteParsingTests {
   // MARK: isBlank
 
   @Test
-  func isBlankReturnsTrueForEmpty() {
+  func `isBlank returns true for an empty sequence`() {
     #expect(bytes("").isBlank())
   }
 
   @Test
-  func isBlankReturnsTrueForSpacesOnly() {
+  func `isBlank returns true for spaces only`() {
     #expect(bytes("   ").isBlank())
   }
 
   @Test
-  func isBlankReturnsTrueForTabsOnly() {
+  func `isBlank returns true for tabs only`() {
     #expect(bytes("\t\t").isBlank())
   }
 
   @Test
-  func isBlankReturnsTrueForMixedWhitespace() {
+  func `isBlank returns true for mixed whitespace`() {
     #expect(bytes(" \t ").isBlank())
   }
 
   @Test
-  func isBlankReturnsFalseForNonWhitespace() {
+  func `isBlank returns false for non-whitespace`() {
     #expect(!bytes("abc").isBlank())
     #expect(!bytes(" abc ").isBlank())
   }
@@ -40,167 +40,167 @@ struct ByteParsingTests {
   // MARK: trimmed
 
   @Test
-  func trimmedRemovesLeadingSpaces() {
+  func `toTrimmedString removes leading spaces`() {
     #expect(bytes("   abc").toTrimmedString() == "abc")
   }
 
   @Test
-  func trimmedRemovesTrailingSpaces() {
+  func `toTrimmedString removes trailing spaces`() {
     #expect(bytes("abc   ").toTrimmedString() == "abc")
   }
 
   @Test
-  func trimmedRemovesLeadingAndTrailingSpaces() {
+  func `toTrimmedString removes leading and trailing spaces`() {
     #expect(bytes("   abc   ").toTrimmedString() == "abc")
   }
 
   @Test
-  func trimmedRemovesTabs() {
+  func `toTrimmedString removes tabs`() {
     #expect(bytes("\tabc\t").toTrimmedString() == "abc")
   }
 
   @Test
-  func trimmedRemovesMixedWhitespace() {
+  func `toTrimmedString removes mixed whitespace`() {
     #expect(bytes(" \t abc \t ").toTrimmedString() == "abc")
   }
 
   @Test
-  func trimmedHandlesEmptyString() {
+  func `toTrimmedString handles an empty string`() {
     #expect(bytes("").toTrimmedString()?.isEmpty == true)
   }
 
   @Test
-  func trimmedHandlesWhitespaceOnly() {
+  func `toTrimmedString handles whitespace only`() {
     #expect(bytes("   ").toTrimmedString()?.isEmpty == true)
   }
 
   // MARK: parseInt
 
   @Test
-  func parseIntParsesPositiveIntegers() {
+  func `parseInt parses positive integers`() {
     #expect(bytes("123").parseInt() == 123)
   }
 
   @Test
-  func parseIntParsesNegativeIntegers() {
+  func `parseInt parses negative integers`() {
     #expect(bytes("-456").parseInt() == -456)
   }
 
   @Test
-  func parseIntParsesWithLeadingPlus() {
+  func `parseInt parses a leading plus`() {
     #expect(bytes("+789").parseInt() == 789)
   }
 
   @Test
-  func parseIntTrimsWhitespace() {
+  func `parseInt trims whitespace`() {
     #expect(bytes("  123  ").parseInt() == 123)
   }
 
   @Test
-  func parseIntReturnsNilForEmpty() {
+  func `parseInt returns nil for empty`() {
     #expect(bytes("").parseInt() == nil)
   }
 
   @Test
-  func parseIntReturnsNilForWhitespaceOnly() {
+  func `parseInt returns nil for whitespace only`() {
     #expect(bytes("   ").parseInt() == nil)
   }
 
   @Test
-  func parseIntReturnsNilForNonNumeric() {
+  func `parseInt returns nil for non-numeric`() {
     #expect(bytes("abc").parseInt() == nil)
   }
 
   @Test
-  func parseIntReturnsNilForMixedContent() {
+  func `parseInt returns nil for mixed content`() {
     #expect(bytes("12a").parseInt() == nil)
   }
 
   // MARK: parseUInt
 
   @Test
-  func parseUIntParsesUnsignedIntegers() {
+  func `parseUInt parses unsigned integers`() {
     #expect(bytes("123").parseUInt() == 123)
   }
 
   @Test
-  func parseUIntParsesWithLeadingPlus() {
+  func `parseUInt parses a leading plus`() {
     #expect(bytes("+789").parseUInt() == 789)
   }
 
   @Test
-  func parseUIntTrimsWhitespace() {
+  func `parseUInt trims whitespace`() {
     #expect(bytes("  456  ").parseUInt() == 456)
   }
 
   @Test
-  func parseUIntReturnsNilForNegative() {
+  func `parseUInt returns nil for a negative value`() {
     #expect(bytes("-123").parseUInt() == nil)
   }
 
   // MARK: parseFloat
 
   @Test
-  func parseFloatParsesFloats() throws {
+  func `parseFloat parses floats`() throws {
     #expect(abs(try #require(bytes("123.45").parseFloat()) - 123.45) < 0.001)
   }
 
   @Test
-  func parseFloatParsesNegativeFloats() throws {
+  func `parseFloat parses negative floats`() throws {
     #expect(abs(try #require(bytes("-123.45").parseFloat()) - -123.45) < 0.001)
   }
 
   @Test
-  func parseFloatTrimsWhitespace() throws {
+  func `parseFloat trims whitespace`() throws {
     #expect(abs(try #require(bytes("  1.5  ").parseFloat()) - 1.5) < 0.001)
   }
 
   @Test
-  func parseFloatReturnsNilForEmpty() {
+  func `parseFloat returns nil for empty`() {
     #expect(bytes("").parseFloat() == nil)
   }
 
   // MARK: parseFrequencyKHz
 
   @Test
-  func parseFrequencyParsesMHzKHzFormat() {
+  func `parseFrequencyKHz parses MHzKHz format`() {
     #expect(bytes("118.125").parseFrequencyKHz() == 118125)
   }
 
   @Test
-  func parseFrequencyParsesMHzKFormatWithPadding() {
+  func `parseFrequencyKHz parses MHzK format with padding`() {
     #expect(bytes("118.1").parseFrequencyKHz() == 118100)
   }
 
   @Test
-  func parseFrequencyParsesMHzOnlyFormat() {
+  func `parseFrequencyKHz parses MHz-only format`() {
     #expect(bytes("365").parseFrequencyKHz() == 365000)
   }
 
   @Test
-  func parseFrequencyTrimsWhitespace() {
+  func `parseFrequencyKHz trims whitespace`() {
     #expect(bytes("  118.5  ").parseFrequencyKHz() == 118500)
   }
 
   @Test
-  func parseFrequencyReturnsNilForInvalidFormat() {
+  func `parseFrequencyKHz returns nil for an invalid format`() {
     #expect(bytes("abc").parseFrequencyKHz() == nil)
   }
 
   // MARK: matches
 
   @Test
-  func matchesReturnsTrueForExactMatch() {
+  func `matches returns true for an exact match`() {
     #expect(bytes("ABC").matches("ABC"))
   }
 
   @Test
-  func matchesReturnsFalseForDifferentContent() {
+  func `matches returns false for different content`() {
     #expect(!bytes("ABC").matches("DEF"))
   }
 
   @Test
-  func matchesReturnsFalseForDifferentLength() {
+  func `matches returns false for a different length`() {
     #expect(!bytes("ABC").matches("AB"))
     #expect(!bytes("AB").matches("ABC"))
   }
@@ -208,24 +208,24 @@ struct ByteParsingTests {
   // MARK: trimmedMatches
 
   @Test
-  func trimmedMatchesAfterTrimming() {
+  func `trimmedMatches matches after trimming`() {
     #expect(bytes("  ABC  ").trimmedMatches("ABC"))
   }
 
   @Test
-  func trimmedMatchesDoesNotMatchUntrimmedContent() {
+  func `trimmedMatches does not match untrimmed content`() {
     #expect(!bytes("  ABC  ").matches("ABC"))
   }
 
   // MARK: toString
 
   @Test
-  func toStringConvertsBytesToString() {
+  func `toString converts bytes to a string`() {
     #expect(bytes("Hello").toString() == "Hello")
   }
 
   @Test
-  func toStringReturnsEmptyStringForEmptyBytes() {
+  func `toString returns an empty string for empty bytes`() {
     #expect(bytes("").toString()?.isEmpty == true)
   }
 }

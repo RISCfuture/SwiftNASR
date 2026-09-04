@@ -9,7 +9,7 @@ import Testing
 @Suite
 struct ILSBackCourseStatusTests {
   @Test
-  func mapsSingleCharacterCSVCodesToTheCorrectSpelledOutStatus() {
+  func `maps single character CSV codes to the correct spelled out status`() {
     #expect(ILS.BackCourseStatus.for("Y") == .usable)
     #expect(ILS.BackCourseStatus.for("U") == .unusable)
     #expect(ILS.BackCourseStatus.for("N") == .noRestrictions)

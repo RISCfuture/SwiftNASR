@@ -10,7 +10,7 @@ struct DDMMSSByteParsingTests {
   }
 
   @Test
-  func parsesNorthLatitude() throws {
+  func `parses north latitude`() throws {
     // 40-25-30.000N = 40 degrees, 25 minutes, 30 seconds North
     // = 40*3600 + 25*60 + 30 = 145530 arc-seconds
     let result = try #require(bytes("40-25-30.000N").parseDDMMSS())
@@ -18,14 +18,14 @@ struct DDMMSSByteParsingTests {
   }
 
   @Test
-  func parsesSouthLatitudeNegative() throws {
+  func `parses south latitude as negative`() throws {
     // 40-25-30.000S should be negative
     let result = try #require(bytes("40-25-30.000S").parseDDMMSS())
     #expect(abs(result - -145530.0) < 0.001)
   }
 
   @Test
-  func parsesEastLongitude() throws {
+  func `parses east longitude`() throws {
     // 122-30-45.500E
     // = 122*3600 + 30*60 + 45.5 = 441045.5 arc-seconds
     let result = try #require(bytes("122-30-45.500E").parseDDMMSS())
@@ -33,14 +33,14 @@ struct DDMMSSByteParsingTests {
   }
 
   @Test
-  func parsesWestLongitudeNegative() throws {
+  func `parses west longitude as negative`() throws {
     // 122-30-45.500W should be negative
     let result = try #require(bytes("122-30-45.500W").parseDDMMSS())
     #expect(abs(result - -441045.5) < 0.001)
   }
 
   @Test
-  func handlesFractionalSeconds() throws {
+  func `handles fractional seconds`() throws {
     // 33-56-53.7900N
     // = 33*3600 + 56*60 + 53.79 = 122213.79 arc-seconds
     let result = try #require(bytes("33-56-53.7900N").parseDDMMSS())
@@ -48,14 +48,14 @@ struct DDMMSSByteParsingTests {
   }
 
   @Test
-  func returnsNilForInvalidFormat() {
+  func `returns nil for invalid format`() {
     #expect(bytes("invalid").parseDDMMSS() == nil)
     #expect(bytes("").parseDDMMSS() == nil)
     #expect(bytes("40-25-30.000").parseDDMMSS() == nil)  // missing direction
   }
 
   @Test
-  func handlesZeroValues() throws {
+  func `handles zero values`() throws {
     // 00-00-00.000N
     let result = try #require(bytes("00-00-00.000N").parseDDMMSS())
     #expect(abs(result - 0.0) < 0.001)

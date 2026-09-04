@@ -32,7 +32,7 @@ struct ParserTests {
   // MARK: prepare
 
   @Test
-  func parsesAllRecordFormatsFromLayoutFile() async throws {
+  func `parses all record formats from layout file`() async throws {
     let parser = try await preparedParser()
     // APT layout file defines 5 record formats: APT, ATT, RWY, ARS, RMK
     let formatCount = await parser.formats.count
@@ -40,7 +40,7 @@ struct ParserTests {
   }
 
   @Test
-  func calculatesCorrectZeroIndexedFieldRangesFromOneIndexedPositions() async throws {
+  func `calculates correct zero indexed field ranges from one indexed positions`() async throws {
     let parser = try await preparedParser()
     let firstFormat = await parser.formats[0]
 
@@ -55,7 +55,7 @@ struct ParserTests {
   }
 
   @Test
-  func correctlyParsesFieldIdentifierTypes() async throws {
+  func `correctly parses field identifier types`() async throws {
     let parser = try await preparedParser()
     let firstFormat = await parser.formats[0]
 
@@ -74,7 +74,7 @@ struct ParserTests {
   }
 
   @Test
-  func throwsBadDataIfAnLEntryIsInvalid() async {
+  func `throws badData if an L entry is invalid`() async {
     let parser = MockParser()
     let distribution = distribution("FailingMockDistribution")
     await #expect {
@@ -88,7 +88,7 @@ struct ParserTests {
   // MARK: NASRTable
 
   @Test
-  func findsFieldByIdentifier() async throws {
+  func `finds field by identifier`() async throws {
     let parser = try await preparedParser()
     let firstFormat = await parser.formats[0]
 
@@ -99,7 +99,7 @@ struct ParserTests {
   }
 
   @Test
-  func returnsNilForUnknownIdentifier() async throws {
+  func `returns nil for unknown identifier`() async throws {
     let parser = try await preparedParser()
     let firstFormat = await parser.formats[0]
 
@@ -107,7 +107,7 @@ struct ParserTests {
   }
 
   @Test
-  func findsFieldOffsetByIdentifier() async throws {
+  func `finds field offset by identifier`() async throws {
     let parser = try await preparedParser()
     let firstFormat = await parser.formats[0]
 

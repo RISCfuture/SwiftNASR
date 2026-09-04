@@ -11,7 +11,7 @@ struct JSONZipCoderTests {
   private let decoder = JSONZipDecoder()
 
   @Test
-  func encodesData() throws {
+  func `encodes data`() throws {
     let data = try encoder.encode(object)
     let archive = try Archive(data: data, accessMode: .read, pathEncoding: .ascii)
     let entry = try #require(
@@ -22,7 +22,7 @@ struct JSONZipCoderTests {
   }
 
   @Test
-  func decodesData() throws {
+  func `decodes data`() throws {
     let encodedData =
       "UEsDBBQAAAgAAGKhf1pCH1vlEQAAABEAAAARAAAAZGlzdHJpYnV0aW9uLmpzb257ImJhciI6MiwiZm9vIjoxfVBLAQIVAxQAAAgAAGKhf1pCH1vlEQAAABEAAAARAAAAAAAAAAAAAACkgQAAAABkaXN0cmlidXRpb24uanNvblBLBQYAAAAAAQABAD8AAABAAAAAAAA="
     let data = Data(base64Encoded: encodedData)!

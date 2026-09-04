@@ -44,7 +44,7 @@ struct FixedWidthParserTests {
   // MARK: over-declared trailing filler
 
   @Test
-  func clampsATrailingFieldThatRunsPastTheEndOfTheRecord() async throws {
+  func `clamps a trailing field that runs past the end of the record`() async throws {
     // The airport layout effective 2026-09-03 ends its runway record with
     // filler at location 1147 for 390 bytes — byte 1536 of a 1532-byte record.
     let parser = StubFixedWidthParser(fields: [
@@ -62,7 +62,7 @@ struct FixedWidthParserTests {
   }
 
   @Test
-  func clampsATrailingFieldThatStartsPastTheEndOfTheRecord() async throws {
+  func `clamps a trailing field that starts past the end of the record`() async throws {
     let parser = StubFixedWidthParser(fields: [
       field(at: 1, length: 3),
       field(at: 4, length: 20)
@@ -78,7 +78,7 @@ struct FixedWidthParserTests {
   // MARK: genuinely short records
 
   @Test
-  func reportsATruncatedRecordWhenAFieldOtherThanTheLastRunsPastTheEnd() async throws {
+  func `reports a truncated record when a non-final field runs past the end`() async throws {
     let parser = StubFixedWidthParser(fields: [
       field(at: 1, length: 3),
       field(at: 4, length: 40),
@@ -96,7 +96,7 @@ struct FixedWidthParserTests {
   }
 
   @Test
-  func reportsATruncatedRecordWhenTheRecordIsShorterThanItsIdentifier() async throws {
+  func `reports a truncated record when the record is shorter than its identifier`() async throws {
     let parser = StubFixedWidthParser(fields: [field(at: 1, length: 3)])
 
     await #expect {
@@ -110,7 +110,7 @@ struct FixedWidthParserTests {
   // MARK: well-formed records
 
   @Test
-  func slicesAWellFormedRecordAtItsDeclaredFieldBoundaries() async throws {
+  func `slices a well formed record at its declared field boundaries`() async throws {
     let parser = StubFixedWidthParser(fields: [
       field(at: 1, length: 3),
       field(at: 4, length: 5),

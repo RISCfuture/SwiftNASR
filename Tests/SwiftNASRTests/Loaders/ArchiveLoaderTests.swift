@@ -19,7 +19,7 @@ struct ArchiveLoaderTests {
   }
 
   @Test
-  func callsBackWithTheArchive() throws {
+  func `calls back with the archive`() throws {
     let location = FileManager.default.temporaryDirectory.appendingPathComponent(
       ProcessInfo.processInfo.globallyUniqueString
     )
