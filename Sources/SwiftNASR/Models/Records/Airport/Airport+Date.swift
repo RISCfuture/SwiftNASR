@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension Airport {
   /// The epoch date of the World Magnetic Model that was used to determine

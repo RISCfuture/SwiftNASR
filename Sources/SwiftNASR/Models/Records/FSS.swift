@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /**
  Flight service stations are FAA facilities that provide in-flight information

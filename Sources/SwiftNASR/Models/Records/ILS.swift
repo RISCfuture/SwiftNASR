@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// An Instrument Landing System (ILS) facility providing precision approach guidance.
 ///

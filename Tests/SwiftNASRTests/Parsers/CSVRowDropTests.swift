@@ -13,7 +13,7 @@ private actor RowCountingParser: CSVParser, DiagnosingParser {
   var pendingDiagnostics = [RecordParseError]()
   var kept = [String]()
 
-  func prepare(distribution: Distribution) throws { self.distribution = distribution }
+  func prepare(distribution: any Distribution) throws { self.distribution = distribution }
   func finish(data _: NASRData) {}
 
   func parse(data _: Data) async throws {

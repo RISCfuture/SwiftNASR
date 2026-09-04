@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 let zulu = TimeZone(secondsFromGMT: 0)!
 
@@ -19,8 +19,8 @@ let zulu = TimeZone(secondsFromGMT: 0)!
  */
 
 public actor NASR {
-  let loader: Loader
-  var distribution: Distribution?
+  let loader: any Loader
+  var distribution: (any Distribution)?
 
   /// Aeronautical data is stored into this field once it is parsed. All members
   /// of this instance are `nil` until the ``parse(_:withProgress:errorHandler:)``
@@ -29,7 +29,7 @@ public actor NASR {
   public var data = NASRData()
 
   /// Creates a new distribution from a loader.
-  public init(loader: Loader) {
+  public init(loader: any Loader) {
     self.loader = loader
   }
 
@@ -81,7 +81,7 @@ public actor NASR {
   public static func fromInternetToMemory(activeAt date: Date? = nil, format: DataFormat = .txt)
     -> NASR?
   {
-    let loader: Loader
+    let loader: any Loader
     if let date {
       guard let cycle = Cycle.effectiveCycle(for: date) else { return nil }
       loader = ArchiveDataDownloader(cycle: cycle, format: format)
@@ -111,7 +111,7 @@ public actor NASR {
     activeAt date: Date? = nil,
     format: DataFormat = .txt
   ) -> NASR? {
-    let loader: Loader
+    let loader: any Loader
     if let date {
       guard let cycle = Cycle.effectiveCycle(for: date) else { return nil }
       loader = ArchiveFileDownloader(cycle: cycle, format: format, location: location)
@@ -137,7 +137,7 @@ public actor NASR {
   /// Sets the distribution directly, useful for testing or when using a custom distribution.
   ///
   /// - Parameter distribution: The distribution to use for parsing.
-  public func setDistribution(_ distribution: Distribution) {
+  public func setDistribution(_ distribution: any Distribution) {
     self.distribution = distribution
   }
 
@@ -201,7 +201,7 @@ public actor NASR {
       _ = await diagnosing.takeDiagnostics()
     }
 
-    if let csvParser = parser as? CSVParser {
+    if let csvParser = parser as? (any CSVParser) {
       let progress = await csvParser.setupProgress()
       progressHandler(progress)
 

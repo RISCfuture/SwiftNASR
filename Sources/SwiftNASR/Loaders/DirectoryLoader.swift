@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /**
  Wraps distribution data in an ``DirectoryDistribution``.
@@ -25,7 +25,7 @@ public final class DirectoryLoader: Loader {
   }
 
   public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in })
-    throws -> Distribution
+    throws -> any Distribution
   {
     progressHandler(completedProgress())
     return DirectoryDistribution(location: location, format: format)

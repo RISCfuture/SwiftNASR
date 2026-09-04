@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// Record types available to load from a distribution.
 public enum RecordType: String, Codable, Sendable {
@@ -78,7 +78,7 @@ public protocol Distribution: Sendable {
     path: String,
     withProgress progressHandler: @Sendable (_ progress: Progress) -> Void,
     returningLines linesHandler: (_ lines: UInt) -> Void
-  ) -> AsyncThrowingStream<Data, Swift.Error>
+  ) -> AsyncThrowingStream<Data, any Swift.Error>
 
   /**
    Reads the cycle from the distribution.
@@ -103,7 +103,7 @@ public protocol Distribution: Sendable {
   func readFileRaw(
     path: String,
     withProgress progressHandler: @Sendable (_ progress: Progress) -> Void
-  ) -> AsyncThrowingStream<Data, Swift.Error>
+  ) -> AsyncThrowingStream<Data, any Swift.Error>
 }
 
 extension Distribution {
@@ -125,7 +125,7 @@ extension Distribution {
     type: RecordType,
     withProgress progressHandler: @Sendable (_ progress: Progress) -> Void = { _ in },
     returningLines linesHandler: (_ lines: UInt) -> Void = { _ in }
-  ) -> AsyncThrowingStream<Data, Swift.Error> {
+  ) -> AsyncThrowingStream<Data, any Swift.Error> {
     switch format {
       case .txt:
         return readFile(
@@ -145,7 +145,7 @@ extension Distribution {
     for type: RecordType,
     withProgress progressHandler: @Sendable (_ progress: Progress) -> Void = { _ in },
     returningLines linesHandler: (_ lines: UInt) -> Void = { _ in }
-  ) -> AsyncThrowingStream<Data, Swift.Error> {
+  ) -> AsyncThrowingStream<Data, any Swift.Error> {
     // For CSV format, the actual parsing happens in the CSV parsers which read files directly
     // We just need to check if the record type is supported
     switch type {

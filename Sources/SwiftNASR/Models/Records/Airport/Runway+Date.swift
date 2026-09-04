@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension Runway {
   /// The date the runway length was determined.

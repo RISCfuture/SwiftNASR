@@ -1,8 +1,8 @@
-import Foundation
+public import Foundation
 @preconcurrency import RegexBuilder
 
 public protocol Parser: Actor {
-  func prepare(distribution: Distribution) async throws
+  func prepare(distribution: any Distribution) async throws
 
   func parse(data: Data) async throws
 
@@ -48,8 +48,8 @@ final class OffsetParser: Sendable {
 enum ParserError: Swift.Error, CustomStringConvertible, Sendable {
   case badData(_ reason: String)
   case unknownRecordIdentifier(_ recordIdentifier: String)
-  case unknownRecordEnumValue(_ value: Sendable)
-  case invalidValue(_ value: Sendable)
+  case unknownRecordEnumValue(_ value: any Sendable)
+  case invalidValue(_ value: any Sendable)
   case truncatedRecord(recordType: String, expectedMinLength: Int, actualLength: Int)
   case missingRequiredField(field: String, recordType: String)
   case invalidLocation(latitude: Float?, longitude: Float?, context: String)
@@ -87,7 +87,7 @@ enum ParserError: Swift.Error, CustomStringConvertible, Sendable {
   }
 }
 
-func parserFor(recordType: RecordType, format: DataFormat = .txt) -> Parser {
+func parserFor(recordType: RecordType, format: DataFormat = .txt) -> any Parser {
   switch format {
     case .txt:
       switch recordType {

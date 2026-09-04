@@ -19,7 +19,7 @@ actor CSVDepartureArrivalProcedureParser: CSVParser {
   /// Sequence number counter for generating unique sequence numbers
   private var sequenceCounter: UInt = 0
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

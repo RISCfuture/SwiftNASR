@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// An Automated Weather Observing System (AWOS) or Automated Surface Observing System (ASOS) station.
 ///

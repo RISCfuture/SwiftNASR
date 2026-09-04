@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 #if canImport(FoundationNetworking)
   import FoundationNetworking
 #endif
@@ -37,7 +37,8 @@ public protocol Downloader: Loader {
    - Throws: If the distribution could not be downloaded.
    */
 
-  func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws -> Distribution
+  func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws
+    -> any Distribution
 }
 
 #if canImport(Darwin)
@@ -99,7 +100,7 @@ extension Downloader {
 
   // periphery:ignore - default protocol implementation; always provided by conformers
   func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) throws
-    -> Distribution
+    -> any Distribution
   {
     progressHandler(completedProgress())
     return NullDistribution()

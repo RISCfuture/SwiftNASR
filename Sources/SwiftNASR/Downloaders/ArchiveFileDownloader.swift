@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 #if canImport(FoundationNetworking)
   import FoundationNetworking
 #endif
@@ -38,7 +38,7 @@ public final class ArchiveFileDownloader: Downloader {
   }
 
   public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in })
-    async throws -> Distribution
+    async throws -> any Distribution
   {
     let delegate = DownloadDelegate()
     progressHandler(delegate.progress)

@@ -59,7 +59,7 @@ public enum Remark<F: RemarkField>: Record {
   /// A remark that applies to a specific fuel type (e.g., 100LL).
   case fuel(field: F, fuel: Airport.FuelType, content: String)
 
-  public init(from decoder: Decoder) throws {
+  public init(from decoder: any Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     guard let type = Kinds(rawValue: try container.decode(String.self, forKey: .type)) else {
       throw DecodingError.dataCorruptedError(
@@ -84,7 +84,7 @@ public enum Remark<F: RemarkField>: Record {
     }
   }
 
-  public func encode(to encoder: Encoder) throws {
+  public func encode(to encoder: any Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
     switch self {
       case .general(let content):

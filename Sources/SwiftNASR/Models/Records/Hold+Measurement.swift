@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension Hold {
   /// The magnetic bearing or radial of holding as a Measurement.

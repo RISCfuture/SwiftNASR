@@ -38,7 +38,7 @@ actor CSVHoldParser: CSVParser, DiagnosingParser {
     .init("LEG_LENGTH_DIST", .unsignedInteger(nullable: .blank))
   ])
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

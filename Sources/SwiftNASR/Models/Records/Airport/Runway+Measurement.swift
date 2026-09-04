@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension Runway {
   /// The total runway length as a Measurement.

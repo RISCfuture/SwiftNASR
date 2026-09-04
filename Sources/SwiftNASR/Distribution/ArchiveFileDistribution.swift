@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 @preconcurrency import ZIPFoundation
 
 /**
@@ -121,7 +121,7 @@ public final class ArchiveFileDistribution: Distribution {
     path: String,
     withProgress progressHandler: (Progress) -> Void = { _ in },
     returningLines linesHandler: (UInt) -> Void = { _ in }
-  ) -> AsyncThrowingStream<Data, Swift.Error> {
+  ) -> AsyncThrowingStream<Data, any Swift.Error> {
     return AsyncThrowingStream { continuation in
       do {
         let lines = try readFileWithCallback(path: path, withProgress: progressHandler) { data in
@@ -138,7 +138,7 @@ public final class ArchiveFileDistribution: Distribution {
   public func readFileRaw(
     path: String,
     withProgress progressHandler: (Progress) -> Void = { _ in }
-  ) -> AsyncThrowingStream<Data, Swift.Error> {
+  ) -> AsyncThrowingStream<Data, any Swift.Error> {
     return AsyncThrowingStream { continuation in
       do {
         // Try exact match first, then case-insensitive match

@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension Airport {
   /// The variation between magnetic and true north as a Measurement.

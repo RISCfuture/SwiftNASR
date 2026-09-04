@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension ParachuteJumpArea {
   /// The azimuth from the navaid as a Measurement.

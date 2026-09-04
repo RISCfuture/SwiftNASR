@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// A Terminal Communications Facility (tower, approach control, etc.) providing ATC services.
 ///

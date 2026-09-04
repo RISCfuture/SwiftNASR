@@ -13,7 +13,7 @@ actor CSVARTCCParser: CSVParser, DiagnosingParser {
   var ARTCCs = [ARTCCKey: ARTCC]()
   var pendingDiagnostics = [RecordParseError]()
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

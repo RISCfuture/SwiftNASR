@@ -30,7 +30,7 @@ actor CSVWeatherStationParser: CSVParser, DiagnosingParser {
     .init("REMARK", .string(nullable: .blank))
   ])
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

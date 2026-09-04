@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// An FSS (Flight Service Station) communications facility/outlet.
 ///

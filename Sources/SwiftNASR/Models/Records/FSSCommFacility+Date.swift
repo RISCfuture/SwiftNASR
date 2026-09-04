@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 public extension FSSCommFacility {
   /// Status effective date.

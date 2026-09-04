@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /**
  A NASR distribution that has been loaded from a directory of decompressed
@@ -108,7 +108,7 @@ public final class DirectoryDistribution: Distribution {
     path: String,
     withProgress progressHandler: (Progress) -> Void = { _ in },
     returningLines linesHandler: (UInt) -> Void = { _ in }
-  ) -> AsyncThrowingStream<Data, Swift.Error> {
+  ) -> AsyncThrowingStream<Data, any Swift.Error> {
     return AsyncThrowingStream { continuation in
       do {
         let lines = try readFileWithCallback(path: path, withProgress: progressHandler) { data in
@@ -125,7 +125,7 @@ public final class DirectoryDistribution: Distribution {
   public func readFileRaw(
     path: String,
     withProgress progressHandler: (Progress) -> Void = { _ in }
-  ) -> AsyncThrowingStream<Data, Swift.Error> {
+  ) -> AsyncThrowingStream<Data, any Swift.Error> {
     return AsyncThrowingStream { continuation in
       do {
         let fileURL = location.appendingPathComponent(path)

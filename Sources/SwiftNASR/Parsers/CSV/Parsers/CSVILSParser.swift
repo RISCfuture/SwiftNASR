@@ -12,7 +12,7 @@ actor CSVILSParser: CSVParser, DiagnosingParser {
   var ILSFacilities = [ILSKey: ILS]()
   var pendingDiagnostics = [RecordParseError]()
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 

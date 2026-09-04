@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// A radio navigational aid such as a VOR or an NDB.
 ///
@@ -614,7 +614,7 @@ public struct VORCheckpoint: Record {
   // for loading states from the parent FSS object
   var findAirportById: (@Sendable (_ id: String) async -> Airport?)!
 
-  public func encode(to encoder: Encoder) throws {
+  public func encode(to encoder: any Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(type, forKey: .type)
     try container.encode(bearing, forKey: .bearing)

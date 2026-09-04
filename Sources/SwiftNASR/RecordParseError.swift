@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// Whether parsing should continue after a ``RecordParseError`` is reported.
 public enum ParseDisposition: Sendable {

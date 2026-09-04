@@ -31,7 +31,7 @@ actor CSVWeatherReportingLocationParser: CSVParser, DiagnosingParser {
     .init("WEA_AFFECT_AREA", .string(nullable: .blank))
   ])
 
-  func prepare(distribution: Distribution) throws {
+  func prepare(distribution: any Distribution) throws {
     self.distribution = distribution
   }
 
