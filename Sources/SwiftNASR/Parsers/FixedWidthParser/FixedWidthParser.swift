@@ -100,10 +100,18 @@ enum FixedWidthParserError: Swift.Error, CustomStringConvertible, Sendable {
             "Field #\(field) type mismatch: expected \(String(describing: expected)), got \(String(describing: actual))"
         )
       case let .fieldCountMismatch(expected, actual):
-        return String(
-          localized:
-            "Layout describes \(actual, format: .number) fields, but the parser transforms \(expected, format: .number)"
-        )
+        // `String.LocalizationValue` interpolation takes a format style; the Linux shim's
+        // plain-`String` initializer does not.
+        #if canImport(Darwin)
+          return String(
+            localized:
+              "Layout describes \(actual, format: .number) fields, but the parser transforms \(expected, format: .number)"
+          )
+        #else
+          return String(
+            localized: "Layout describes \(actual) fields, but the parser transforms \(expected)"
+          )
+        #endif
     }
   }
 }
