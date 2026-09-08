@@ -101,7 +101,8 @@ enum FixedWidthParserError: Swift.Error, CustomStringConvertible, Sendable {
         )
       case let .fieldCountMismatch(expected, actual):
         return String(
-          localized: "Layout describes \(actual) fields, but the parser transforms \(expected)"
+          localized:
+            "Layout describes \(actual, format: .number) fields, but the parser transforms \(expected, format: .number)"
         )
     }
   }

@@ -16,13 +16,8 @@ public struct Airport: ParentRecord {
 
   // MARK: - Properties
 
-  /**
-   The FAA site number, which identifies this airport uniquely within a single
-   NASR cycle. It is not a stable identifier across cycles: the FAA
-   occasionally corrects a site number, just as an airport's ``LID`` can
-   change. Persisting either value across cycles requires a reconciliation step
-   to detect a record that has been re-keyed rather than retired.
-   */
+  /// The FAA site number, which identifies this airport uniquely within a single
+  /// NASR cycle. It is not stable across cycles.
   public let id: String
 
   /// The airport name.
