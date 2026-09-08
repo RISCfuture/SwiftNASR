@@ -23,7 +23,24 @@ struct ByteTransformer {
   }
 
   /// Applies the field transformations to byte slices.
+  ///
+  /// The slices come from the layout file shipped with the distribution, while
+  /// the transformations are compiled in, so a layout that gains or loses a
+  /// field no longer lines up with them.
+  ///
+  /// - Parameter slices: One slice per field, in layout order.
+  /// - Returns: The transformed row.
+  /// - Throws: ``FixedWidthParserError/fieldCountMismatch(expected:actual:)``
+  ///           if the layout and the transformations describe different numbers
+  ///           of fields.
   func applyTo(_ slices: [ByteSlice]) throws -> FixedWidthTransformedRow {
+    guard slices.count == fields.count else {
+      throw FixedWidthParserError.fieldCountMismatch(
+        expected: fields.count,
+        actual: slices.count
+      )
+    }
+
     let transformedValues = try slices.enumerated().map { index, slice -> Any? in
       switch fields[index] {
         case .recordType:

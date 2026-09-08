@@ -1,5 +1,16 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- A runway's Pavement Classification field no longer crashes the fixed-width airport parser when it does not hold a five-part PCN value. The field is widening from 11 to 16 characters for the ICAO PCR transition, and a PCR value is conventionally four-part rather than PCN's `number/type/subgrade/tirePressure/determination`; splitting such a value and indexing the missing components trapped on an out-of-range index, which the parser's own `do`/`catch` could not intercept. Any value that does not yield exactly five components is now reported as an `invalidValue` field error, so the record is diagnosed and skipped instead of killing the process
+- A layout whose field count disagrees with a parser's compiled-in field transformations is now reported as an error rather than trapping (a layout with an extra field) or silently reading each subsequent value from its neighbouring field (a layout with one fewer)
+
+### Changed
+
+- `Airport.id` is documented as unique within a single NASR cycle rather than stable across cycles. The FAA re-keyed FAA LID `18AL` (LOUISVILLE STAGEFIELD AHP) from site number `03329.19` to `00329.19` in the 2026-09-03 cycle, so persisting either the site number or the LID across cycles requires a reconciliation step
+
 ## [4.1.1] - 2026-09-02
 
 ### Fixed

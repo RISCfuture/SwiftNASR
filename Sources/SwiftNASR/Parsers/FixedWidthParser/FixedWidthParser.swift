@@ -74,6 +74,7 @@ enum FixedWidthParserError: Swift.Error, CustomStringConvertible, Sendable {
   case conversionError(_ value: String, error: any Swift.Error, at: Int)
   case invalidValue(_ value: String, at: Int)
   case typeMismatch(at: Int, expected: Any.Type, actual: Any.Type)
+  case fieldCountMismatch(expected: Int, actual: Int)
 
   var description: String {
     switch self {
@@ -97,6 +98,10 @@ enum FixedWidthParserError: Swift.Error, CustomStringConvertible, Sendable {
         return String(
           localized:
             "Field #\(field) type mismatch: expected \(String(describing: expected)), got \(String(describing: actual))"
+        )
+      case let .fieldCountMismatch(expected, actual):
+        return String(
+          localized: "Layout describes \(actual) fields, but the parser transforms \(expected)"
         )
     }
   }

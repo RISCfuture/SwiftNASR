@@ -122,4 +122,50 @@ struct FixedWidthParserTests {
     let values = try #require(await parser.parsedValues)
     #expect(values.compactMap { $0.toString() } == ["RWY", "ALPHA", "BETA"])
   }
+
+  // MARK: layout and transformer field counts
+
+  @Test(arguments: [1, 3])
+  func `reports a field count mismatch when the layout and transformer disagree`(
+    _ sliceCount: Int
+  ) throws {
+    let transformer = ByteTransformer([.recordType, .string()])
+    let slices = [ByteSlice](repeating: Array("X".utf8)[...], count: sliceCount)
+
+    #expect {
+      try transformer.applyTo(slices)
+    } throws: { error in
+      guard case let FixedWidthParserError.fieldCountMismatch(expected, actual) = error else {
+        return false
+      }
+      return expected == 2 && actual == sliceCount
+    }
+  }
+
+  // MARK: pavement classification
+
+  @Test(arguments: ["61", "560/R/B/W", "61//B/X/T", "61/R/B/X/T/U"])
+  func `reports an invalid pavement classification for a value without five components`(
+    _ value: String
+  ) throws {
+    #expect {
+      try FixedWidthAirportParser.parsePavementClassification(value)
+    } throws: { error in
+      guard case let SwiftNASR.Error.invalidPavementClassification(reported) = error else {
+        return false
+      }
+      return reported == value
+    }
+  }
+
+  @Test
+  func `parses a five component pavement classification`() throws {
+    let classification = try FixedWidthAirportParser.parsePavementClassification("61/R/B/X/T")
+
+    #expect(classification.number == 61)
+    #expect(classification.type == .rigid)
+    #expect(classification.subgradeStrengthCategory == .medium)
+    #expect(classification.tirePressureLimit == .high)
+    #expect(classification.determinationMethod == .technical)
+  }
 }
