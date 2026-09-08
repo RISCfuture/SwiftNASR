@@ -3,6 +3,11 @@ import Foundation
 private let offsetParser = OffsetParser()
 
 extension FixedWidthAirportParser {
+
+  /// The number of slash-separated components in a PCN value:
+  /// `number/type/subgradeStrength/tirePressure/determinationMethod`.
+  private static let pavementClassificationComponentCount = 5
+
   private var runwayTransformer: ByteTransformer {
     .init([
       .recordType,  //   0 record type
@@ -213,6 +218,33 @@ extension FixedWidthAirportParser {
     ])
   }
 
+  static func parsePavementClassification(_ value: String) throws -> Runway.PavementClassification {
+    let components = value.split(separator: "/")
+    guard components.count == Self.pavementClassificationComponentCount else {
+      throw Error.invalidPavementClassification(value)
+    }
+    let numberStr = String(components[0]).trimmingCharacters(in: .whitespaces)
+    guard let number = UInt(numberStr) else { throw Error.invalidPavementClassification(value) }
+    let type = try Runway.PavementClassification.Classification.require(String(components[1]))
+    let strength = try Runway.PavementClassification.SubgradeStrengthCategory.require(
+      String(components[2])
+    )
+    let tirePressure = try Runway.PavementClassification.TirePressureLimit.require(
+      String(components[3])
+    )
+    let determination = try Runway.PavementClassification.DeterminationMethod.require(
+      String(components[4])
+    )
+
+    return Runway.PavementClassification(
+      number: number,
+      type: type,
+      subgradeStrengthCategory: strength,
+      tirePressureLimit: tirePressure,
+      determinationMethod: determination
+    )
+  }
+
   func parseRunwayRecord(_ values: [ArraySlice<UInt8>]) throws {
     guard let airportIndex = values[1].toTrimmedString() else { return }
     guard let airport = airports[airportIndex] else { return }
@@ -233,7 +265,7 @@ extension FixedWidthAirportParser {
     let pavementClassification: Runway.PavementClassification?
     if let classStr: String = try t[optional: 8] {
       do {
-        pavementClassification = try parsePavementClassification(classStr)
+        pavementClassification = try Self.parsePavementClassification(classStr)
       } catch {
         throw FixedWidthParserError.invalidValue(classStr, at: 8)
       }
@@ -297,29 +329,5 @@ extension FixedWidthAirportParser {
     }
 
     return (materials, condition)
-  }
-
-  private func parsePavementClassification(_ value: String) throws -> Runway.PavementClassification {
-    let components = value.split(separator: "/")
-    let numberStr = String(components[0]).trimmingCharacters(in: .whitespaces)
-    guard let number = UInt(numberStr) else { throw Error.invalidPavementClassification(value) }
-    let type = try Runway.PavementClassification.Classification.require(String(components[1]))
-    let strength = try Runway.PavementClassification.SubgradeStrengthCategory.require(
-      String(components[2])
-    )
-    let tirePressure = try Runway.PavementClassification.TirePressureLimit.require(
-      String(components[3])
-    )
-    let determination = try Runway.PavementClassification.DeterminationMethod.require(
-      String(components[4])
-    )
-
-    return Runway.PavementClassification(
-      number: number,
-      type: type,
-      subgradeStrengthCategory: strength,
-      tirePressureLimit: tirePressure,
-      determinationMethod: determination
-    )
   }
 }
