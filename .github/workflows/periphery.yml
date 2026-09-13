@@ -7,6 +7,9 @@ jobs:
   periphery:
     name: Run Periphery
     runs-on: macos-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: SwiftyLab/setup-swift@latest
@@ -21,6 +24,8 @@ jobs:
             ~/Library/Caches/org.swift.swiftpm
           key: swiftpm-periphery-macos-latest-swift6.3-${{ hashFiles('Package.resolved') }}
       - name: Install Periphery
-        run: brew install peripheryapp/periphery/periphery
+        run: brew install periphery-pro/tap/periphery-cli
       - name: Run Periphery
+        env:
+          PERIPHERY_TOKEN: ${{ secrets.PERIPHERY_TOKEN }}
         run: periphery scan --strict
