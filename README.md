@@ -61,7 +61,7 @@ to your `Package.swift` file. Example:
 ```swift
 // [...]
 dependencies: [
-    .package(url: "https://github.com/RISCfuture/SwiftNASR.git", .branch("master")),
+    .package(url: "https://github.com/RISCfuture/SwiftNASR.git", .branch("main")),
 ]
 // [...]
 ```
