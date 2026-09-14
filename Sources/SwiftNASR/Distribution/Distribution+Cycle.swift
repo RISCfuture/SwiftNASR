@@ -8,6 +8,41 @@ let readmeCycleDateStrategy = Date.ParseStrategy(
   calendar: Calendar(identifier: .gregorian)
 )
 
+/// The spellings a README effective date is accepted in, for validating a parse.
+///
+/// The distributions write a two-digit day — `September 03, 2026` — but a one-digit day is
+/// accepted as well, so a change of spelling reads as a date rather than as a corrupt one.
+private var readmeCycleDateStyles: [Date.FormatStyle] {
+  let base = Date.FormatStyle(
+    date: .long,
+    locale: Locale(identifier: "en_US"),
+    calendar: Calendar(identifier: .gregorian),
+    timeZone: zulu
+  )
+  .month(.wide)
+  .year(.defaultDigits)
+  return [base.day(.twoDigits), base.day(.defaultDigits)]
+}
+
+/// Whitespace and the sentence's full stop, neither of which belongs to the date.
+private let readmeCycleDateTerminators = CharacterSet.whitespacesAndNewlines
+  .union(CharacterSet(charactersIn: "."))
+
+/// Parses a README effective date, rejecting anything the README would not have written.
+///
+/// `Date.ParseStrategy` is lenient in two ways this format cannot tolerate: it rolls out-of-range
+/// components over, reading `October 32, 2025` as November 1st, and it stops at the first match,
+/// accepting trailing text. Both would yield a plausible but wrong ``Cycle``, which callers turn
+/// straight into a download URL. Re-rendering the result and requiring it to equal the input
+/// rejects both, while still tolerating surrounding whitespace.
+func parseReadmeCycleDate(_ string: String) -> Date? {
+  let trimmed = string.trimmingCharacters(in: readmeCycleDateTerminators)
+  guard let date = try? readmeCycleDateStrategy.parse(trimmed),
+    readmeCycleDateStyles.contains(where: { $0.format(date) == trimmed })
+  else { return nil }
+  return date
+}
+
 extension Distribution {
   private var readmeFirstLine: Data {
     "AIS subscriber files effective date ".data(using: .isoLatin1)!
@@ -44,11 +79,11 @@ extension Distribution {
   }
 
   private func parseCycleFrom(_ line: Data) -> Cycle? {
-    let cycleDateData = line[readmeFirstLine.count..<(line.count - 1)]
+    let cycleDateData = line[readmeFirstLine.count...]
     guard let cycleDateString = String(data: cycleDateData, encoding: .isoLatin1) else {
       return nil
     }
-    guard let cycleDate = try? readmeCycleDateStrategy.parse(cycleDateString) else {
+    guard let cycleDate = parseReadmeCycleDate(cycleDateString) else {
       return nil
     }
 
