@@ -46,7 +46,7 @@ public final class ArchiveFileDownloader: Downloader {
     let (tempfileURL, response) = try await session.download(from: cycleURL, delegate: delegate)
 
     guard let HTTPResponse = response as? HTTPURLResponse else {
-      throw Error.badResponse(response as! HTTPURLResponse)
+      throw Error.badResponse(response)
     }
 
     // Check for non-success status codes

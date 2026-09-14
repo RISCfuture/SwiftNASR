@@ -36,7 +36,7 @@ public final class ArchiveDataDownloader: Downloader {
     let (data, response) = try await session.data(from: cycleURL, delegate: delegate)
 
     guard let HTTPResponse = response as? HTTPURLResponse else {
-      throw Error.badResponse(response as! HTTPURLResponse)
+      throw Error.badResponse(response)
     }
 
     // Check for non-success status codes
