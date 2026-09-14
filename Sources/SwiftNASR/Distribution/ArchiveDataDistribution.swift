@@ -172,7 +172,7 @@ public final class ArchiveDataDistribution: Distribution {
       return nil
     }
 
-    guard let cycleDate = try? readmeCycleDateStrategy.parse(cycleDateString) else {
+    guard let cycleDate = parseReadmeCycleDate(cycleDateString) else {
       return nil
     }
 
