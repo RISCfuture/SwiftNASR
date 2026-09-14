@@ -141,4 +141,40 @@ struct CycleTests {
     // expirationDate should equal the next cycle's effectiveDate
     #expect(expirationDate == cycle.next?.effectiveDate)
   }
+
+  // MARK: parseReadmeCycleDate
+
+  @Test(arguments: [
+    "October 32, 2025",  // day out of range for the month
+    "February 30, 2025",
+    "October 30, 2025 and more words",  // trailing text
+    "October 30, 2025extra",
+    "Octobre 30, 2025",  // not the README's locale
+    "10/30/2025",  // not the README's format
+    ""
+  ])
+  func `rejects a malformed README effective date`(_ input: String) {
+    #expect(parseReadmeCycleDate(input) == nil)
+  }
+
+  @Test(arguments: [
+    ("October 30, 2025", 2025, 10, 30),
+    ("January 1, 2026", 2026, 1, 1),
+    ("December 31, 2025", 2025, 12, 31),
+    ("  March 5, 2024  ", 2024, 3, 5),  // surrounding whitespace is tolerated
+    ("September 03, 2026", 2026, 9, 3),  // the distributions pad the day
+    ("October 01, 2026.", 2026, 10, 1)  // and end the sentence
+  ])
+  func `parses a well-formed README effective date`(
+    _ input: String,
+    _ year: Int,
+    _ month: Int,
+    _ day: Int
+  ) throws {
+    let date = try #require(parseReadmeCycleDate(input))
+    let components = calendar.dateComponents([.year, .month, .day], from: date)
+    #expect(components.year == year)
+    #expect(components.month == month)
+    #expect(components.day == day)
+  }
 }
