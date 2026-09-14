@@ -8,6 +8,34 @@ let readmeCycleDateStrategy = Date.ParseStrategy(
   calendar: Calendar(identifier: .gregorian)
 )
 
+/// Renders a cycle date back into the README's spelling, for validating a parse.
+private var readmeCycleDateStyle: Date.FormatStyle {
+  Date.FormatStyle(
+    date: .long,
+    locale: Locale(identifier: "en_US"),
+    calendar: Calendar(identifier: .gregorian),
+    timeZone: zulu
+  )
+  .month(.wide)
+  .day(.defaultDigits)
+  .year(.defaultDigits)
+}
+
+/// Parses a README effective date, rejecting anything the README would not have written.
+///
+/// `Date.ParseStrategy` is lenient in two ways this format cannot tolerate: it rolls out-of-range
+/// components over, reading `October 32, 2025` as November 1st, and it stops at the first match,
+/// accepting trailing text. Both would yield a plausible but wrong ``Cycle``, which callers turn
+/// straight into a download URL. Re-rendering the result and requiring it to equal the input
+/// rejects both, while still tolerating surrounding whitespace.
+func parseReadmeCycleDate(_ string: String) -> Date? {
+  let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard let date = try? readmeCycleDateStrategy.parse(trimmed),
+    readmeCycleDateStyle.format(date) == trimmed
+  else { return nil }
+  return date
+}
+
 extension Distribution {
   private var readmeFirstLine: Data {
     "AIS subscriber files effective date ".data(using: .isoLatin1)!
@@ -48,7 +76,7 @@ extension Distribution {
     guard let cycleDateString = String(data: cycleDateData, encoding: .isoLatin1) else {
       return nil
     }
-    guard let cycleDate = try? readmeCycleDateStrategy.parse(cycleDateString) else {
+    guard let cycleDate = parseReadmeCycleDate(cycleDateString) else {
       return nil
     }
 
