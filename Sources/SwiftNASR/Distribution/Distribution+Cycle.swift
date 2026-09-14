@@ -1,14 +1,14 @@
 import Foundation
 
-extension Distribution {
-  private var cycleDateFormatter: DateFormatter {
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US")
-    formatter.timeZone = zulu
-    formatter.dateFormat = "MMMM d, yyyy"
-    return formatter
-  }
+/// Parses the effective date as the distribution README spells it (e.g. `October 30, 2025`).
+let readmeCycleDateStrategy = Date.ParseStrategy(
+  format: "\(month: .wide) \(day: .defaultDigits), \(year: .defaultDigits)",
+  locale: Locale(identifier: "en_US"),
+  timeZone: zulu,
+  calendar: Calendar(identifier: .gregorian)
+)
 
+extension Distribution {
   private var readmeFirstLine: Data {
     "AIS subscriber files effective date ".data(using: .isoLatin1)!
   }
@@ -48,7 +48,7 @@ extension Distribution {
     guard let cycleDateString = String(data: cycleDateData, encoding: .isoLatin1) else {
       return nil
     }
-    guard let cycleDate = cycleDateFormatter.date(from: cycleDateString) else {
+    guard let cycleDate = try? readmeCycleDateStrategy.parse(cycleDateString) else {
       return nil
     }
 
