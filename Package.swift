@@ -34,8 +34,7 @@ let package = Package(
       name: "SwiftNASR",
       dependencies: ["ZIPFoundation", "StreamingCSV"],
       resources: [.process("Resources")],
-      swiftSettings: upcomingFeatures,
-      linkerSettings: [.linkedLibrary("swift_Concurrency")]
+      swiftSettings: upcomingFeatures
     ),
     .testTarget(
       name: "SwiftNASRTests",
@@ -44,8 +43,7 @@ let package = Package(
         .copy("Resources/MockDistribution"),
         .copy("Resources/FailingMockDistribution")
       ],
-      swiftSettings: upcomingFeatures,
-      linkerSettings: [.linkedLibrary("swift_Concurrency")]
+      swiftSettings: upcomingFeatures
     ),
     .executableTarget(
       name: "SwiftNASR_E2E",
@@ -54,8 +52,7 @@ let package = Package(
         .product(name: "ArgumentParser", package: "swift-argument-parser")
       ],
       path: "Tests/SwiftNASR_E2E",
-      swiftSettings: upcomingFeatures,
-      linkerSettings: [.linkedLibrary("swift_Concurrency")]
+      swiftSettings: upcomingFeatures
     )
   ],
   swiftLanguageModes: [.v5, .v6]
