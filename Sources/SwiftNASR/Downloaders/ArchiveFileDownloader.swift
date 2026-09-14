@@ -46,6 +46,7 @@ public final class ArchiveFileDownloader: Downloader {
     let (tempfileURL, response) = try await session.download(from: cycleURL, delegate: delegate)
 
     guard let HTTPResponse = response as? HTTPURLResponse else {
+      try? FileManager.default.removeItem(at: tempfileURL)
       throw Error.badResponse(response)
     }
 
