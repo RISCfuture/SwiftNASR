@@ -61,10 +61,10 @@ struct ByteTransformer {
           return try transformFrequency(slice, nullable: nullable, index: index)
         case let .boolean(trueValue, nullable):
           return try transformBoolean(slice, trueValue: trueValue, nullable: nullable, index: index)
-        case let .datetime(formatter, nullable):
+        case let .datetime(strategy, nullable):
           return try transformDatetime(
             slice,
-            formatter: formatter,
+            strategy: strategy,
             nullable: nullable,
             index: index
           )
@@ -210,13 +210,13 @@ struct ByteTransformer {
 
   private func transformDatetime(
     _ slice: ByteSlice,
-    formatter: DateFormatter,
+    strategy: Date.ParseStrategy,
     nullable: Nullable,
     index: Int
   ) throws -> Any? {
     try transform(slice, nullable: nullable, index: index, trim: true) { bytes in
       guard let str = bytes.toString(),
-        let transformed = formatter.date(from: str)
+        let transformed = try? strategy.parse(str)
       else {
         let str = bytes.toString() ?? "<invalid>"
         throw FixedWidthParserError.invalidDate(str, at: index)

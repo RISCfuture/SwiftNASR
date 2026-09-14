@@ -67,33 +67,36 @@ final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
   }
 }
 
-private var cycleDateFormatter: DateFormatter {
-  let formatter = DateFormatter()
-  formatter.locale = Locale(identifier: "en_US_POSIX")
-  formatter.dateFormat = "yyyy-MM-dd"
-  formatter.timeZone = zulu
-  return formatter
-}
+/// Formats the cycle effective date the way the TXT distribution URL spells it (e.g. `2025-09-04`).
+private let TXTCycleDateStyle = Date.VerbatimFormatStyle(
+  format: "\(year: .defaultDigits)-\(month: .twoDigits)-\(day: .twoDigits)",
+  locale: Locale(identifier: "en_US_POSIX"),
+  timeZone: zulu,
+  calendar: Calendar(identifier: .gregorian)
+)
+
+/// Formats the cycle effective date the way the CSV distribution URL spells it (e.g. `04_Sep_2025`).
+private let CSVCycleDateStyle = Date.VerbatimFormatStyle(
+  format: "\(day: .twoDigits)_\(month: .abbreviated)_\(year: .defaultDigits)",
+  locale: Locale(identifier: "en_US"),
+  timeZone: zulu,
+  calendar: Calendar(identifier: .gregorian)
+)
 
 // swiftlint:disable missing_docs
 extension Downloader {
   public var cycleURL: URL {
     switch format {
       case .txt:
-        let cycleString = cycleDateFormatter.string(from: cycle.effectiveDate!)
+        let cycleString = TXTCycleDateStyle.format(cycle.effectiveDate!)
         return URL(
           string:
             "https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_\(cycleString).zip"
         )!
       case .csv:
-        // CSV format uses DD_Mmm_YYYY format (e.g., 04_Sep_2025_CSV.zip)
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US")
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        formatter.dateFormat = "dd_MMM_yyyy"
-        let csvDateString = formatter.string(from: cycle.effectiveDate!)
+        let cycleString = CSVCycleDateStyle.format(cycle.effectiveDate!)
         return URL(
-          string: "https://nfdc.faa.gov/webContent/28DaySub/extra/\(csvDateString)_CSV.zip"
+          string: "https://nfdc.faa.gov/webContent/28DaySub/extra/\(cycleString)_CSV.zip"
         )!
     }
   }

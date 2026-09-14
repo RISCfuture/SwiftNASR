@@ -197,10 +197,10 @@ struct CSVTransformer {
           str in
           return str == trueValue
         }
-      case let .datetime(formatter, nullable):
+      case let .datetime(strategy, nullable):
         return try transformColumn(value, nullable: nullable, column: columnName, trim: true) {
           str in
-          guard let transformed = formatter.date(from: str) else {
+          guard let transformed = try? strategy.parse(str) else {
             throw CSVParserError.invalidDateInColumn(str, column: columnName)
           }
           return transformed

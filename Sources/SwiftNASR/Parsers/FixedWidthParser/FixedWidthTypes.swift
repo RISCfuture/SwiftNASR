@@ -149,7 +149,7 @@ enum FixedWidthField {
   case DDMMSS(nullable: Nullable = .notNull)
   case frequency(nullable: Nullable = .notNull)
   case boolean(trueValue: String = "Y", nullable: Nullable = .notNull)
-  case datetime(formatter: DateFormatter, nullable: Nullable = .notNull)
+  case datetime(strategy: Date.ParseStrategy, nullable: Nullable = .notNull)
   case dateComponents(format: DateFormat, nullable: Nullable = .notNull)
   case fixedWidthArray(
     width: Int = 1,

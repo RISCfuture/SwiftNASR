@@ -186,12 +186,7 @@ public final class DirectoryDistribution: Distribution {
         let dateString = String(line.dropFirst("AIS subscriber files effective date ".count))
           .trimmingCharacters(in: .whitespaces)
 
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)!
-        formatter.dateFormat = "MMMM d, yyyy"
-
-        if let date = formatter.date(from: dateString) {
+        if let date = try? readmeCycleDateStrategy.parse(dateString) {
           let components = Calendar(identifier: .gregorian).dateComponents(
             in: TimeZone(secondsFromGMT: 0)!,
             from: date

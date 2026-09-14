@@ -194,12 +194,7 @@ public final class ArchiveFileDistribution: Distribution {
       return nil
     }
 
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US")
-    formatter.timeZone = TimeZone(identifier: "UTC")
-    formatter.dateFormat = "MMMM d, yyyy"
-
-    guard let cycleDate = formatter.date(from: cycleDateString) else {
+    guard let cycleDate = try? readmeCycleDateStrategy.parse(cycleDateString) else {
       return nil
     }
 
