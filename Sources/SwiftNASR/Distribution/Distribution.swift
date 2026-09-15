@@ -46,7 +46,7 @@ public protocol Distribution: Sendable {
   /// The data format (TXT or CSV) for this distribution.
   ///
   /// This property determines which parsers are used when calling
-  /// ``NASR/parse(_:withProgress:errorHandler:)``. TXT format uses fixed-width
+  /// ``NASR/parse(_:progress:errorHandler:)``. TXT format uses fixed-width
   /// parsers, while CSV format uses comma-separated value parsers.
   var format: DataFormat { get }
 
@@ -64,9 +64,8 @@ public protocol Distribution: Sendable {
    Decompresses and reads a file asynchronously from a distribution.
 
    - Parameter path: The path to the file.
-   - Parameter progressHandler: A block that receives the Progress object when
-                                the task begins. You can add it to your parent
-                                Progress.
+   - Parameter progress: A subprogress, obtained from your own `ProgressManager`, that reports
+                         how much of the file has been read. Pass `nil` to track no progress.
    - Parameter linesHandler: Called when the number of lines in the file is
                              known.
    - Returns: An `AsyncStream` that contains each line, in order, from the
@@ -76,7 +75,7 @@ public protocol Distribution: Sendable {
   @FileReadActor
   func readFile(
     path: String,
-    withProgress progressHandler: @Sendable (_ progress: Progress) -> Void,
+    progress: consuming Subprogress?,
     returningLines linesHandler: (_ lines: UInt) -> Void
   ) -> AsyncThrowingStream<Data, any Swift.Error>
 
@@ -95,14 +94,14 @@ public protocol Distribution: Sendable {
    parsers with multi-line quoted fields).
 
    - Parameter path: The path to the file within the distribution.
-   - Parameter progressHandler: A block that receives the Progress object when
-                                the task begins.
+   - Parameter progress: A subprogress, obtained from your own `ProgressManager`, that reports
+                         how much of the file has been read. Pass `nil` to track no progress.
    - Returns: An `AsyncThrowingStream` that yields raw data chunks.
    */
   @FileReadActor
   func readFileRaw(
     path: String,
-    withProgress progressHandler: @Sendable (_ progress: Progress) -> Void
+    progress: consuming Subprogress?
   ) -> AsyncThrowingStream<Data, any Swift.Error>
 }
 
@@ -112,30 +111,30 @@ extension Distribution {
    Reads the data for a given record type from the distribution.
 
    - Parameter type: The record type to read data for.
-   - Parameter progressHandler: A block that receives the Progress object when
-   the task begins. You can add it to your parent Progress.
+   - Parameter progress: A subprogress, obtained from your own `ProgressManager`, that reports
+                         how much of the record file has been read. Pass `nil` to track no
+                         progress.
    - Parameter linesHandler: Called when the number of lines in the file is
    known.
-   - Returns: An async stream of data from the record file, and the progress
-   through that file.
+   - Returns: An async stream of data from the record file.
    */
 
   @FileReadActor
   public func read(
     type: RecordType,
-    withProgress progressHandler: @Sendable (_ progress: Progress) -> Void = { _ in },
+    progress: consuming Subprogress? = nil,
     returningLines linesHandler: (_ lines: UInt) -> Void = { _ in }
   ) -> AsyncThrowingStream<Data, any Swift.Error> {
     switch format {
       case .txt:
         return readFile(
           path: "\(type.rawValue).txt",
-          withProgress: progressHandler,
+          progress: progress,
           returningLines: linesHandler
         )
       case .csv:
         // For CSV format, we need to handle multiple files per record type
-        return readCSVFiles(for: type, withProgress: progressHandler, returningLines: linesHandler)
+        return readCSVFiles(for: type, progress: progress, returningLines: linesHandler)
     }
   }
 
@@ -143,7 +142,7 @@ extension Distribution {
   @FileReadActor
   public func readCSVFiles(
     for type: RecordType,
-    withProgress progressHandler: @Sendable (_ progress: Progress) -> Void = { _ in },
+    progress: consuming Subprogress? = nil,
     returningLines linesHandler: (_ lines: UInt) -> Void = { _ in }
   ) -> AsyncThrowingStream<Data, any Swift.Error> {
     // For CSV format, the actual parsing happens in the CSV parsers which read files directly
@@ -165,9 +164,7 @@ extension Distribution {
     // For CSV, we'll just return a marker indicating CSV format
     // The actual parsing happens in the CSV parsers which read files directly
     // Report a completed progress for the "read" phase since CSV files are read all at once
-    let readProgress = Progress(totalUnitCount: 1)
-    readProgress.completedUnitCount = 1
-    progressHandler(readProgress)
+    completeImmediately(progress)
 
     // Call the lines handler with 1 to ensure parseProgress is initialized
     linesHandler(1)

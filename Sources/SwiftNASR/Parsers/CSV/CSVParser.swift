@@ -1,4 +1,4 @@
-public import Foundation
+internal import Foundation
 import StreamingCSV
 
 /**
@@ -14,23 +14,9 @@ public protocol CSVParser: Parser {
 
   /// The CSV files this parser will process.
   var CSVFiles: [String] { get }
-
-  /// Progress object for reporting parsing progress.
-  var progress: Progress? { get set }
-
-  /// Cumulative bytes read across all files (for progress tracking).
-  var bytesRead: Int64 { get set }
 }
 
 extension CSVParser {
-  /// Sets up progress tracking and returns the Progress object.
-  func setupProgress() -> Progress {
-    let prog = Progress(totalUnitCount: 1)
-    progress = prog
-    bytesRead = 0
-    return prog
-  }
-
   /// Parse a CSV file with header-based row access.
   ///
   /// This method reads the header row to build a column name to index mapping,
@@ -50,7 +36,7 @@ extension CSVParser {
       throw ParserError.badData("Distribution not set for CSV parser")
     }
 
-    let dataStream = await distribution.readFileRaw(path: filename) { _ in }
+    let dataStream = await distribution.readFileRaw(path: filename, progress: nil)
     // FAA data files use Latin-1 (ISO-8859-1) encoding for special characters like degree symbols
     let rowStream = StreamingCSVReader.stream(from: dataStream, encoding: .isoLatin1)
 

@@ -56,10 +56,13 @@ struct ArchiveDataDistributionTests {
   @Test
   func `reads each line from the file`() async throws {
     var iter = 0
-    var progress = Progress(totalUnitCount: 0)
+    let progress = ProgressManager(totalCount: 21)
 
-    let stream = await distributionReadme.readFile(path: "APT.TXT") { progress = $0 }
-    #expect(progress.completedUnitCount == 21)
+    let stream = await distributionReadme.readFile(
+      path: "APT.TXT",
+      progress: progress.subprogress(assigningCount: 21)
+    )
+    #expect(progress.completedCount == 21)
 
     for try await data in stream {
       if iter == 0 {

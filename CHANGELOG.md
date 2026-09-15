@@ -2,6 +2,58 @@
 
 ## [Unreleased]
 
+### Added
+
+- Progress reported for a file read, an archive extraction, or a download now also carries
+  `totalByteCount` and `completedByteCount`, so a caller can display byte figures alongside the
+  fraction. Read them from anywhere in your own progress tree with
+  `summary(of: \.completedByteCount)`
+
+### Changed
+
+- **BREAKING:** Progress is reported through Foundation's `ProgressManager` (SF-0023) rather than
+  `Progress`/`NSProgress`, which inverts how progress reaches SwiftNASR. Where you used to receive a
+  `Progress` through a handler block and add it to your own tree, you now pass a `Subprogress` down
+  from your own `ProgressManager`. Six signatures change accordingly, each replacing its
+  `withProgress:` handler with `progress: consuming Subprogress? = nil`: `NASR.load(progress:)`,
+  `NASR.parse(_:progress:errorHandler:)`, `Loader.load(progress:)`, `Downloader.load(progress:)`,
+  `Distribution.readFile(path:progress:returningLines:)`, and
+  `Distribution.readFileRaw(path:progress:)` — along with the `Distribution` conveniences
+  `read(type:progress:returningLines:)` and `readCSVFiles(for:progress:returningLines:)`. Pass `nil`
+  (or omit the argument) to track no progress:
+
+  ``` swift
+  let progress = ProgressManager(totalCount: 100)
+  let nasr = NASR.fromInternetToMemory()!
+  try await nasr.load(progress: progress.subprogress(assigningCount: 10))
+  try await nasr.parse(
+    .airports,
+    progress: progress.subprogress(assigningCount: 90),
+    errorHandler: { _ in .proceed }
+  )
+  ```
+
+  A `Subprogress` is non-copyable and cannot be captured by an escaping closure, so code that parses
+  several record types concurrently must mint one inside each task from a `ProgressManager` it
+  captures, rather than creating them up front.
+- **BREAKING:** The platform floor rises to macOS 27, iOS 27, tvOS 27, watchOS 27, and visionOS 27,
+  and the manifest's tools version to 6.4. `ProgressManager` exists nowhere below that: it carries no
+  lower availability annotation on Apple platforms, it is `@available(FoundationPreview 6.4)` on
+  Linux, and `MacOSVersion.v27` is itself `@available(_PackageDescription 6.4)`
+- **BREAKING:** `CSVParser` no longer requires `progress` or `bytesRead`. Both were vestigial — the
+  progress object was written but never read, and `bytesRead` was only ever reset to zero — and a CSV
+  parse now reports its single unit of progress from `NASR.parse(_:progress:errorHandler:)` itself
+- A record that fails to parse no longer stalls the fixed-width parse progress. Every line now counts
+  against the total, whether or not it parsed, so an observer waiting for completion is not left
+  hanging by a diagnosed record
+
+### Fixed
+
+- A directory distribution no longer double-counts a file it reads. It added each line's length to
+  its progress on top of the length of the chunk the line arrived in, reporting 35 bytes read from a
+  21-byte file. `Progress` clamped `fractionCompleted` to 1.0 and hid this; `ProgressManager`
+  reports the overshoot
+
 ## [4.3.0] - 2026-09-16
 
 ### Added
@@ -24,7 +76,6 @@
 - A runway, remark, arresting system, or attendance schedule naming a site number with no airport record is reported as `unknownParentRecord` through the parse error handler. The fixed-width airport parser skipped these silently, so a dropped `APT` record took its child records with it without anything saying so; the other eleven fixed-width parsers already reported the same condition
 - The record names in an `unknownParentRecord` error are localized. Both the child and the parent kind were interpolated into the description as English string literals, so a translated sentence would have come out half in English; each is now a case with its own localized text
 - An airport or runway parsed from the TXT distribution whose federal agreements, runway surface, or pavement classification holds an unrepresentable value is kept, with a `fieldError` naming the field, rather than dropped whole. This matches what the CSV parsers already did: in the 2026-09-03 cycle a stray slash in one airport's NASP code cost that airport entirely (19,410 TXT airports against 19,411 in CSV), and a heliport whose surface reads `OR` — apparently its own state code, miskeyed — cost that runway
-
 ## [4.2.0] - 2026-09-14
 
 ### Changed

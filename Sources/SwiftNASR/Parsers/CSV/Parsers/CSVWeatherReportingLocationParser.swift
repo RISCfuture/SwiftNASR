@@ -7,8 +7,6 @@ import StreamingCSV
 actor CSVWeatherReportingLocationParser: CSVParser, DiagnosingParser {
   static let type = RecordType.weatherReportingLocations
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["WXL_BASE.csv", "WXL_SVC.csv"]
 
   var pendingDiagnostics = [RecordParseError]()

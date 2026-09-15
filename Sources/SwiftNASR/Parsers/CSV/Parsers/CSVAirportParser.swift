@@ -6,8 +6,6 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
   static let type = RecordType.airports
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = [
     "FRQ.csv", "APT_BASE.csv", "APT_CON.csv", "APT_RWY.csv",
     "APT_RWY_END.csv", "APT_ARS.csv", "APT_ATT.csv", "APT_RMK.csv"

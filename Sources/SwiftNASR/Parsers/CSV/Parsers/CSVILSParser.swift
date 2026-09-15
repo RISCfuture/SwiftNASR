@@ -5,8 +5,6 @@ actor CSVILSParser: CSVParser, DiagnosingParser {
   static let type = RecordType.ILSes
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["ILS_BASE.csv", "ILS_GS.csv", "ILS_DME.csv", "ILS_MKR.csv", "ILS_RMK.csv"]
 
   var ILSFacilities = [ILSKey: ILS]()

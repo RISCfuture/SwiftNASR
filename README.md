@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/RISCfuture/SwiftNASR/actions/workflows/ci.yml/badge.svg)](https://github.com/RISCfuture/SwiftNASR/actions/workflows/ci.yml)
 [![Documentation](https://github.com/RISCfuture/SwiftNASR/actions/workflows/doc.yml/badge.svg)](https://riscfuture.github.io/SwiftNASR/)
-[![Swift 6.3+](https://img.shields.io/badge/Swift-6.3+-orange.svg)](https://swift.org)
-[![Platforms](https://img.shields.io/badge/Platforms-macOS%20|%20iOS%20|%20tvOS%20|%20watchOS%20|%20visionOS-blue.svg)](https://swift.org)
+[![Swift 6.4+](https://img.shields.io/badge/Swift-6.4+-orange.svg)](https://swift.org)
+[![Platforms](https://img.shields.io/badge/Platforms-macOS%2027+%20|%20iOS%2027+%20|%20tvOS%2027+%20|%20watchOS%2027+%20|%20visionOS%2027+-blue.svg)](https://swift.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 SwiftNASR is a Swift library that downloads and parses National Airspace System

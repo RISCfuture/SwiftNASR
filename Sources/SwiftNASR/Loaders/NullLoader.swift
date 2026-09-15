@@ -52,10 +52,8 @@ public final class NullLoader: Loader {
    Yields a ``NullDistribution`` that cannot be used to parse NASR data.
    */
 
-  public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) throws
-    -> any Distribution
-  {
-    progressHandler(completedProgress())
+  public func load(progress: consuming Subprogress? = nil) throws -> any Distribution {
+    completeImmediately(progress)
     return NullDistribution()
   }
 }

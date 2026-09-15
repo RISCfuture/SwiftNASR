@@ -7,7 +7,7 @@ public import Foundation
 
  Fields in this model that reference other record types (e.g.,
  ``airport``, which references ``Airport``) will be `nil` unless the
- associated type has been parsed with ``NASR/parse(_:withProgress:errorHandler:)``.
+ associated type has been parsed with ``NASR/parse(_:progress:errorHandler:)``.
  */
 
 public struct FSS: ParentRecord {

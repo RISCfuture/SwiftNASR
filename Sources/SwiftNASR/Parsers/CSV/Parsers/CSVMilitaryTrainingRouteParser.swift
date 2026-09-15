@@ -7,8 +7,6 @@ actor CSVMilitaryTrainingRouteParser: CSVParser, DiagnosingParser {
   static let type = RecordType.militaryTrainingRoutes
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = [
     "MTR_BASE.csv", "MTR_AGY.csv", "MTR_PT.csv",
     "MTR_SOP.csv", "MTR_TERR.csv", "MTR_WDTH.csv"

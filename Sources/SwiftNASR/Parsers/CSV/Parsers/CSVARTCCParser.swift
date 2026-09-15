@@ -6,8 +6,6 @@ actor CSVARTCCParser: CSVParser, DiagnosingParser {
   static let type = RecordType.ARTCCFacilities
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["ATC_BASE.csv", "ATC_RMK.csv", "ATC_SVC.csv"]
 
   var ARTCCs = [ARTCCKey: ARTCC]()
