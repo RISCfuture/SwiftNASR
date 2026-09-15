@@ -6,8 +6,6 @@ actor CSVAirwayParser: CSVParser, DiagnosingParser {
   static let type = RecordType.airways
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["AWY_BASE.csv", "AWY_SEG_ALT.csv"]
 
   var airways = [AirwayKey: Airway]()

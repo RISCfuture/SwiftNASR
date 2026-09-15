@@ -68,7 +68,7 @@ extension Distribution {
 
     let lines: AsyncThrowingStream = await readFile(
       path: path,
-      withProgress: { _ in },
+      progress: nil,
       returningLines: { _ in }
     )
 

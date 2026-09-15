@@ -32,4 +32,4 @@ and a subclass of ``Distribution`` is generated to process that data.
 
 ### Downloading Distributions
 
-- ``load(withProgress:)``
+- ``load(progress:)``

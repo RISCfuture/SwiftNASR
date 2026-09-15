@@ -12,8 +12,6 @@ actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
   static let type = RecordType.terminalCommFacilities
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = [
     "ATC_BASE.csv", "ATC_SVC.csv", "ATC_ATIS.csv", "ATC_RMK.csv",
     "RDR.csv", "MIL_OPS.csv", "CLS_ARSP.csv"

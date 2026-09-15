@@ -27,11 +27,8 @@ public final class ArchiveDataDownloader: Downloader {
     self.session = session
   }
 
-  public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in })
-    async throws -> any Distribution
-  {
-    let delegate = DownloadDelegate()
-    progressHandler(delegate.progress)
+  public func load(progress: consuming Subprogress? = nil) async throws -> any Distribution {
+    let delegate = DownloadDelegate(progress: progress)
 
     let (data, response) = try await session.data(from: cycleURL, delegate: delegate)
 

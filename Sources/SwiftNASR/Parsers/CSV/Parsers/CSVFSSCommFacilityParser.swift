@@ -9,8 +9,6 @@ import StreamingCSV
 actor CSVFSSCommFacilityParser: CSVParser, DiagnosingParser {
   static let type = RecordType.FSSCommFacilities
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["COM.csv"]
 
   var facilities = [FSSCommFacility]()

@@ -1,12 +1,19 @@
 # CI Matrix Policy
 #
-# Category A (tools-version 6.2 + macOS 26 min): macos-26 + Swift 6.2
-# Category B (tools-version 6.2 + older macOS):  macos-15 + 6.2, macos-26 + 6.2
-# Category C (tools-version 6.3):                macos-15 + 6.3/6.4, macos-26 + 6.3/6.4
-# Linux:                                          ubuntu + Swift 6.3/6.4
+# This package adopts Foundation's SF-0023 `ProgressManager`, which exists only
+# in the macOS 27 SDK family and, on Linux, only in swift-foundation 6.4. That
+# fixes the whole matrix:
 #
-# This package is Category C. StreamingCSV requires tools-version 6.3, so Swift
-# 6.1 and 6.2 can no longer resolve it.
+# Darwin: the macOS 27 SDK ships with Xcode 27, which the `xcode-27` image
+#         provides and `macos-15`/`macos-26` cannot. Its bundled toolchain is
+#         Swift 6.4, so the Xcode selection is the whole toolchain setup and
+#         SwiftyLab/setup-swift is not used here.
+# Linux:  Swift 6.4 only. `ProgressManager` is `@available(FoundationPreview
+#         6.4)`, so it is absent from swift-foundation release/6.3.
+#
+# `// swift-tools-version:` is 6.4 because `MacOSVersion.v27` is
+# `@available(_PackageDescription 6.4)`, so no earlier toolchain can even read
+# the manifest.
 
 name: CI
 
@@ -21,25 +28,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  tests:
-    name: Build and Test
+  tests-darwin:
+    name: Build and Test (macOS)
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v7
+      # `latest` rather than `latest-stable`: the macOS 27 SDK is what this
+      # package needs, and it ships with an Xcode that may still be a preview.
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest
+      - name: Cache SwiftPM build products
+        uses: actions/cache@v6
+        with:
+          path: |
+            .build
+            ~/.cache/org.swift.swiftpm
+            ~/Library/Caches/org.swift.swiftpm
+          key: swiftpm-test-xcode-27-${{ hashFiles('Package.resolved') }}
+      - name: Build
+        run: swift build -v
+      - name: Test
+        run: swift test -v
+  tests-linux:
+    name: Build and Test (Linux)
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: macos-15
-            swift: "6.3"
-          - os: macos-15
-            swift: "6.4"
-          - os: macos-26
-            swift: "6.3"
-          - os: macos-26
-            swift: "6.4"
-          - os: ubuntu-latest
-            swift: "6.3"
-          - os: ubuntu-latest
-            swift: "6.4"
-    runs-on: ${{ matrix.os }}
+        swift: ["6.4"]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: SwiftyLab/setup-swift@latest
@@ -52,7 +69,7 @@ jobs:
             .build
             ~/.cache/org.swift.swiftpm
             ~/Library/Caches/org.swift.swiftpm
-          key: swiftpm-test-${{ matrix.os }}-swift${{ matrix.swift }}-${{ hashFiles('Package.resolved') }}
+          key: swiftpm-test-ubuntu-latest-swift${{ matrix.swift }}-${{ hashFiles('Package.resolved') }}
       - name: Build
         run: swift build -v
       - name: Test
@@ -61,12 +78,12 @@ jobs:
     name: Build Documentation
     # macOS: the CoreLocation-gated Location extension is absent from the
     # Linux symbol graph, so its documentation would go unchecked there.
-    runs-on: macos-26
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v7
-      - uses: SwiftyLab/setup-swift@latest
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
-          swift-version: "6.3"
+          xcode-version: latest
       - name: Cache SwiftPM build products
         uses: actions/cache@v6
         with:
@@ -74,7 +91,7 @@ jobs:
             .build
             ~/.cache/org.swift.swiftpm
             ~/Library/Caches/org.swift.swiftpm
-          key: swiftpm-docs-macos-26-swift6.3-${{ hashFiles('Package.resolved') }}
+          key: swiftpm-docs-xcode-27-${{ hashFiles('Package.resolved') }}
       - name: Build documentation
         run: |
           swift package \

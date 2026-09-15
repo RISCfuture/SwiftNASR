@@ -32,10 +32,13 @@ struct ArchiveFileDistributionTests {
     defer { try? FileManager.default.removeItem(at: tempfile) }
 
     var iter = 0
-    var progress = Progress(totalUnitCount: 0)
+    let progress = ProgressManager(totalCount: 21)
 
-    let stream = await distribution.readFile(path: "APT.TXT") { progress = $0 }
-    #expect(progress.completedUnitCount == 21)
+    let stream = await distribution.readFile(
+      path: "APT.TXT",
+      progress: progress.subprogress(assigningCount: 21)
+    )
+    #expect(progress.completedCount == 21)
 
     for try await data in stream {
       if iter == 0 {

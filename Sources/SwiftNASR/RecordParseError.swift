@@ -4,14 +4,14 @@ public import Foundation
 public enum ParseDisposition: Sendable {
   /// Continue parsing subsequent records.
   case proceed
-  /// Stop parsing; ``NASR/parse(_:withProgress:errorHandler:)`` returns `false`.
+  /// Stop parsing; ``NASR/parse(_:progress:errorHandler:)`` returns `false`.
   case abort
 }
 
 /// A problem encountered while parsing a single record from a NASR distribution.
 ///
 /// Reported through the `errorHandler` of
-/// ``NASR/parse(_:withProgress:errorHandler:)``. A
+/// ``NASR/parse(_:progress:errorHandler:)``. A
 /// ``recordError(recordType:recordID:underlying:)`` means the record could not
 /// be constructed and was omitted; a
 /// ``fieldError(recordType:recordID:field:value:underlying:)`` means the record

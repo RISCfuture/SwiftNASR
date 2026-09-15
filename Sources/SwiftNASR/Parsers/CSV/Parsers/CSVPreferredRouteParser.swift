@@ -6,8 +6,6 @@ actor CSVPreferredRouteParser: CSVParser, DiagnosingParser {
   static let type = RecordType.preferredRoutes
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["PFR_BASE.csv", "PFR_SEG.csv"]
 
   var routes = [String: PreferredRoute]()

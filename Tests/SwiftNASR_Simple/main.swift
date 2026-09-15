@@ -21,9 +21,9 @@ if FileManager.default.fileExists(atPath: txtPath.path) {
 
   print("About to call nasr.load()...")
   do {
-    try await nasr.load { progress in
-      print("Load progress: \(progress.fractionCompleted)")
-    }
+    let progress = ProgressManager(totalCount: 1)
+    try await nasr.load(progress: progress.subprogress(assigningCount: 1))
+    print("Load progress: \(progress.fractionCompleted)")
     print("Load completed successfully!")
   } catch {
     print("Load failed: \(error)")

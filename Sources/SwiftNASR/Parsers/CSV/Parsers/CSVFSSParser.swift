@@ -4,8 +4,6 @@ import StreamingCSV
 /// CSV FSS Parser using declarative transformers like FixedWidthFSSParser
 actor CSVFSSParser: CSVParser {
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["FSS_BASE.csv", "FSS_RMK.csv"]
 
   var FSSes = [String: FSS]()

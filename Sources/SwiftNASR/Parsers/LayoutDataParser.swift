@@ -175,7 +175,7 @@ extension LayoutDataParser {
     let layoutPath = "Layout_Data/\(type.rawValue.lowercased())_rf.txt"
     let lines: AsyncThrowingStream = await distribution.readFile(
       path: layoutPath,
-      withProgress: { _ in },
+      progress: nil,
       returningLines: { _ in }
     )
     for try await data in lines {

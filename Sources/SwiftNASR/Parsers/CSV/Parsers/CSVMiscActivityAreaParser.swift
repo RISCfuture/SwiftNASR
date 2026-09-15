@@ -6,8 +6,6 @@ actor CSVMiscActivityAreaParser: CSVParser, DiagnosingParser {
   static let type = RecordType.miscActivityAreas
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["MAA_BASE.csv", "MAA_CON.csv", "MAA_RMK.csv", "MAA_SHP.csv"]
 
   var pendingDiagnostics = [RecordParseError]()

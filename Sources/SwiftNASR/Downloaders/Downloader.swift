@@ -33,19 +33,25 @@ public protocol Downloader: Loader {
   /**
    Downloads the NASR data asynchronously.
 
-   - Returns: The downloaded distribution, and an object for tracking progress.
+   - Parameter progress: A subprogress, obtained from your own `ProgressManager`, that reports
+                         download progress. Pass `nil` to track no progress.
+   - Returns: The downloaded distribution.
    - Throws: If the distribution could not be downloaded.
    */
 
-  func load(withProgress progressHandler: @Sendable (Progress) -> Void) async throws
-    -> any Distribution
+  func load(progress: consuming Subprogress?) async throws -> any Distribution
 }
 
 #if canImport(Darwin)
   @objc
 #endif
 final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
-  let progress = Progress(totalUnitCount: 0)
+  private let progress: ByteReadProgress
+
+  init(progress: consuming Subprogress?) {
+    self.progress = ByteReadProgress(progress)
+    super.init()
+  }
 
   func urlSession(
     _: URLSession,
@@ -62,8 +68,10 @@ final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
     totalBytesWritten: Int64,
     totalBytesExpectedToWrite: Int64
   ) {
-    progress.completedUnitCount = totalBytesWritten
-    progress.totalUnitCount = totalBytesExpectedToWrite
+    progress.update(
+      completed: Int(clamping: totalBytesWritten),
+      total: Int(clamping: totalBytesExpectedToWrite)
+    )
   }
 }
 
@@ -102,10 +110,8 @@ extension Downloader {
   }
 
   // periphery:ignore - default protocol implementation; always provided by conformers
-  func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in }) throws
-    -> any Distribution
-  {
-    progressHandler(completedProgress())
+  func load(progress: consuming Subprogress? = nil) throws -> any Distribution {
+    completeImmediately(progress)
     return NullDistribution()
   }
 }

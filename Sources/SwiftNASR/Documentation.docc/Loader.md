@@ -27,4 +27,4 @@ only retrieves it from disk, memory, or the Internet.
 
 ### Loading Data
 
-- ``load(withProgress:)``
+- ``load(progress:)``

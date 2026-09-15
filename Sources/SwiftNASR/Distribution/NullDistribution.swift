@@ -16,7 +16,7 @@ public final class NullDistribution: Distribution {
 
   public func readFile(
     path _: String,
-    withProgress _: @Sendable (Progress) -> Void = { _ in },
+    progress _: consuming Subprogress? = nil,
     returningLines _: (UInt) -> Void = { _ in }
   ) -> AsyncThrowingStream<Data, any Swift.Error> {
     return AsyncThrowingStream { $0.finish(throwing: Error.nullDistribution) }
@@ -24,7 +24,7 @@ public final class NullDistribution: Distribution {
 
   public func readFileRaw(
     path _: String,
-    withProgress _: @Sendable (Progress) -> Void = { _ in }
+    progress _: consuming Subprogress? = nil
   ) -> AsyncThrowingStream<Data, any Swift.Error> {
     return AsyncThrowingStream { $0.finish(throwing: Error.nullDistribution) }
   }

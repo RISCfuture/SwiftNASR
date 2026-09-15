@@ -46,7 +46,7 @@ public final class ArchiveFileDistribution: Distribution {
   @discardableResult
   private func readFileWithCallback(
     path: String,
-    withProgress progressHandler: (Progress) -> Void = { _ in },
+    progress: ByteReadProgress,
     eachLine: (Data) -> Void
   ) throws -> UInt {
     // Try exact match first, then case-insensitive match
@@ -57,14 +57,13 @@ public final class ArchiveFileDistribution: Distribution {
     var lines: UInt = 0
     var totalBytesProcessed: UInt64 = 0
 
-    let progress = Progress(totalUnitCount: Int64(entry.uncompressedSize))
-    progressHandler(progress)
+    progress.setTotal(Int(clamping: entry.uncompressedSize))
 
     _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: true, progress: nil) { data in
       totalBytesProcessed += UInt64(data.count)
       buffer.append(data)
 
-      progress.completedUnitCount += Int64(data.count)
+      progress.advance(by: data.count)
 
       // Process lines from buffer - handle both \r\n and \n line endings
       while true {
@@ -119,12 +118,13 @@ public final class ArchiveFileDistribution: Distribution {
 
   public func readFile(
     path: String,
-    withProgress progressHandler: (Progress) -> Void = { _ in },
+    progress: consuming Subprogress? = nil,
     returningLines linesHandler: (UInt) -> Void = { _ in }
   ) -> AsyncThrowingStream<Data, any Swift.Error> {
+    let progress = ByteReadProgress(progress)
     return AsyncThrowingStream { continuation in
       do {
-        let lines = try readFileWithCallback(path: path, withProgress: progressHandler) { data in
+        let lines = try readFileWithCallback(path: path, progress: progress) { data in
           continuation.yield(data)
         }
         linesHandler(lines)
@@ -137,8 +137,9 @@ public final class ArchiveFileDistribution: Distribution {
 
   public func readFileRaw(
     path: String,
-    withProgress progressHandler: (Progress) -> Void = { _ in }
+    progress: consuming Subprogress? = nil
   ) -> AsyncThrowingStream<Data, any Swift.Error> {
+    let progress = ByteReadProgress(progress)
     return AsyncThrowingStream { continuation in
       do {
         // Try exact match first, then case-insensitive match
@@ -149,12 +150,11 @@ public final class ArchiveFileDistribution: Distribution {
           return
         }
 
-        let progress = Progress(totalUnitCount: Int64(entry.uncompressedSize))
-        progressHandler(progress)
+        progress.setTotal(Int(clamping: entry.uncompressedSize))
 
         _ = try archive.extract(entry, bufferSize: chunkSize, skipCRC32: true, progress: nil) {
           data in
-          progress.completedUnitCount += Int64(data.count)
+          progress.advance(by: data.count)
           // Force a copy to avoid ZIPFoundation buffer reuse issues
           continuation.yield(Data(data))
         }
@@ -175,11 +175,7 @@ public final class ArchiveFileDistribution: Distribution {
     }
     // For TXT format, read from the README file
     let path = try findFile(prefix: "Read_me") ?? "README.txt"
-    let lines: AsyncThrowingStream = await readFile(
-      path: path,
-      withProgress: { _ in },
-      returningLines: { _ in }
-    )
+    let lines: AsyncThrowingStream = await readFile(path: path)
     let readmePrefix = "AIS subscriber files effective date ".data(using: .isoLatin1)!
     for try await line in lines where line.starts(with: readmePrefix) {
       return parseCycleFromReadme(line)

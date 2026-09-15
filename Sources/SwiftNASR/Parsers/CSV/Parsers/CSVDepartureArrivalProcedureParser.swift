@@ -6,8 +6,6 @@ import StreamingCSV
 /// Parses DP_BASE.csv, DP_APT.csv, DP_RTE.csv, STAR_BASE.csv, STAR_APT.csv, and STAR_RTE.csv.
 actor CSVDepartureArrivalProcedureParser: CSVParser {
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = [
     "DP_BASE.csv", "DP_APT.csv", "DP_RTE.csv",
     "STAR_BASE.csv", "STAR_APT.csv", "STAR_RTE.csv"

@@ -8,8 +8,6 @@ private actor RowCountingParser: CSVParser, DiagnosingParser {
   static let type = RecordType.navaids
   var distribution: (any Distribution)?
   let CSVFiles = ["TEST.csv"]
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   var pendingDiagnostics = [RecordParseError]()
   var kept = [String]()
 

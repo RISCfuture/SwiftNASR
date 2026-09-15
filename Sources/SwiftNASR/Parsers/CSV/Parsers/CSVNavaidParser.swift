@@ -6,8 +6,6 @@ actor CSVNavaidParser: CSVParser, DiagnosingParser {
   static let type = RecordType.navaids
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["NAV_BASE.csv", "NAV_RMK.csv", "NAV_CKPT.csv"]
 
   var navaids = [NavaidKey: Navaid]()

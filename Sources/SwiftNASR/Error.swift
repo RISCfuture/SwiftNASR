@@ -5,7 +5,7 @@ public import Foundation
 
 /// Errors that can occur in SwiftNASR methods.
 public enum Error: Swift.Error, Sendable {
-  /// Tried to call ``NASR/load(withProgress:)`` on a ``NASR`` instance with
+  /// Tried to call ``NASR/load(progress:)`` on a ``NASR`` instance with
   /// a ``NullDistribution``.
   case nullDistribution
 
@@ -32,8 +32,8 @@ public enum Error: Swift.Error, Sendable {
   /// Response did not contain any body.
   case noData
 
-  /// ``NASR/parse(_:withProgress:errorHandler:)`` was called before
-  /// ``NASR/load(withProgress:)``.
+  /// ``NASR/parse(_:progress:errorHandler:)`` was called before
+  /// ``NASR/load(progress:)``.
   case notYetLoaded
 
   /**

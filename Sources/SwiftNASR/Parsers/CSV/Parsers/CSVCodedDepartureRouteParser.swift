@@ -7,8 +7,6 @@ import StreamingCSV
 /// RCode, Orig, Dest, DepFix, Route String, DCNTR, ACNTR, TCNTRs, CoordReq, Play, NavEqp, Length
 actor CSVCodedDepartureRouteParser: CSVParser {
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["CDR.csv"]
 
   var routes = [String: CodedDepartureRoute]()
