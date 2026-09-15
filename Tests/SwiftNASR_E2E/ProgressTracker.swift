@@ -75,7 +75,7 @@ func renderProgressBar(progress: ProgressTracker) async {
 
 func terminalWidth() -> Int {
   var w = winsize()
-  if ioctl(STDOUT_FILENO, UInt(TIOCGWINSZ), &w) == 0 {
+  if unsafe ioctl(STDOUT_FILENO, UInt(TIOCGWINSZ), &w) == 0 {
     return Int(w.ws_col)
   }
   return 80

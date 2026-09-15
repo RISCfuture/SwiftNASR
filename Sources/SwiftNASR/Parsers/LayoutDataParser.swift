@@ -1,5 +1,5 @@
 import Foundation
-@preconcurrency import RegexBuilder
+@unsafe @preconcurrency import RegexBuilder
 
 private final class FieldParser: Sendable {
   private let lengthRef = Reference<UInt>()
