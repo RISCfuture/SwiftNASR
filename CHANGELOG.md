@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Changed
+
+- A record that fails to parse no longer stalls the fixed-width parse progress. Every line now counts
+  against the total, whether or not it parsed, so an observer waiting for completion is not left
+  hanging by a diagnosed record
+
 ### Fixed
 
 - A directory distribution no longer double-counts a file it reads. It added each line's length to

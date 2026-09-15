@@ -265,9 +265,9 @@ public actor NASR {
       }
 
     for try await chunk in data {
+      defer { parseProgress.completedUnitCount += 1 }
       do {
         try await parser.parse(data: chunk)
-        parseProgress.completedUnitCount += 1
       } catch {
         await discardPendingDiagnostics()
         if errorHandler(.fromThrown(recordType: type, recordID: nil, error)) == .abort {
