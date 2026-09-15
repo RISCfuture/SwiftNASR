@@ -37,7 +37,7 @@ actor CSVDepartureArrivalProcedureParser: CSVParser {
 
       // Generate a unique sequence number for this procedure
       self.sequenceCounter += 1
-      let sequenceNumber = String(format: "%05d", self.sequenceCounter)
+      let sequenceNumber = unsafe String(format: "%05d", self.sequenceCounter)
 
       let procedure = DepartureArrivalProcedure(
         procedureType: .DP,
@@ -62,7 +62,7 @@ actor CSVDepartureArrivalProcedureParser: CSVParser {
 
       // Generate a unique sequence number for this procedure
       self.sequenceCounter += 1
-      let sequenceNumber = String(format: "%05d", self.sequenceCounter)
+      let sequenceNumber = unsafe String(format: "%05d", self.sequenceCounter)
 
       let procedure = DepartureArrivalProcedure(
         procedureType: .STAR,
