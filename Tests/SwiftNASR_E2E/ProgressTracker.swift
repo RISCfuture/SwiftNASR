@@ -1,74 +1,68 @@
 import Foundation
+import Observation
+import Synchronization
 
-actor ProgressTracker {
-  var progress: Progress
-  var isStarted = false
-  var currentRecordType: String?
+/// Root progress for one format's load-and-parse run, plus the label shown beside the bar.
+final class ProgressTracker: Sendable {
 
-  var fractionCompleted: Double { progress.fractionCompleted }
+  /// The progress every load and parse reports into. Hand out `subprogress(assigningCount:)` to
+  /// give a phase its share of the run.
+  let manager: ProgressManager
 
-  var isFinished: Bool { isStarted && progress.isFinished }
+  private let recordType = Mutex<String?>(nil)
 
-  init() {
-    self.progress = Progress(totalUnitCount: 100)
-  }
+  /// The record type currently being parsed, if any.
+  var currentRecordType: String? { recordType.withLock { $0 } }
 
-  func addChild(_ child: Progress, withPendingUnitCount inUnitCount: Int64) {
-    self.progress.addChild(child, withPendingUnitCount: inUnitCount)
-    isStarted = true
+  init(totalCount: Int) {
+    manager = ProgressManager(totalCount: totalCount)
   }
 
   func setCurrentRecordType(_ recordType: String?) {
-    self.currentRecordType = recordType
-  }
-
-  func reset(totalUnitCount: Int64) {
-    self.progress = Progress(totalUnitCount: totalUnitCount)
-    isStarted = false
-    currentRecordType = nil
+    self.recordType.withLock { $0 = recordType }
   }
 }
 
 // MARK: - Progress Display
 
-func trackProgress(progress: ProgressTracker) -> Task<Void, any Swift.Error> {
-  Task.detached {
-    repeat {
-      try await Task.sleep(for: .seconds(0.1))
-      await renderProgressBar(progress: progress)
-    } while await !progress.isFinished
+/// Draws a progress bar for `tracker`, redrawing each time its completed percentage changes and
+/// stopping once its progress finishes.
+///
+/// `ProgressManager` is `Observable`, so the bar follows the run's actual progress rather than a
+/// timer.
+func trackProgress(progress tracker: ProgressTracker) -> Task<Void, Never> {
+  let manager = tracker.manager
+  return Task {
+    var lastPercent = -1
+    let percentages = Observations<Int, Never>.untilFinished {
+      manager.isFinished ? .finish : .next(percentComplete(of: manager))
+    }
+    for await percent in percentages where percent != lastPercent {
+      lastPercent = percent
+      await renderProgressBar(percent: percent, recordType: tracker.currentRecordType)
+    }
+    if manager.isFinished { await renderProgressBar(percent: 100, recordType: nil) }
   }
 }
 
-@MainActor
-func renderProgressBar(progress: ProgressTracker) async {
-  let fractionCompleted = await progress.fractionCompleted
-  let currentRecordType = await progress.currentRecordType
-  let percent = Int((fractionCompleted * 100).rounded())
+private func percentComplete(of manager: ProgressManager) -> Int {
+  let clampedFraction = max(0, min(1, manager.fractionCompleted))
+  return Int((clampedFraction * 100).rounded())
+}
 
+@MainActor
+func renderProgressBar(percent: Int, recordType: String?) {
   // Build the status suffix (e.g., " - Parsing airports...")
-  let statusSuffix: String
-  if let recordType = currentRecordType {
-    statusSuffix = " - Parsing \(recordType)..."
-  } else {
-    statusSuffix = ""
-  }
+  let statusSuffix = recordType.map { " - Parsing \($0)..." } ?? ""
 
   // Reserve space for percentage, brackets, and status
   let reservedSpace = 10 + statusSuffix.count
   let barWidth = max(terminalWidth() - reservedSpace, 10)  // Ensure minimum bar width
 
-  // Ensure fractionCompleted is within valid bounds
-  let clampedFraction = max(0.0, min(1.0, fractionCompleted))
-  let completedWidth = Int(clampedFraction * Double(barWidth))
-
-  // Ensure counts are non-negative
-  let safeCompletedWidth = max(0, min(barWidth, completedWidth))
-  let safeRemainingWidth = max(0, barWidth - safeCompletedWidth)
-
+  let completedWidth = max(0, min(barWidth, barWidth * percent / 100))
   let bar =
-    String(repeating: "=", count: safeCompletedWidth)
-    + String(repeating: " ", count: safeRemainingWidth)
+    String(repeating: "=", count: completedWidth)
+    + String(repeating: " ", count: barWidth - completedWidth)
   print("\r[\(bar)] \(percent)%\(statusSuffix)", terminator: "")
   fflush(nil)  // Ensure that all open output streams are flushed immediately
 }

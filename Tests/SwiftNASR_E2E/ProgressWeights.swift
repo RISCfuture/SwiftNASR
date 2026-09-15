@@ -1,10 +1,10 @@
 import SwiftNASR
 
 /// Weight for the initial loading phase (relative to parsing weights).
-let loadingWeight: Int64 = 10
+let loadingWeight: Int = 10
 
 /// Returns the weight for a record type based on format.
-func weight(for recordType: RecordType, isCSV: Bool) -> Int64 {
+func weight(for recordType: RecordType, isCSV: Bool) -> Int {
   recordTypeRegistry[recordType]?.weight(isCSV: isCSV) ?? 1
 }
 
@@ -19,7 +19,7 @@ var CSVRecordTypes: Set<RecordType> {
 }
 
 /// Calculates the total progress weight for selected record types.
-func totalWeight(isCSV: Bool, selectedRecordTypes: Set<RecordType>) -> Int64 {
+func totalWeight(isCSV: Bool, selectedRecordTypes: Set<RecordType>) -> Int {
   let recordTotal = selectedRecordTypes.reduce(0) { $0 + weight(for: $1, isCSV: isCSV) }
   return loadingWeight + recordTotal
 }

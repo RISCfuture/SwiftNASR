@@ -3,8 +3,6 @@ import Foundation
 /// CSV Fix Parser for parsing FIX_BASE.csv, FIX_NAV.csv, and FIX_CHRT.csv
 actor CSVFixParser: CSVParser {
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["FIX_BASE.csv", "FIX_NAV.csv", "FIX_CHRT.csv"]
 
   var fixes = [FixKey: Fix]()

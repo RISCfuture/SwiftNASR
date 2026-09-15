@@ -40,8 +40,6 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     workingDirectory.appendingPathComponent("distribution_csv.zip")
   }
 
-  private let progress = ProgressTracker()
-
   init() {}
 
   mutating func getTxtNASR() -> NASR? {
@@ -146,24 +144,24 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
   ) async throws {
     let isCSV = formatName.lowercased() == "csv"
     let effectiveRecordTypes = effectiveTypes(for: isCSV, selectedRecordTypes: selectedRecordTypes)
-    await progress.reset(
-      totalUnitCount: totalWeight(isCSV: isCSV, selectedRecordTypes: effectiveRecordTypes)
+    let progress = ProgressTracker(
+      totalCount: totalWeight(isCSV: isCSV, selectedRecordTypes: effectiveRecordTypes)
     )
     print("Loading \(formatName)…")
-    let progress = self.progress
-    try await nasr.load { child in
-      Task { @MainActor in await progress.addChild(child, withPendingUnitCount: loadingWeight) }
-    }
+    try await nasr.load(progress: progress.manager.subprogress(assigningCount: loadingWeight))
     print("Done loading \(formatName); parsing…")
 
-    _ = trackProgress(progress: progress)
+    let progressBar = trackProgress(progress: progress)
     let errorCollector = ErrorCollector()
     try await parseValues(
       nasr: nasr,
       isCSV: isCSV,
       errorCollector: errorCollector,
-      selectedRecordTypes: effectiveRecordTypes
+      selectedRecordTypes: effectiveRecordTypes,
+      progress: progress
     )
+    progressBar.cancel()
+    await progressBar.value
 
     // Clear the progress line before printing results
     print("\r" + String(repeating: " ", count: terminalWidth()) + "\r", terminator: "")
@@ -212,21 +210,9 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     nasr: NASR,
     isCSV: Bool,
     errorCollector: ErrorCollector,
-    selectedRecordTypes: Set<RecordType>
+    selectedRecordTypes: Set<RecordType>,
+    progress: ProgressTracker
   ) async throws {
-    let progress = self.progress
-
-    // Helper to create progress handler for a record type
-    func progressHandler(for recordType: RecordType) -> @Sendable (Progress) -> Void {
-      let recordWeight = weight(for: recordType, isCSV: isCSV)
-      return { child in
-        Task { @MainActor in
-          await progress.setCurrentRecordType(String(describing: recordType))
-          await progress.addChild(child, withPendingUnitCount: recordWeight)
-        }
-      }
-    }
-
     // Helper to create error handler for a record type
     func errorHandler(for recordType: RecordType)
       -> @Sendable (RecordParseError) -> ParseDisposition
@@ -249,10 +235,12 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     // Parse all selected record types concurrently
     try await withThrowingTaskGroup(of: Void.self) { group in
       for recordType in selectedRecordTypes {
+        let recordWeight = weight(for: recordType, isCSV: isCSV)
         group.addTask {
+          progress.setCurrentRecordType(String(describing: recordType))
           _ = try await nasr.parse(
             recordType,
-            withProgress: progressHandler(for: recordType),
+            progress: progress.manager.subprogress(assigningCount: recordWeight),
             errorHandler: errorHandler(for: recordType)
           )
         }
@@ -261,7 +249,7 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     }
 
     // Clear current record type when done
-    await progress.setCurrentRecordType(nil)
+    progress.setCurrentRecordType(nil)
   }
 
   /// Parses the record types option into a set of RecordType values.

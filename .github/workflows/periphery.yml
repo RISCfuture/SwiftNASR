@@ -6,15 +6,16 @@ on:
 jobs:
   periphery:
     name: Run Periphery
-    runs-on: macos-latest
+    # xcode-27: scanning builds the package, which needs the macOS 27 SDK.
+    runs-on: xcode-27
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v6
-      - uses: SwiftyLab/setup-swift@latest
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
-          swift-version: "6.3"
+          xcode-version: latest
       - name: Cache SwiftPM build products
         uses: actions/cache@v6
         with:
@@ -22,7 +23,7 @@ jobs:
             .build
             ~/.cache/org.swift.swiftpm
             ~/Library/Caches/org.swift.swiftpm
-          key: swiftpm-periphery-macos-latest-swift6.3-${{ hashFiles('Package.resolved') }}
+          key: swiftpm-periphery-xcode-27-${{ hashFiles('Package.resolved') }}
       - name: Install Periphery
         run: brew install periphery-pro/tap/periphery-cli
       - name: Run Periphery

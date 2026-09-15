@@ -5,7 +5,7 @@ After one of the `load` methods is called (see _Loaders_), records can be
 parsed.
 
 Records are stored in a ``NASRData`` instance after being loaded by the
-``NASR/parse(_:withProgress:errorHandler:)`` method.
+``NASR/parse(_:progress:errorHandler:)`` method.
 
 Each record maintains an internal link back to its parent ``NASRData`` object.
 This is used to allow records to cross-reference each other; e.g., the
@@ -63,7 +63,7 @@ data.airports[0].tieInFSSID // returns a String identifier
 
 - ``NASR``
 - ``NASRData``
-- ``NASR/parse(_:withProgress:errorHandler:)``
+- ``NASR/parse(_:progress:errorHandler:)``
 
 ### Associated Types
 

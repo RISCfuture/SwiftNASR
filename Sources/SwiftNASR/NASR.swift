@@ -23,7 +23,7 @@ public actor NASR {
   var distribution: (any Distribution)?
 
   /// Aeronautical data is stored into this field once it is parsed. All members
-  /// of this instance are `nil` until the ``parse(_:withProgress:errorHandler:)``
+  /// of this instance are `nil` until the ``parse(_:progress:errorHandler:)``
   /// function is called for each data type. The ``NASRData`` object can be
   /// serialized to disk using an `Encoder`.
   public var data = NASRData()
@@ -144,16 +144,12 @@ public actor NASR {
   /**
    Asynchronously loads data, either from disk or from the Internet.
 
-   - Parameter progressHandler: This block is called before processing begins
-   with a Progress object that you can use to
-   track loading progress. You would add this
-   object to your parent Progress object.
+   - Parameter progress: A subprogress, obtained from your own `ProgressManager`, that reports
+   loading progress. Pass `nil` to track no progress.
    */
 
-  public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in })
-    async throws
-  {
-    distribution = try await loader.load(withProgress: progressHandler)
+  public func load(progress: consuming Subprogress? = nil) async throws {
+    distribution = try await loader.load(progress: progress)
     let cycle = try await distribution!.readCycle()
     await data.finishParsing(cycle: cycle)
   }
@@ -163,10 +159,8 @@ public actor NASR {
    Populates the corresponding field in the ``NASRData`` field of ``data``.
 
    - Parameter type: The type of data to parse.
-   - Parameter progressHandler: This block is called before processing begins
-   with a Progress object that you can use to
-   track loading progress. You would add this
-   object to your parent Progress object.
+   - Parameter progress: A subprogress, obtained from your own `ProgressManager`, that reports
+   parsing progress. Pass `nil` to track no progress.
    - Parameter errorHandler: Called whenever a parsing problem is encountered.
    Receives a ``RecordParseError`` describing the
    problem, and returns a ``ParseDisposition``:
@@ -178,7 +172,7 @@ public actor NASR {
   @discardableResult
   public func parse(
     _ type: RecordType,
-    withProgress progressHandler: @Sendable (Progress) -> Void = { _ in },
+    progress: consuming Subprogress? = nil,
     errorHandler: @Sendable (_ error: RecordParseError) -> ParseDisposition
   ) async throws -> Bool {
     guard let distribution = self.distribution else { throw Error.notYetLoaded }
@@ -201,9 +195,8 @@ public actor NASR {
       _ = await diagnosing.takeDiagnostics()
     }
 
-    if let csvParser = parser as? (any CSVParser) {
-      let progress = await csvParser.setupProgress()
-      progressHandler(progress)
+    if parser is any CSVParser {
+      let readProgress = progress?.start(totalCount: 1)
 
       let data = await distribution.read(type: type)
       for try await chunk in data {
@@ -223,51 +216,42 @@ public actor NASR {
         }
       }
 
-      progress.completedUnitCount = progress.totalUnitCount
+      readProgress?.complete(count: 1)
       await parser.finish(data: self.data)
       return true
     }
 
-    let progress = Progress(totalUnitCount: 10)
-    progressHandler(progress)
-    var parseProgress: Progress!
+    // The fixed-width path reads the record file, then parses it line by line: one tenth of the
+    // work is the read, the rest the parse.
+    let recordProgress = progress?.start(totalCount: 10)
+    var parseProgress: ProgressManager?
 
     let data =
       switch type {
         case .states:
           await distribution.readFile(
             path: "State_&_Country_Codes/STATE.txt",
-            withProgress: { readProgress in
-              progress.addChild(readProgress, withPendingUnitCount: 1)
-            },
+            progress: recordProgress?.subprogress(assigningCount: 1),
             returningLines: { lines in
-              parseProgress = Progress(
-                totalUnitCount: Int64(lines),
-                parent: progress,
-                pendingUnitCount: 9
-              )
+              parseProgress = recordProgress?.subprogress(assigningCount: 9)
+                .start(totalCount: Int(lines))
             }
           )
         default:
           await distribution.read(
             type: type,
-            withProgress: { readProgress in
-              progress.addChild(readProgress, withPendingUnitCount: 1)
-            },
+            progress: recordProgress?.subprogress(assigningCount: 1),
             returningLines: { lines in
-              parseProgress = Progress(
-                totalUnitCount: Int64(lines),
-                parent: progress,
-                pendingUnitCount: 9
-              )
+              parseProgress = recordProgress?.subprogress(assigningCount: 9)
+                .start(totalCount: Int(lines))
             }
           )
       }
 
     for try await chunk in data {
+      defer { parseProgress?.complete(count: 1) }
       do {
         try await parser.parse(data: chunk)
-        parseProgress.completedUnitCount += 1
       } catch {
         await discardPendingDiagnostics()
         if errorHandler(.fromThrown(recordType: type, recordID: nil, error)) == .abort {
