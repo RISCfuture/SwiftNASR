@@ -40,7 +40,7 @@ public final class DirectoryDistribution: Distribution {
   @discardableResult
   private func readFileWithCallback(
     path: String,
-    withProgress progressHandler: (Progress) -> Void = { _ in },
+    progress: ByteReadProgress,
     eachLine: (Data) -> Void
   ) throws -> UInt {
     let fileURL = location.appendingPathComponent(path)
@@ -60,8 +60,7 @@ public final class DirectoryDistribution: Distribution {
       try FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as! NSNumber
     var lines: UInt = 0
 
-    let progress = Progress(totalUnitCount: filesize.int64Value)
-    progressHandler(progress)
+    progress.setTotal(Int(clamping: filesize.int64Value))
 
     while true {
       if let EOL = buffer.range(of: delimiter) {
@@ -72,12 +71,10 @@ public final class DirectoryDistribution: Distribution {
 
         let subrange = buffer.startIndex..<EOL.lowerBound
         var subdata = buffer.subdata(in: subrange)
-        let byteCount = subdata.count
         // Strip trailing \r for Windows-style line endings
         if subdata.last == carriageReturn {
           subdata.removeLast()
         }
-        progress.completedUnitCount += Int64(byteCount)
 
         eachLine(subdata)
         lines += 1
@@ -85,7 +82,7 @@ public final class DirectoryDistribution: Distribution {
         buffer.removeSubrange(subrange)
       } else {
         let data = handle.readData(ofLength: chunkSize)
-        progress.completedUnitCount += Int64(data.count)
+        progress.advance(by: data.count)
         guard !data.isEmpty else {
           if !buffer.isEmpty {
             // Strip trailing \r for Windows-style line endings
@@ -106,12 +103,13 @@ public final class DirectoryDistribution: Distribution {
 
   public func readFile(
     path: String,
-    withProgress progressHandler: (Progress) -> Void = { _ in },
+    progress: consuming Subprogress? = nil,
     returningLines linesHandler: (UInt) -> Void = { _ in }
   ) -> AsyncThrowingStream<Data, any Swift.Error> {
+    let progress = ByteReadProgress(progress)
     return AsyncThrowingStream { continuation in
       do {
-        let lines = try readFileWithCallback(path: path, withProgress: progressHandler) { data in
+        let lines = try readFileWithCallback(path: path, progress: progress) { data in
           continuation.yield(data)
         }
         linesHandler(lines)
@@ -124,8 +122,9 @@ public final class DirectoryDistribution: Distribution {
 
   public func readFileRaw(
     path: String,
-    withProgress progressHandler: (Progress) -> Void = { _ in }
+    progress: consuming Subprogress? = nil
   ) -> AsyncThrowingStream<Data, any Swift.Error> {
+    let progress = ByteReadProgress(progress)
     return AsyncThrowingStream { continuation in
       do {
         let fileURL = location.appendingPathComponent(path)
@@ -143,13 +142,12 @@ public final class DirectoryDistribution: Distribution {
 
         let filesize =
           try FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as! NSNumber
-        let progress = Progress(totalUnitCount: filesize.int64Value)
-        progressHandler(progress)
+        progress.setTotal(Int(clamping: filesize.int64Value))
 
         while true {
           let data = handle.readData(ofLength: chunkSize)
           guard !data.isEmpty else { break }
-          progress.completedUnitCount += Int64(data.count)
+          progress.advance(by: data.count)
           continuation.yield(data)
         }
 

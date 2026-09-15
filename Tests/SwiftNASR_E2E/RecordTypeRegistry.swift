@@ -4,13 +4,13 @@ import SwiftNASR
 struct RecordTypeInfo {
   let recordType: RecordType
   let displayName: String
-  let txtWeight: Int64?  // nil if not available in TXT
-  let csvWeight: Int64?  // nil if not available in CSV
+  let txtWeight: Int?  // nil if not available in TXT
+  let csvWeight: Int?  // nil if not available in CSV
 
   var availableInTXT: Bool { txtWeight != nil }
   var availableInCSV: Bool { csvWeight != nil }
 
-  func weight(isCSV: Bool) -> Int64 {
+  func weight(isCSV: Bool) -> Int {
     (isCSV ? csvWeight : txtWeight) ?? 1
   }
 }

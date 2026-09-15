@@ -3,7 +3,7 @@ import Foundation
 /**
  A data class containing all data parsed from a NASR distribution. The
  members of this class will be `nil` until their respective calls to
- ``NASR/parse(_:withProgress:errorHandler:)`` have been made.
+ ``NASR/parse(_:progress:errorHandler:)`` have been made.
 
  This class can be encoded to disk using ``NASRDataCodable``, and re-associated
  with a SwiftNASR object using ``NASR/fromData(_:)``. Parsing the data takes

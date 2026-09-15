@@ -49,14 +49,14 @@ information.
 
 ### Reading a File
 
-- ``readFile(path:withProgress:returningLines:)``
+- ``readFile(path:progress:returningLines:)``
 
 ### Reading Records
 
 These methods are already implemented and normally do not need to be overridden.
 
 - ``RecordType``
-- ``read(type:withProgress:returningLines:)``
+- ``read(type:progress:returningLines:)``
 
 ### Reading the Cycle
 

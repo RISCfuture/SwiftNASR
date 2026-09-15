@@ -6,8 +6,6 @@ actor CSVParachuteJumpAreaParser: CSVParser, DiagnosingParser {
   static let type = RecordType.parachuteJumpAreas
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["PJA_BASE.csv", "PJA_CON.csv"]
 
   var areas = [String: ParachuteJumpArea]()

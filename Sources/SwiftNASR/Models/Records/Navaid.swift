@@ -8,7 +8,7 @@ public import Foundation
 ///
 /// Fields in this model that reference other record types (e.g.,
 /// ``lowAltitudeARTCC``, which references ``ARTCC``) will be `nil` unless the
-/// associated type has been parsed with ``NASR/parse(_:withProgress:errorHandler:)`.
+/// associated type has been parsed with ``NASR/parse(_:progress:errorHandler:)`.
 public struct Navaid: ParentRecord {
 
   /// The FAA identifier for this navaid (e.g., "OAK").

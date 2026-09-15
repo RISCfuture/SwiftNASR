@@ -10,8 +10,6 @@ actor CSVLocationIdentifierParser: CSVParser, DiagnosingParser {
   static let type = RecordType.locationIdentifiers
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["LID.csv"]
 
   var identifiers = [LocationIdentifier]()

@@ -24,10 +24,8 @@ public final class DirectoryLoader: Loader {
     self.format = format
   }
 
-  public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in })
-    throws -> any Distribution
-  {
-    progressHandler(completedProgress())
+  public func load(progress: consuming Subprogress? = nil) throws -> any Distribution {
+    completeImmediately(progress)
     return DirectoryDistribution(location: location, format: format)
   }
 }

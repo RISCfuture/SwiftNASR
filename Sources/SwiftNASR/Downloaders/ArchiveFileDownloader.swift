@@ -37,11 +37,8 @@ public final class ArchiveFileDownloader: Downloader {
     self.session = session
   }
 
-  public func load(withProgress progressHandler: @Sendable (Progress) -> Void = { _ in })
-    async throws -> any Distribution
-  {
-    let delegate = DownloadDelegate()
-    progressHandler(delegate.progress)
+  public func load(progress: consuming Subprogress? = nil) async throws -> any Distribution {
+    let delegate = DownloadDelegate(progress: progress)
 
     let (tempfileURL, response) = try await session.download(from: cycleURL, delegate: delegate)
 

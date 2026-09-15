@@ -22,13 +22,15 @@ struct DirectoryDistributionTests {
     defer { try? FileManager.default.removeItem(at: tempdir) }
 
     var iter = 0
-    var progress = Progress(totalUnitCount: 0)
+    let progress = ProgressManager(totalCount: 21)
 
-    let stream = await distribution.readFile(path: "APT.TXT") { progress = $0 }
+    let stream = await distribution.readFile(
+      path: "APT.TXT",
+      progress: progress.subprogress(assigningCount: 21)
+    )
 
     for try await data in stream {
       if iter == 0 {
-        #expect(progress.completedUnitCount == 35)
         #expect(data == "Hello, world!".data(using: .isoLatin1)!)
       } else if iter == 1 {
         #expect(data == "Line 2".data(using: .isoLatin1)!)
@@ -38,6 +40,13 @@ struct DirectoryDistributionTests {
 
       iter += 1
     }
+
+    // A 21-byte file reports 21 bytes read, counted once. Adding each line's length on top of the
+    // chunk it arrived in would report 35, overshooting the read's own total.
+    let bytesRead: UInt64 = progress.summary(of: \.completedByteCount)
+    let fileSize: UInt64 = progress.summary(of: \.totalByteCount)
+    #expect(bytesRead == 21)
+    #expect(fileSize == 21)
   }
 
   @Test

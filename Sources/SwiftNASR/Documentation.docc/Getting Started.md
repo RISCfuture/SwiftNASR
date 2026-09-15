@@ -66,7 +66,7 @@ print(sanCarlos.runways[0].length)
 
 `data` is an object of type ``NASRData``. Its fields, such as
 ``NASRData/airports`` will only not be `nil` once
-``NASR/parse(_:withProgress:errorHandler:)`` has been called for that data type
+``NASR/parse(_:progress:errorHandler:)`` has been called for that data type
 (as in the example above).
 
 To avoid parsing a large dataset each time your application loads, I recommend

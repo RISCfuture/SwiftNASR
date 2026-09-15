@@ -8,8 +8,6 @@ import StreamingCSV
 actor CSVARTCCBoundarySegmentParser: CSVParser, DiagnosingParser {
   static let type = RecordType.ARTCCBoundarySegments
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["ARB_SEG.csv"]
 
   var pendingDiagnostics = [RecordParseError]()

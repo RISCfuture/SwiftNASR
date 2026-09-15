@@ -8,8 +8,6 @@ actor CSVHoldParser: CSVParser, DiagnosingParser {
   static let type = RecordType.holds
 
   var distribution: (any Distribution)?
-  var progress: Progress?
-  var bytesRead: Int64 = 0
   let CSVFiles = ["HPF_BASE.csv", "HPF_CHRT.csv", "HPF_SPD_ALT.csv", "HPF_RMK.csv"]
 
   var holds = [String: Hold]()

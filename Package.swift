@@ -1,4 +1,4 @@
-// swift-tools-version: 6.3
+// swift-tools-version: 6.4
 
 import PackageDescription
 
@@ -15,7 +15,7 @@ let upcomingFeatures: [SwiftSetting] = [
 let package = Package(
   name: "SwiftNASR",
   defaultLocalization: "en",
-  platforms: [.macOS(.v15), .iOS(.v18), .tvOS(.v18), .watchOS(.v11), .visionOS(.v2)],
+  platforms: [.macOS(.v27), .iOS(.v27), .tvOS(.v27), .watchOS(.v27), .visionOS(.v27)],
 
   products: [
     .library(
