@@ -72,12 +72,10 @@ public final class DirectoryDistribution: Distribution {
 
         let subrange = buffer.startIndex..<EOL.lowerBound
         var subdata = buffer.subdata(in: subrange)
-        let byteCount = subdata.count
         // Strip trailing \r for Windows-style line endings
         if subdata.last == carriageReturn {
           subdata.removeLast()
         }
-        progress.completedUnitCount += Int64(byteCount)
 
         eachLine(subdata)
         lines += 1

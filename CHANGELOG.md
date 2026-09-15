@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- A directory distribution no longer double-counts a file it reads. It added each line's length to
+  its progress on top of the length of the chunk the line arrived in, reporting 35 bytes read from a
+  21-byte file. `Progress` clamped `fractionCompleted` to 1.0 and hid this; `ProgressManager`
+  reports the overshoot
+
 ## [4.3.0] - 2026-09-16
 
 ### Added

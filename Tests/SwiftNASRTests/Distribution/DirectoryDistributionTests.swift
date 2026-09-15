@@ -28,7 +28,7 @@ struct DirectoryDistributionTests {
 
     for try await data in stream {
       if iter == 0 {
-        #expect(progress.completedUnitCount == 35)
+        #expect(progress.completedUnitCount == 21)
         #expect(data == "Hello, world!".data(using: .isoLatin1)!)
       } else if iter == 1 {
         #expect(data == "Line 2".data(using: .isoLatin1)!)
