@@ -94,7 +94,7 @@ public struct Cycle: Codable, LosslessStringConvertible, Sendable, Identifiable,
 
   /// The cycle in YYYY-mm-dd format.
   public var description: String {
-    String(format: "%04d-%02d-%02d", year, month, day)
+    unsafe String(format: "%04d-%02d-%02d", year, month, day)
   }
 
   public var id: String { description }

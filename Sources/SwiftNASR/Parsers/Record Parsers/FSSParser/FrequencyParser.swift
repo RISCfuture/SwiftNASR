@@ -1,5 +1,5 @@
 import Foundation
-@preconcurrency import RegexBuilder
+@unsafe @preconcurrency import RegexBuilder
 
 final class FrequencyParser: Sendable {
   private let MHzRef = Reference<UInt>()

@@ -1,5 +1,5 @@
 import Foundation
-@preconcurrency import RegexBuilder
+@unsafe @preconcurrency import RegexBuilder
 
 private final class VGSIParser: Sendable {
   private let numberRef = Reference<UInt>()

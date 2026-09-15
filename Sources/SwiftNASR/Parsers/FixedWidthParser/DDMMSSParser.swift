@@ -1,4 +1,4 @@
-@preconcurrency import RegexBuilder
+@unsafe @preconcurrency import RegexBuilder
 
 final class DDMMSSParser: Sendable {
   private let degreesRef = Reference<Int>()

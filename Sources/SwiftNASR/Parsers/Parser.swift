@@ -1,5 +1,5 @@
 public import Foundation
-@preconcurrency import RegexBuilder
+@unsafe @preconcurrency import RegexBuilder
 
 public protocol Parser: Actor {
   func prepare(distribution: any Distribution) async throws

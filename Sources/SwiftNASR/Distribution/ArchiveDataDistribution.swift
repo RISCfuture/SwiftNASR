@@ -1,5 +1,5 @@
 public import Foundation
-@preconcurrency import ZIPFoundation
+@unsafe @preconcurrency import ZIPFoundation
 
 /**
  A NASR distribution that has been loaded from a ZIP archive and stored in
