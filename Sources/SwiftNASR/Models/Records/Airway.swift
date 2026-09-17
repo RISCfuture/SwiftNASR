@@ -128,6 +128,14 @@ public struct Airway: ParentRecord {
     /// Whether this is a dogleg point.
     public let isDogleg: Bool?
 
+    /// Whether the segment's minimum enroute altitude is unusable. The FAA
+    /// spells this field "MEA gap" and codes it `U` (unusable) or `N`; a blank
+    /// leaves this `nil`.
+    public let isMEAUnusable: Bool?
+
+    /// The required navigation performance for the segment (nautical miles).
+    public let requiredNavigationPerformanceNM: Float?
+
     /// The ARTCC with jurisdiction over this segment.
     public let ARTCCID: String?
 
@@ -140,6 +148,7 @@ public struct Airway: ParentRecord {
       case sequenceNumber, point, changeoverPoint, altitudes, distanceToNextNM
       case magneticCourseDeg, magneticCourseOppositeDeg, trackAngleOutbound, trackAngleInbound
       case hasSignalCoverageGap, isUSAirspaceOnly, isAirwayGap, isDogleg
+      case isMEAUnusable, requiredNavigationPerformanceNM
       case ARTCCID, changeoverExceptions
     }
   }

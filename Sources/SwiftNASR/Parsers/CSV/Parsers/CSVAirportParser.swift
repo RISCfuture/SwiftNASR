@@ -117,7 +117,8 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
     .init("GROSS_WT_DW", .float(nullable: .blank)),
     .init("GROSS_WT_DTW", .float(nullable: .blank)),
     .init("GROSS_WT_DDTW", .float(nullable: .blank)),
-    .init("PCN", .integer(nullable: .blank)),
+    .init("PAVEMENT_CLASSIFICATION", .string(nullable: .blank)),
+    .init("PCN_PCR_NUMBER", .integer(nullable: .blank)),
     .init("PAVEMENT_TYPE_CODE", .string(nullable: .blank)),
     .init("SUBGRADE_STRENGTH_CODE", .string(nullable: .blank)),
     .init("TIRE_PRES_CODE", .string(nullable: .blank)),
@@ -783,7 +784,16 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
     runwayId: String,
     id: String?
   ) throws -> Runway.PavementClassification? {
-    guard let pcnNumber: Int = try t[optional: "PCN"] else { return nil }
+    guard let number: Int = try t[optional: "PCN_PCR_NUMBER"] else { return nil }
+
+    guard
+      let ratingSystem = diagnose(
+        Runway.PavementClassification.RatingSystem.self,
+        try t[optional: "PAVEMENT_CLASSIFICATION"],
+        field: "runway[\(runwayId)].pavementClassification.ratingSystem",
+        id: id
+      )
+    else { return nil }
 
     guard
       let type = diagnose(
@@ -822,7 +832,8 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
     else { return nil }
 
     return Runway.PavementClassification(
-      number: UInt(pcnNumber),
+      ratingSystem: ratingSystem,
+      number: UInt(number),
       type: type,
       subgradeStrengthCategory: strength,
       tirePressureLimit: tirePressure,

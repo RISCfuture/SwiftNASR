@@ -82,7 +82,8 @@ actor FixedWidthAirwayParser: FixedWidthParser, DiagnosingParser {
     .string(nullable: .blank),  // 39 DME/DME/IRU MEA opposite direction
     .boolean(nullable: .blank),  // 40 dogleg flag
     .float(nullable: .blank),  // 41 RNP
-    .null  // 42 record sort sequence
+    .boolean(trueValue: "U", falseValue: "N", nullable: .blank),  // 42 MEA gap indicator
+    .null  // 43 record sort sequence
   ])
 
   // AWY2 - Point description
@@ -276,6 +277,8 @@ actor FixedWidthAirwayParser: FixedWidthParser, DiagnosingParser {
         isUSAirspaceOnly: try t[optional: 26],
         isAirwayGap: try t[optional: 19],
         isDogleg: try t[optional: 40],
+        isMEAUnusable: try t[optional: 42],
+        requiredNavigationPerformanceNM: try t[optional: 41],
         ARTCCID: try t[optional: 28]
       )
 
@@ -336,6 +339,8 @@ actor FixedWidthAirwayParser: FixedWidthParser, DiagnosingParser {
         isUSAirspaceOnly: segment.isUSAirspaceOnly,
         isAirwayGap: segment.isAirwayGap,
         isDogleg: segment.isDogleg,
+        isMEAUnusable: segment.isMEAUnusable,
+        requiredNavigationPerformanceNM: segment.requiredNavigationPerformanceNM,
         ARTCCID: segment.ARTCCID,
         changeoverExceptions: segment.changeoverExceptions
       )
@@ -386,6 +391,8 @@ actor FixedWidthAirwayParser: FixedWidthParser, DiagnosingParser {
         isUSAirspaceOnly: segment.isUSAirspaceOnly,
         isAirwayGap: segment.isAirwayGap,
         isDogleg: segment.isDogleg,
+        isMEAUnusable: segment.isMEAUnusable,
+        requiredNavigationPerformanceNM: segment.requiredNavigationPerformanceNM,
         ARTCCID: segment.ARTCCID,
         changeoverExceptions: segment.changeoverExceptions
       )

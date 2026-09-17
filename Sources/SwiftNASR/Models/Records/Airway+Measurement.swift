@@ -26,6 +26,11 @@ public extension Airway.Segment {
   var magneticCourseOpposite: Measurement<UnitAngle>? {
     magneticCourseOppositeDeg.map { Measurement(value: Double($0), unit: .degrees) }
   }
+
+  /// The required navigation performance as a Measurement.
+  var requiredNavigationPerformance: Measurement<UnitLength>? {
+    requiredNavigationPerformanceNM.map { Measurement(value: Double($0), unit: .nauticalMiles) }
+  }
 }
 
 // MARK: - Airway.ChangeoverPoint

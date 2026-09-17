@@ -147,14 +147,19 @@ public struct Runway: Record {
 
   // MARK: - Types
 
-  /// A runway pavement classification number (PCN) and its attributes. See
-  /// AC 150/5335-5 for detailed information on how PCN is calculated.
+  /// A runway pavement classification and its attributes. See AC 150/5335-5
+  /// for detailed information on how the classification is calculated.
   public struct PavementClassification: Record {
 
-    /// The determined PCN, a broad classification of runway strength.
+    /// The rating system ``number`` is expressed in. PCR and PCN values are
+    /// not interchangeable, so this must be consulted before comparing a
+    /// classification against an aircraft's ACR or ACN.
+    public let ratingSystem: RatingSystem
+
+    /// The determined rating, a broad classification of runway strength.
     public let number: UInt
 
-    /// Whether the rigid or flexible pavement method was used for the PCN
+    /// Whether the rigid or flexible pavement method was used for the
     /// calculation.
     public let type: Classification
 
@@ -164,18 +169,29 @@ public struct Runway: Record {
     /// The maximum allowable tire pressure.
     public let tirePressureLimit: TirePressureLimit
 
-    /// The PCN determination method.
+    /// The determination method.
     public let determinationMethod: DeterminationMethod
 
-    /// PCN pavement types, used to determine how the PCN is calculated.
+    /// The rating systems a pavement classification can be expressed in.
+    public enum RatingSystem: String, RecordEnum {
+
+      /// Pavement classification rating, paired with the aircraft
+      /// classification rating (ACR) method.
+      case PCR
+
+      /// Pavement classification number, paired with the older aircraft
+      /// classification number (ACN) method.
+      case PCN
+    }
+
+    /// Pavement types, used to determine how the rating is calculated.
     public enum Classification: String, RecordEnum {
 
-      /// PCN is calculated for rigid pavements using the Westergaard
-      /// theory.
+      /// Calculated for rigid pavements using the Westergaard theory.
       case rigid = "R"
 
-      /// PCN is calculated for flexible pavements using the CBR design
-      /// procedure combined with Boussinesq's solution.
+      /// Calculated for flexible pavements using the CBR design procedure
+      /// combined with Boussinesq's solution.
       case flexible = "F"
     }
 
@@ -225,17 +241,18 @@ public struct Runway: Record {
       case low = "Z"
     }
 
-    /// Methods by which PCN can be determined.
+    /// Methods by which a pavement classification can be determined.
     public enum DeterminationMethod: String, RecordEnum {
 
-      /// PCN was determined using aircraft.
+      /// Determined using aircraft.
       case aircraft = "U"
 
-      /// PCN was determined using technical analysis.
+      /// Determined using technical analysis.
       case technical = "T"
     }
 
     private enum CodingKeys: String, CodingKey {
+      case ratingSystem
       case number
       case type
       case subgradeStrengthCategory

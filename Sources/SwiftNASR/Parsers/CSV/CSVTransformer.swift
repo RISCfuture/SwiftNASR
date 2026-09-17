@@ -192,10 +192,13 @@ struct CSVTransformer {
           }
           return transformed
         }
-      case let .boolean(trueValue, nullable):
+      case let .boolean(trueValue, falseValue, nullable):
         return try transformColumn(value, nullable: nullable, column: columnName, trim: true) {
           str in
-          return str == trueValue
+          if str == trueValue { return true }
+          guard let falseValue else { return false }
+          if str == falseValue { return false }
+          throw CSVParserError.invalidValueInColumn(str, column: columnName)
         }
       case let .datetime(formatter, nullable):
         return try transformColumn(value, nullable: nullable, column: columnName, trim: true) {
@@ -287,7 +290,7 @@ struct CSVTransformer {
       case .float(let nullable): return nullable
       case .DDMMSS(let nullable): return nullable
       case .frequency(let nullable): return nullable
-      case .boolean(_, let nullable): return nullable
+      case .boolean(_, _, let nullable): return nullable
       case .datetime(_, let nullable): return nullable
       case .dateComponents(_, let nullable): return nullable
       case .fixedWidthArray(_, _, let nullable, _, _): return nullable

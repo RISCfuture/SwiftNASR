@@ -52,7 +52,10 @@ actor FixedWidthWeatherStationParser: FixedWidthParser {
   // L  AN  0040 00122  N/A     STATION CITY
   // L  AN  0002 00162  N/A     STATION STATE POST OFFICE CODE
   // L  AN  0010 00164  N/A     INFORMATION EFFECTIVE DATE
-  //       0082 00174  N/A     BLANKS: FILLER
+  //
+  // The layout's trailing "0082 00174 N/A BLANKS: FILLER" line carries no
+  // justification or type column, so it describes no field the layout parser
+  // can slice. The transformations stop at the effective date to match.
 
   private let basicTransformer = ByteTransformer([
     .recordType,  //  0 record type
@@ -72,8 +75,7 @@ actor FixedWidthWeatherStationParser: FixedWidthParser {
     .string(nullable: .blank),  // 14 airport site number
     .string(nullable: .blank),  // 15 city
     .string(nullable: .blank),  // 16 state code
-    .null,  // 17 effective date
-    .null  // 18 blanks
+    .null  // 17 effective date
   ])
 
   // AWOS2 - Remarks

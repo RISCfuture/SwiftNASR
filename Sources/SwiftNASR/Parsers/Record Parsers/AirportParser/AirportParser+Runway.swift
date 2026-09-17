@@ -4,9 +4,9 @@ private let offsetParser = OffsetParser()
 
 extension FixedWidthAirportParser {
 
-  /// The number of slash-separated components in a PCN value:
-  /// `number/type/subgradeStrength/tirePressure/determinationMethod`.
-  private static let pavementClassificationComponentCount = 5
+  /// The number of slash-separated components in a pavement classification:
+  /// `ratingSystem/number/type/subgradeStrength/tirePressure/determinationMethod`.
+  private static let pavementClassificationComponentCount = 6
 
   private var runwayTransformer: ByteTransformer {
     .init([
@@ -223,20 +223,24 @@ extension FixedWidthAirportParser {
     guard components.count == Self.pavementClassificationComponentCount else {
       throw Error.invalidPavementClassification(value)
     }
-    let numberStr = String(components[0]).trimmingCharacters(in: .whitespaces)
-    guard let number = UInt(numberStr) else { throw Error.invalidPavementClassification(value) }
-    let type = try Runway.PavementClassification.Classification.require(String(components[1]))
-    let strength = try Runway.PavementClassification.SubgradeStrengthCategory.require(
-      String(components[2])
+    let ratingSystem = try Runway.PavementClassification.RatingSystem.require(
+      String(components[0]).trimmingCharacters(in: .whitespaces)
     )
-    let tirePressure = try Runway.PavementClassification.TirePressureLimit.require(
+    let numberStr = String(components[1]).trimmingCharacters(in: .whitespaces)
+    guard let number = UInt(numberStr) else { throw Error.invalidPavementClassification(value) }
+    let type = try Runway.PavementClassification.Classification.require(String(components[2]))
+    let strength = try Runway.PavementClassification.SubgradeStrengthCategory.require(
       String(components[3])
     )
-    let determination = try Runway.PavementClassification.DeterminationMethod.require(
+    let tirePressure = try Runway.PavementClassification.TirePressureLimit.require(
       String(components[4])
+    )
+    let determination = try Runway.PavementClassification.DeterminationMethod.require(
+      String(components[5])
     )
 
     return Runway.PavementClassification(
+      ratingSystem: ratingSystem,
       number: number,
       type: type,
       subgradeStrengthCategory: strength,

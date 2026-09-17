@@ -133,6 +133,18 @@ enum ParserHelpers {
     }
   }
 
+  /// Parses the N/U flag the FAA uses for an airway segment's MEA gap.
+  /// - Returns: `true` for "U" (unusable), `false` for "N", `nil` for nil/empty.
+  /// - Throws: `ParserError.invalidValue` for any other value.
+  static func parseNUFlag(_ value: String?, fieldName: String) throws -> Bool? {
+    guard let value, !value.isEmpty else { return nil }
+    switch value.uppercased() {
+      case "U": return true
+      case "N": return false
+      default: throw ParserError.invalidValue("\(fieldName): \(value)")
+    }
+  }
+
   /// Parses an X/blank flag with strict validation (e.g., for airway gap indicators).
   /// - Returns: `true` for "X", `false` for nil/empty.
   /// - Throws: `ParserError.invalidValue` for any other value.

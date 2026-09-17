@@ -422,6 +422,14 @@ public struct Navaid: ParentRecord {
       /// NDB transmission power below 50 watts (25 NM range).
       case NDBLowPower = "MH"
 
+      /// Low-power NDB. Not described by `nav_rf.txt`; observed on Canadian
+      /// NDBs, and on fan markers in combination with ``FM``.
+      case lowPower = "L"
+
+      /// Medium-power NDB. Not described by `nav_rf.txt`; observed on
+      /// Canadian NDBs.
+      case mediumPower = "M"
+
       /// Simultaneous range homing signal and/or voice.
       case simultaneousRangeHomingSignal = "S"
 

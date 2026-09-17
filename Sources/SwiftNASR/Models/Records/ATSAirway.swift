@@ -51,6 +51,7 @@ public struct ATSAirway: Record, Identifiable {
     case bahama = "BF"
     case pacific = "PA"
     case puertoRico = "PR"
+    case special = "SP"
 
     public var description: String {
       switch self {
@@ -58,6 +59,7 @@ public struct ATSAirway: Record, Identifiable {
         case .bahama: return "Bahama Route"
         case .pacific: return "Pacific Route"
         case .puertoRico: return "Puerto Rico Route"
+        case .special: return "Special Route"
       }
     }
   }

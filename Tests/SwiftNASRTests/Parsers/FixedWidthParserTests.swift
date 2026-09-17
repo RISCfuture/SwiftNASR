@@ -142,10 +142,38 @@ struct FixedWidthParserTests {
     }
   }
 
+  // MARK: coded flags
+
+  /// Without a `falseValue` a flag is lenient: anything but the true value
+  /// reads as `false`. The airway MEA gap indicator codes `U` against `N`, so
+  /// it supplies one and an unexpected code is reported instead.
+  @Test
+  func `reads a coded flag strictly when a false value is given`() throws {
+    let lenient = ByteTransformer([.recordType, .boolean(trueValue: "U")])
+    let strict = ByteTransformer([.recordType, .boolean(trueValue: "U", falseValue: "N")])
+
+    func slices(_ flag: String) -> [ByteSlice] {
+      [Array("AWY1".utf8)[...], Array(flag.utf8)[...]]
+    }
+
+    #expect(try lenient.applyTo(slices("U"))[1] as Bool == true)
+    #expect(try lenient.applyTo(slices("N"))[1] as Bool == false)
+    #expect(try lenient.applyTo(slices("?"))[1] as Bool == false)
+
+    #expect(try strict.applyTo(slices("U"))[1] as Bool == true)
+    #expect(try strict.applyTo(slices("N"))[1] as Bool == false)
+    #expect {
+      try strict.applyTo(slices("?"))
+    } throws: { error in
+      guard case let FixedWidthParserError.invalidValue(value, index) = error else { return false }
+      return value == "?" && index == 1
+    }
+  }
+
   // MARK: pavement classification
 
-  @Test(arguments: ["61", "560/R/B/W", "61//B/X/T", "61/R/B/X/T/U"])
-  func `reports an invalid pavement classification for a value without five components`(
+  @Test(arguments: ["61", "PCN/560/R/B/W", "PCN//R/B/X/T", "PCN/61/R/B/X/T/U", "61/R/B/X/T"])
+  func `reports an invalid pavement classification for a value without six components`(
     _ value: String
   ) throws {
     #expect {
@@ -159,13 +187,23 @@ struct FixedWidthParserTests {
   }
 
   @Test
-  func `parses a five component pavement classification`() throws {
-    let classification = try FixedWidthAirportParser.parsePavementClassification("61/R/B/X/T")
+  func `parses a six component pavement classification`() throws {
+    let classification = try FixedWidthAirportParser.parsePavementClassification("PCN/61  /R/B/X/T")
 
+    #expect(classification.ratingSystem == .PCN)
     #expect(classification.number == 61)
     #expect(classification.type == .rigid)
     #expect(classification.subgradeStrengthCategory == .medium)
     #expect(classification.tirePressureLimit == .high)
     #expect(classification.determinationMethod == .technical)
+  }
+
+  @Test
+  func `parses a pavement classification rating`() throws {
+    let classification = try FixedWidthAirportParser.parsePavementClassification("PCR/2110/F/B/X/T")
+
+    #expect(classification.ratingSystem == .PCR)
+    #expect(classification.number == 2110)
+    #expect(classification.type == .flexible)
   }
 }

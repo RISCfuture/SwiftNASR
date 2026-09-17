@@ -59,8 +59,14 @@ struct ByteTransformer {
           return try transformDDMMSS(slice, nullable: nullable, index: index)
         case .frequency(let nullable):
           return try transformFrequency(slice, nullable: nullable, index: index)
-        case let .boolean(trueValue, nullable):
-          return try transformBoolean(slice, trueValue: trueValue, nullable: nullable, index: index)
+        case let .boolean(trueValue, falseValue, nullable):
+          return try transformBoolean(
+            slice,
+            trueValue: trueValue,
+            falseValue: falseValue,
+            nullable: nullable,
+            index: index
+          )
         case let .datetime(formatter, nullable):
           return try transformDatetime(
             slice,
@@ -197,14 +203,21 @@ struct ByteTransformer {
     }
   }
 
+  /// Transforms a coded flag. With no `falseValue`, anything other than
+  /// `trueValue` reads as `false`. Supplying one makes the field strict: a
+  /// value matching neither is reported rather than silently read as `false`.
   private func transformBoolean(
     _ slice: ByteSlice,
     trueValue: String,
+    falseValue: String?,
     nullable: Nullable,
     index: Int
   ) throws -> Any? {
     try transform(slice, nullable: nullable, index: index, trim: true) { bytes in
-      bytes.trimmedMatches(trueValue)
+      if bytes.trimmedMatches(trueValue) { return true }
+      guard let falseValue else { return false }
+      if bytes.trimmedMatches(falseValue) { return false }
+      throw FixedWidthParserError.invalidValue(bytes.toString() ?? "", at: index)
     }
   }
 

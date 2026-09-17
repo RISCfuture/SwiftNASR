@@ -148,6 +148,8 @@ actor CSVAirwayParser: CSVParser, DiagnosingParser {
         ) ?? false
       let isDogleg =
         try ParserHelpers.parseYNFlag(row[ifExists: "DOGLEG"], fieldName: "DOGLEG") ?? false
+      let isMEAUnusable =
+        try ParserHelpers.parseNUFlag(row[ifExists: "MEA_GAP"], fieldName: "MEA_GAP")
 
       let segment = Airway.Segment(
         sequenceNumber: sequenceNumber,
@@ -163,6 +165,11 @@ actor CSVAirwayParser: CSVParser, DiagnosingParser {
         isUSAirspaceOnly: false,
         isAirwayGap: isAirwayGap,
         isDogleg: isDogleg,
+        isMEAUnusable: isMEAUnusable,
+        requiredNavigationPerformanceNM: self.parseOptionalFloat(
+          row,
+          column: "REQD_NAV_PERFORMANCE"
+        ),
         ARTCCID: ARTCCID?.isEmpty == true ? nil : ARTCCID
       )
 
