@@ -4,6 +4,15 @@ import SwiftNASR
 
 @main
 struct SwiftNASR_E2E: AsyncParsableCommand {
+  static let configuration = CommandConfiguration(
+    abstract: "Downloads, parses, and verifies a full NASR distribution.",
+    discussion: """
+      Exits nonzero when a distribution could not be downloaded, a record type parsed to nothing, \
+      a record was dropped, or an association check failed. Unrepresentable fields are reported \
+      but do not fail the run.
+      """
+  )
+
   @Option(
     name: .shortAndLong,
     help: "The working directory to store the distribution data.",
@@ -11,11 +20,15 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
   )
   var workingDirectory = URL.currentDirectory().appendingPathComponent(".SwiftNASR_TestData")
 
+  @Option(name: .shortAndLong, help: "Data format to parse.")
+  var format = FormatSelection.both
+
   @Option(
-    name: .shortAndLong,
-    help: "Data format to parse (txt or csv, or both if not specified)"
+    name: .long,
+    help: "Cycle to parse: ‘effective’, ‘next’, or an effective date as YYYY-MM-DD.",
+    transform: parseCycle
   )
-  var format: String?
+  var cycle: Cycle?
 
   @Option(
     name: .long,
@@ -23,8 +36,30 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
   )
   var localCSVPath: String?
 
-  @Flag(name: .shortAndLong, help: "Print all errors instead of summary")
-  var verbose: Bool = false
+  @Option(name: .customLong("report"), help: "Path to write the JSON run report to.")
+  var reportPath: String?
+
+  @Option(
+    name: .customLong("baseline"),
+    help: "An earlier run's report, whose record counts this run is compared against."
+  )
+  var baselinePath: String?
+
+  @Flag(
+    name: .long,
+    inversion: .prefixedNo,
+    help: "Encode the parsed data to a zipped JSON file."
+  )
+  var save = true
+
+  @Option(name: .long, help: "Percentage a record count must move by to count as drift.")
+  var driftPercent = 10
+
+  @Option(name: .long, help: "Records a count must move by to count as drift.")
+  var driftMinimum = 25
+
+  @Flag(name: .shortAndLong, help: "Print all errors instead of a sample")
+  var verbose = false
 
   @Option(
     name: .shortAndLong,
@@ -33,184 +68,247 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
   )
   var recordTypes: String?
 
-  private var txtDistributionURL: URL {
-    workingDirectory.appendingPathComponent("distribution_txt.zip")
-  }
-  private var csvDistributionURL: URL {
-    workingDirectory.appendingPathComponent("distribution_csv.zip")
-  }
-
   private let progress = ProgressTracker()
+
+  /// The cycle this run targets.
+  private var targetCycle: Cycle { cycle ?? .effective }
 
   init() {}
 
-  mutating func getTxtNASR() -> NASR? {
-    // Ensure working directory exists
-    try? FileManager.default.createDirectory(
-      at: workingDirectory,
-      withIntermediateDirectories: true
-    )
-
-    if FileManager.default.fileExists(atPath: txtDistributionURL.path) {
-      return NASR.fromLocalArchive(txtDistributionURL)
+  func validate() throws {
+    guard localCSVPath == nil || cycle == nil else {
+      throw ValidationError("--cycle cannot be combined with --local-csv-path.")
     }
-    print("Attempting to download TXT archive...")
-    return NASR.fromInternetToFile(txtDistributionURL, format: .txt)
+    guard driftPercent >= 0, driftMinimum >= 0 else {
+      throw ValidationError("Drift thresholds cannot be negative.")
+    }
   }
 
-  mutating func getCsvNASR() -> NASR? {
-    // Ensure working directory exists
-    try? FileManager.default.createDirectory(
-      at: workingDirectory,
-      withIntermediateDirectories: true
-    )
-
-    if let localCSVPath {
-      let url = URL(filePath: localCSVPath)
-      return NASR.fromLocalDirectory(url, format: .csv)
-    }
-    if FileManager.default.fileExists(atPath: csvDistributionURL.path) {
-      return NASR.fromLocalArchive(csvDistributionURL, format: .csv)
-    }
-    print("Attempting to download CSV archive...")
-    return NASR.fromInternetToFile(csvDistributionURL, format: .csv)
-  }
-
-  mutating func run() async throws {
-    let formats = determineFormats()
+  func run() async throws {
     let selectedRecordTypes = try parseRecordTypesFilter()
-
     if let selected = selectedRecordTypes {
       print(
         "Filtering to record types: \(selected.map(\.rawValue).sorted().joined(separator: ", "))"
       )
     }
 
-    if formats.contains("txt") {
-      print("\n=== Testing TXT Format ===")
-      if let nasr = getTxtNASR() {
-        do {
-          try await runForFormat(
-            nasr: nasr,
-            formatName: "TXT",
-            selectedRecordTypes: selectedRecordTypes
-          )
-        } catch {
-          print("Warning: TXT format test failed: \(error)")
-          print("This may be due to the cycle data not being available for the current date.")
-          print("Continuing with other formats...")
-        }
-      } else {
-        print("Warning: Could not obtain TXT format NASR distribution")
-        print("This may be due to the cycle data not being available for the current date.")
-        print("Continuing with other formats...")
-      }
+    let baseline = try comparableBaseline(filter: selectedRecordTypes)
+
+    var formatReports: [FormatReport] = []
+    var samples: [ErrorSample] = []
+    for dataFormat in format.formats {
+      let (formatReport, formatSamples) = await runForFormat(
+        dataFormat,
+        selectedRecordTypes: selectedRecordTypes,
+        baseline: baseline?.formats[dataFormat.rawValue.lowercased()]
+      )
+      formatReports.append(formatReport)
+      samples.append(contentsOf: formatSamples)
     }
 
-    if formats.contains("csv") {
-      print("\n=== Testing CSV Format ===")
-      if let nasr = getCsvNASR() {
-        do {
-          try await runForFormat(
-            nasr: nasr,
-            formatName: "CSV",
-            selectedRecordTypes: selectedRecordTypes
-          )
-        } catch {
-          print("Warning: CSV format test failed: \(error)")
-          print("This may be due to the cycle data not being available for the current date.")
-          print("Continuing...")
-        }
-      } else {
-        print("Warning: Could not obtain CSV format NASR distribution")
-        print("This may be due to the cycle data not being available for the current date.")
-        print("Continuing...")
-      }
-    }
-  }
-
-  private func determineFormats() -> Set<String> {
-    if let format = format?.lowercased() {
-      if format == "both" {
-        return ["txt", "csv"]
-      }
-      return [format]
-    }
-    return ["txt", "csv"]
-  }
-
-  private mutating func runForFormat(
-    nasr: NASR,
-    formatName: String,
-    selectedRecordTypes: Set<RecordType>?
-  ) async throws {
-    let isCSV = formatName.lowercased() == "csv"
-    let effectiveRecordTypes = effectiveTypes(for: isCSV, selectedRecordTypes: selectedRecordTypes)
-    await progress.reset(
-      totalUnitCount: totalWeight(isCSV: isCSV, selectedRecordTypes: effectiveRecordTypes)
+    let report = RunReport(
+      cycle: targetCycle,
+      recordTypeFilter: selectedRecordTypes,
+      formats: formatReports,
+      errorSamples: samples,
+      drift: baseline.map {
+        driftFindings(
+          from: $0,
+          to: formatReports,
+          percent: driftPercent,
+          minimum: driftMinimum
+        )
+      } ?? []
     )
-    print("Loading \(formatName)…")
+
+    report.printSummary()
+    if let reportPath {
+      try report.write(to: URL(filePath: reportPath))
+    }
+    if report.failed { throw ExitCode.failure }
+  }
+
+  /// An earlier run's report, if one was given and it covers the same record types. Counts and
+  /// error tallies from a run narrowed by `--record-types` are not comparable with a full run's.
+  private func comparableBaseline(filter: Set<RecordType>?) throws -> RunReport? {
+    guard let baselinePath else { return nil }
+    let baseline = try RunReport.read(from: URL(filePath: baselinePath))
+    guard baseline.recordTypeFilter == filter.map({ $0.map(\.rawValue).sorted() }) else {
+      print("Ignoring the baseline: it covers a different set of record types.")
+      return nil
+    }
+    return baseline
+  }
+
+  private func runForFormat(
+    _ dataFormat: DataFormat,
+    selectedRecordTypes: Set<RecordType>?,
+    baseline: FormatReport?
+  ) async -> (FormatReport, [ErrorSample]) {
+    let startedAt = Date()
+    let source = makeSource(for: dataFormat)
+    let parsedTypes = effectiveTypes(for: dataFormat, selectedRecordTypes: selectedRecordTypes)
+    let errorCollector = ErrorCollector(sampleLimit: verbose ? .max : defaultErrorSampleLimit)
+
+    func report(
+      abortReason: String? = nil,
+      saveError: String? = nil,
+      distributionCycle: Cycle? = nil,
+      recordTypes: [String: RecordTypeReport] = [:],
+      associations: AssociationReport = .notRun
+    ) -> FormatReport {
+      .init(
+        format: dataFormat,
+        expectedCycle: source.expectedCycle,
+        distributionCycle: distributionCycle,
+        abortReason: abortReason,
+        saveError: saveError,
+        durationSeconds: Int(Date().timeIntervalSince(startedAt).rounded()),
+        recordTypes: recordTypes,
+        associations: associations,
+        baseline: baseline
+      )
+    }
+
+    print("\n=== Testing \(dataFormat.rawValue) Format ===")
+    do {
+      try await loadAndParse(
+        source.nasr,
+        format: dataFormat,
+        recordTypes: parsedTypes,
+        errorCollector: errorCollector
+      )
+    } catch {
+      clearProgressLine()
+      return (report(abortReason: error.localizedDescription), [])
+    }
+    clearProgressLine()
+
+    var saveError: String?
+    if save {
+      print("\nSaving \(dataFormat.rawValue)…")
+      do {
+        try await saveData(
+          nasr: source.nasr,
+          format: dataFormat,
+          workingDirectory: workingDirectory
+        )
+      } catch {
+        saveError = error.localizedDescription
+      }
+    }
+
+    print("\nVerifying associations…")
+    let associations = await verifyAssociations(
+      nasr: source.nasr,
+      format: dataFormat,
+      selectedRecordTypes: parsedTypes
+    )
+
+    let tallies = errorCollector.talliesByRecordType
+    let reports = await recordTypeReports(
+      of: source.nasr,
+      recordTypes: reportedTypes(for: dataFormat, parsing: parsedTypes),
+      tallies: tallies
+    )
+
+    return (
+      report(
+        saveError: saveError,
+        distributionCycle: await source.nasr.data.cycle,
+        recordTypes: reports,
+        associations: associations
+      ),
+      errorSamples(format: dataFormat, tallies: tallies)
+    )
+  }
+
+  /// A local archive already downloaded for this cycle is reused; anything else is downloaded.
+  /// The cache is named after the FAA's own filename, so an archive from another cycle can never
+  /// stand in for the one that was asked for.
+  private func makeSource(for dataFormat: DataFormat) -> Source {
+    if dataFormat == .csv, let localCSVPath {
+      return .init(
+        nasr: .fromLocalDirectory(URL(filePath: localCSVPath), format: .csv),
+        expectedCycle: nil
+      )
+    }
+
+    try? FileManager.default.createDirectory(
+      at: workingDirectory,
+      withIntermediateDirectories: true
+    )
+
+    let archive = cachedArchiveURL(for: dataFormat)
+    if FileManager.default.fileExists(atPath: archive.path) {
+      return .init(nasr: .fromLocalArchive(archive, format: dataFormat), expectedCycle: targetCycle)
+    }
+
+    print("Downloading the \(dataFormat.rawValue) archive for cycle \(targetCycle)…")
+    let downloader = ArchiveFileDownloader(
+      cycle: targetCycle,
+      format: dataFormat,
+      location: archive
+    )
+    return .init(nasr: .init(loader: downloader), expectedCycle: targetCycle)
+  }
+
+  private func cachedArchiveURL(for dataFormat: DataFormat) -> URL {
+    let filename = ArchiveFileDownloader(cycle: targetCycle, format: dataFormat)
+      .cycleURL.lastPathComponent
+    return workingDirectory.appendingPathComponent(filename)
+  }
+
+  private func loadAndParse(
+    _ nasr: NASR,
+    format dataFormat: DataFormat,
+    recordTypes: Set<RecordType>,
+    errorCollector: ErrorCollector
+  ) async throws {
+    await progress.reset(
+      totalUnitCount: totalWeight(format: dataFormat, selectedRecordTypes: recordTypes)
+    )
+    print("Loading \(dataFormat.rawValue)…")
     let progress = self.progress
     try await nasr.load { child in
       Task { @MainActor in await progress.addChild(child, withPendingUnitCount: loadingWeight) }
     }
-    print("Done loading \(formatName); parsing…")
+    print("Done loading \(dataFormat.rawValue); parsing…")
 
     _ = trackProgress(progress: progress)
-    let errorCollector = ErrorCollector()
     try await parseValues(
       nasr: nasr,
-      isCSV: isCSV,
+      format: dataFormat,
       errorCollector: errorCollector,
-      selectedRecordTypes: effectiveRecordTypes
-    )
-
-    // Clear the progress line before printing results
-    print("\r" + String(repeating: " ", count: terminalWidth()) + "\r", terminator: "")
-
-    // Print error summary
-    await errorCollector.printSummary(verbose: verbose, formatName: formatName)
-
-    print("\nSaving \(formatName)…")
-    await saveData(
-      nasr: nasr,
-      formatName: formatName,
-      workingDirectory: workingDirectory,
-      selectedRecordTypes: effectiveRecordTypes
-    )
-
-    // Verify completion
-    await verifyCompletion(
-      nasr: nasr,
-      formatName: formatName,
-      isCSV: isCSV,
-      selectedRecordTypes: effectiveRecordTypes
-    )
-
-    // Verify associations
-    print("\nVerifying associations…")
-    await verifyAssociations(
-      nasr: nasr,
-      formatName: formatName,
-      isCSV: isCSV,
-      selectedRecordTypes: effectiveRecordTypes
+      selectedRecordTypes: recordTypes
     )
   }
 
   /// Returns the effective set of record types to parse, filtering by format availability and user selection.
-  private func effectiveTypes(for isCSV: Bool, selectedRecordTypes: Set<RecordType>?) -> Set<
-    RecordType
-  > {
-    let availableTypes = isCSV ? CSVRecordTypes : txtRecordTypes
+  private func effectiveTypes(
+    for dataFormat: DataFormat,
+    selectedRecordTypes: Set<RecordType>?
+  ) -> Set<RecordType> {
+    let availableTypes = availableRecordTypes(for: dataFormat)
     if let selected = selectedRecordTypes {
       return availableTypes.intersection(selected)
     }
     return availableTypes
   }
 
-  private mutating func parseValues(
+  /// The record types a format reports on: those parsed, plus `states`, which every TXT run parses
+  /// so that state associations resolve. It is deliberately absent from the progress weighting,
+  /// which only covers the tracked task group.
+  private func reportedTypes(
+    for dataFormat: DataFormat,
+    parsing parsedTypes: Set<RecordType>
+  ) -> Set<RecordType> {
+    dataFormat == .csv ? parsedTypes : parsedTypes.union([.states])
+  }
+
+  private func parseValues(
     nasr: NASR,
-    isCSV: Bool,
+    format dataFormat: DataFormat,
     errorCollector: ErrorCollector,
     selectedRecordTypes: Set<RecordType>
   ) async throws {
@@ -218,7 +316,7 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
 
     // Helper to create progress handler for a record type
     func progressHandler(for recordType: RecordType) -> @Sendable (Progress) -> Void {
-      let recordWeight = weight(for: recordType, isCSV: isCSV)
+      let recordWeight = weight(for: recordType, format: dataFormat)
       return { child in
         Task { @MainActor in
           await progress.setCurrentRecordType(String(describing: recordType))
@@ -228,22 +326,16 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     }
 
     // Helper to create error handler for a record type
-    func errorHandler(for recordType: RecordType)
-      -> @Sendable (RecordParseError) -> ParseDisposition
-    {
-      let typeName = String(describing: recordType)
-      return { error in
-        Task { await errorCollector.record(error, recordType: typeName) }
+    func errorHandler() -> @Sendable (RecordParseError) -> ParseDisposition {
+      { error in
+        errorCollector.record(error)
         return .proceed
       }
     }
 
     // States must be parsed first for state associations to work (TXT only)
-    if !isCSV {
-      try await nasr.parse(
-        .states,
-        errorHandler: errorHandler(for: .states)
-      )
+    if dataFormat == .txt {
+      try await nasr.parse(.states, errorHandler: errorHandler())
     }
 
     // Parse all selected record types concurrently
@@ -253,7 +345,7 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
           _ = try await nasr.parse(
             recordType,
             withProgress: progressHandler(for: recordType),
-            errorHandler: errorHandler(for: recordType)
+            errorHandler: errorHandler()
           )
         }
       }
@@ -298,11 +390,24 @@ struct SwiftNASR_E2E: AsyncParsableCommand {
     return selectedTypes
   }
 
+  /// A format's data source, and the cycle its archive is expected to declare. A local directory
+  /// contains whatever cycle it contains, so there is nothing to hold it to.
+  private struct Source {
+    let nasr: NASR
+    let expectedCycle: Cycle?
+  }
+
   // periphery:ignore - used by ArgumentParser's Decodable-based command parsing
   private enum CodingKeys: String, CodingKey {
     case workingDirectory
     case format
+    case cycle
     case localCSVPath
+    case reportPath
+    case baselinePath
+    case save
+    case driftPercent
+    case driftMinimum
     case verbose
     case recordTypes
   }

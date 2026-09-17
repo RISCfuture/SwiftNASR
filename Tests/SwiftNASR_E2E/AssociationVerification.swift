@@ -2,10 +2,10 @@ import SwiftNASR
 
 func verifyAssociations(
   nasr: NASR,
-  formatName: String,
-  isCSV: Bool,
+  format: DataFormat,
   selectedRecordTypes: Set<RecordType>
-) async {
+) async -> AssociationReport {
+  let isCSV = format == .csv
   var failures: [String] = []
   var successes: [String] = []
 
@@ -18,6 +18,27 @@ func verifyAssociations(
     }
   }
 
+  // Passes if any candidate resolves the association. Records legitimately reference facilities
+  // the distribution does not contain — 87 of the 99 airports naming a responsible ARTCC name a
+  // Canadian one — so resting the check on whichever element the collection happened to yield
+  // first makes it fail at random. A check with no candidates at all is recorded as neither a
+  // pass nor a failure.
+  func check<T>(
+    _ description: String,
+    anyOf candidates: some Sequence<T>,
+    resolves: (T) async -> Bool
+  ) async {
+    var sawCandidate = false
+    for candidate in candidates {
+      sawCandidate = true
+      if await resolves(candidate) {
+        check(description, true)
+        return
+      }
+    }
+    if sawCandidate { check(description, false) }
+  }
+
   // Helper to check if record types are available for association testing
   func canTest(_ types: RecordType...) -> Bool {
     types.allSatisfy { selectedRecordTypes.contains($0) }
@@ -28,45 +49,57 @@ func verifyAssociations(
     // State associations (TXT only - no state parser for CSV)
     if !isCSV {
       // Find an airport with a state code to test state association
-      if let airportWithState = airports.first(where: { $0.stateCode != nil }) {
+      await check("Airport.state", anyOf: airports.lazy.filter { $0.stateCode != nil }) {
+        airportWithState in
         let state = await airportWithState.state
-        check("Airport.state", state != nil)
+        return state != nil
       }
 
       // Find an airport with county state code
-      if let airport = airports.first(where: { !$0.countyStateCode.isEmpty }) {
+      await check(
+        "Airport.countyState",
+        anyOf: airports.lazy.filter { !$0.countyStateCode.isEmpty }
+      ) { airport in
         let countyState = await airport.countyState
-        check("Airport.countyState", countyState != nil)
+        return countyState != nil
       }
     }
 
     // boundaryARTCCs (TXT only - CSV doesn't have boundaryARTCCId)
     if !isCSV, canTest(.ARTCCFacilities) {
-      if let airportWithARTCC = airports.first(where: { $0.boundaryARTCCId != nil }) {
+      await check(
+        "Airport.boundaryARTCCs",
+        anyOf: airports.lazy.filter { $0.boundaryARTCCId != nil }
+      ) { airportWithARTCC in
         let artccs = await airportWithARTCC.boundaryARTCCs
-        check("Airport.boundaryARTCCs", artccs != nil && !artccs!.isEmpty)
+        return artccs != nil && !artccs!.isEmpty
       }
     }
 
     // responsibleARTCCs
     if canTest(.ARTCCFacilities) {
-      if let airport = airports.first(where: { !$0.responsibleARTCCId.isEmpty }) {
+      await check(
+        "Airport.responsibleARTCCs",
+        anyOf: airports.lazy.filter { !$0.responsibleARTCCId.isEmpty }
+      ) { airport in
         let artccs = await airport.responsibleARTCCs
-        check("Airport.responsibleARTCCs", artccs != nil && !artccs!.isEmpty)
+        return artccs != nil && !artccs!.isEmpty
       }
     }
 
     // tieInFSS
     if canTest(.flightServiceStations) {
-      if let airport = airports.first(where: { !$0.tieInFSSId.isEmpty }) {
+      await check("Airport.tieInFSS", anyOf: airports.lazy.filter { !$0.tieInFSSId.isEmpty }) {
+        airport in
         let fss = await airport.tieInFSS
-        check("Airport.tieInFSS", fss != nil)
+        return fss != nil
       }
 
       // alternateFSS (optional)
-      if let airport = airports.first(where: { $0.alternateFSSId != nil }) {
+      await check("Airport.alternateFSS", anyOf: airports.lazy.filter { $0.alternateFSSId != nil })
+      { airport in
         let fss = await airport.alternateFSS
-        check("Airport.alternateFSS", fss != nil)
+        return fss != nil
       }
 
       // NOTAMIssuer (optional) - iterate to find an airport with a valid FSS match
@@ -85,20 +118,21 @@ func verifyAssociations(
   if canTest(.ARTCCFacilities), let artccs = await nasr.data.ARTCCs, !artccs.isEmpty {
     // State association (TXT only)
     if !isCSV {
-      if let artccWithState = artccs.first(where: { $0.stateCode != nil }) {
+      await check("ARTCC.state", anyOf: artccs.lazy.filter { $0.stateCode != nil }) {
+        artccWithState in
         let state = await artccWithState.state
-        check("ARTCC.state", state != nil)
+        return state != nil
       }
     }
 
     // CommFrequency.associatedAirport
     if canTest(.airports) {
-      for artcc in artccs {
-        if let freq = artcc.frequencies.first(where: { $0.associatedAirportCode != nil }) {
-          let airport = await freq.associatedAirport
-          check("ARTCC.CommFrequency.associatedAirport", airport != nil)
-          break
-        }
+      await check(
+        "ARTCC.CommFrequency.associatedAirport",
+        anyOf: artccs.lazy.flatMap(\.frequencies).filter { $0.associatedAirportCode != nil }
+      ) { frequency in
+        let airport = await frequency.associatedAirport
+        return airport != nil
       }
     }
   }
@@ -106,34 +140,37 @@ func verifyAssociations(
   // FSS associations
   if canTest(.flightServiceStations), let fsses = await nasr.data.FSSes, !fsses.isEmpty {
     // nearestFSSWithTeletype
-    if let fss = fsses.first(where: { $0.nearestFSSIdWithTeletype != nil }) {
+    await check(
+      "FSS.nearestFSSWithTeletype",
+      anyOf: fsses.lazy.filter { $0.nearestFSSIdWithTeletype != nil }
+    ) { fss in
       let nearestFSS = await fss.nearestFSSWithTeletype
-      check("FSS.nearestFSSWithTeletype", nearestFSS != nil)
+      return nearestFSS != nil
     }
 
     // State associations (TXT only)
     if !isCSV {
       // state
-      if let fss = fsses.first(where: { $0.stateName != nil }) {
+      await check("FSS.state", anyOf: fsses.lazy.filter { $0.stateName != nil }) { fss in
         let state = await fss.state
-        check("FSS.state", state != nil)
+        return state != nil
       }
 
       // CommFacility.state
-      for fss in fsses {
-        if let facility = fss.commFacilities.first(where: { $0.stateName != nil }) {
-          let state = await facility.state
-          check("FSS.CommFacility.state", state != nil)
-          break
-        }
+      await check(
+        "FSS.CommFacility.state",
+        anyOf: fsses.lazy.flatMap(\.commFacilities).filter { $0.stateName != nil }
+      ) { facility in
+        let state = await facility.state
+        return state != nil
       }
     }
 
     // airport
     if canTest(.airports) {
-      if let fss = fsses.first(where: { $0.airportId != nil }) {
+      await check("FSS.airport", anyOf: fsses.lazy.filter { $0.airportId != nil }) { fss in
         let airport = await fss.airport
-        check("FSS.airport", airport != nil)
+        return airport != nil
       }
     }
   }
@@ -142,9 +179,9 @@ func verifyAssociations(
   if canTest(.navaids), let navaids = await nasr.data.navaids, !navaids.isEmpty {
     // state (TXT only)
     if !isCSV {
-      if let navaid = navaids.first(where: { $0.stateName != nil }) {
+      await check("Navaid.state", anyOf: navaids.lazy.filter { $0.stateName != nil }) { navaid in
         let state = await navaid.state
-        check("Navaid.state", state != nil)
+        return state != nil
       }
     }
 
@@ -219,9 +256,12 @@ func verifyAssociations(
   if canTest(.weatherReportingStations, .airports), let stations = await nasr.data.weatherStations,
     !stations.isEmpty
   {
-    if let station = stations.first(where: { $0.airportSiteNumber != nil }) {
+    await check(
+      "WeatherStation.airport",
+      anyOf: stations.lazy.filter { $0.airportSiteNumber != nil }
+    ) { station in
       let airport = await station.airport
-      check("WeatherStation.airport", airport != nil)
+      return airport != nil
     }
   }
 
@@ -240,16 +280,22 @@ func verifyAssociations(
     !facilities.isEmpty
   {
     if canTest(.airports) {
-      if let facility = facilities.first(where: { $0.airportSiteNumber != nil }) {
+      await check(
+        "TerminalCommFacility.airport",
+        anyOf: facilities.lazy.filter { $0.airportSiteNumber != nil }
+      ) { facility in
         let airport = await facility.airport
-        check("TerminalCommFacility.airport", airport != nil)
+        return airport != nil
       }
     }
 
     if canTest(.flightServiceStations) {
-      if let facility = facilities.first(where: { $0.tieInFSSId != nil }) {
+      await check(
+        "TerminalCommFacility.tieInFSS",
+        anyOf: facilities.lazy.filter { $0.tieInFSSId != nil }
+      ) { facility in
         let fss = await facility.tieInFSS
-        check("TerminalCommFacility.tieInFSS", fss != nil)
+        return fss != nil
       }
     }
   }
@@ -259,23 +305,30 @@ func verifyAssociations(
     // ParachuteJumpArea associations
     if canTest(.parachuteJumpAreas), let pjas = await nasr.data.parachuteJumpAreas, !pjas.isEmpty {
       if canTest(.airports) {
-        if let pja = pjas.first(where: { $0.airportSiteNumber != nil }) {
+        await check(
+          "ParachuteJumpArea.airport",
+          anyOf: pjas.lazy.filter { $0.airportSiteNumber != nil }
+        ) { pja in
           let airport = await pja.airport
-          check("ParachuteJumpArea.airport", airport != nil)
+          return airport != nil
         }
       }
 
       if canTest(.navaids) {
-        if let pja = pjas.first(where: { $0.navaidIdentifier != nil }) {
+        await check(
+          "ParachuteJumpArea.navaid",
+          anyOf: pjas.lazy.filter { $0.navaidIdentifier != nil }
+        ) { pja in
           let navaid = await pja.navaid
-          check("ParachuteJumpArea.navaid", navaid != nil)
+          return navaid != nil
         }
       }
 
       if canTest(.flightServiceStations) {
-        if let pja = pjas.first(where: { $0.FSSIdentifier != nil }) {
+        await check("ParachuteJumpArea.fss", anyOf: pjas.lazy.filter { $0.FSSIdentifier != nil }) {
+          pja in
           let fss = await pja.fss
-          check("ParachuteJumpArea.fss", fss != nil)
+          return fss != nil
         }
       }
     }
@@ -285,16 +338,22 @@ func verifyAssociations(
       !mtrs.isEmpty
     {
       if canTest(.ARTCCFacilities) {
-        if let mtr = mtrs.first(where: { !$0.ARTCCIdentifiers.isEmpty }) {
+        await check(
+          "MilitaryTrainingRoute.artccs",
+          anyOf: mtrs.lazy.filter { !$0.ARTCCIdentifiers.isEmpty }
+        ) { mtr in
           let artccs = await mtr.artccs
-          check("MilitaryTrainingRoute.artccs", !artccs.isEmpty)
+          return !artccs.isEmpty
         }
       }
 
       if canTest(.flightServiceStations) {
-        if let mtr = mtrs.first(where: { !$0.FSSIdentifiers.isEmpty }) {
+        await check(
+          "MilitaryTrainingRoute.fsses",
+          anyOf: mtrs.lazy.filter { !$0.FSSIdentifiers.isEmpty }
+        ) { mtr in
           let fsses = await mtr.fsses
-          check("MilitaryTrainingRoute.fsses", !fsses.isEmpty)
+          return !fsses.isEmpty
         }
       }
     }
@@ -302,16 +361,22 @@ func verifyAssociations(
     // MiscActivityArea associations
     if canTest(.miscActivityAreas), let maas = await nasr.data.miscActivityAreas, !maas.isEmpty {
       if canTest(.navaids) {
-        if let maa = maas.first(where: { $0.navaidIdentifier != nil }) {
+        await check(
+          "MiscActivityArea.navaid",
+          anyOf: maas.lazy.filter { $0.navaidIdentifier != nil }
+        ) { maa in
           let navaid = await maa.navaid
-          check("MiscActivityArea.navaid", navaid != nil)
+          return navaid != nil
         }
       }
 
       if canTest(.airports) {
-        if let maa = maas.first(where: { $0.associatedAirportSiteNumber != nil }) {
+        await check(
+          "MiscActivityArea.associatedAirport",
+          anyOf: maas.lazy.filter { $0.associatedAirportSiteNumber != nil }
+        ) { maa in
           let airport = await maa.associatedAirport
-          check("MiscActivityArea.associatedAirport", airport != nil)
+          return airport != nil
         }
       }
     }
@@ -331,21 +396,30 @@ func verifyAssociations(
       !facilities.isEmpty
     {
       if canTest(.flightServiceStations) {
-        if let facility = facilities.first(where: { $0.FSSIdentifier != nil }) {
+        await check(
+          "FSSCommFacility.fss",
+          anyOf: facilities.lazy.filter { $0.FSSIdentifier != nil }
+        ) { facility in
           let fss = await facility.fss
-          check("FSSCommFacility.fss", fss != nil)
+          return fss != nil
         }
 
-        if let facility = facilities.first(where: { $0.alternateFSSIdentifier != nil }) {
+        await check(
+          "FSSCommFacility.alternateFSS",
+          anyOf: facilities.lazy.filter { $0.alternateFSSIdentifier != nil }
+        ) { facility in
           let fss = await facility.alternateFSS
-          check("FSSCommFacility.alternateFSS", fss != nil)
+          return fss != nil
         }
       }
 
       if canTest(.navaids) {
-        if let facility = facilities.first(where: { $0.navaidIdentifier != nil }) {
+        await check(
+          "FSSCommFacility.navaid",
+          anyOf: facilities.lazy.filter { $0.navaidIdentifier != nil }
+        ) { facility in
           let navaid = await facility.navaid
-          check("FSSCommFacility.navaid", navaid != nil)
+          return navaid != nil
         }
       }
     }
@@ -353,29 +427,31 @@ func verifyAssociations(
     // Hold associations
     if canTest(.holds), let holds = await nasr.data.holds, !holds.isEmpty {
       if canTest(.navaids) {
-        if let hold = holds.first(where: { $0.navaidIdentifier != nil }) {
+        await check("Hold.navaid", anyOf: holds.lazy.filter { $0.navaidIdentifier != nil }) {
+          hold in
           let navaid = await hold.navaid
-          check("Hold.navaid", navaid != nil)
+          return navaid != nil
         }
       }
 
       if canTest(.reportingPoints) {
-        if let hold = holds.first(where: { $0.fixIdentifier != nil }) {
+        await check("Hold.fix", anyOf: holds.lazy.filter { $0.fixIdentifier != nil }) { hold in
           let fix = await hold.fix
-          check("Hold.fix", fix != nil)
+          return fix != nil
         }
       }
 
       if canTest(.ARTCCFacilities) {
-        if let hold = holds.first(where: { $0.fixARTCC != nil }) {
+        await check("Hold.fixARTCCReference", anyOf: holds.lazy.filter { $0.fixARTCC != nil }) {
+          hold in
           let artcc = await hold.fixARTCCReference
-          check("Hold.fixARTCCReference", artcc != nil)
+          return artcc != nil
         }
       }
 
-      if let hold = holds.first(where: { $0.fixStateCode != nil }) {
+      await check("Hold.fixState", anyOf: holds.lazy.filter { $0.fixStateCode != nil }) { hold in
         let state = await hold.fixState
-        check("Hold.fixState", state != nil)
+        return state != nil
       }
     }
 
@@ -404,16 +480,22 @@ func verifyAssociations(
     if canTest(.locationIdentifiers), let lids = await nasr.data.locationIdentifiers, !lids.isEmpty
     {
       if canTest(.ARTCCFacilities) {
-        if let lid = lids.first(where: { $0.controllingARTCC != nil }) {
+        await check(
+          "LocationIdentifier.artcc",
+          anyOf: lids.lazy.filter { $0.controllingARTCC != nil }
+        ) { lid in
           let artcc = await lid.artcc
-          check("LocationIdentifier.artcc", artcc != nil)
+          return artcc != nil
         }
       }
 
       if canTest(.flightServiceStations) {
-        if let lid = lids.first(where: { $0.landingFacilityFSS != nil }) {
+        await check(
+          "LocationIdentifier.landingFacilityFSSReference",
+          anyOf: lids.lazy.filter { $0.landingFacilityFSS != nil }
+        ) { lid in
           let fss = await lid.landingFacilityFSSReference
-          check("LocationIdentifier.landingFacilityFSSReference", fss != nil)
+          return fss != nil
         }
       }
     }
@@ -422,31 +504,38 @@ func verifyAssociations(
     if canTest(.weatherReportingLocations),
       let locations = await nasr.data.weatherReportingLocations, !locations.isEmpty
     {
-      if let location = locations.first(where: { $0.stateCode != nil }) {
+      await check(
+        "WeatherReportingLocation.state",
+        anyOf: locations.lazy.filter { $0.stateCode != nil }
+      ) { location in
         let state = await location.state
-        check("WeatherReportingLocation.state", state != nil)
+        return state != nil
       }
     }
 
     // ATSAirway associations
     if canTest(.ATSAirways), let airways = await nasr.data.atsAirways, !airways.isEmpty {
       if canTest(.ARTCCFacilities) {
-        for airway in airways {
-          if let routePoint = airway.routePoints.first(where: { $0.ARTCCIdentifier != nil }) {
-            let artcc = await airway.artcc(for: routePoint)
-            check("ATSAirway.artcc(for:)", artcc != nil)
-            break
+        await check(
+          "ATSAirway.artcc(for:)",
+          anyOf: airways.lazy.flatMap { airway in
+            airway.routePoints.lazy.filter { $0.ARTCCIdentifier != nil }.map { (airway, $0) }
           }
+        ) { pair in
+          let artcc = await pair.0.artcc(for: pair.1)
+          return artcc != nil
         }
       }
 
       if canTest(.navaids) {
-        for airway in airways {
-          if let routePoint = airway.routePoints.first(where: { $0.navaidIdentifier != nil }) {
-            let navaid = await airway.navaid(for: routePoint)
-            check("ATSAirway.navaid(for:)", navaid != nil)
-            break
+        await check(
+          "ATSAirway.navaid(for:)",
+          anyOf: airways.lazy.flatMap { airway in
+            airway.routePoints.lazy.filter { $0.navaidIdentifier != nil }.map { (airway, $0) }
           }
+        ) { pair in
+          let navaid = await pair.0.navaid(for: pair.1)
+          return navaid != nil
         }
       }
     }
@@ -501,15 +590,5 @@ func verifyAssociations(
     check("CodedDepartureRoute.artcc", foundARTCC)
   }
 
-  // Print results
-  print("\n=== Association Verification (\(formatName)) ===")
-  print("Passed: \(successes.count)")
-  if !failures.isEmpty {
-    print("Failed: \(failures.count)")
-    for failure in failures {
-      print("  - \(failure)")
-    }
-  } else {
-    print("All association tests passed!")
-  }
+  return AssociationReport(passedCount: successes.count, failures: failures.sorted())
 }

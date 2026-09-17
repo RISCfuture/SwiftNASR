@@ -31,17 +31,46 @@ actor ProgressTracker {
 
 // MARK: - Progress Display
 
+/// Whether standard output is a terminal. A redrawing bar is only legible on one; anywhere else it
+/// becomes a hundred near-identical log lines, so a plain line per ten percent goes out instead.
+let stdoutIsTerminal = isatty(STDOUT_FILENO) == 1
+
 func trackProgress(progress: ProgressTracker) -> Task<Void, any Swift.Error> {
   Task.detached {
+    var lastLoggedStep = -1
     repeat {
       try await Task.sleep(for: .seconds(0.1))
-      await renderProgressBar(progress: progress)
+      if stdoutIsTerminal {
+        await renderProgressBar(progress: progress)
+      } else {
+        lastLoggedStep = await logProgress(progress: progress, lastLoggedStep: lastLoggedStep)
+      }
     } while await !progress.isFinished
   }
 }
 
+/// Erases the progress bar's line so what follows prints on a clean one.
+func clearProgressLine() {
+  guard stdoutIsTerminal else { return }
+  print("\r" + String(repeating: " ", count: terminalWidth()) + "\r", terminator: "")
+}
+
+/// Prints a line each time progress crosses a ten-percent step, and returns the step it last
+/// printed.
+private func logProgress(progress: ProgressTracker, lastLoggedStep: Int) async -> Int {
+  let fractionCompleted = await progress.fractionCompleted
+  let step = Int((max(0.0, min(1.0, fractionCompleted)) * 10).rounded(.down))
+  guard step > lastLoggedStep else { return lastLoggedStep }
+
+  let currentRecordType = await progress.currentRecordType
+  let statusSuffix = currentRecordType.map { " - parsing \($0)" } ?? ""
+  print("  \(step * 10)% complete\(statusSuffix)")
+  fflush(nil)
+  return step
+}
+
 @MainActor
-func renderProgressBar(progress: ProgressTracker) async {
+private func renderProgressBar(progress: ProgressTracker) async {
   let fractionCompleted = await progress.fractionCompleted
   let currentRecordType = await progress.currentRecordType
   let percent = Int((fractionCompleted * 100).rounded())
@@ -73,7 +102,7 @@ func renderProgressBar(progress: ProgressTracker) async {
   fflush(nil)  // Ensure that all open output streams are flushed immediately
 }
 
-func terminalWidth() -> Int {
+private func terminalWidth() -> Int {
   var w = winsize()
   if ioctl(STDOUT_FILENO, UInt(TIOCGWINSZ), &w) == 0 {
     return Int(w.ws_col)

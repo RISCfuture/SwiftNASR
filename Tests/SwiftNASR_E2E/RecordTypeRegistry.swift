@@ -7,11 +7,18 @@ struct RecordTypeInfo {
   let txtWeight: Int64?  // nil if not available in TXT
   let csvWeight: Int64?  // nil if not available in CSV
 
-  var availableInTXT: Bool { txtWeight != nil }
-  var availableInCSV: Bool { csvWeight != nil }
+  func isAvailable(in format: DataFormat) -> Bool {
+    switch format {
+      case .txt: txtWeight != nil
+      case .csv: csvWeight != nil
+    }
+  }
 
-  func weight(isCSV: Bool) -> Int64 {
-    (isCSV ? csvWeight : txtWeight) ?? 1
+  func weight(for format: DataFormat) -> Int64 {
+    switch format {
+      case .txt: txtWeight ?? 1
+      case .csv: csvWeight ?? 1
+    }
   }
 }
 
@@ -175,35 +182,6 @@ func getRecordCount(from data: NASRData, for recordType: RecordType) async -> In
     case .ATSAirways: return await data.atsAirways?.count
     case .locationIdentifiers: return await data.locationIdentifiers?.count
     case .states: return await data.states?.count
-  }
-}
-
-/// Checks if the record data is nil for a given record type.
-func isRecordNil(in data: NASRData, for recordType: RecordType) async -> Bool {
-  switch recordType {
-    case .airports: return await data.airports == nil
-    case .ARTCCFacilities: return await data.ARTCCs == nil
-    case .flightServiceStations: return await data.FSSes == nil
-    case .navaids: return await data.navaids == nil
-    case .reportingPoints: return await data.fixes == nil
-    case .weatherReportingStations: return await data.weatherStations == nil
-    case .airways: return await data.airways == nil
-    case .ILSes: return await data.ILSFacilities == nil
-    case .terminalCommFacilities: return await data.terminalCommFacilities == nil
-    case .departureArrivalProceduresComplete:
-      return await data.departureArrivalProceduresComplete == nil
-    case .preferredRoutes: return await data.preferredRoutes == nil
-    case .holds: return await data.holds == nil
-    case .weatherReportingLocations: return await data.weatherReportingLocations == nil
-    case .parachuteJumpAreas: return await data.parachuteJumpAreas == nil
-    case .militaryTrainingRoutes: return await data.militaryTrainingRoutes == nil
-    case .codedDepartureRoutes: return await data.codedDepartureRoutes == nil
-    case .miscActivityAreas: return await data.miscActivityAreas == nil
-    case .ARTCCBoundarySegments: return await data.ARTCCBoundarySegments == nil
-    case .FSSCommFacilities: return await data.FSSCommFacilities == nil
-    case .ATSAirways: return await data.atsAirways == nil
-    case .locationIdentifiers: return await data.locationIdentifiers == nil
-    case .states: return await data.states == nil
   }
 }
 

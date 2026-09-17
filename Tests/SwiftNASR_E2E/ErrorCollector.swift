@@ -1,58 +1,58 @@
 import Foundation
+import Synchronization
 import SwiftNASR
 
-actor ErrorCollector {
-  private var errors: [RecordError] = []
+/// How many errors of each kind one record type produced, with a few sample messages of each.
+struct ErrorTally: Sendable {
+  var droppedRecordCount = 0
+  var fieldErrorCount = 0
+  var droppedRecordSamples: [String] = []
+  var fieldErrorSamples: [String] = []
+}
 
-  func record(_ error: RecordParseError, recordType: String) {
-    errors.append(RecordError(recordType: recordType, error: error))
+/// Tallies the parse errors every record type's error handler reports.
+///
+/// Recording is synchronous because the error handler is: hopping onto an actor lets the run finish
+/// and the summary print while the last errors are still queued, which makes the counts vary from
+/// run to run.
+final class ErrorCollector: Sendable {
+  private let sampleLimit: Int
+  private let tallies = Mutex<[RecordType: ErrorTally]>([:])
+
+  /// Every record type that reported an error, with its tally.
+  var talliesByRecordType: [RecordType: ErrorTally] { tallies.withLock { $0 } }
+
+  init(sampleLimit: Int) {
+    self.sampleLimit = sampleLimit
   }
 
-  func errorsByRecordType() -> [String: [RecordError]] {
-    Dictionary(grouping: errors, by: \.recordType)
-  }
-
-  func printSummary(verbose: Bool, formatName: String) {
-    guard !errors.isEmpty else {
-      print("\n\(formatName) - No parsing errors")
-      return
-    }
-
-    if verbose {
-      print("\n=== All Errors (\(formatName)) ===")
-      for error in errors {
-        print("[\(error.recordType)] \(error.error)")
+  func record(_ error: RecordParseError) {
+    tallies.withLock { tallies in
+      var tally = tallies[error.recordType, default: ErrorTally()]
+      switch error {
+        case .recordError:
+          tally.droppedRecordCount += 1
+          append(error, to: &tally.droppedRecordSamples)
+        case .fieldError:
+          tally.fieldErrorCount += 1
+          append(error, to: &tally.fieldErrorSamples)
       }
-    } else {
-      print("\n=== Error Summary (\(formatName)) ===")
-      let dropped = errors.filter {
-        if case .recordError = $0.error { return true }
-        return false
-      }.count
-      let fieldIssues = errors.count - dropped
-      print(
-        "Total errors: \(errors.count) (\(dropped) dropped records, \(fieldIssues) field issues)"
-      )
-
-      let grouped = errorsByRecordType()
-      let sortedTypes = grouped.keys.sorted { grouped[$0]!.count > grouped[$1]!.count }
-
-      for recordType in sortedTypes {
-        let typeErrors = grouped[recordType]!
-        print("\n\(recordType) (\(typeErrors.count) error\(typeErrors.count == 1 ? "" : "s")):")
-        let samplesToShow = min(3, typeErrors.count)
-        for i in 0..<samplesToShow {
-          print("  - \(typeErrors[i].error)")
-        }
-        if typeErrors.count > samplesToShow {
-          print("  ... and \(typeErrors.count - samplesToShow) more")
-        }
-      }
+      tallies[error.recordType] = tally
     }
   }
 
-  struct RecordError {
-    let recordType: String
-    let error: RecordParseError
+  private func append(_ error: RecordParseError, to samples: inout [String]) {
+    guard samples.count < sampleLimit else { return }
+    samples.append(error.localizedDescription)
+  }
+}
+
+extension RecordParseError {
+  /// The record type the error was reported against.
+  var recordType: RecordType {
+    switch self {
+      case let .recordError(recordType, _, _): recordType
+      case let .fieldError(recordType, _, _, _, _): recordType
+    }
   }
 }
