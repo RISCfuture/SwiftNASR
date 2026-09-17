@@ -1,0 +1,472 @@
+name: NASR Cycle Watch
+
+# The FAA publishes each 28-day cycle about 29 days before it takes effect, so the incoming cycle
+# can be parsed weeks before anyone depends on it. A cheap probe gates the expensive parse; the
+# report artifact, named for the cycle, doubles as the record of what has already been checked.
+
+on:
+  schedule:
+    - cron: "0 16 * * *"
+  workflow_dispatch:
+    inputs:
+      cycle:
+        description: "Cycle to check, as YYYY-MM-DD. Blank uses the next cycle to take effect."
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: Look for a new cycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      issues: write
+    outputs:
+      cycle: ${{ steps.target.outputs.cycle }}
+      previous-cycle: ${{ steps.target.outputs.previous-cycle }}
+      published-at: ${{ steps.availability.outputs.published-at }}
+      parse: ${{ steps.decide.outputs.parse }}
+    steps:
+      - name: Resolve the target cycle
+        id: target
+        env:
+          REQUESTED: ${{ inputs.cycle }}
+        run: |
+          set -euo pipefail
+
+          period=$(( 28 * 86400 ))
+          datum=$(date -u -d 2020-12-03 +%s)
+          index=$(( ($(date -u +%s) - datum) / period ))
+          target=$(( datum + (index + 1) * period ))
+
+          if [ -n "$REQUESTED" ]; then
+            if ! requested=$(date -u -d "$REQUESTED" +%s 2>/dev/null); then
+              echo "::error::'$REQUESTED' is not a date. Use YYYY-MM-DD."
+              exit 1
+            fi
+            if [ $(( (requested - datum) % period )) -ne 0 ]; then
+              echo "::error::$REQUESTED is not a NASR cycle; cycles fall every 28 days from 2020-12-03."
+              exit 1
+            fi
+            target=$requested
+          fi
+
+          {
+            echo "cycle=$(date -u -d "@$target" +%F)"
+            echo "previous-cycle=$(date -u -d "@$(( target - period ))" +%F)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check whether the FAA has published it
+        id: availability
+        env:
+          CYCLE: ${{ steps.target.outputs.cycle }}
+        run: |
+          set -euo pipefail
+
+          # nfdc.faa.gov answers every HEAD with 503, files that exist included, so availability has
+          # to be read from a one-byte range GET: 206 published, 404 not yet.
+          probe() {
+            curl --silent --show-error --location --range 0-0 \
+                 --retry 3 --retry-delay 10 --retry-all-errors \
+                 --dump-header "$2" --output /dev/null \
+                 --write-out '%{http_code}' "$1" || echo 000
+          }
+
+          csv_name=$(LC_ALL=C date -u -d "$CYCLE" +%d_%b_%Y)
+          txt_url="https://nfdc.faa.gov/webContent/28DaySub/28DaySubscription_Effective_$CYCLE.zip"
+          csv_url="https://nfdc.faa.gov/webContent/28DaySub/extra/${csv_name}_CSV.zip"
+
+          txt_code=$(probe "$txt_url" txt.headers)
+          csv_code=$(probe "$csv_url" csv.headers)
+          echo "TXT $txt_url -> $txt_code"
+          echo "CSV $csv_url -> $csv_code"
+
+          # Both formats land the same day, so one without the other is an upload in progress.
+          if [ "$txt_code" = "206" ] && [ "$csv_code" = "206" ]; then
+            available=true
+          else
+            available=false
+          fi
+
+          published=$(grep -i '^last-modified:' txt.headers | tail -n 1 | cut -d' ' -f2- | tr -d '\r')
+          days_out=$(( ( $(date -u -d "$CYCLE" +%s) - $(date -u +%s) ) / 86400 ))
+
+          # Publication runs ~29 days ahead; still missing two weeks out means the FAA slipped or
+          # the URLs moved, either of which otherwise looks like an ordinary quiet day.
+          if [ "$available" != "true" ] && [ "$days_out" -le 14 ]; then
+            overdue=true
+          else
+            overdue=false
+          fi
+
+          {
+            echo "available=$available"
+            echo "overdue=$overdue"
+            echo "days-out=$days_out"
+            echo "published-at=$published"
+            echo "txt-code=$txt_code"
+            echo "csv-code=$csv_code"
+            echo "txt-url=$txt_url"
+            echo "csv-url=$csv_url"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether to parse
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CYCLE: ${{ steps.target.outputs.cycle }}
+          AVAILABLE: ${{ steps.availability.outputs.available }}
+          DAYS_OUT: ${{ steps.availability.outputs.days-out }}
+          PUBLISHED: ${{ steps.availability.outputs.published-at }}
+          REQUESTED: ${{ inputs.cycle }}
+        run: |
+          set -euo pipefail
+
+          note() { echo "$1"; echo "$1" >> "$GITHUB_STEP_SUMMARY"; }
+
+          if [ "$AVAILABLE" != "true" ]; then
+            note "Cycle $CYCLE is not downloadable yet; it takes effect in $DAYS_OUT day(s)."
+            echo "parse=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -n "$REQUESTED" ]; then
+            note "Re-checking cycle $CYCLE on request (published \`$PUBLISHED\`)."
+            echo "parse=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # An existing report artifact is the record that this cycle was already checked.
+          artifact="nasr-report-$CYCLE"
+          found=$(ARTIFACT="$artifact" gh api \
+            "repos/$GH_REPO/actions/artifacts?name=$artifact&per_page=100" \
+            --jq '[.artifacts[] | select(.name == env.ARTIFACT and .expired == false)] | length')
+
+          if [ "$found" -gt 0 ]; then
+            note "Cycle $CYCLE has already been checked."
+            echo "parse=false" >> "$GITHUB_OUTPUT"
+          else
+            note "Cycle $CYCLE is new (published \`$PUBLISHED\`, effective in $DAYS_OUT days)."
+            echo "parse=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Report a cycle the FAA never published
+        if: steps.availability.outputs.overdue == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          CYCLE: ${{ steps.target.outputs.cycle }}
+          DAYS_OUT: ${{ steps.availability.outputs.days-out }}
+          TXT_URL: ${{ steps.availability.outputs.txt-url }}
+          TXT_CODE: ${{ steps.availability.outputs.txt-code }}
+          CSV_URL: ${{ steps.availability.outputs.csv-url }}
+          CSV_CODE: ${{ steps.availability.outputs.csv-code }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "Cycle **$CYCLE** takes effect in $DAYS_OUT day(s) and is still not downloadable."
+            echo "The FAA normally publishes about 29 days ahead, so either this cycle slipped or"
+            echo "the download URLs have changed shape."
+            echo
+            echo "| Format | URL | Range GET |"
+            echo "|---|---|---|"
+            echo "| TXT | \`$TXT_URL\` | $TXT_CODE |"
+            echo "| CSV | \`$CSV_URL\` | $CSV_CODE |"
+            echo
+            echo "[View the run]($RUN_URL)"
+          } > issue-body.md
+
+          title="NASR cycle $CYCLE was never published"
+          number=$(TITLE="$title" gh issue list --state all --search "NASR cycle $CYCLE in:title" \
+            --json number,title --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')
+
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body-file issue-body.md
+          else
+            gh issue create --title "$title" --body-file issue-body.md
+          fi
+
+  parse:
+    name: Parse the cycle
+    needs: probe
+    if: needs.probe.outputs.parse == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    env:
+      CYCLE: ${{ needs.probe.outputs.cycle }}
+      PREVIOUS_CYCLE: ${{ needs.probe.outputs.previous-cycle }}
+      PUBLISHED: ${{ needs.probe.outputs.published-at }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Name the report and the log
+        run: |
+          set -euo pipefail
+          {
+            echo "REPORT=$RUNNER_TEMP/report.json"
+            echo "PARSE_LOG=$RUNNER_TEMP/parse.log"
+          } >> "$GITHUB_ENV"
+
+      - uses: SwiftyLab/setup-swift@latest
+        with:
+          swift-version: "6.4"
+
+      - name: Cache SwiftPM build products
+        # Usually misses: 28 days between runs is well past the seven-day idle eviction. It earns
+        # its place when a cycle is re-checked by hand after a fix.
+        uses: actions/cache@v6
+        with:
+          path: |
+            .build
+            ~/.cache/org.swift.swiftpm
+          key: swiftpm-cyclewatch-ubuntu-latest-swift6.4-${{ hashFiles('Package.resolved') }}
+
+      - name: Build
+        # Release: a debug build cannot get through 250 MB of fixed-width records in any useful time.
+        run: swift build -c release --product SwiftNASR_E2E
+
+      - name: Fetch the previous cycle's report
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ARTIFACT: nasr-report-${{ needs.probe.outputs.previous-cycle }}
+        run: |
+          set -euo pipefail
+
+          # download-artifact cannot reach another run's artifact without that run's id, which is
+          # itself state to keep somewhere; the name already carries the cycle.
+          id=$(gh api "repos/$GH_REPO/actions/artifacts?name=$ARTIFACT&per_page=100" \
+            --jq '[.artifacts[] | select(.name == env.ARTIFACT and .expired == false)]
+                  | max_by(.id) | .id // empty')
+
+          if [ -z "$id" ]; then
+            echo "No report for $PREVIOUS_CYCLE; this cycle becomes the baseline for the next one."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          gh api "repos/$GH_REPO/actions/artifacts/$id/zip" > previous.zip
+          unzip -o -q previous.zip -d previous
+
+          # A run that crashed before writing its report still uploaded its log, so the artifact
+          # existing does not mean there is anything to compare against.
+          if [ -f previous/report.json ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "The report for $PREVIOUS_CYCLE holds no counts; the comparison is skipped."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Parse the cycle
+        id: parse
+        env:
+          BASELINE_FOUND: ${{ steps.baseline.outputs.found }}
+        run: |
+          set -euo pipefail
+
+          args=(--cycle "$CYCLE" --working-directory "$RUNNER_TEMP/nasr" --report "$REPORT" --no-save)
+          if [ "$BASELINE_FOUND" = "true" ]; then
+            args+=(--baseline previous/report.json)
+          fi
+
+          # The exit code is captured, not propagated: the report still has to be uploaded,
+          # summarized, and turned into an issue.
+          status=0
+          .build/release/SwiftNASR_E2E "${args[@]}" 2>&1 | tee "$PARSE_LOG" || status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the report
+        # Uploaded before anything reads it, and on failure too: this artifact is also the record
+        # that the cycle was checked, so a broken cycle is reported once rather than every day.
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nasr-report-${{ needs.probe.outputs.cycle }}
+          path: |
+            ${{ runner.temp }}/report.json
+            ${{ runner.temp }}/parse.log
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Read the verdict out of the report
+        id: verdict
+        if: always()
+        run: |
+          set -euo pipefail
+
+          failed=unknown
+          drift=0
+          if [ -f "$REPORT" ]; then
+            failed=$(jq -r '.failed' "$REPORT")
+            drift=$(jq '.drift | length' "$REPORT")
+          fi
+          {
+            echo "failed=$failed"
+            echo "drift=$drift"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write the job summary
+        if: always()
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "$REPORT" ]; then
+            echo "The run produced no report for cycle \`$CYCLE\`; see the log." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          {
+            echo "## NASR cycle $CYCLE"
+            echo
+            echo "- Published by the FAA: \`$PUBLISHED\`"
+            declared=$(jq -r '[.formats[].distributionCycle] | map(select(. != null))
+                              | unique | join(", ")' "$REPORT")
+            echo "- Cycle the archive declares: \`$declared\`"
+            echo "- Outcome: $(jq -r 'if .failed then "**failed**" else "clean" end' "$REPORT")"
+            jq -r '.failureReasons[]? | "  - \(.)"' "$REPORT"
+            echo
+            jq -r '
+              ["| Record type | TXT | CSV | TXT dropped/field | CSV dropped/field |",
+               "|---|---:|---:|---:|---:|"],
+              ((.formats.txt.recordTypes // {}) as $t | (.formats.csv.recordTypes // {}) as $c
+               | ([($t | keys), ($c | keys)] | add | unique)[]
+               | . as $k
+               | "| \($k) | \($t[$k].count // "-") | \($c[$k].count // "-")"
+                 + " | \($t[$k].droppedErrors // 0)/\($t[$k].fieldErrors // 0)"
+                 + " | \($c[$k].droppedErrors // 0)/\($c[$k].fieldErrors // 0) |")
+              | .[]? // .' "$REPORT"
+            echo
+            jq -r '.formats | to_entries[]
+              | "- \(.key | ascii_upcase) associations: \(.value.associations.passedCount) passed"
+                + (if (.value.associations.failures | length) > 0
+                   then ", failed: " + (.value.associations.failures | join(", ")) else "" end)' "$REPORT"
+            echo
+            if [ "$(jq '.drift | length' "$REPORT")" -gt 0 ]; then
+              echo "### Record count drift against $PREVIOUS_CYCLE"
+              echo
+              echo "| Format | Record type | $PREVIOUS_CYCLE | $CYCLE | Reason |"
+              echo "|---|---|---:|---:|---|"
+              jq -r '.drift[] | "| \(.format | ascii_upcase) | \(.recordType) | \(.was)"
+                        + " | \(.now // "missing") | \(.reason) |"' "$REPORT"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open or update the cycle's issue
+        # Drift files an issue as readily as a parse failure: a record type that quietly empties
+        # produces no errors at all, so the count diff is the only thing that would ever mention it.
+        if: >-
+          always() && steps.parse.outcome != 'skipped'
+          && (steps.parse.outputs.status != '0' || steps.verdict.outputs.drift != '0')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          STATUS: ${{ steps.parse.outputs.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          days_out=$(( ( $(date -u -d "$CYCLE" +%s) - $(date -u +%s) ) / 86400 ))
+
+          # Everything from the report reaches the body through a file, so nothing the FAA ships is
+          # ever read as shell.
+          {
+            echo "The end-to-end check for cycle **$CYCLE** (published \`$PUBLISHED\`, effective in"
+            echo "$days_out day(s)) found problems."
+            echo
+            echo "[View the run]($RUN_URL) - the \`nasr-report-$CYCLE\` artifact holds the full"
+            echo "report and the tool's log."
+            echo
+
+            if [ -f "$REPORT" ]; then
+              if [ "${STATUS:-1}" != "0" ]; then
+                echo "### Failures"
+                echo
+                jq -r '.failureReasons[]? | "- \(.)"' "$REPORT"
+                echo
+              fi
+
+              if [ "$(jq '.drift | length' "$REPORT")" -gt 0 ]; then
+                echo "### Record count drift against $PREVIOUS_CYCLE"
+                echo
+                echo "| Format | Record type | $PREVIOUS_CYCLE | $CYCLE | Reason |"
+                echo "|---|---|---:|---:|---|"
+                jq -r '.drift[] | "| \(.format | ascii_upcase) | \(.recordType) | \(.was)"
+                        + " | \(.now // "missing") | \(.reason) |"' "$REPORT"
+                echo
+              fi
+
+              echo "### Record counts"
+              echo
+              jq -r '
+                ["| Record type | TXT | CSV | TXT dropped/field | CSV dropped/field |",
+                 "|---|---:|---:|---:|---:|"],
+                ((.formats.txt.recordTypes // {}) as $t | (.formats.csv.recordTypes // {}) as $c
+                 | ([($t | keys), ($c | keys)] | add | unique)[]
+                 | . as $k
+                 | "| \($k) | \($t[$k].count // "-") | \($c[$k].count // "-")"
+                   + " | \($t[$k].droppedErrors // 0)/\($t[$k].fieldErrors // 0)"
+                   + " | \($c[$k].droppedErrors // 0)/\($c[$k].fieldErrors // 0) |")
+                | .[]? // .' "$REPORT"
+              echo
+              echo "Unrepresentable fields never fail the check on their own; the standing set of"
+              echo "them is FAA data that is genuinely wrong."
+              echo
+              echo "### Error samples"
+              echo
+              echo '```'
+              jq -r '[.errorSamples[]?][:50][] | "[\(.format) \(.recordType) \(.kind)] \(.message)"' "$REPORT"
+              echo '```'
+            else
+              echo "The run produced no report. The tail of its log:"
+              echo
+              echo '```'
+              tail -c 8000 "$PARSE_LOG" 2>/dev/null || echo "No log was produced either."
+              echo '```'
+            fi
+          } > issue-body.md
+
+          # The title is a function of the cycle alone, which is what keeps a re-check idempotent.
+          # The search omits the punctuation so GitHub's query parser cannot read it as a qualifier.
+          title="NASR cycle $CYCLE: end-to-end check failed"
+          number=$(TITLE="$title" gh issue list --state all --search "NASR cycle $CYCLE in:title" \
+            --json number,title --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')
+
+          if [ -n "$number" ]; then
+            gh issue reopen "$number" >/dev/null 2>&1 || true
+            gh issue comment "$number" --body-file issue-body.md
+          else
+            gh issue create --title "$title" --body-file issue-body.md
+          fi
+
+      - name: Annotate the outcome
+        if: always() && steps.parse.outcome != 'skipped'
+        env:
+          STATUS: ${{ steps.parse.outputs.status }}
+          DRIFT: ${{ steps.verdict.outputs.drift }}
+        run: |
+          set -euo pipefail
+
+          drift=${DRIFT:-0}
+
+          if [ "${STATUS:-1}" != "0" ]; then
+            echo "::error::Cycle $CYCLE failed its end-to-end check; an issue has been filed."
+          elif [ "$drift" != "0" ]; then
+            echo "::warning::Cycle $CYCLE parsed cleanly but $drift record type(s) drifted."
+          else
+            echo "Cycle $CYCLE parsed cleanly in both formats with no count drift."
+          fi
