@@ -19,7 +19,13 @@ extension FixedWidthAirportParser {
     let t = try remarkTransformer.applyTo(values)
 
     let airportID: String = try t[1]
-    guard var airport = airports[airportID] else { return }
+    guard var airport = airports[airportID] else {
+      throw ParserError.unknownParentRecord(
+        parentType: "Airport",
+        parentID: airportID,
+        childType: "remark"
+      )
+    }
     let dataElement: String = try t[3]
     let fieldID = String(dataElement.split(separator: Character(" "))[0])
     let remark: String = try t[4]

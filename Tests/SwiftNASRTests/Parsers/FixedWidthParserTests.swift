@@ -170,6 +170,49 @@ struct FixedWidthParserTests {
     }
   }
 
+  // MARK: orphaned child records
+
+  /// Child records naming a site number with no airport record are reported
+  /// rather than skipped. A dropped airport otherwise takes its runways,
+  /// remarks, arresting systems, and attendance schedules down with it without
+  /// anything appearing in the error handler.
+  @Test
+  func `reports airport child records whose site number has no airport`() async throws {
+    let parser = FixedWidthAirportParser()
+    let site = "00000.*A"
+
+    func slices(_ fields: [String]) -> [ByteSlice] {
+      fields.map { Array($0.utf8)[...] }
+    }
+
+    func isOrphan(_ error: any Swift.Error, _ childType: String) -> Bool {
+      guard case let ParserError.unknownParentRecord(parentType, parentID, child) = error else {
+        return false
+      }
+      return parentType == "Airport" && parentID == site && child == childType
+    }
+
+    await #expect {
+      try await parser.parseRunwayRecord(slices(["RWY", site]))
+    } throws: { isOrphan($0, "runway") }
+
+    await #expect {
+      try await parser.parseRemarkRecord(slices(["RMK", site, "AK", "A110-1", "a remark"]))
+    } throws: { isOrphan($0, "remark") }
+
+    await #expect {
+      try await parser.parseArrestingSystemRecord(
+        slices(["ARS", site, "AK", "18/36", "18", "BAK-12", ""])
+      )
+    } throws: { isOrphan($0, "arresting system") }
+
+    await #expect {
+      try await parser.parseAttendanceRecord(
+        slices(["ATT", site, "AK", "1", "ALL/ALL/ALL", ""])
+      )
+    } throws: { isOrphan($0, "attendance schedule") }
+  }
+
   // MARK: pavement classification
 
   @Test(arguments: ["61", "PCN/560/R/B/W", "PCN//R/B/X/T", "PCN/61/R/B/X/T/U", "61/R/B/X/T"])

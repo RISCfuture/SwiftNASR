@@ -15,7 +15,13 @@ extension FixedWidthAirportParser {
     let t = try attendanceTransformer.applyTo(values)
 
     let airportID: String = try t[1]
-    guard var airport = airports[airportID] else { return }
+    guard var airport = airports[airportID] else {
+      throw ParserError.unknownParentRecord(
+        parentType: "Airport",
+        parentID: airportID,
+        childType: "attendance schedule"
+      )
+    }
     let schedule: String = try t[4]
     airport.attendanceSchedule.append(parseAttendanceSchedule(schedule))
     airports[airportID] = airport

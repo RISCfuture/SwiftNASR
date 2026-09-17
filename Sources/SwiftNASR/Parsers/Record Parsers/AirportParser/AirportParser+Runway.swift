@@ -251,7 +251,13 @@ extension FixedWidthAirportParser {
 
   func parseRunwayRecord(_ values: [ArraySlice<UInt8>]) throws {
     guard let airportIndex = values[1].toTrimmedString() else { return }
-    guard let airport = airports[airportIndex] else { return }
+    guard let airport = airports[airportIndex] else {
+      throw ParserError.unknownParentRecord(
+        parentType: "Airport",
+        parentID: airportIndex,
+        childType: "runway"
+      )
+    }
 
     let t = try runwayTransformer.applyTo(values)
 

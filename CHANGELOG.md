@@ -19,6 +19,7 @@
 - A runway's pavement classification is parsed again, in both distribution formats. The field now holds six slash-separated components rather than five, so every TXT runway carrying pavement data was dropped — which in turn orphaned the remark and attendance records referencing those runways — while the CSV column was renamed `PCN` to `PCN_PCR_NUMBER`, and because an absent CSV column reads as `nil`, all 23,174 runways silently lost their pavement data without reporting anything
 - ATS airways designated `SP` (special route) are parsed. `ats_rf.txt` documents a fifth designation that the parser did not recognize, dropping 290 ATS1 records and orphaning their point descriptions
 - Navaid class codes `L` and `M` are recognized. They are absent from `nav_rf.txt` but appear in production data on Canadian NDBs and, combined as `LFM`, on fan markers
+- A runway, remark, arresting system, or attendance schedule naming a site number with no airport record is reported as `unknownParentRecord` through the parse error handler. The fixed-width airport parser skipped these silently, so a dropped `APT` record took its child records with it without anything saying so; the other eleven fixed-width parsers already reported the same condition
 
 ## [4.2.0] - 2026-09-14
 
