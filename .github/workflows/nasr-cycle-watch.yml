@@ -272,6 +272,29 @@ jobs:
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Download the archives
+        # curl rather than the tool's own downloader: URLSession's download task hands back an
+        # archive with no entries on Linux. The tool reuses anything already sitting in its working
+        # directory under the FAA's own filename for the cycle, so these are picked up as a cache.
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$RUNNER_TEMP/nasr"
+          csv_name=$(LC_ALL=C date -u -d "$CYCLE" +%d_%b_%Y)
+          base=https://nfdc.faa.gov/webContent/28DaySub
+
+          curl --fail --silent --show-error --location --retry 3 --retry-all-errors \
+            --output "$RUNNER_TEMP/nasr/28DaySubscription_Effective_$CYCLE.zip" \
+            "$base/28DaySubscription_Effective_$CYCLE.zip"
+          curl --fail --silent --show-error --location --retry 3 --retry-all-errors \
+            --output "$RUNNER_TEMP/nasr/${csv_name}_CSV.zip" \
+            "$base/extra/${csv_name}_CSV.zip"
+
+          ls -la "$RUNNER_TEMP/nasr"
+          for f in "$RUNNER_TEMP"/nasr/*.zip; do
+            echo "$f: $(unzip -l "$f" | tail -1)"
+          done
+
       - name: Parse the cycle
         id: parse
         env:
