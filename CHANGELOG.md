@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-09-16
+
 ### Added
 
 - `Runway.PavementClassification.ratingSystem` distinguishes a PCR value from a PCN one. The FAA added a leading rating-system code to the `PAVEMENT CLASSIFICATION` field (`PCN/103 /R/C/W/T`, `PCR/2110/F/B/X/T`) as part of the ICAO ACR/PCR transition. The two are separate scales — the 2026-10-01 cycle carries 1,101 PCR values against 1,007 PCN — so a consumer must know which it holds before comparing it against an aircraft's ACR or ACN
