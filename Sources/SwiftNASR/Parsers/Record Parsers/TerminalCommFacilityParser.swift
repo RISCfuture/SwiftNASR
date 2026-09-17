@@ -368,9 +368,9 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "TerminalCommFacility",
+        parentType: .terminalCommFacility,
         parentID: facilityID,
-        childType: "hours"
+        childType: .hours
       )
     }
 
@@ -390,9 +390,9 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "TerminalCommFacility",
+        parentType: .terminalCommFacility,
         parentID: facilityID,
-        childType: "frequencies"
+        childType: .frequencies
       )
     }
 
@@ -432,9 +432,9 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "TerminalCommFacility",
+        parentType: .terminalCommFacility,
         parentID: facilityID,
-        childType: "services"
+        childType: .service
       )
     }
 
@@ -451,9 +451,9 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "TerminalCommFacility",
+        parentType: .terminalCommFacility,
         parentID: facilityID,
-        childType: "radar"
+        childType: .radar
       )
     }
 
@@ -493,9 +493,9 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "TerminalCommFacility",
+        parentType: .terminalCommFacility,
         parentID: facilityID,
-        childType: "remark"
+        childType: .remark
       )
     }
 
@@ -530,9 +530,9 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "TerminalCommFacility",
+        parentType: .terminalCommFacility,
         parentID: facilityID,
-        childType: "satellite airport"
+        childType: .satelliteAirport
       )
     }
 
@@ -583,9 +583,9 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "TerminalCommFacility",
+        parentType: .terminalCommFacility,
         parentID: facilityID,
-        childType: "airspace"
+        childType: .airspace
       )
     }
 
@@ -614,9 +614,9 @@ actor FixedWidthTerminalCommFacilityParser: FixedWidthParser {
 
     guard facilities[facilityID] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "TerminalCommFacility",
+        parentType: .terminalCommFacility,
         parentID: facilityID,
-        childType: "ATIS"
+        childType: .ATIS
       )
     }
 

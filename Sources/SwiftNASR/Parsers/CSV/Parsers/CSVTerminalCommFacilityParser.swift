@@ -103,9 +103,9 @@ actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
       }
       guard self.facilities[facilityID] != nil else {
         throw ParserError.unknownParentRecord(
-          parentType: "TerminalCommFacility",
+          parentType: .terminalCommFacility,
           parentID: facilityID,
-          childType: "service"
+          childType: .service
         )
       }
 
@@ -131,9 +131,9 @@ actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
       }
       guard self.facilities[facilityID] != nil else {
         throw ParserError.unknownParentRecord(
-          parentType: "TerminalCommFacility",
+          parentType: .terminalCommFacility,
           parentID: facilityID,
-          childType: "ATIS"
+          childType: .ATIS
         )
       }
 
@@ -162,9 +162,9 @@ actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
       }
       guard self.facilities[facilityID] != nil else {
         throw ParserError.unknownParentRecord(
-          parentType: "TerminalCommFacility",
+          parentType: .terminalCommFacility,
           parentID: facilityID,
-          childType: "remark"
+          childType: .remark
         )
       }
 
@@ -207,9 +207,9 @@ actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
       let facilityID = try row["FACILITY_ID"]
       guard self.facilities[facilityID] != nil else {
         throw ParserError.unknownParentRecord(
-          parentType: "TerminalCommFacility",
+          parentType: .terminalCommFacility,
           parentID: facilityID,
-          childType: "radar"
+          childType: .radar
         )
       }
 
@@ -244,9 +244,9 @@ actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
       let siteNumber = try row["SITE_NO"]
       guard let facilityID = siteToFacility[siteNumber] else {
         throw ParserError.unknownParentRecord(
-          parentType: "TerminalCommFacility",
+          parentType: .terminalCommFacility,
           parentID: siteNumber,
-          childType: "military operations"
+          childType: .militaryOperations
         )
       }
 
@@ -272,9 +272,9 @@ actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
       let siteNumber = try row["SITE_NO"]
       guard let facilityID = siteToFacility[siteNumber] else {
         throw ParserError.unknownParentRecord(
-          parentType: "TerminalCommFacility",
+          parentType: .terminalCommFacility,
           parentID: siteNumber,
-          childType: "class airspace"
+          childType: .classAirspace
         )
       }
 

@@ -21,9 +21,9 @@ extension FixedWidthAirportParser {
     let airportID: String = try t[1]
     guard var airport = airports[airportID] else {
       throw ParserError.unknownParentRecord(
-        parentType: "Airport",
+        parentType: .airport,
         parentID: airportID,
-        childType: "remark"
+        childType: .remark
       )
     }
     let dataElement: String = try t[3]

@@ -53,7 +53,11 @@ enum ParserError: Swift.Error, CustomStringConvertible, Sendable {
   case truncatedRecord(recordType: String, expectedMinLength: Int, actualLength: Int)
   case missingRequiredField(field: String, recordType: String)
   case invalidLocation(latitude: Float?, longitude: Float?, context: String)
-  case unknownParentRecord(parentType: String, parentID: String, childType: String)
+  case unknownParentRecord(
+    parentType: ParentRecordType,
+    parentID: String,
+    childType: ChildRecordType
+  )
   case invalidSequenceNumber(_ value: String, recordType: String)
 
   var description: String {
@@ -79,7 +83,8 @@ enum ParserError: Swift.Error, CustomStringConvertible, Sendable {
         return String(localized: "Invalid location (lat: \(latStr), lon: \(lonStr)) in \(context)")
       case let .unknownParentRecord(parentType, parentID, childType):
         return String(
-          localized: "\(childType) record references unknown \(parentType) ‘\(parentID)’"
+          localized:
+            "\(childType.description) record references unknown \(parentType.description) ‘\(parentID)’"
         )
       case let .invalidSequenceNumber(value, recordType):
         return String(localized: "Invalid sequence number ‘\(value)’ in \(recordType) record")

@@ -185,32 +185,32 @@ struct FixedWidthParserTests {
       fields.map { Array($0.utf8)[...] }
     }
 
-    func isOrphan(_ error: any Swift.Error, _ childType: String) -> Bool {
+    func isOrphan(_ error: any Swift.Error, _ childType: ChildRecordType) -> Bool {
       guard case let ParserError.unknownParentRecord(parentType, parentID, child) = error else {
         return false
       }
-      return parentType == "Airport" && parentID == site && child == childType
+      return parentType == .airport && parentID == site && child == childType
     }
 
     await #expect {
       try await parser.parseRunwayRecord(slices(["RWY", site]))
-    } throws: { isOrphan($0, "runway") }
+    } throws: { isOrphan($0, .runway) }
 
     await #expect {
       try await parser.parseRemarkRecord(slices(["RMK", site, "AK", "A110-1", "a remark"]))
-    } throws: { isOrphan($0, "remark") }
+    } throws: { isOrphan($0, .remark) }
 
     await #expect {
       try await parser.parseArrestingSystemRecord(
         slices(["ARS", site, "AK", "18/36", "18", "BAK-12", ""])
       )
-    } throws: { isOrphan($0, "arresting system") }
+    } throws: { isOrphan($0, .arrestingSystem) }
 
     await #expect {
       try await parser.parseAttendanceRecord(
         slices(["ATT", site, "AK", "1", "ALL/ALL/ALL", ""])
       )
-    } throws: { isOrphan($0, "attendance schedule") }
+    } throws: { isOrphan($0, .attendanceSchedule) }
   }
 
   // MARK: runway surface

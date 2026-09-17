@@ -150,9 +150,9 @@ actor FixedWidthPreferredRouteParser: FixedWidthParser, DiagnosingParser {
 
     guard routes[routeKey] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "PreferredRoute",
+        parentType: .preferredRoute,
         parentID: routeKey,
-        childType: "segment"
+        childType: .segment
       )
     }
     routes[routeKey]?.segments.append(segment)

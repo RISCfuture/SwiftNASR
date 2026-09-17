@@ -233,9 +233,9 @@ actor FixedWidthATSAirwayParser: Parser, DiagnosingParser {
 
     guard var point = pointData[key]?[seqNum] else {
       throw ParserError.unknownParentRecord(
-        parentType: "ATSAirway",
+        parentType: .ATSAirway,
         parentID: "\(key) seq \(seqNum)",
-        childType: "point description"
+        childType: .pointDescription
       )
     }
 
@@ -316,9 +316,9 @@ actor FixedWidthATSAirwayParser: Parser, DiagnosingParser {
 
     guard var point = pointData[key]?[seqNum] else {
       throw ParserError.unknownParentRecord(
-        parentType: "ATSAirway",
+        parentType: .ATSAirway,
         parentID: "\(key) seq \(seqNum)",
-        childType: "changeover point"
+        childType: .changeoverPoint
       )
     }
 
@@ -354,9 +354,9 @@ actor FixedWidthATSAirwayParser: Parser, DiagnosingParser {
 
     guard var point = pointData[key]?[seqNum] else {
       throw ParserError.unknownParentRecord(
-        parentType: "ATSAirway",
+        parentType: .ATSAirway,
         parentID: "\(key) seq \(seqNum)",
-        childType: "point remark"
+        childType: .pointRemark
       )
     }
     guard !remark.isEmpty else { return }
@@ -375,9 +375,9 @@ actor FixedWidthATSAirwayParser: Parser, DiagnosingParser {
 
     guard var point = pointData[key]?[seqNum] else {
       throw ParserError.unknownParentRecord(
-        parentType: "ATSAirway",
+        parentType: .ATSAirway,
         parentID: "\(key) seq \(seqNum)",
-        childType: "changeover exception"
+        childType: .changeoverException
       )
     }
     guard !exception.isEmpty else { return }
@@ -390,9 +390,9 @@ actor FixedWidthATSAirwayParser: Parser, DiagnosingParser {
     let remark = String(line.substring(28, 200)).trimmingCharacters(in: .whitespaces)
     guard airways[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "ATSAirway",
+        parentType: .ATSAirway,
         parentID: key,
-        childType: "route remark"
+        childType: .routeRemark
       )
     }
     guard !remark.isEmpty else { return }

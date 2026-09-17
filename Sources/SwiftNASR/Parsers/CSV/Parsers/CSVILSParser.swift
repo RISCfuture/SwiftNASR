@@ -134,9 +134,9 @@ actor CSVILSParser: CSVParser, DiagnosingParser {
 
       guard self.ILSFacilities[key] != nil else {
         throw ParserError.unknownParentRecord(
-          parentType: "ILS",
+          parentType: .ILS,
           parentID: "\(siteNo)-\(runwayEndId)",
-          childType: "glide slope"
+          childType: .glideSlope
         )
       }
 
@@ -190,9 +190,9 @@ actor CSVILSParser: CSVParser, DiagnosingParser {
 
       guard self.ILSFacilities[key] != nil else {
         throw ParserError.unknownParentRecord(
-          parentType: "ILS",
+          parentType: .ILS,
           parentID: "\(siteNo)-\(runwayEndId)",
-          childType: "DME"
+          childType: .DME
         )
       }
 
@@ -247,9 +247,9 @@ actor CSVILSParser: CSVParser, DiagnosingParser {
 
       guard self.ILSFacilities[key] != nil else {
         throw ParserError.unknownParentRecord(
-          parentType: "ILS",
+          parentType: .ILS,
           parentID: "\(siteNo)-\(runwayEndId)",
-          childType: "marker beacon"
+          childType: .markerBeacon
         )
       }
 
@@ -323,9 +323,9 @@ actor CSVILSParser: CSVParser, DiagnosingParser {
 
       guard self.ILSFacilities[key] != nil else {
         throw ParserError.unknownParentRecord(
-          parentType: "ILS",
+          parentType: .ILS,
           parentID: "\(siteNo)-\(runwayEndId)",
-          childType: "remark"
+          childType: .remark
         )
       }
 

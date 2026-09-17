@@ -162,9 +162,9 @@ actor FixedWidthHoldParser: LayoutDataParser, DiagnosingParser {
         }
         guard holds[holdKey] != nil else {
           throw ParserError.unknownParentRecord(
-            parentType: "Hold",
+            parentType: .hold,
             parentID: holdKey,
-            childType: "charting info"
+            childType: .chartingInfo
           )
         }
         let chartInfo = String(line.substring(87, 22)).trimmingCharacters(in: .whitespaces)
@@ -183,9 +183,9 @@ actor FixedWidthHoldParser: LayoutDataParser, DiagnosingParser {
         }
         guard holds[holdKey] != nil else {
           throw ParserError.unknownParentRecord(
-            parentType: "Hold",
+            parentType: .hold,
             parentID: holdKey,
-            childType: "altitude/speed info"
+            childType: .altitudeSpeedInfo
           )
         }
         let otherAltSpeed = String(line.substring(87, 15)).trimmingCharacters(in: .whitespaces)
@@ -204,9 +204,9 @@ actor FixedWidthHoldParser: LayoutDataParser, DiagnosingParser {
         }
         guard holds[holdKey] != nil else {
           throw ParserError.unknownParentRecord(
-            parentType: "Hold",
+            parentType: .hold,
             parentID: holdKey,
-            childType: "remark"
+            childType: .remark
           )
         }
         let fieldLabel = String(line.substring(87, 100)).trimmingCharacters(in: .whitespaces)

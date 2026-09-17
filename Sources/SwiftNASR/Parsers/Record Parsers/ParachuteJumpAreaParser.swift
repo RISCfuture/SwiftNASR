@@ -168,9 +168,9 @@ actor FixedWidthParachuteJumpAreaParser: LayoutDataParser, DiagnosingParser {
     }
     guard areas[PJAId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "ParachuteJumpArea",
+        parentType: .parachuteJumpArea,
         parentID: PJAId,
-        childType: "times of use"
+        childType: .timesOfUse
       )
     }
     let timesOfUse = String(line.substring(10, 75)).trimmingCharacters(in: .whitespaces)
@@ -191,9 +191,9 @@ actor FixedWidthParachuteJumpAreaParser: LayoutDataParser, DiagnosingParser {
     }
     guard areas[PJAId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "ParachuteJumpArea",
+        parentType: .parachuteJumpArea,
         parentID: PJAId,
-        childType: "user group"
+        childType: .userGroup
       )
     }
     let name = String(line.substring(10, 75)).trimmingCharacters(in: .whitespaces)
@@ -228,9 +228,9 @@ actor FixedWidthParachuteJumpAreaParser: LayoutDataParser, DiagnosingParser {
     }
     guard areas[PJAId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "ParachuteJumpArea",
+        parentType: .parachuteJumpArea,
         parentID: PJAId,
-        childType: "contact facility"
+        childType: .contactFacility
       )
     }
 
@@ -276,9 +276,9 @@ actor FixedWidthParachuteJumpAreaParser: LayoutDataParser, DiagnosingParser {
     }
     guard areas[PJAId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "ParachuteJumpArea",
+        parentType: .parachuteJumpArea,
         parentID: PJAId,
-        childType: "remark"
+        childType: .remark
       )
     }
     let remarks = String(line.substring(10, 300)).trimmingCharacters(in: .whitespaces)

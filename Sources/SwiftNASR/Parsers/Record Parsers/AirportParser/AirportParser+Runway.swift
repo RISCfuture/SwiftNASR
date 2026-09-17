@@ -253,9 +253,9 @@ extension FixedWidthAirportParser {
     guard let airportIndex = values[1].toTrimmedString() else { return }
     guard let airport = airports[airportIndex] else {
       throw ParserError.unknownParentRecord(
-        parentType: "Airport",
+        parentType: .airport,
         parentID: airportIndex,
-        childType: "runway"
+        childType: .runway
       )
     }
 

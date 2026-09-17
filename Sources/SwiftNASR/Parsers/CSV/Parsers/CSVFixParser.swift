@@ -116,9 +116,9 @@ actor CSVFixParser: CSVParser {
 
       guard var fix = self.fixes[key] else {
         throw ParserError.unknownParentRecord(
-          parentType: "Fix",
+          parentType: .fix,
           parentID: navFixID,
-          childType: "navaid makeup"
+          childType: .navaidMakeup
         )
       }
 
@@ -154,9 +154,9 @@ actor CSVFixParser: CSVParser {
 
       guard var fix = self.fixes[key] else {
         throw ParserError.unknownParentRecord(
-          parentType: "Fix",
+          parentType: .fix,
           parentID: chartFixID,
-          childType: "chart type"
+          childType: .chartType
         )
       }
 

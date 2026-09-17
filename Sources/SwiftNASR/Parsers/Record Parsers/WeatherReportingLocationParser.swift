@@ -124,9 +124,9 @@ actor FixedWidthWeatherReportingLocationParser: LayoutDataParser, DiagnosingPars
   private func parseContinuationRecord(_ data: Data) throws {
     guard let currentId = currentLocationId, locations[currentId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "WeatherReportingLocation",
+        parentType: .weatherReportingLocation,
         parentID: currentLocationId ?? "unknown",
-        childType: "continuation"
+        childType: .continuation
       )
     }
 

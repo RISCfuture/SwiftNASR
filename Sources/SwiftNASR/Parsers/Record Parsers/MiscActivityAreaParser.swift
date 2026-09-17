@@ -184,9 +184,9 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser, DiagnosingParser {
     }
     guard areas[MAAId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MiscActivityArea",
+        parentType: .miscActivityArea,
         parentID: MAAId,
-        childType: "polygon coordinate"
+        childType: .polygonCoordinate
       )
     }
 
@@ -222,9 +222,9 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser, DiagnosingParser {
     }
     guard areas[MAAId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MiscActivityArea",
+        parentType: .miscActivityArea,
         parentID: MAAId,
-        childType: "times of use"
+        childType: .timesOfUse
       )
     }
     let text = String(line.substring(10, 75)).trimmingCharacters(in: .whitespaces)
@@ -247,9 +247,9 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser, DiagnosingParser {
     }
     guard areas[MAAId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MiscActivityArea",
+        parentType: .miscActivityArea,
         parentID: MAAId,
-        childType: "user group"
+        childType: .userGroup
       )
     }
     let text = String(line.substring(10, 75)).trimmingCharacters(in: .whitespaces)
@@ -277,9 +277,9 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser, DiagnosingParser {
     }
     guard areas[MAAId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MiscActivityArea",
+        parentType: .miscActivityArea,
         parentID: MAAId,
-        childType: "contact facility"
+        childType: .contactFacility
       )
     }
 
@@ -322,9 +322,9 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser, DiagnosingParser {
     }
     guard areas[MAAId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MiscActivityArea",
+        parentType: .miscActivityArea,
         parentID: MAAId,
-        childType: "check for NOTAMs"
+        childType: .NOTAMCheck
       )
     }
     let text = String(line.substring(10, 4)).trimmingCharacters(in: .whitespaces)
@@ -347,9 +347,9 @@ actor FixedWidthMiscActivityAreaParser: LayoutDataParser, DiagnosingParser {
     }
     guard areas[MAAId] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MiscActivityArea",
+        parentType: .miscActivityArea,
         parentID: MAAId,
-        childType: "remark"
+        childType: .remark
       )
     }
     let text = String(line.substring(10, 300)).trimmingCharacters(in: .whitespaces)

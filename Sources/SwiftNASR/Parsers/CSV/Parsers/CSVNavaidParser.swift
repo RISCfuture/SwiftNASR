@@ -220,9 +220,9 @@ actor CSVNavaidParser: CSVParser, DiagnosingParser {
       guard let key = matchingKey, var navaid = self.navaids[key] else {
         recordDroppedRow(
           ParserError.unknownParentRecord(
-            parentType: "navaid",
+            parentType: .navaid,
             parentID: navID,
-            childType: "remark"
+            childType: .remark
           ),
           id: navID
         )
@@ -256,9 +256,9 @@ actor CSVNavaidParser: CSVParser, DiagnosingParser {
       guard let key = matchingKey else {
         recordDroppedRow(
           ParserError.unknownParentRecord(
-            parentType: "navaid",
+            parentType: .navaid,
             parentID: navID,
-            childType: "VOR checkpoint"
+            childType: .VORCheckpoint
           ),
           id: navID
         )

@@ -155,9 +155,9 @@ actor FixedWidthWeatherStationParser: FixedWidthParser {
     let key = try WeatherStationKey(values: values)
     guard var station = stations[key] else {
       throw ParserError.unknownParentRecord(
-        parentType: "WeatherStation",
+        parentType: .weatherStation,
         parentID: key.stationId,
-        childType: "remark"
+        childType: .remark
       )
     }
     try process(&station)

@@ -214,9 +214,9 @@ actor FixedWidthFixParser: FixedWidthParser {
     let key = try FixKey(values: values)
     guard var fix = fixes[key] else {
       throw ParserError.unknownParentRecord(
-        parentType: "Fix",
+        parentType: .fix,
         parentID: key.id,
-        childType: "continuation record"
+        childType: .continuation
       )
     }
     try process(&fix)

@@ -131,9 +131,9 @@ actor FixedWidthMilitaryTrainingRouteParser: LayoutDataParser, DiagnosingParser 
     }
     guard routes[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MilitaryTrainingRoute",
+        parentType: .militaryTrainingRoute,
         parentID: key,
-        childType: "operating procedures"
+        childType: .operatingProcedures
       )
     }
     let text = String(line.substring(12, 100)).trimmingCharacters(in: .whitespaces)
@@ -153,9 +153,9 @@ actor FixedWidthMilitaryTrainingRouteParser: LayoutDataParser, DiagnosingParser 
     }
     guard routes[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MilitaryTrainingRoute",
+        parentType: .militaryTrainingRoute,
         parentID: key,
-        childType: "route width"
+        childType: .routeWidth
       )
     }
     let text = String(line.substring(12, 100)).trimmingCharacters(in: .whitespaces)
@@ -175,9 +175,9 @@ actor FixedWidthMilitaryTrainingRouteParser: LayoutDataParser, DiagnosingParser 
     }
     guard routes[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MilitaryTrainingRoute",
+        parentType: .militaryTrainingRoute,
         parentID: key,
-        childType: "terrain following"
+        childType: .terrainFollowing
       )
     }
     let text = String(line.substring(12, 100)).trimmingCharacters(in: .whitespaces)
@@ -206,9 +206,9 @@ actor FixedWidthMilitaryTrainingRouteParser: LayoutDataParser, DiagnosingParser 
     }
     guard routes[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MilitaryTrainingRoute",
+        parentType: .militaryTrainingRoute,
         parentID: key,
-        childType: "route point"
+        childType: .routePoint
       )
     }
 
@@ -278,9 +278,9 @@ actor FixedWidthMilitaryTrainingRouteParser: LayoutDataParser, DiagnosingParser 
     }
     guard routes[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "MilitaryTrainingRoute",
+        parentType: .militaryTrainingRoute,
         parentID: key,
-        childType: "agency"
+        childType: .agency
       )
     }
 

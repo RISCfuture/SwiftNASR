@@ -298,9 +298,9 @@ actor FixedWidthILSParser: FixedWidthParser {
 
     guard ILSFacilities[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "ILS",
+        parentType: .ILS,
         parentID: "\(airportSiteNumber)/\(runwayEndId)/\(systemType)",
-        childType: "localizer"
+        childType: .localizer
       )
     }
 
@@ -353,9 +353,9 @@ actor FixedWidthILSParser: FixedWidthParser {
 
     guard ILSFacilities[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "ILS",
+        parentType: .ILS,
         parentID: "\(airportSiteNumber)/\(runwayEndId)/\(systemType)",
-        childType: "glide slope"
+        childType: .glideSlope
       )
     }
 
@@ -405,9 +405,9 @@ actor FixedWidthILSParser: FixedWidthParser {
 
     guard ILSFacilities[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "ILS",
+        parentType: .ILS,
         parentID: "\(airportSiteNumber)/\(runwayEndId)/\(systemType)",
-        childType: "DME"
+        childType: .DME
       )
     }
 
@@ -454,9 +454,9 @@ actor FixedWidthILSParser: FixedWidthParser {
 
     guard ILSFacilities[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "ILS",
+        parentType: .ILS,
         parentID: "\(airportSiteNumber)/\(runwayEndId)/\(systemType)",
-        childType: "marker beacon"
+        childType: .markerBeacon
       )
     }
 
@@ -513,9 +513,9 @@ actor FixedWidthILSParser: FixedWidthParser {
 
     guard ILSFacilities[key] != nil else {
       throw ParserError.unknownParentRecord(
-        parentType: "ILS",
+        parentType: .ILS,
         parentID: "\(airportSiteNumber)/\(runwayEndId)/\(systemType)",
-        childType: "remark"
+        childType: .remark
       )
     }
 
