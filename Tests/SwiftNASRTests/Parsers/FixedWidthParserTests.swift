@@ -213,6 +213,50 @@ struct FixedWidthParserTests {
     } throws: { isOrphan($0, "attendance schedule") }
   }
 
+  // MARK: runway surface
+
+  @Test
+  func `splits a runway surface into materials and a condition`() async throws {
+    let parser = FixedWidthAirportParser()
+
+    let (materials, condition) = await parser.parseRunwaySurface(
+      "ASPH-CONC-G",
+      runwayID: "18/36",
+      airportID: "00000.*A"
+    )
+
+    #expect(materials == [.asphalt, .concrete])
+    #expect(condition == .good)
+    #expect(await parser.takeDiagnostics().isEmpty)
+  }
+
+  /// An unknown component costs that component, not the runway. The 2026-09-03
+  /// cycle carries one heliport whose surface reads "OR-F", which previously
+  /// dropped the whole runway record.
+  @Test
+  func `keeps a runway whose surface names an unknown material`() async throws {
+    let parser = FixedWidthAirportParser()
+
+    let (materials, condition) = await parser.parseRunwaySurface(
+      "OR-F",
+      runwayID: "H1",
+      airportID: "19559.5*H"
+    )
+
+    #expect(materials.isEmpty)
+    #expect(condition == .fair)
+
+    let pending = await parser.takeDiagnostics()
+    #expect(pending.count == 1)
+    guard case let .fieldError(_, id, field, value, _) = pending.first else {
+      Issue.record("expected .fieldError")
+      return
+    }
+    #expect(id == "19559.5*H")
+    #expect(field == "runway[H1].materials")
+    #expect(value == "OR")
+  }
+
   // MARK: pavement classification
 
   @Test(arguments: ["61", "PCN/560/R/B/W", "PCN//R/B/X/T", "PCN/61/R/B/X/T/U", "61/R/B/X/T"])

@@ -260,14 +260,15 @@ extension FixedWidthAirportParser {
     }
 
     let t = try runwayTransformer.applyTo(values)
+    let runwayID: String = try t[3]
 
     let (materials, condition): (Set<Runway.Material>, Runway.Condition?)
-    if let condStr: String = try t[optional: 6] {
-      do {
-        (materials, condition) = try parseRunwaySurface(condStr)
-      } catch {
-        throw FixedWidthParserError.invalidValue(condStr, at: 6)
-      }
+    if let surfaceStr: String = try t[optional: 6] {
+      (materials, condition) = parseRunwaySurface(
+        surfaceStr,
+        runwayID: runwayID,
+        airportID: airportIndex
+      )
     } else {
       (materials, condition) = (.init(), nil)
     }
@@ -277,7 +278,13 @@ extension FixedWidthAirportParser {
       do {
         pavementClassification = try Self.parsePavementClassification(classStr)
       } catch {
-        throw FixedWidthParserError.invalidValue(classStr, at: 8)
+        recordFieldError(
+          field: "runway[\(runwayID)].pavementClassification",
+          value: classStr,
+          id: airportIndex,
+          thrown: error
+        )
+        pavementClassification = nil
       }
     } else {
       pavementClassification = nil
@@ -323,18 +330,29 @@ extension FixedWidthAirportParser {
     airports[airportIndex]!.runways.append(runway)
   }
 
-  private func parseRunwaySurface(_ value: String) throws -> (
-    Set<Runway.Material>, Runway.Condition?
-  ) {
+  /// Splits the combined surface type and condition field. A component that is
+  /// neither a known material nor a known condition is reported and skipped,
+  /// leaving the rest of the runway intact.
+  func parseRunwaySurface(
+    _ value: String,
+    runwayID: String,
+    airportID: String
+  ) -> (Set<Runway.Material>, Runway.Condition?) {
     var materials = Set<Runway.Material>()
     var condition: Runway.Condition?
 
     for identifier in value.split(separator: CharacterSet(charactersIn: "-/")) {
       if let material = Runway.Material.for(String(identifier)) {
         materials.insert(material)
+      } else if let parsedCondition = Runway.Condition.for(String(identifier)) {
+        condition = parsedCondition
       } else {
-        condition = Runway.Condition.for(String(identifier))
-        guard condition != nil else { throw Error.invalidRunwaySurface(value) }  // something we don't know
+        recordFieldError(
+          field: "runway[\(runwayID)].materials",
+          value: String(identifier),
+          id: airportID,
+          underlying: ParserError.unknownRecordEnumValue(String(identifier))
+        )
       }
     }
 

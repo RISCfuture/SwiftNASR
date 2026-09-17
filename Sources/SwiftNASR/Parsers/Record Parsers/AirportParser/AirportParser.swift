@@ -90,10 +90,9 @@ actor FixedWidthAirportParser: FixedWidthParser, DiagnosingParser {
       emptyPlaceholders: ["BLANK"]
     ),  //  55 ARFF certification type and date
     .fixedWidthArray(
-      convert: { try Airport.FederalAgreement.require($0) },
       nullable: .compact,
       emptyPlaceholders: ["NONE", "BLANK"]
-    ),  //  56 federal agreements code
+    ),  //  56 federal agreements code (raw strings; decoded inline with diagnose)
     .recordEnum(Airport.AirspaceAnalysisDetermination.self, nullable: .blank),  //  57 airspace analysis determination
     .boolean(nullable: .blank),  //  58 airport of entry
     .boolean(nullable: .blank),  //  59 customs airport
@@ -239,6 +238,11 @@ actor FixedWidthAirportParser: FixedWidthParser, DiagnosingParser {
         )
       }
 
+    let rawAgreements: [String] = try t[56]
+    let agreements = rawAgreements.compactMap {
+      diagnose(Airport.FederalAgreement.self, $0, field: "agreements", id: airportID)
+    }
+
     let rawFuelIDs: [String] = try t[66]
     let fuelsAvailable = rawFuelIDs.compactMap {
       diagnose(Airport.FuelType.self, $0, field: "fuelsAvailable", id: airportID)
@@ -285,7 +289,7 @@ actor FixedWidthAirportParser: FixedWidthParser, DiagnosingParser {
       activationDateComponents: try t[optional: 53],
       status: try t[54],
       arffCapability: ARFFCapability,
-      agreements: try t[56],
+      agreements: agreements,
       airspaceAnalysisDetermination: try t[optional: 57],
       customsEntryAirport: try t[optional: 58],
       customsLandingRightsAirport: try t[optional: 59],
