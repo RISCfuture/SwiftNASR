@@ -43,6 +43,8 @@
   and the manifest's tools version to 6.4. `ProgressManager` exists nowhere below that: it carries no
   lower availability annotation on Apple platforms, it is `@available(FoundationPreview 6.4)` on
   Linux, and `MacOSVersion.v27` is itself `@available(_PackageDescription 6.4)`
+- The StreamingCSV requirement rises to 3.0.0, which declares the same `swift-tools-version: 6.4`.
+  A consumer can then resolve SwiftNASR alongside StreamingCSV 3.x
 - **BREAKING:** `CSVParser` no longer requires `progress` or `bytesRead`. Both were vestigial — the
   progress object was written but never read, and `bytesRead` was only ever reset to zero — and a CSV
   parse now reports its single unit of progress from `NASR.parse(_:progress:errorHandler:)` itself
