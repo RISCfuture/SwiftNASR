@@ -219,13 +219,14 @@ struct FixedWidthParserTests {
   func `splits a runway surface into materials and a condition`() async throws {
     let parser = FixedWidthAirportParser()
 
-    let (materials, condition) = await parser.parseRunwaySurface(
+    let (materials, hasUnrecognizedMaterials, condition) = await parser.parseRunwaySurface(
       "ASPH-CONC-G",
       runwayID: "18/36",
       airportID: "00000.*A"
     )
 
     #expect(materials == [.asphalt, .concrete])
+    #expect(!hasUnrecognizedMaterials)
     #expect(condition == .good)
     #expect(await parser.takeDiagnostics().isEmpty)
   }
@@ -237,13 +238,14 @@ struct FixedWidthParserTests {
   func `keeps a runway whose surface names an unknown material`() async throws {
     let parser = FixedWidthAirportParser()
 
-    let (materials, condition) = await parser.parseRunwaySurface(
+    let (materials, hasUnrecognizedMaterials, condition) = await parser.parseRunwaySurface(
       "OR-F",
       runwayID: "H1",
       airportID: "19559.5*H"
     )
 
     #expect(materials.isEmpty)
+    #expect(hasUnrecognizedMaterials)
     #expect(condition == .fair)
 
     let pending = await parser.takeDiagnostics()

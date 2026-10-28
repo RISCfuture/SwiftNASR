@@ -620,7 +620,7 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
     // Parse surface type and condition
     let surfaceCode: String = (try? t[optional: "SURFACE_TYPE_CODE"]) ?? ""
     let conditionCode: String? = try t[optional: "COND"]
-    let (materials, condition) = parseRunwaySurface(
+    let (materials, hasUnrecognizedMaterials, condition) = parseRunwaySurface(
       surfaceCode,
       conditionCode: conditionCode,
       runwayId: runwayId,
@@ -724,6 +724,7 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
       lengthSource: lengthSource,
       lengthSourceDateComponents: lengthSourceDateComponents,
       materials: materials,
+      hasUnrecognizedMaterials: hasUnrecognizedMaterials,
       condition: condition,
       treatment: treatment,
       pavementClassification: pavementClassification,
@@ -744,8 +745,11 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
     conditionCode: String?,
     runwayId: String,
     airportId: String
-  ) -> (Set<Runway.Material>, Runway.Condition?) {
+  ) -> (
+    materials: Set<Runway.Material>, hasUnrecognizedMaterials: Bool, condition: Runway.Condition?
+  ) {
     var materials = Set<Runway.Material>()
+    var hasUnrecognizedMaterials = false
 
     // A surface code is a primary material plus an optional secondary one. The
     // separator is normally "-" (e.g. "ASPH-CONC") but a few records use "/"
@@ -758,6 +762,8 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
         id: airportId
       ) {
         materials.insert(material)
+      } else {
+        hasUnrecognizedMaterials = true
       }
     }
 
@@ -774,7 +780,7 @@ actor CSVAirportParser: CSVParser, DiagnosingParser {
         nil
       }
 
-    return (materials, condition)
+    return (materials, hasUnrecognizedMaterials, condition)
   }
 
   private func parsePavementClassification(

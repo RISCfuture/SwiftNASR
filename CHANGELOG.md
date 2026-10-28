@@ -8,6 +8,9 @@
   `totalByteCount` and `completedByteCount`, so a caller can display byte figures alongside the
   fraction. Read them from anywhere in your own progress tree with
   `summary(of: \.completedByteCount)`
+- `Runway.hasUnrecognizedMaterials` reports whether the surface lists a material that SwiftNASR
+  does not recognize and so omits from `materials`; `Runway.Material.isPaved` classifies a single
+  material
 
 ### Changed
 
@@ -46,6 +49,11 @@
 - A record that fails to parse no longer stalls the fixed-width parse progress. Every line now counts
   against the total, whether or not it parsed, so an observer waiting for completion is not left
   hanging by a diagnosed record
+- **BREAKING:** `Runway.isPaved` is a `Bool?`, which is `nil` when the runway's surface is unknown.
+  It returned `true` for any runway with no unpaved materials, including one whose surface was
+  blank (seven runways in the 2026-10-01 cycle) or held only an unrecognized code, such as OR83's
+  heliport, whose surface reads `OR`. A runway listing an unrecognized material alongside known
+  paved ones is likewise `nil`; one listing any known unpaved material is still `false`
 
 ### Fixed
 

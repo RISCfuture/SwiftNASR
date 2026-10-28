@@ -36,6 +36,10 @@ public struct Runway: Record {
   /// different materials.
   public let materials: Set<Material>
 
+  /// `true` if the source lists a surface material that SwiftNASR does not
+  /// recognize. ``materials`` omits such a material.
+  public let hasUnrecognizedMaterials: Bool
+
   /// The condition of the runway surface.
   public let condition: Condition?
 
@@ -76,18 +80,11 @@ public struct Runway: Record {
   public internal(set) var remarks = Remarks<Field>()
 
   /// `true` if the runway consists entirely of paved materials (no dirt,
-  /// turf, sand, water, etc.).
-  public var isPaved: Bool {
-    for material in materials {
-      switch material {
-        case .asphalt, .brick, .concrete, .deck, .gravel, .metal, .partiallyConcreteOrAsphalt,
-          .piercedSteel, .roof:
-          continue
-        default:
-          return false
-      }
-    }
-    return true
+  /// turf, sand, water, etc.), `false` if any of its materials is unpaved, or
+  /// `nil` if its surface is unknown or includes an unrecognized material.
+  public var isPaved: Bool? {
+    if materials.contains(where: { !$0.isPaved }) { return false }
+    return materials.isEmpty || hasUnrecognizedMaterials ? nil : true
   }
 
   /**
@@ -115,6 +112,7 @@ public struct Runway: Record {
     lengthSource: String?,
     lengthSourceDateComponents: DateComponents?,
     materials: Set<Material>,
+    hasUnrecognizedMaterials: Bool,
     condition: Condition?,
     treatment: Treatment?,
     pavementClassification: PavementClassification?,
@@ -132,6 +130,7 @@ public struct Runway: Record {
     self.lengthSource = lengthSource
     self.lengthSourceDateComponents = lengthSourceDateComponents
     self.materials = materials
+    self.hasUnrecognizedMaterials = hasUnrecognizedMaterials
     self.condition = condition
     self.treatment = treatment
     self.pavementClassification = pavementClassification
@@ -316,6 +315,17 @@ public struct Runway: Record {
       "ROOFTOP": .roof, "ALUM": .metal, "GRASS": .turf, "SOD": .turf,
       "T": .treated
     ]
+
+    /// `true` if this is a paved material.
+    public var isPaved: Bool {
+      switch self {
+        case .asphalt, .brick, .concrete, .deck, .gravel, .metal, .partiallyConcreteOrAsphalt,
+          .piercedSteel, .roof:
+          true
+        default:
+          false
+      }
+    }
   }
 
   /// The condition of the runway surface.
@@ -428,8 +438,8 @@ public struct Runway: Record {
   }
 
   private enum CodingKeys: String, CodingKey {
-    case identification, lengthFt, widthFt, materials, condition, treatment, pavementClassification,
-      edgeLightsIntensity, baseEnd, reciprocalEnd, lengthSource,
+    case identification, lengthFt, widthFt, materials, hasUnrecognizedMaterials, condition,
+      treatment, pavementClassification, edgeLightsIntensity, baseEnd, reciprocalEnd, lengthSource,
       singleWheelWeightBearingCapacityKlb, dualWheelWeightBearingCapacityKlb,
       tandemDualWheelWeightBearingCapacityKlb, doubleTandemDualWheelWeightBearingCapacityKlb
 

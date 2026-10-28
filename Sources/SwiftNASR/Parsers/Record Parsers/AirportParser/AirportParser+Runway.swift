@@ -262,16 +262,10 @@ extension FixedWidthAirportParser {
     let t = try runwayTransformer.applyTo(values)
     let runwayID: String = try t[3]
 
-    let (materials, condition): (Set<Runway.Material>, Runway.Condition?)
-    if let surfaceStr: String = try t[optional: 6] {
-      (materials, condition) = parseRunwaySurface(
-        surfaceStr,
-        runwayID: runwayID,
-        airportID: airportIndex
-      )
-    } else {
-      (materials, condition) = (.init(), nil)
-    }
+    let surface =
+      try (t[optional: 6] as String?).map {
+        parseRunwaySurface($0, runwayID: runwayID, airportID: airportIndex)
+      } ?? (materials: [], hasUnrecognizedMaterials: false, condition: nil)
 
     let pavementClassification: Runway.PavementClassification?
     if let classStr: String = try t[optional: 8] {
@@ -314,8 +308,9 @@ extension FixedWidthAirportParser {
       widthFt: try t[optional: 5],
       lengthSource: try t[optional: 78],
       lengthSourceDateComponents: try t[optional: 79],
-      materials: materials,
-      condition: condition,
+      materials: surface.materials,
+      hasUnrecognizedMaterials: surface.hasUnrecognizedMaterials,
+      condition: surface.condition,
       treatment: try t[optional: 7],
       pavementClassification: pavementClassification,
       edgeLightsIntensity: try t[optional: 9],
@@ -332,13 +327,16 @@ extension FixedWidthAirportParser {
 
   /// Splits the combined surface type and condition field. A component that is
   /// neither a known material nor a known condition is reported and skipped,
-  /// leaving the rest of the runway intact.
+  /// leaving the rest of the runway intact, and sets `hasUnrecognizedMaterials`.
   func parseRunwaySurface(
     _ value: String,
     runwayID: String,
     airportID: String
-  ) -> (Set<Runway.Material>, Runway.Condition?) {
+  ) -> (
+    materials: Set<Runway.Material>, hasUnrecognizedMaterials: Bool, condition: Runway.Condition?
+  ) {
     var materials = Set<Runway.Material>()
+    var hasUnrecognizedMaterials = false
     var condition: Runway.Condition?
 
     for identifier in value.split(separator: CharacterSet(charactersIn: "-/")) {
@@ -347,6 +345,7 @@ extension FixedWidthAirportParser {
       } else if let parsedCondition = Runway.Condition.for(String(identifier)) {
         condition = parsedCondition
       } else {
+        hasUnrecognizedMaterials = true
         recordFieldError(
           field: "runway[\(runwayID)].materials",
           value: String(identifier),
@@ -356,6 +355,6 @@ extension FixedWidthAirportParser {
       }
     }
 
-    return (materials, condition)
+    return (materials, hasUnrecognizedMaterials, condition)
   }
 }

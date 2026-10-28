@@ -22,6 +22,7 @@
 ### Construction
 
 - ``materials``
+- ``hasUnrecognizedMaterials``
 - ``condition-swift.property``
 - ``treatment-swift.property``
 - ``pavementClassification-swift.property``

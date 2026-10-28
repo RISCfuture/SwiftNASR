@@ -89,7 +89,7 @@ and working with the data:
 ```swift
 let validAirports = distribution.data.airports!.filter { airport in
     return airport.publicUse &&
-        airport.runways.filter { $0.isPaved && $0.length > 3000 }.count > 0
+        airport.runways.contains { $0.isPaved == true && ($0.lengthFt ?? 0) > 3000 }
 }
 let data = try encoder.encode(validAirports)
 ```
