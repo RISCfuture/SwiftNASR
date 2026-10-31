@@ -2,6 +2,45 @@
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-10-31
+
+### Added
+
+- `CSVRowError` locates a dropped CSV row. It carries the source `filename`, the `rowNumber`
+  (counting the header as row 1), and a `reason`: `.truncated(fieldCount:expectedFieldCount:)`, or
+  `.invalid(_:)` wrapping the parse failure. It arrives as the `underlying` error of a
+  `RecordParseError.recordError`, whose `recordID` now carries the row's identifying columns where
+  the file has them, such as `BRAVO/K2` for fix BRAVO in ICAO region K2
+
+### Changed
+
+- **BREAKING:** `ILS.SystemType.LAAS` is removed. No FAA distribution uses it: neither the ILS CSV
+  layout nor the fixed-width layout lists it, and the CSV code `LA` that mapped to it denotes an LDA
+- Fixes, FSSes, coded departure routes, and departure/arrival procedures recover from a CSV row that
+  fails to parse, as every other CSV record family already did. Their parsers used to abort at the
+  first bad row, which discarded the rest of that file and every supplemental file after it (such as
+  `FIX_NAV.csv` and `FSS_RMK.csv`), and returning `.proceed` from the error handler could not resume
+  them. They now report the row and continue
+- A CSV row with fewer fields than its header is reported as a dropped row instead of being skipped
+  silently
+- `NASR.parse(_:progress:errorHandler:)` throws `CancellationError` when its task is cancelled. It
+  used to report the cancellation to the error handler as a record error, and carry on parsing if
+  the handler returned `.proceed`
+- CSV rows dropped before a fatal file or header error, such as a missing supplemental file or a
+  missing required column, are reported ahead of that error rather than discarded with it
+- Field errors recorded while parsing a CSV row that is then dropped are discarded with the row,
+  matching the fixed-width parsers
+
+### Fixed
+
+- CSV ILS system type codes now follow the ILS CSV data layout. Five of the nine codes were read as
+  the wrong system type: `LD` (ILS/DME, 796 facilities in the 2026-10-29 cycle, including all three
+  at KSFO) as LDA, `LE` (LOC/DME) as ILS/DME, `DD` (LDA/DME) as LOC/DME, `SD` (SDF/DME) as SDF, and
+  `LA` (LDA) as LAAS. `ILS.id` includes the system type, so the IDs of these facilities change
+- CSV location identifiers read four of the same codes wrongly for
+  `LocationIdentifier.ILSFacilityType`: `LE` (LOC/DME) as LDA/DME, `DD` (LDA/DME) as LOC/DME, `SF`
+  (SDF) as SDF/DME, and `SD` (SDF/DME) as SDF
+
 ## [5.0.0] - 2026-10-28
 
 ### Added
