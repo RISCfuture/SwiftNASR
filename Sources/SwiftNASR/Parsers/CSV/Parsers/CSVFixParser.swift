@@ -1,8 +1,12 @@
 import Foundation
 
 /// CSV Fix Parser for parsing FIX_BASE.csv, FIX_NAV.csv, and FIX_CHRT.csv
-actor CSVFixParser: CSVParser {
+actor CSVFixParser: DiagnosingCSVParser {
+  static let type = RecordType.reportingPoints
+  static let identityColumns = ["FIX_ID", "ICAO_REGION_CODE"]
+
   var distribution: (any Distribution)?
+  var pendingDiagnostics = [RecordParseError]()
   let CSVFiles = ["FIX_BASE.csv", "FIX_NAV.csv", "FIX_CHRT.csv"]
 
   var fixes = [FixKey: Fix]()

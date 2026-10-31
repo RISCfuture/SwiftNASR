@@ -4,8 +4,9 @@ import StreamingCSV
 /// CSV Weather Reporting Location Parser using declarative transformers.
 ///
 /// Parses WXL_BASE.csv and WXL_SVC.csv files to create WeatherReportingLocation records.
-actor CSVWeatherReportingLocationParser: CSVParser, DiagnosingParser {
+actor CSVWeatherReportingLocationParser: DiagnosingCSVParser {
   static let type = RecordType.weatherReportingLocations
+  static let identityColumns = ["WEA_ID"]
   var distribution: (any Distribution)?
   let CSVFiles = ["WXL_BASE.csv", "WXL_SVC.csv"]
 

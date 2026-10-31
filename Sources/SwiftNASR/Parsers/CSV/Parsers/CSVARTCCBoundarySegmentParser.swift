@@ -5,8 +5,9 @@ import StreamingCSV
 ///
 /// Parses `ARB_SEG.csv` to create `ARTCCBoundarySegment` records containing
 /// boundary point locations and descriptions for Air Route Traffic Control Centers.
-actor CSVARTCCBoundarySegmentParser: CSVParser, DiagnosingParser {
+actor CSVARTCCBoundarySegmentParser: DiagnosingCSVParser {
   static let type = RecordType.ARTCCBoundarySegments
+  static let identityColumns = ["REC_ID", "POINT_SEQ"]
   var distribution: (any Distribution)?
   let CSVFiles = ["ARB_SEG.csv"]
 

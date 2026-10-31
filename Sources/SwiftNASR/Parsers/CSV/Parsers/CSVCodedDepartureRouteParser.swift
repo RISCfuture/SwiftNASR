@@ -5,8 +5,12 @@ import StreamingCSV
 ///
 /// CDR is a comma-delimited file with 12 fields:
 /// RCode, Orig, Dest, DepFix, Route String, DCNTR, ACNTR, TCNTRs, CoordReq, Play, NavEqp, Length
-actor CSVCodedDepartureRouteParser: CSVParser {
+actor CSVCodedDepartureRouteParser: DiagnosingCSVParser {
+  static let type = RecordType.codedDepartureRoutes
+  static let identityColumns = ["RCode"]
+
   var distribution: (any Distribution)?
+  var pendingDiagnostics = [RecordParseError]()
   let CSVFiles = ["CDR.csv"]
 
   var routes = [String: CodedDepartureRoute]()

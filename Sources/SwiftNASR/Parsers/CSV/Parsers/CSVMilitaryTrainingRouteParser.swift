@@ -3,8 +3,9 @@ import StreamingCSV
 
 /// CSV Military Training Route Parser for parsing MTR_BASE.csv, MTR_AGY.csv,
 /// MTR_PT.csv, MTR_SOP.csv, MTR_TERR.csv, and MTR_WDTH.csv
-actor CSVMilitaryTrainingRouteParser: CSVParser, DiagnosingParser {
+actor CSVMilitaryTrainingRouteParser: DiagnosingCSVParser {
   static let type = RecordType.militaryTrainingRoutes
+  static let identityColumns = ["ROUTE_TYPE_CODE", "ROUTE_ID", "ROUTE_PT_SEQ"]
 
   var distribution: (any Distribution)?
   let CSVFiles = [

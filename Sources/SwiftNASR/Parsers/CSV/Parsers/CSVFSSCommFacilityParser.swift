@@ -6,8 +6,9 @@ import StreamingCSV
 /// Parses FSS communication outlet data from `COM.csv`.
 /// Note: The CSV format does not include frequencies, navaid position data,
 /// owner/operator info, charts, or time zone that are available in the TXT format.
-actor CSVFSSCommFacilityParser: CSVParser, DiagnosingParser {
+actor CSVFSSCommFacilityParser: DiagnosingCSVParser {
   static let type = RecordType.FSSCommFacilities
+  static let identityColumns = ["COMM_LOC_ID", "COMM_TYPE"]
   var distribution: (any Distribution)?
   let CSVFiles = ["COM.csv"]
 

@@ -2,8 +2,9 @@ import Foundation
 import StreamingCSV
 
 /// CSV Weather Station Parser for parsing AWOS.csv
-actor CSVWeatherStationParser: CSVParser, DiagnosingParser {
+actor CSVWeatherStationParser: DiagnosingCSVParser {
   static let type = RecordType.weatherReportingStations
+  static let identityColumns = ["ASOS_AWOS_ID", "ASOS_AWOS_TYPE"]
   var distribution: (any Distribution)?
   let CSVFiles = ["AWOS.csv"]
 

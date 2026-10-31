@@ -2,8 +2,9 @@ import Foundation
 import StreamingCSV
 
 /// CSV Navaid Parser using declarative transformers like FixedWidthNavaidParser
-actor CSVNavaidParser: CSVParser, DiagnosingParser {
+actor CSVNavaidParser: DiagnosingCSVParser {
   static let type = RecordType.navaids
+  static let identityColumns = ["NAV_ID", "NAV_TYPE"]
 
   var distribution: (any Distribution)?
   let CSVFiles = ["NAV_BASE.csv", "NAV_RMK.csv", "NAV_CKPT.csv"]

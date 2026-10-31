@@ -11,6 +11,15 @@ struct CSVRow: Sendable {
   /// The raw field values for this row.
   let values: [String]
 
+  /// Whether the row has fewer fields than the header.
+  var isTruncated: Bool { values.count < headerMap.columnNames.count }
+
+  /// The number of fields in this row.
+  var fieldCount: UInt { UInt(values.count) }
+
+  /// The number of fields the header declares.
+  var expectedFieldCount: UInt { UInt(headerMap.columnNames.count) }
+
   // MARK: - Methods
 
   /// Access a field that should exist but may be empty.

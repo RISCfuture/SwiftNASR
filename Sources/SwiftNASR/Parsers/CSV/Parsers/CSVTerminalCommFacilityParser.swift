@@ -8,8 +8,9 @@ import StreamingCSV
 /// radar (legacy TWR5), military operations (legacy TWR1/2/6), and class-airspace
 /// (legacy TWR8) data are folded in from `RDR.csv`, `MIL_OPS.csv`, and `CLS_ARSP.csv`
 /// respectively, so the CSV ``TerminalCommFacility`` matches the TXT representation.
-actor CSVTerminalCommFacilityParser: CSVParser, DiagnosingParser {
+actor CSVTerminalCommFacilityParser: DiagnosingCSVParser {
   static let type = RecordType.terminalCommFacilities
+  static let identityColumns = ["FACILITY_ID", "ARPT_ID"]
 
   var distribution: (any Distribution)?
   let CSVFiles = [

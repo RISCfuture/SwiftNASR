@@ -2,8 +2,9 @@ import Foundation
 import StreamingCSV
 
 /// CSV Misc Activity Area Parser for parsing MAA_BASE.csv, MAA_CON.csv, MAA_RMK.csv, and MAA_SHP.csv
-actor CSVMiscActivityAreaParser: CSVParser, DiagnosingParser {
+actor CSVMiscActivityAreaParser: DiagnosingCSVParser {
   static let type = RecordType.miscActivityAreas
+  static let identityColumns = ["MAA_ID", "POINT_SEQ"]
 
   var distribution: (any Distribution)?
   let CSVFiles = ["MAA_BASE.csv", "MAA_CON.csv", "MAA_RMK.csv", "MAA_SHP.csv"]

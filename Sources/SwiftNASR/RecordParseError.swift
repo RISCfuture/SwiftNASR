@@ -43,6 +43,7 @@ public enum RecordParseError: Swift.Error, Sendable {
       case let e as ParserError: return e
       case let e as FixedWidthParserError: return e
       case let e as SwiftNASR.Error: return e
+      case let e as CSVRowError: return e
       default: return AnySendableError(error)
     }
   }

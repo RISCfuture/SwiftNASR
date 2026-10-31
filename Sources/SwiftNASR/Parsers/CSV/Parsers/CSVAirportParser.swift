@@ -2,8 +2,9 @@ import Foundation
 import StreamingCSV
 
 /// CSV Airport Parser using header-based field access
-actor CSVAirportParser: CSVParser, DiagnosingParser {
+actor CSVAirportParser: DiagnosingCSVParser {
   static let type = RecordType.airports
+  static let identityColumns = ["SITE_NO", "ARPT_ID", "RWY_ID", "RWY_END_ID", "FACILITY"]
 
   var distribution: (any Distribution)?
   let CSVFiles = [

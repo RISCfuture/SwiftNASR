@@ -4,8 +4,12 @@ import StreamingCSV
 /// CSV Departure/Arrival Procedure Parser for parsing DP/STAR CSV files.
 ///
 /// Parses DP_BASE.csv, DP_APT.csv, DP_RTE.csv, STAR_BASE.csv, STAR_APT.csv, and STAR_RTE.csv.
-actor CSVDepartureArrivalProcedureParser: CSVParser {
+actor CSVDepartureArrivalProcedureParser: DiagnosingCSVParser {
+  static let type = RecordType.departureArrivalProceduresComplete
+  static let identityColumns = ["DP_COMPUTER_CODE", "STAR_COMPUTER_CODE", "POINT_SEQ"]
+
   var distribution: (any Distribution)?
+  var pendingDiagnostics = [RecordParseError]()
   let CSVFiles = [
     "DP_BASE.csv", "DP_APT.csv", "DP_RTE.csv",
     "STAR_BASE.csv", "STAR_APT.csv", "STAR_RTE.csv"

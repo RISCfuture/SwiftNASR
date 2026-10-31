@@ -1,8 +1,9 @@
 import Foundation
 
 /// CSV ILS Parser for parsing ILS_BASE.csv, ILS_GS.csv, ILS_DME.csv, ILS_MKR.csv, and ILS_RMK.csv
-actor CSVILSParser: CSVParser, DiagnosingParser {
+actor CSVILSParser: DiagnosingCSVParser {
   static let type = RecordType.ILSes
+  static let identityColumns = ["SITE_NO", "RWY_END_ID", "SYSTEM_TYPE_CODE"]
 
   var distribution: (any Distribution)?
   let CSVFiles = ["ILS_BASE.csv", "ILS_GS.csv", "ILS_DME.csv", "ILS_MKR.csv", "ILS_RMK.csv"]

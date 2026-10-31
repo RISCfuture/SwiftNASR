@@ -2,8 +2,9 @@ import Foundation
 import StreamingCSV
 
 /// CSV Parachute Jump Area Parser for parsing PJA_BASE.csv and PJA_CON.csv
-actor CSVParachuteJumpAreaParser: CSVParser, DiagnosingParser {
+actor CSVParachuteJumpAreaParser: DiagnosingCSVParser {
   static let type = RecordType.parachuteJumpAreas
+  static let identityColumns = ["PJA_ID"]
 
   var distribution: (any Distribution)?
   let CSVFiles = ["PJA_BASE.csv", "PJA_CON.csv"]

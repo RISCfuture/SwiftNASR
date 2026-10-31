@@ -2,8 +2,9 @@ import Foundation
 import StreamingCSV
 
 /// CSV Airway Parser for parsing AWY_BASE.csv and AWY_SEG_ALT.csv
-actor CSVAirwayParser: CSVParser, DiagnosingParser {
+actor CSVAirwayParser: DiagnosingCSVParser {
   static let type = RecordType.airways
+  static let identityColumns = ["AWY_ID", "AWY_LOCATION", "POINT_SEQ"]
 
   var distribution: (any Distribution)?
   let CSVFiles = ["AWY_BASE.csv", "AWY_SEG_ALT.csv"]

@@ -2,8 +2,9 @@ import Foundation
 import StreamingCSV
 
 /// CSV ARTCC Parser using declarative transformers like FixedWidthARTCCParser
-actor CSVARTCCParser: CSVParser, DiagnosingParser {
+actor CSVARTCCParser: DiagnosingCSVParser {
   static let type = RecordType.ARTCCFacilities
+  static let identityColumns = ["FACILITY_ID", "FACILITY_TYPE"]
 
   var distribution: (any Distribution)?
   let CSVFiles = ["ATC_BASE.csv", "ATC_RMK.csv", "ATC_SVC.csv"]

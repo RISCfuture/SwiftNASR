@@ -6,8 +6,9 @@ import StreamingCSV
 /// The CSV format stores one facility type per row, unlike the TXT format which
 /// aggregates all facility types under a single location identifier record.
 /// This parser creates one `LocationIdentifier` record per CSV row.
-actor CSVLocationIdentifierParser: CSVParser, DiagnosingParser {
+actor CSVLocationIdentifierParser: DiagnosingCSVParser {
   static let type = RecordType.locationIdentifiers
+  static let identityColumns = ["LOC_ID", "FAC_TYPE"]
 
   var distribution: (any Distribution)?
   let CSVFiles = ["LID.csv"]

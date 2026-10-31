@@ -2,8 +2,9 @@ import Foundation
 import StreamingCSV
 
 /// CSV Preferred Route Parser for parsing PFR_BASE.csv and PFR_SEG.csv
-actor CSVPreferredRouteParser: CSVParser, DiagnosingParser {
+actor CSVPreferredRouteParser: DiagnosingCSVParser {
   static let type = RecordType.preferredRoutes
+  static let identityColumns = ["ORIGIN_ID", "DSTN_ID", "PFR_TYPE_CODE", "ROUTE_NO", "SEGMENT_SEQ"]
 
   var distribution: (any Distribution)?
   let CSVFiles = ["PFR_BASE.csv", "PFR_SEG.csv"]

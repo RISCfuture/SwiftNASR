@@ -2,8 +2,12 @@ import Foundation
 import StreamingCSV
 
 /// CSV FSS Parser using declarative transformers like FixedWidthFSSParser
-actor CSVFSSParser: CSVParser {
+actor CSVFSSParser: DiagnosingCSVParser {
+  static let type = RecordType.flightServiceStations
+  static let identityColumns = ["FSS_ID"]
+
   var distribution: (any Distribution)?
+  var pendingDiagnostics = [RecordParseError]()
   let CSVFiles = ["FSS_BASE.csv", "FSS_RMK.csv"]
 
   var FSSes = [String: FSS]()

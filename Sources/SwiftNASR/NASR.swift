@@ -198,13 +198,18 @@ public actor NASR {
     if parser is any CSVParser {
       let readProgress = progress?.start(totalCount: 1)
 
+      // A CSV parse reads every file in one call, so rows dropped before a fatal
+      // file or header error are reported ahead of that error.
       let data = await distribution.read(type: type)
       for try await chunk in data {
         do {
           try await parser.parse(data: chunk)
+        } catch let error as CancellationError {
+          throw error
         } catch {
-          await discardPendingDiagnostics()
-          if errorHandler(.fromThrown(recordType: type, recordID: nil, error)) == .abort {
+          guard await drainDiagnostics(),
+            errorHandler(.fromThrown(recordType: type, recordID: nil, error)) == .proceed
+          else {
             await parser.finish(data: self.data)
             return false
           }
@@ -250,8 +255,11 @@ public actor NASR {
 
     for try await chunk in data {
       defer { parseProgress?.complete(count: 1) }
+      try Task.checkCancellation()
       do {
         try await parser.parse(data: chunk)
+      } catch let error as CancellationError {
+        throw error
       } catch {
         await discardPendingDiagnostics()
         if errorHandler(.fromThrown(recordType: type, recordID: nil, error)) == .abort {

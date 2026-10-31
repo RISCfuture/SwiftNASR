@@ -4,8 +4,9 @@ import Foundation
 ///
 /// Parses holding pattern data from CSV files: `HPF_BASE.csv`, `HPF_CHRT.csv`,
 /// `HPF_SPD_ALT.csv`, and `HPF_RMK.csv`.
-actor CSVHoldParser: CSVParser, DiagnosingParser {
+actor CSVHoldParser: DiagnosingCSVParser {
   static let type = RecordType.holds
+  static let identityColumns = ["HP_NAME", "HP_NO"]
 
   var distribution: (any Distribution)?
   let CSVFiles = ["HPF_BASE.csv", "HPF_CHRT.csv", "HPF_SPD_ALT.csv", "HPF_RMK.csv"]
