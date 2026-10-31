@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## [6.0.0] - 2026-10-31
+## [5.0.1] - 2026-10-31
 
 ### Added
 
@@ -14,8 +14,6 @@
 
 ### Changed
 
-- **BREAKING:** `ILS.SystemType.LAAS` is removed. No FAA distribution uses it: neither the ILS CSV
-  layout nor the fixed-width layout lists it, and the CSV code `LA` that mapped to it denotes an LDA
 - Fixes, FSSes, coded departure routes, and departure/arrival procedures recover from a CSV row that
   fails to parse, as every other CSV record family already did. Their parsers used to abort at the
   first bad row, which discarded the rest of that file and every supplemental file after it (such as
@@ -30,6 +28,11 @@
   missing required column, are reported ahead of that error rather than discarded with it
 - Field errors recorded while parsing a CSV row that is then dropped are discarded with the row,
   matching the fixed-width parsers
+
+### Deprecated
+
+- `ILS.SystemType.LAAS`. No FAA distribution uses it: neither the ILS CSV layout nor the
+  fixed-width layout lists it, and the CSV code `LA` that mapped to it denotes an LDA
 
 ### Fixed
 

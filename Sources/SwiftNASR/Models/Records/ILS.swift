@@ -121,6 +121,14 @@ public struct ILS: ParentRecord {
     /// LDA with Distance Measuring Equipment.
     case LDA_DME = "LDA/DME"
 
+    /// Local Area Augmentation System (GBAS).
+    @available(
+      *,
+      deprecated,
+      message: "No FAA distribution uses this system type; the CSV code LA denotes an LDA."
+    )
+    case LAAS = "LAAS"
+
     /// The two-letter `SYSTEM_TYPE_CODE` values used by the CSV distribution.
     public static var synonyms: [String: Self] {
       [
