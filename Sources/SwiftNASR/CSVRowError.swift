@@ -33,16 +33,17 @@ extension CSVRowError: LocalizedError {
   }
 
   public var failureReason: String? {
+    let row = String(rowNumber)
     switch reason {
       case let .truncated(fieldCount, expectedFieldCount):
         return String(
           localized:
-            "Row \(rowNumber, format: .number.grouping(.never)) of \(filename) has \(fieldCount, format: .number.grouping(.never)) of \(expectedFieldCount, format: .number.grouping(.never)) fields."
+            "Row \(row) of \(filename) has \(fieldCount) of \(expectedFieldCount) fields."
         )
       case let .invalid(underlying):
         return String(
           localized:
-            "Row \(rowNumber, format: .number.grouping(.never)) of \(filename): \(String(describing: underlying))"
+            "Row \(row) of \(filename): \(String(describing: underlying))"
         )
     }
   }
