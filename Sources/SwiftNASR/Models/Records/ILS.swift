@@ -121,20 +121,18 @@ public struct ILS: ParentRecord {
     /// LDA with Distance Measuring Equipment.
     case LDA_DME = "LDA/DME"
 
-    /// Local Area Augmentation System (GBAS).
-    case LAAS = "LAAS"
-
+    /// The two-letter `SYSTEM_TYPE_CODE` values used by the CSV distribution.
     public static var synonyms: [String: Self] {
       [
         "LS": .ILS,
-        "LD": .LDA,
-        "LG": .LOC_GS,
-        "LE": .ILS_DME,
-        "SD": .SDF,
-        "SF": .SDF,  // Alternative CSV code for SDF
+        "SF": .SDF,
         "LC": .localizer,
-        "DD": .LOC_DME,  // CSV code for LOC/DME
-        "LA": .LAAS  // CSV code for LAAS/GBAS
+        "LA": .LDA,
+        "LD": .ILS_DME,
+        "SD": .SDF_DME,
+        "LE": .LOC_DME,
+        "LG": .LOC_GS,
+        "DD": .LDA_DME
       ]
     }
   }

@@ -106,7 +106,7 @@ actor CSVLocationIdentifierParser: CSVParser, DiagnosingParser {
         case "INSTRUMENT LANDING SYSTEM":
           if !facType.isEmpty {
             do {
-              ilsFacilityType = try parseILSFacilityType(facType)
+              ilsFacilityType = try LocationIdentifier.ILSFacilityType.require(facType)
             } catch {
               recordFieldError(field: "ilsFacilityType", value: facType, id: locID, thrown: error)
             }
@@ -297,22 +297,6 @@ actor CSVLocationIdentifierParser: CSVParser, DiagnosingParser {
       case "VORTAC": return .VORTAC
       case "VOT": return .VOT
       default: return nil
-    }
-  }
-
-  private func parseILSFacilityType(_ facType: String) throws -> LocationIdentifier.ILSFacilityType
-  {
-    switch facType.uppercased() {
-      case "LS", "ILS": return .ILS
-      case "LD", "ILS/DME": return .ILS_DME
-      case "LC", "LOCALIZER", "LOC": return .localizer
-      case "LG", "LOC/GS": return .LOC_GS
-      case "LA", "LDA": return .LDA
-      case "LE", "LDA/DME": return .LDA_DME
-      case "SD", "SDF": return .SDF
-      case "SF", "SDF/DME", "SF/DME": return .SDF_DME
-      case "DD", "LOC/DME": return .LOC_DME
-      default: throw ParserError.unknownRecordEnumValue(facType)
     }
   }
 

@@ -239,6 +239,24 @@ public struct LocationIdentifier: Record, Identifiable {
     /// SDF with Distance Measuring Equipment
     case SDF_DME = "SF/DME"
 
+    /// The two-letter facility-type codes used by the CSV distribution, and the
+    /// layout's spellings that differ from the fixed-width data.
+    static var synonyms: [String: Self] {
+      [
+        "LS": .ILS,
+        "LD": .ILS_DME,
+        "LC": .localizer,
+        "LOC": .localizer,
+        "LE": .LOC_DME,
+        "LG": .LOC_GS,
+        "LA": .LDA,
+        "DD": .LDA_DME,
+        "SF": .SDF,
+        "SD": .SDF_DME,
+        "SDF/DME": .SDF_DME
+      ]
+    }
+
     public var description: String { rawValue }
   }
 
