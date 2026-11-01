@@ -211,7 +211,7 @@ jobs:
       PREVIOUS_CYCLE: ${{ needs.probe.outputs.previous-cycle }}
       PUBLISHED: ${{ needs.probe.outputs.published-at }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
 
       - name: Name the report and the log
         run: |
@@ -221,14 +221,14 @@ jobs:
             echo "PARSE_LOG=$RUNNER_TEMP/parse.log"
           } >> "$GITHUB_ENV"
 
-      - uses: SwiftyLab/setup-swift@latest
+      - uses: SwiftyLab/setup-swift@v1.14.2
         with:
           swift-version: "6.4"
 
       - name: Cache SwiftPM build products
         # Usually misses: 28 days between runs is well past the seven-day idle eviction. It earns
         # its place when a cycle is re-checked by hand after a fix.
-        uses: actions/cache@v6
+        uses: actions/cache@v6.1.0
         with:
           path: |
             .build
@@ -317,7 +317,7 @@ jobs:
         # Uploaded before anything reads it, and on failure too: this artifact is also the record
         # that the cycle was checked, so a broken cycle is reported once rather than every day.
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: nasr-report-${{ needs.probe.outputs.cycle }}
           path: |

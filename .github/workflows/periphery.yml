@@ -12,12 +12,12 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: maxim-lobanov/setup-xcode@v1
+      - uses: actions/checkout@v7.0.1
+      - uses: maxim-lobanov/setup-xcode@v1.7.0
         with:
           xcode-version: latest
       - name: Cache SwiftPM build products
-        uses: actions/cache@v6
+        uses: actions/cache@v6.1.0
         with:
           path: |
             .build
@@ -29,4 +29,4 @@ jobs:
       - name: Run Periphery
         env:
           PERIPHERY_TOKEN: ${{ secrets.PERIPHERY_TOKEN }}
-        run: periphery scan --strict
+        run: periphery scan --strict -- --build-system native

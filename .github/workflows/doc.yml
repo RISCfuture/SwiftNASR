@@ -22,12 +22,12 @@ jobs:
     # xcode-27: the package's macOS 27 floor needs the macOS 27 SDK to build.
     runs-on: xcode-27
     steps:
-      - uses: actions/checkout@v7
-      - uses: maxim-lobanov/setup-xcode@v1
+      - uses: actions/checkout@v7.0.1
+      - uses: maxim-lobanov/setup-xcode@v1.7.0
         with:
           xcode-version: latest
       - name: Cache SwiftPM build products
-        uses: actions/cache@v6
+        uses: actions/cache@v6.1.0
         with:
           path: |
             .build
@@ -61,7 +61,7 @@ jobs:
           </html>
           EOF
       - name: Upload
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: "docs/"
 
@@ -74,4 +74,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v5.0.1
