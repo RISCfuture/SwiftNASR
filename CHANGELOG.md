@@ -43,6 +43,11 @@
 - CSV location identifiers read four of the same codes wrongly for
   `LocationIdentifier.ILSFacilityType`: `LE` (LOC/DME) as LDA/DME, `DD` (LDA/DME) as LOC/DME, `SF`
   (SDF) as SDF/DME, and `SD` (SDF/DME) as SDF
+- `Location.latitude`, `Location.longitude`, `Location.coordinate`, and `Location.location` are
+  exact on Apple platforms. Foundation there converts `UnitAngle.arcSeconds` with a rounded
+  coefficient, which scaled every coordinate converted to degrees by 8 parts per million: up to 151
+  m of error, and about 90 m at KOAK. `latitude` and `longitude` are now Measurements in degrees;
+  read `latitudeArcsec` and `longitudeArcsec` for arc-seconds
 
 ## [5.0.0] - 2026-10-28
 

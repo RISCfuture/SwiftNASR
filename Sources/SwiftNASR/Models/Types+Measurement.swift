@@ -7,14 +7,21 @@ public import Foundation
 // MARK: - Location
 
 public extension Location {
-  /// The latitude as a Measurement.
+  /// The latitude as a Measurement in degrees.
+  ///
+  /// Expressed in degrees because Foundation on Apple platforms converts
+  /// `UnitAngle.arcSeconds` with a rounded coefficient that would scale every coordinate
+  /// by 8 parts per million. Read ``latitudeArcsec`` for arc-seconds.
   var latitude: Measurement<UnitAngle> {
-    Measurement(value: Double(latitudeArcsec), unit: .arcSeconds)
+    Measurement(value: Double(latitudeArcsec) / 3600, unit: .degrees)
   }
 
-  /// The longitude as a Measurement.
+  /// The longitude as a Measurement in degrees.
+  ///
+  /// Expressed in degrees for the same reason as ``latitude``. Read
+  /// ``longitudeArcsec`` for arc-seconds.
   var longitude: Measurement<UnitAngle> {
-    Measurement(value: Double(longitudeArcsec), unit: .arcSeconds)
+    Measurement(value: Double(longitudeArcsec) / 3600, unit: .degrees)
   }
 
   /// The elevation as a Measurement.
@@ -28,8 +35,8 @@ public extension Location {
     /// The coordinate as a CoreLocation coordinate.
     var coordinate: CLLocationCoordinate2D {
       CLLocationCoordinate2D(
-        latitude: latitude.converted(to: .degrees).value,
-        longitude: longitude.converted(to: .degrees).value
+        latitude: latitude.value,
+        longitude: longitude.value
       )
     }
 
