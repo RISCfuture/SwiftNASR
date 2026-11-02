@@ -101,7 +101,7 @@ jobs:
           days_out=$(( ( $(date -u -d "$CYCLE" +%s) - $(date -u +%s) ) / 86400 ))
 
           # Publication runs ~29 days ahead; still missing two weeks out means the FAA slipped or
-          # the URLs moved, either of which otherwise looks like an ordinary quiet day.
+          # the URLs moved, either of which otherwise looks like an ordinary quiet poll.
           if [ "$available" != "true" ] && [ "$days_out" -le 14 ]; then
             overdue=true
           else
@@ -317,7 +317,7 @@ jobs:
 
       - name: Upload the report
         # Uploaded before anything reads it, and on failure too: this artifact is also the record
-        # that the cycle was checked, so a broken cycle is reported once rather than every day.
+        # that the cycle was checked, so a broken cycle is reported once rather than on every poll.
         if: always()
         uses: actions/upload-artifact@v7.0.2
         with:
