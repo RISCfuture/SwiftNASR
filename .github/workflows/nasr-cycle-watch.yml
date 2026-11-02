@@ -97,7 +97,7 @@ jobs:
             available=false
           fi
 
-          published=$(grep -i '^last-modified:' txt.headers | tail -n 1 | cut -d' ' -f2- | tr -d '\r')
+          published=$({ grep -i '^last-modified:' txt.headers || true; } | tail -n 1 | cut -d' ' -f2- | tr -d '\r')
           days_out=$(( ( $(date -u -d "$CYCLE" +%s) - $(date -u +%s) ) / 86400 ))
 
           # Publication runs ~29 days ahead; still missing two weeks out means the FAA slipped or
