@@ -6,7 +6,9 @@ name: NASR Cycle Watch
 
 on:
   schedule:
-    - cron: "0 16 * * *"
+    # Mondays. The FAA posts a cycle about 29 days ahead, so a weekly poll finds it within a week
+    # and still has two weeks of margin before the overdue alert.
+    - cron: "0 16 * * 1"
   workflow_dispatch:
     inputs:
       cycle:
