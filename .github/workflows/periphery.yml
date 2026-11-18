@@ -4,10 +4,15 @@ on:
     branches: [main]
   pull_request:
 jobs:
+  route:
+    uses: RISCfuture/ci-workflows/.github/workflows/minerva-route.yml@1.1.0
+    permissions:
+      contents: read
   periphery:
     name: Run Periphery
     # xcode-27: scanning builds the package, which needs the macOS 27 SDK.
-    runs-on: xcode-27
+    needs: route
+    runs-on: ${{ fromJSON(needs.route.outputs.xcode-27) }}
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: read
